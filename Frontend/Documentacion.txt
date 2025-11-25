@@ -1,4 +1,0 @@
-.service.ts: Peticiones HTTP, lógica de negocio
-.model.ts: Definición de estructuras de datos (interfaces)
-.routes.ts: Configuración de navegación del módulo
-components/: UI, templates HTML, estilos y lógica de presentación
