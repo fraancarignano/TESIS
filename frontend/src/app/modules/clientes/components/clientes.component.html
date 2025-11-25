@@ -1,0 +1,63 @@
+<div class="clientes-container">
+  <div class="header">
+    <div class="breadcrumb">
+      <span>Principal</span>
+      <span class="separator">></span>
+      <span class="active">Clientes</span>
+    </div>
+    
+    <div class="actions-bar">
+      <div class="search-box">
+        <input 
+          type="text" 
+          placeholder="Buscar en el sistema..."
+          [(ngModel)]="terminoBusqueda"
+        >
+      </div>
+      <button class="btn-nuevo" (click)="abrirFormularioNuevo()">
+        <span>+</span> Nuevo Cliente
+      </button>
+    </div>
+  </div>
+
+  <div class="tabla-clientes">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Apellido</th>
+          <th>Empresa</th>
+          <th>Mail</th>
+          <th style="text-align: right;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let cliente of clientesFiltrados">
+          <td>{{ cliente.nombre }}</td>
+          <td>{{ cliente.apellido }}</td>
+          <td>{{ cliente.empresa }}</td>
+          <td>{{ cliente.email }}</td>
+          <td class="acciones">
+            <button class="btn-eliminar" (click)="eliminarCliente(cliente.id!)">
+              Eliminar
+            </button>
+            <button class="btn-modificar" (click)="abrirFormularioEditar(cliente)">
+              Modificar
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="clientesFiltrados.length === 0">
+          <td colspan="5" style="text-align: center; padding: 40px; color: #999;">
+            No se encontraron clientes
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<app-cliente-form 
+  *ngIf="mostrarFormulario"
+  [cliente]="clienteSeleccionado"
+  (cerrar)="cerrarFormulario()"
+></app-cliente-form>

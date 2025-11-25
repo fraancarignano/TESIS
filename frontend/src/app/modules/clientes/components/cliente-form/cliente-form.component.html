@@ -1,0 +1,171 @@
+<div class="modal-overlay" (click)="cancelar()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <!-- Header con gradiente -->
+    <div class="modal-header">
+      <div class="header-content">
+        <div class="icon-badge">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h2>{{ titulo }}</h2>
+          <p class="subtitle">{{ esEdicion ? 'Actualiza la información del cliente' : 'Ingresa los datos del nuevo cliente' }}</p>
+        </div>
+      </div>
+      <button class="btn-close" (click)="cancelar()" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Contenido del formulario -->
+    <div class="modal-body">
+      <form [formGroup]="formulario" (ngSubmit)="guardar()">
+        <div class="form-section">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Información Personal
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-field">
+              <label for="nombre">
+                Nombre <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <input 
+                  type="text" 
+                  id="nombre"
+                  formControlName="nombre"
+                  placeholder="Ingrese el nombre"
+                  [class.error]="formulario.get('nombre')?.invalid && formulario.get('nombre')?.touched"
+                >
+              </div>
+              <span class="error-message" *ngIf="formulario.get('nombre')?.invalid && formulario.get('nombre')?.touched">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                El nombre es requerido (mínimo 2 caracteres)
+              </span>
+            </div>
+
+            <div class="form-field">
+              <label for="apellido">
+                Apellido <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <input 
+                  type="text" 
+                  id="apellido"
+                  formControlName="apellido"
+                  placeholder="Ingrese el apellido"
+                  [class.error]="formulario.get('apellido')?.invalid && formulario.get('apellido')?.touched"
+                >
+              </div>
+              <span class="error-message" *ngIf="formulario.get('apellido')?.invalid && formulario.get('apellido')?.touched">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                El apellido es requerido (mínimo 2 caracteres)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            Información Corporativa
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-field">
+              <label for="empresa">
+                Empresa <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <input 
+                  type="text" 
+                  id="empresa"
+                  formControlName="empresa"
+                  placeholder="Nombre de la empresa"
+                  [class.error]="formulario.get('empresa')?.invalid && formulario.get('empresa')?.touched"
+                >
+              </div>
+              <span class="error-message" *ngIf="formulario.get('empresa')?.invalid && formulario.get('empresa')?.touched">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                La empresa es requerida
+              </span>
+            </div>
+
+            <div class="form-field">
+              <label for="email">
+                Email Corporativo <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                <input 
+                  type="email" 
+                  id="email"
+                  formControlName="email"
+                  placeholder="correo@empresa.com"
+                  [class.error]="formulario.get('email')?.invalid && formulario.get('email')?.touched"
+                >
+              </div>
+              <span class="error-message" *ngIf="formulario.get('email')?.invalid && formulario.get('email')?.touched">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                Ingresa un email corporativo válido
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer con botones -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cancelar()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="formulario.invalid">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            {{ esEdicion ? 'Actualizar Cliente' : 'Registrar Cliente' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

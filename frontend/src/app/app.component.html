@@ -1,0 +1,46 @@
+<div class="app-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      TAMARINDO
+    </div>
+    
+    <nav class="nav-menu">
+      <a routerLink="/reportes" routerLinkActive="active" class="nav-item">
+        <span class="text">Reportes</span>
+      </a>
+      
+      <a routerLink="/inventario" routerLinkActive="active" class="nav-item">
+        <span class="text">Inventario</span>
+      </a>
+      
+      <a routerLink="/proyectos" routerLinkActive="active" class="nav-item">
+        <span class="text">Proyectos</span>
+      </a>
+      
+      <a routerLink="/usuarios" routerLinkActive="active" class="nav-item">
+        <span class="text">Usuarios</span>
+      </a>
+      
+      <a routerLink="/clientes" routerLinkActive="active" class="nav-item">
+        <span class="text">Clientes</span>
+      </a>
+    </nav>
+
+    <div class="user-profile">
+      <div class="avatar">
+        <img src="assets/avatar.jpg" alt="User" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="avatar-placeholder">WC</div>
+      </div>
+      <div class="user-info">
+        <div class="user-name">Wilson Cardona</div>
+        <div class="user-email">wilson@tamarindo.com</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
