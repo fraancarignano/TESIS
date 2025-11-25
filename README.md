@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # TamarindoESCMB
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.2.1.
@@ -57,3 +58,52 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+=======
+✅ Requerimientos previos
+
+Para ejecutar este proyecto necesitás tener instalados:
+
+Backend (C# – .NET 8)
+- .NET SDK 8.0 o superior
+- SQL Server (local o remoto)
+- SQL Server Management Studio (opcional)
+
+Frontend (Angular)
+- Node.js 18+
+- Angular CLI
+npm install -g @angular/cli
+
+Instalación
+1) Clonar el repositorio
+git clone https://github.com/fraancarignano/TESIS.git
+
+
+⚙️ Backend (.NET)
+2) Restaurar dependencias
+
+
+3) Configurar la base de datos
+
+Modificar appsettings.json:
+
+"ConnectionStrings": {
+  "DefaultConnection": "Server=localhost;Database=TurnosDB;Trusted_Connection=True;"
+}
+
+4) Aplicar migraciones 
+dotnet ef database update
+
+5) Ejecutar el backend
+
+
+Frontend (Angular)
+6) Instalar dependencias
+npm install
+
+7) Ejecutar la aplicación
+ng serve -o
+
+
+📂 Estructura del proyecto
+te lo que significa “Crear README con pasos de instalación y dependencias”: entregar este archivo claro, técnico y reproducible.
+>>>>>>> 4f2f515988498309a789ab6f3c61e70675776cb4
