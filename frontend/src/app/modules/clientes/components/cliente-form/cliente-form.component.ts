@@ -12,7 +12,7 @@ import { Cliente } from '../../models/cliente.model';
   styleUrls: ['./cliente-form.component.css']
 })
 export class ClienteFormComponent implements OnInit {
-  @Input() cliente: Cliente | null = null;  // ← IMPORTANTE: Debe tener @Input()
+  @Input() cliente: Cliente | null = null;
   @Output() cerrar = new EventEmitter<void>();
 
   formulario: FormGroup;
@@ -23,10 +23,20 @@ export class ClienteFormComponent implements OnInit {
     private clientesService: ClientesService
   ) {
     this.formulario = this.fb.group({
+      // Información Personal
       nombre: ['', [Validators.required, Validators.minLength(2)]],
       apellido: ['', [Validators.required, Validators.minLength(2)]],
-      empresa: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]]
+      telefono: ['', [Validators.required]],
+      email: ['', [Validators.required, Validators.email]],
+      
+      // Información Corporativa
+      empresa: ['', [Validators.required]],
+      razon_social: [''], // Opcional
+      cuit: ['', [Validators.required, Validators.pattern(/^\d{2}-\d{8}-\d$/)]],
+      tipo_cliente: ['', [Validators.required]],
+      
+      // Información Adicional
+      observaciones: [''] // Opcional
     });
   }
 

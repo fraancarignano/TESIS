@@ -25,6 +25,7 @@
     <!-- Contenido del formulario -->
     <div class="modal-body">
       <form [formGroup]="formulario" (ngSubmit)="guardar()">
+        <!-- SECCIÓN 1: Información Personal -->
         <div class="form-section">
           <h3 class="section-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -85,8 +86,60 @@
               </span>
             </div>
           </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="telefono">
+                Teléfono <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+                <input 
+                  type="tel" 
+                  id="telefono"
+                  formControlName="telefono"
+                  placeholder="+54 351 123-4567"
+                  [class.error]="formulario.get('telefono')?.invalid && formulario.get('telefono')?.touched"
+                >
+              </div>
+              <span class="error-message" *ngIf="formulario.get('telefono')?.invalid && formulario.get('telefono')?.touched">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                El teléfono es requerido
+              </span>
+            </div>
+
+            <div class="form-field">
+              <label for="email">
+                Email Corporativo <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                <input 
+                  type="email" 
+                  id="email"
+                  formControlName="email"
+                  placeholder="correo@empresa.com"
+                  [class.error]="formulario.get('email')?.invalid && formulario.get('email')?.touched"
+                >
+              </div>
+              <span class="error-message" *ngIf="formulario.get('email')?.invalid && formulario.get('email')?.touched">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                Ingresa un email corporativo válido
+              </span>
+            </div>
+          </div>
         </div>
 
+        <!-- SECCIÓN 2: Información Corporativa -->
         <div class="form-section">
           <h3 class="section-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -123,28 +176,111 @@
             </div>
 
             <div class="form-field">
-              <label for="email">
-                Email Corporativo <span class="required">*</span>
+              <label for="razon_social">
+                Razón Social
               </label>
               <div class="input-wrapper">
                 <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 </svg>
                 <input 
-                  type="email" 
-                  id="email"
-                  formControlName="email"
-                  placeholder="correo@empresa.com"
-                  [class.error]="formulario.get('email')?.invalid && formulario.get('email')?.touched"
+                  type="text" 
+                  id="razon_social"
+                  formControlName="razon_social"
+                  placeholder="Razón Social S.A."
                 >
               </div>
-              <span class="error-message" *ngIf="formulario.get('email')?.invalid && formulario.get('email')?.touched">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="cuit">
+                CUIT <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                  <line x1="7" y1="8" x2="17" y2="8"></line>
+                  <line x1="7" y1="12" x2="17" y2="12"></line>
+                  <line x1="7" y1="16" x2="13" y2="16"></line>
+                </svg>
+                <input 
+                  type="text" 
+                  id="cuit"
+                  formControlName="cuit"
+                  placeholder="20-12345678-9"
+                  maxlength="13"
+                  [class.error]="formulario.get('cuit')?.invalid && formulario.get('cuit')?.touched"
+                >
+              </div>
+              <span class="error-message" *ngIf="formulario.get('cuit')?.invalid && formulario.get('cuit')?.touched">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
-                Ingresa un email corporativo válido
+                Formato válido: XX-XXXXXXXX-X
               </span>
+            </div>
+
+            <div class="form-field">
+              <label for="tipo_cliente">
+                Tipo de Cliente <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <select 
+                  id="tipo_cliente"
+                  formControlName="tipo_cliente"
+                  [class.error]="formulario.get('tipo_cliente')?.invalid && formulario.get('tipo_cliente')?.touched"
+                >
+                  <option value="">Seleccione un tipo</option>
+                  <option value="Regular">Regular</option>
+                  <option value="Premium">Premium</option>
+                  <option value="Corporativo">Corporativo</option>
+                  <option value="Gobierno">Gobierno</option>
+                </select>
+              </div>
+              <span class="error-message" *ngIf="formulario.get('tipo_cliente')?.invalid && formulario.get('tipo_cliente')?.touched">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                Selecciona un tipo de cliente
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 3: Información Adicional -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Información Adicional
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-field full-width">
+              <label for="observaciones">
+                Observaciones
+              </label>
+              <div class="input-wrapper">
+                <textarea 
+                  id="observaciones"
+                  formControlName="observaciones"
+                  placeholder="Notas adicionales sobre el cliente..."
+                  rows="4"
+                ></textarea>
+              </div>
             </div>
           </div>
         </div>
