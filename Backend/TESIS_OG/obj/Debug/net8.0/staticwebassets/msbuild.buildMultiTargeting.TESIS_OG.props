@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\TESIS_OG.props" />
-</Project>
