@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ClientesService } from '../../services/clientes.service';
 import { Cliente } from '../../models/cliente.model';
+import { AlertasService } from '../../../../core/services/alertas';
 
 @Component({
   selector: 'app-cliente-form',
@@ -20,7 +21,8 @@ export class ClienteFormComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private clientesService: ClientesService
+    private clientesService: ClientesService,
+    private alertas: AlertasService
   ) {
     this.formulario = this.fb.group({
       // Información Personal
@@ -53,8 +55,11 @@ export class ClienteFormComponent implements OnInit {
       
       if (this.esEdicion && this.cliente?.id) {
         this.clientesService.actualizarCliente({ ...clienteData, id: this.cliente.id });
+        this.alertas.success('¡Cliente actualizado!', 'Los cambios se guardaron correctamente'); 
       } else {
         this.clientesService.agregarCliente(clienteData);
+        this.alertas.success('¡Cliente registrado!', 'El nuevo cliente se agregó correctamente');
+
       }
       
       this.cerrar.emit();
@@ -63,15 +68,26 @@ export class ClienteFormComponent implements OnInit {
     }
   }
 
-  cancelar(): void {
+  async cancelar(): Promise<void> {
+  if (this.formulario.dirty) {
+    const confirmado = await this.alertas.confirmar(
+      '¿Descartar cambios?',
+      'Los datos ingresados se perderán',
+      'Sí, salir'
+    );
+    
+    if (confirmado) {
+      this.cerrar.emit();
+    }
+    } else {
     this.cerrar.emit();
   }
-
-  private marcarCamposComoTocados(): void {
-    Object.keys(this.formulario.controls).forEach(key => {
-      this.formulario.get(key)?.markAsTouched();
-    });
-  }
+}
+private marcarCamposComoTocados(): void {
+  Object.keys(this.formulario.controls).forEach(key => {
+    this.formulario.get(key)?.markAsTouched();
+  });
+}
 
   get titulo(): string {
     return this.esEdicion ? 'Modificar Cliente' : 'Nuevo Cliente';
