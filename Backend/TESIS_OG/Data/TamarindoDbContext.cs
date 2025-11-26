@@ -16,55 +16,55 @@ public partial class TamarindoDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Ciudad> Ciudads { get; set; }
+    //public virtual DbSet<Ciudad> Ciudads { get; set; }
 
     public virtual DbSet<Cliente> Clientes { get; set; }
 
-    public virtual DbSet<DetalleMaterialProyecto> DetalleMaterialProyectos { get; set; }
+    //public virtual DbSet<DetalleMaterialProyecto> DetalleMaterialProyectos { get; set; }
 
-    public virtual DbSet<DetalleOrdenCompra> DetalleOrdenCompras { get; set; }
+    //public virtual DbSet<DetalleOrdenCompra> DetalleOrdenCompras { get; set; }
 
-    public virtual DbSet<DetalleTallerProyecto> DetalleTallerProyectos { get; set; }
+    //public virtual DbSet<DetalleTallerProyecto> DetalleTallerProyectos { get; set; }
 
-    public virtual DbSet<Direccion> Direccions { get; set; }
+    //public virtual DbSet<Direccion> Direccions { get; set; }
 
-    public virtual DbSet<EstadoCliente> EstadoClientes { get; set; }
+    //public virtual DbSet<EstadoCliente> EstadoClientes { get; set; }
 
-    public virtual DbSet<HistorialCliente> HistorialClientes { get; set; }
+    //public virtual DbSet<HistorialCliente> HistorialClientes { get; set; }
 
-    public virtual DbSet<HistorialUsuario> HistorialUsuarios { get; set; }
+    //public virtual DbSet<HistorialUsuario> HistorialUsuarios { get; set; }
 
-    public virtual DbSet<Insumo> Insumos { get; set; }
+    //public virtual DbSet<Insumo> Insumos { get; set; }
 
-    public virtual DbSet<InventarioMovimiento> InventarioMovimientos { get; set; }
+    //public virtual DbSet<InventarioMovimiento> InventarioMovimientos { get; set; }
 
-    public virtual DbSet<ObservacionProyecto> ObservacionProyectos { get; set; }
+    //public virtual DbSet<ObservacionProyecto> ObservacionProyectos { get; set; }
 
-    public virtual DbSet<OrdenCompra> OrdenCompras { get; set; }
+    //public virtual DbSet<OrdenCompra> OrdenCompras { get; set; }
 
-    public virtual DbSet<Pai> Pais { get; set; }
+    //public virtual DbSet<Pai> Pais { get; set; }
 
-    public virtual DbSet<Permiso> Permisos { get; set; }
+    //public virtual DbSet<Permiso> Permisos { get; set; }
 
-    public virtual DbSet<Proveedor> Proveedors { get; set; }
+    //public virtual DbSet<Proveedor> Proveedors { get; set; }
 
-    public virtual DbSet<Provincium> Provincia { get; set; }
+    //public virtual DbSet<Provincium> Provincia { get; set; }
 
-    public virtual DbSet<Proyecto> Proyectos { get; set; }
+    //public virtual DbSet<Proyecto> Proyectos { get; set; }
 
-    public virtual DbSet<Rol> Rols { get; set; }
+    //public virtual DbSet<Rol> Rols { get; set; }
 
-    public virtual DbSet<RolPermiso> RolPermisos { get; set; }
+    //public virtual DbSet<RolPermiso> RolPermisos { get; set; }
 
-    public virtual DbSet<Scrap> Scraps { get; set; }
+    //public virtual DbSet<Scrap> Scraps { get; set; }
 
-    public virtual DbSet<Taller> Tallers { get; set; }
+    //public virtual DbSet<Taller> Tallers { get; set; }
 
-    public virtual DbSet<TipoInsumo> TipoInsumos { get; set; }
+    //public virtual DbSet<TipoInsumo> TipoInsumos { get; set; }
 
-    public virtual DbSet<UnidadMedidum> UnidadMedida { get; set; }
+    //public virtual DbSet<UnidadMedidum> UnidadMedida { get; set; }
 
-    public virtual DbSet<Usuario> Usuarios { get; set; }
+    //public virtual DbSet<Usuario> Usuarios { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
