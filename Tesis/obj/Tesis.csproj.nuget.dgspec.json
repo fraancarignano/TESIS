@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\fraan\\OneDrive\\Documentos\\GitHub\\ApiTemplate\\Tesis\\Tesis\\Tesis.csproj": {}
+    "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Tesis\\Tesis.csproj": {}
   },
   "projects": {
-    "C:\\Users\\fraan\\OneDrive\\Documentos\\GitHub\\ApiTemplate\\Tesis\\Tesis\\Tesis.csproj": {
+    "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Tesis\\Tesis.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\fraan\\OneDrive\\Documentos\\GitHub\\ApiTemplate\\Tesis\\Tesis\\Tesis.csproj",
+        "projectUniqueName": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Tesis\\Tesis.csproj",
         "projectName": "Tesis",
-        "projectPath": "C:\\Users\\fraan\\OneDrive\\Documentos\\GitHub\\ApiTemplate\\Tesis\\Tesis\\Tesis.csproj",
-        "packagesPath": "C:\\Users\\fraan\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\fraan\\OneDrive\\Documentos\\GitHub\\ApiTemplate\\Tesis\\Tesis\\obj\\",
+        "projectPath": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Tesis\\Tesis.csproj",
+        "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Tesis\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\fraan\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -44,12 +44,28 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.200"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.11, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[9.0.11, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[10.0.0, )"
+            },
             "Microsoft.VisualStudio.Azure.Containers.Tools.Targets": {
               "target": "Package",
               "version": "[1.21.0, )"
@@ -74,7 +90,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.201/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
