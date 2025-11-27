@@ -7,9 +7,42 @@ import { Cliente } from '../models/cliente.model';
 })
 export class ClientesService {
   private clientes: Cliente[] = [
-    { id: 1, nombre: 'Octavio', apellido: 'Rodriguez', empresa: 'Tamarindo', email: 'octaro@gmail.com' },
-    { id: 2, nombre: 'Alan', apellido: 'Turing', empresa: 'Walmart', email: 'turingalan@gmail.com' },
-    { id: 3, nombre: 'Davo', apellido: 'Xeneize', empresa: 'Puerrul', email: 'bover@gmail.com' }
+    { 
+      id: 1, 
+      nombre: 'Octavio', 
+      apellido: 'Rodriguez', 
+      telefono: '+54 351 123-4567',
+      empresa: 'Tamarindo', 
+      email: 'octaro@gmail.com',
+      razonSocial: 'Tamarindo S.A.',
+      cuit: '20-12345678-9',
+      tipoCliente: 'Mayorista',
+      observaciones: 'Cliente frecuente, pago puntual'
+    },
+    { 
+      id: 2, 
+      nombre: 'Alan', 
+      apellido: 'Turing', 
+      telefono: '+54 11 9876-5432',
+      empresa: 'Walmart', 
+      email: 'turingalan@gmail.com',
+      razonSocial: 'Walmart Argentina S.R.L.',
+      cuit: '30-98765432-1',
+      tipoCliente: 'Corporativo',
+      observaciones: 'Requiere factura A'
+    },
+    { 
+      id: 3, 
+      nombre: 'Davo', 
+      apellido: 'Xeneize', 
+      telefono: '+54 341 555-8899',
+      empresa: 'Puerrul', 
+      email: 'bover@gmail.com',
+      razonSocial: 'Puerrul S.A.',
+      cuit: '27-55588899-3',
+      tipoCliente: 'Minorista',
+      observaciones: ''
+    }
   ];
 
   private clientesSubject = new BehaviorSubject<Cliente[]>(this.clientes);
