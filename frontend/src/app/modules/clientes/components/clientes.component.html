@@ -32,16 +32,20 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let cliente of clientesFiltrados">
+        <tr 
+          *ngFor="let cliente of clientesFiltrados" 
+          class="fila-clickeable"
+          (click)="abrirDetalle(cliente)"
+        >
           <td>{{ cliente.nombre }}</td>
           <td>{{ cliente.apellido }}</td>
           <td>{{ cliente.empresa }}</td>
           <td>{{ cliente.email }}</td>
           <td class="acciones">
-            <button class="btn-eliminar" (click)="eliminarCliente(cliente.id!)">
+            <button class="btn-eliminar" (click)="eliminarCliente(cliente.id!, $event)">
               Eliminar
             </button>
-            <button class="btn-modificar" (click)="abrirFormularioEditar(cliente)">
+            <button class="btn-modificar" (click)="abrirFormularioEditar(cliente, $event)">
               Modificar
             </button>
           </td>
@@ -61,3 +65,9 @@
   [cliente]="clienteSeleccionado"
   (cerrar)="cerrarFormulario()"
 ></app-cliente-form>
+
+<app-cliente-detalle-modal
+  *ngIf="mostrarDetalle"
+  [cliente]="clienteDetalle!"
+  (cerrar)="cerrarDetalle()"
+></app-cliente-detalle-modal>

@@ -22,8 +22,14 @@ namespace TESIS_OG
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+<<<<<<< HEAD
             
             builder.Services.AddScoped<IAuthService, AuthService>();
+=======
+            // --- AGREGA ESTA LÍNEA ---
+            builder.Services.AddRazorPages();
+            // -------------------------
+>>>>>>> 29a4806136cc1668d964cc746f41ed579d890536
 
             // JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -59,6 +65,10 @@ namespace TESIS_OG
 
             app.UseHttpsRedirection();
             app.UseAuthorization();
+            // --- AGREGA ESTAS LÍNEAS ---
+            app.UseStaticFiles(); // Para que cargue el CSS y estilos
+            app.MapRazorPages();  // Para que funcionen las rutas /Clientes
+                                  // ---------------------------
             app.MapControllers();
 
             app.Run();
