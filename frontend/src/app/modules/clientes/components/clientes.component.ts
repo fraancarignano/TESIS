@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { ClientesService } from '../services/clientes.service';
 import { Cliente } from '../models/cliente.model';
 import { ClienteFormComponent } from './cliente-form/cliente-form.component';
+import { AlertasService } from '../../../core/services/alertas';
+
+
 
 @Component({
   selector: 'app-clientes',
@@ -18,7 +21,9 @@ export class ClientesComponent implements OnInit {
   clienteSeleccionado: Cliente | null = null;
   terminoBusqueda = '';
 
-  constructor(private clientesService: ClientesService) {}
+  constructor(
+    private alertas: AlertasService,
+    private clientesService: ClientesService) {}
 
   ngOnInit(): void {
     this.clientesService.getClientes().subscribe(
@@ -54,9 +59,16 @@ export class ClientesComponent implements OnInit {
     this.clienteSeleccionado = null;
   }
 
-  eliminarCliente(id: number): void {
-    if (confirm('¿Estás seguro de eliminar este cliente?')) {
-      this.clientesService.eliminarCliente(id);
-    }
+ async eliminarCliente(id: number): Promise<void> {
+  const confirmado = await this.alertas.confirmar(
+    '¿Eliminar cliente?',
+    'Esta acción no se puede deshacer',
+    'Sí, eliminar'
+  );
+
+  if (confirmado) {
+    this.clientesService.eliminarCliente(id);
+    this.alertas.success('Cliente eliminado', 'El cliente se eliminó correctamente');
   }
+}
 }
