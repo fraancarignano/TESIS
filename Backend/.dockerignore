@@ -28,3 +28,8 @@ README.md
 !.git/config
 !.git/packed-refs
 !.git/refs/heads/**
+
+# Archivos de configuración local
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
