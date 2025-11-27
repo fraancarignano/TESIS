@@ -17,6 +17,9 @@ namespace TESIS_OG
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            // --- AGREGA ESTA LÍNEA ---
+            builder.Services.AddRazorPages();
+            // -------------------------
 
 
             var app = builder.Build();
@@ -30,6 +33,10 @@ namespace TESIS_OG
 
             app.UseHttpsRedirection();
             app.UseAuthorization();
+            // --- AGREGA ESTAS LÍNEAS ---
+            app.UseStaticFiles(); // Para que cargue el CSS y estilos
+            app.MapRazorPages();  // Para que funcionen las rutas /Clientes
+                                  // ---------------------------
             app.MapControllers();
 
             app.Run();

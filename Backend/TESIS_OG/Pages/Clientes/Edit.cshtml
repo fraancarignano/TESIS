@@ -1,0 +1,83 @@
+@page
+@model TESIS_OG.Pages_Clientes.EditModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Cliente</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Cliente.IdCliente" />
+            <div class="form-group">
+                <label asp-for="Cliente.NombreApellido" class="control-label"></label>
+                <input asp-for="Cliente.NombreApellido" class="form-control" />
+                <span asp-validation-for="Cliente.NombreApellido" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Cliente.RazonSocial" class="control-label"></label>
+                <input asp-for="Cliente.RazonSocial" class="form-control" />
+                <span asp-validation-for="Cliente.RazonSocial" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="Cliente.TipoCliente" class="control-label"></label>
+                <input asp-for="Cliente.TipoCliente" class="form-control" />
+                <span asp-validation-for="Cliente.TipoCliente" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="Cliente.Cuit" class="control-label"></label>
+                <input asp-for="Cliente.Cuit" class="form-control" />
+                <span asp-validation-for="Cliente.Cuit" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Cliente.Telefono" class="control-label"></label>
+                <input asp-for="Cliente.Telefono" class="form-control" />
+                <span asp-validation-for="Cliente.Telefono" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="Cliente.Email" class="control-label"></label>
+                <input asp-for="Cliente.Email" class="form-control" />
+                <span asp-validation-for="Cliente.Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Cliente.IdDireccion" class="control-label"></label>
+                <select asp-for="Cliente.IdDireccion" class="form-control" asp-items="ViewBag.IdDireccion"></select>
+                <span asp-validation-for="Cliente.IdDireccion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Cliente.IdEstadoCliente" class="control-label"></label>
+                <select asp-for="Cliente.IdEstadoCliente" class="form-control" asp-items="ViewBag.IdEstadoCliente"></select>
+                <span asp-validation-for="Cliente.IdEstadoCliente" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Cliente.FechaAlta" class="control-label"></label>
+                <input asp-for="Cliente.FechaAlta" class="form-control" />
+                <span asp-validation-for="Cliente.FechaAlta" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Cliente.Observaciones" class="control-label"></label>
+                <textarea asp-for="Cliente.Observaciones" class="form-control"></textarea>
+                <span asp-validation-for="Cliente.Observaciones" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
