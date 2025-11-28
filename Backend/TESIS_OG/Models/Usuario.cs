@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
+
 namespace TESIS_OG.Models;
 
 public partial class Usuario

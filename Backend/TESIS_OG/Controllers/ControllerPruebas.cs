@@ -45,7 +45,7 @@ namespace TESIS_OG.Controllers
         }
 
         [HttpGet("tables-count")]
-        public async Task<IActionResult> GetTablesInfo()
+        public IActionResult GetTablesInfo()
         {
             try
             {
