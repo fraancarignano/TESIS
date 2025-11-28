@@ -22,25 +22,42 @@ namespace TESIS_OG
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-<<<<<<< HEAD
-            
+
             builder.Services.AddScoped<IAuthService, AuthService>();
-=======
+
             // --- AGREGA ESTA LÍNEA ---
             builder.Services.AddRazorPages();
-            // -------------------------
->>>>>>> 29a4806136cc1668d964cc746f41ed579d890536
+
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAngular",
+                    policy =>
+                    {
+                        policy.WithOrigins("http://localhost:4200")
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+                    });
+            });
 
             // JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"];
+            // VALIDACIÓN: Asegura que la clave existe
+            if (string.IsNullOrEmpty(secretKey))
+            {
+                throw new InvalidOperationException(
+                    "JWT SecretKey no configurada. Verifica appsettings.json"
+                );
+            }
 
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer(options =>
+                .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -50,11 +67,12 @@ namespace TESIS_OG
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = jwtSettings["Issuer"],
                     ValidAudience = jwtSettings["Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
                 };
             });
 
             var app = builder.Build();
+
 
 
             if (app.Environment.IsDevelopment())
@@ -64,6 +82,7 @@ namespace TESIS_OG
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("AllowAngular");
             app.UseAuthorization();
             // --- AGREGA ESTAS LÍNEAS ---
             app.UseStaticFiles(); // Para que cargue el CSS y estilos
