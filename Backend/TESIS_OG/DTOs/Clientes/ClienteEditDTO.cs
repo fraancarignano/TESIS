@@ -1,7 +1,8 @@
-﻿namespace TESIS_OG.DTOs
+﻿namespace TESIS_OG.DTOs.Clientes
 {
-    public class ClienteCreateDTO
+    public class ClienteEditDTO
     {
+        public int IdCliente { get; set; }
         public string? NombreApellido { get; set; }
         public string? RazonSocial { get; set; }
         public string TipoCliente { get; set; }
@@ -13,4 +14,3 @@
         public string? Observaciones { get; set; }
     }
 }
-

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TESIS_OG.Data;
 using TESIS_OG.Models;
-using TESIS_OG.DTOs;
+using TESIS_OG.DTOs.Clientes;
 
 namespace TESIS_OG.Controllers
 {
@@ -44,6 +44,86 @@ namespace TESIS_OG.Controllers
                 message = "Cliente creado correctamente",
                 cliente
             });
+        }
+
+        // GET: api/Cliente (INDEX - Listar todos)
+        [HttpGet]
+        public IActionResult Index()
+        {
+            var clientes = _context.Clientes
+                .Select(c => new ClienteIndexDTO
+                {
+                    IdCliente = c.IdCliente,
+                    NombreApellido = c.NombreApellido,
+                    RazonSocial = c.RazonSocial,
+                    TipoCliente = c.TipoCliente,
+                    Cuit = c.Cuit,
+                    Telefono = c.Telefono,
+                    Email = c.Email,
+                    FechaAlta = c.FechaAlta,
+                    IdEstadoCliente = c.IdEstadoCliente
+                })
+                .ToList();
+
+            return Ok(clientes);
+        }
+
+        // GET: api/Cliente/{id} (Obtener uno para editar)
+        [HttpGet("{id}")]
+        public IActionResult ObtenerCliente(int id)
+        {
+            var cliente = _context.Clientes.Find(id);
+
+            if (cliente == null)
+                return NotFound(new { message = "Cliente no encontrado" });
+
+            return Ok(cliente);
+        }
+
+        // PUT: api/Cliente/{id} (EDIT - Editar)
+        [HttpPut("{id}")]
+        public IActionResult EditarCliente(int id, [FromBody] ClienteEditDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var cliente = _context.Clientes.Find(id);
+
+            if (cliente == null)
+                return NotFound(new { message = "Cliente no encontrado" });
+
+            cliente.NombreApellido = dto.NombreApellido;
+            cliente.RazonSocial = dto.RazonSocial;
+            cliente.TipoCliente = dto.TipoCliente;
+            cliente.Cuit = dto.Cuit;
+            cliente.Telefono = dto.Telefono;
+            cliente.Email = dto.Email;
+            cliente.IdDireccion = dto.IdDireccion;
+            cliente.IdEstadoCliente = dto.IdEstadoCliente;
+            cliente.Observaciones = dto.Observaciones;
+
+            _context.SaveChanges();
+
+            return Ok(new
+            {
+                message = "Cliente actualizado correctamente",
+                cliente
+            });
+        }
+
+        // DELETE: api/Cliente/{id} (DELETE - Eliminar)
+        [HttpDelete("{id}")]
+        public IActionResult EliminarCliente(int id)
+        {
+            var cliente = _context.Clientes.Find(id);
+
+            if (cliente == null)
+                return NotFound(new { message = "Cliente no encontrado" });
+
+            _context.Clientes.Remove(cliente);
+            _context.SaveChanges();
+
+            return Ok(new { message = "Cliente eliminado correctamente" });
         }
     }
 }
