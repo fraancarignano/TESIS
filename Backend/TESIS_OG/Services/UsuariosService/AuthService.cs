@@ -48,7 +48,7 @@ namespace TESIS_OG.Services.UsuariosService
             {
                 Token = token,
                 IdUsuario = usuario.IdUsuario,
-                NombreCompleto = $"{usuario.NombreUsuario} {usuario.ApellidoUsuario}",
+                NombreUsuario = $"{usuario.NombreUsuario} {usuario.ApellidoUsuario}",
                 Email = usuario.Email
             };
         }
@@ -76,6 +76,103 @@ namespace TESIS_OG.Services.UsuariosService
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public async Task<LoginResponseDTO?> RegistrarUsuarioAsync(UsuarioCreateDto usuarioDto)
+        {
+            // Verificar si el nombre de usuario ya existe
+            var existeUsuario = await _context.Usuarios
+                .AnyAsync(u => u.NombreUsuario == usuarioDto.NombreUsuario);
+
+            if (existeUsuario)
+                return null; // Usuario duplicado
+
+            // Verificar si el email ya existe
+            var existeEmail = await _context.Usuarios
+                .AnyAsync(u => u.Email == usuarioDto.Email);
+
+            if (existeEmail)
+                return null; // Email duplicado
+
+            // ⬅️ CAMBIO: Buscar el rol por nombre
+            var rol = await _context.Rols
+                .FirstOrDefaultAsync(r => r.NombreRol == usuarioDto.NombreRol);
+
+            if (rol == null)
+                return null; // Rol no encontrado
+
+            // Hashear la contraseña
+            var contraseñaHash = BCrypt.Net.BCrypt.HashPassword(usuarioDto.Contraseña);
+
+            // Crear el nuevo usuario
+            var nuevoUsuario = new Usuario
+            {
+                NombreUsuario = usuarioDto.NombreUsuario,
+                ApellidoUsuario = usuarioDto.ApellidoUsuario,
+                Email = usuarioDto.Email,
+                Contraseña = contraseñaHash,
+                IdRol = rol.IdRol, 
+                Estado = "Activo",
+                FechaCreacion = DateOnly.FromDateTime(DateTime.Now),
+                UltimoAcceso = null
+            };
+
+            _context.Usuarios.Add(nuevoUsuario);
+            await _context.SaveChangesAsync();
+
+            return new LoginResponseDTO
+            {
+                IdUsuario = nuevoUsuario.IdUsuario,
+                NombreUsuario = nuevoUsuario.NombreUsuario,
+                ApellidoUsuario = nuevoUsuario.ApellidoUsuario,
+                Email = nuevoUsuario.Email,
+                IdRol = nuevoUsuario.IdRol,
+                Estado = nuevoUsuario.Estado,
+                FechaCreacion = nuevoUsuario.FechaCreacion,
+                UltimoAcceso = nuevoUsuario.UltimoAcceso
+            };
+        }
+        public async Task<List<UsuarioListDTO>> ObtenerTodosLosUsuariosAsync()
+        {
+            var usuarios = await _context.Usuarios
+                .Include(u => u.IdRolNavigation)  // ⬅️ Incluir el rol para obtener el nombre
+                .Select(u => new UsuarioListDTO
+                {
+                    IdUsuario = u.IdUsuario,
+                    NombreUsuario = u.NombreUsuario,
+                    ApellidoUsuario = u.ApellidoUsuario,
+                    Email = u.Email,
+                    NombreRol = u.IdRolNavigation.NombreRol,
+                    Estado = u.Estado,
+                    FechaCreacion = u.FechaCreacion,
+                    UltimoAcceso = u.UltimoAcceso
+                })
+                .OrderByDescending(u => u.FechaCreacion)  // ⬅️ Más recientes primero
+                .ToListAsync();
+
+            return usuarios;
+        }
+
+        public async Task<LoginResponseDTO?> ObtenerUsuarioPorIdAsync(int id)
+        {
+            var usuario = await _context.Usuarios
+                .Include(u => u.IdRolNavigation)
+                .FirstOrDefaultAsync(u => u.IdUsuario == id);
+
+            if (usuario == null)
+                return null;
+
+            return new LoginResponseDTO
+            {
+                IdUsuario = usuario.IdUsuario,
+                NombreUsuario = usuario.NombreUsuario,
+                ApellidoUsuario = usuario.ApellidoUsuario,
+                Email = usuario.Email,
+                IdRol = usuario.IdRol,
+                Estado = usuario.Estado,
+                FechaCreacion = usuario.FechaCreacion,
+                UltimoAcceso = usuario.UltimoAcceso
+            };
         }
     }
 }
