@@ -1,73 +1,96 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { Cliente } from '../models/cliente.model';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators'; // ← Agregar este import
+import { Cliente, NuevoCliente, ActualizarCliente } from '../models/cliente.model'; // ← Agregar ActualizarCliente
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClientesService {
-  private clientes: Cliente[] = [
-    { 
-      id: 1, 
-      nombre: 'Octavio', 
-      apellido: 'Rodriguez', 
-      telefono: '+54 351 123-4567',
-      empresa: 'Tamarindo', 
-      email: 'octaro@gmail.com',
-      razonSocial: 'Tamarindo S.A.',
-      cuit: '20-12345678-9',
-      tipoCliente: 'Mayorista',
-      observaciones: 'Cliente frecuente, pago puntual'
-    },
-    { 
-      id: 2, 
-      nombre: 'Alan', 
-      apellido: 'Turing', 
-      telefono: '+54 11 9876-5432',
-      empresa: 'Walmart', 
-      email: 'turingalan@gmail.com',
-      razonSocial: 'Walmart Argentina S.R.L.',
-      cuit: '30-98765432-1',
-      tipoCliente: 'Corporativo',
-      observaciones: 'Requiere factura A'
-    },
-    { 
-      id: 3, 
-      nombre: 'Davo', 
-      apellido: 'Xeneize', 
-      telefono: '+54 341 555-8899',
-      empresa: 'Puerrul', 
-      email: 'bover@gmail.com',
-      razonSocial: 'Puerrul S.A.',
-      cuit: '27-55588899-3',
-      tipoCliente: 'Minorista',
-      observaciones: ''
+  private apiUrl = 'https://localhost:7163/api/Cliente';
+
+  constructor(private http: HttpClient) {}
+
+  /** 
+   * Obtener todos los clientes
+   */
+  obtenerClientes(): Observable<Cliente[]> {
+    return this.http.get<Cliente[]>(this.apiUrl).pipe(
+      tap(data => console.log('Clientes obtenidos:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /** 
+   * Obtener cliente por ID
+   */
+  obtenerClientePorId(id: number): Observable<Cliente> {
+    return this.http.get<Cliente>(`${this.apiUrl}/${id}`).pipe(
+      tap(data => console.log('Cliente obtenido:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Crear nuevo Cliente
+   */
+  agregarCliente(cliente: NuevoCliente): Observable<Cliente> {
+    return this.http.post<Cliente>(this.apiUrl, cliente).pipe( // ← Cambiar PUT a POST
+      tap(data => console.log('Cliente creado:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Actualizar cliente existente
+   */
+  actualizarCliente(cliente: ActualizarCliente): Observable<Cliente> {
+    const { id, ...datos } = cliente;
+    return this.http.put<Cliente>(`${this.apiUrl}/${id}`, datos).pipe(
+      tap(data => console.log('Cliente actualizado:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Eliminar cliente
+   */
+  eliminarCliente(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => console.log('Cliente eliminado:', id)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Manejo de errores HTTP
+   */
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = 'Ocurrió un error desconocido';
+    
+    if (error.error instanceof ErrorEvent) {
+      // Error del lado del cliente
+      errorMessage = `Error: ${error.error.message}`;
+    } else {
+      // Error del lado del servidor
+      errorMessage = `Código: ${error.status}\nMensaje: ${error.message}`;
+      
+      // Mensajes específicos según el código de error
+      switch (error.status) {
+        case 404:
+          errorMessage = 'Recurso no encontrado';
+          break;
+        case 500:
+          errorMessage = 'Error interno del servidor';
+          break;
+        case 0:
+          errorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo en http://localhost:7163';
+          break;
+      }
     }
-  ];
-
-  private clientesSubject = new BehaviorSubject<Cliente[]>(this.clientes);
-
-  getClientes(): Observable<Cliente[]> {
-    return this.clientesSubject.asObservable();
-  }
-
-  agregarCliente(cliente: Cliente): void {
-    const nuevoId = Math.max(...this.clientes.map(c => c.id || 0)) + 1;
-    const nuevoCliente = { ...cliente, id: nuevoId };
-    this.clientes.push(nuevoCliente);
-    this.clientesSubject.next([...this.clientes]);
-  }
-
-  actualizarCliente(cliente: Cliente): void {
-    const index = this.clientes.findIndex(c => c.id === cliente.id);
-    if (index !== -1) {
-      this.clientes[index] = cliente;
-      this.clientesSubject.next([...this.clientes]);
-    }
-  }
-
-  eliminarCliente(id: number): void {
-    this.clientes = this.clientes.filter(c => c.id !== id);
-    this.clientesSubject.next([...this.clientes]);
+    
+    console.error('Error en ClientesService:', errorMessage, error);
+    return throwError(() => new Error(errorMessage));
   }
 }

@@ -26,6 +26,8 @@ export class ClientesComponent implements OnInit {
   clienteSeleccionado: Cliente | null = null;
   clienteDetalle: Cliente | null = null;
   terminoBusqueda = '';
+  loading = false;
+  error = false;
 
   constructor(
     private alertas: AlertasService,
@@ -33,21 +35,64 @@ export class ClientesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.clientesService.getClientes().subscribe(
-      clientes => this.clientes = clientes
-    );
+    this.cargarClientes();
   }
 
+  /**
+   * Cargar clientes desde el backend
+   */
+  cargarClientes(): void {
+    this.loading = true;
+    this.error = false;
+    
+    this.clientesService.obtenerClientes().subscribe({
+      next: (data) => {
+        // Mapear respuesta del backend (PascalCase) a camelCase
+        this.clientes = data.map(c => this.mapearClienteDesdeBackend(c));
+        this.loading = false;
+        console.log('Clientes cargados:', this.clientes);
+      },
+      error: (err) => {
+        console.error('Error al cargar clientes:', err);
+        this.error = true;
+        this.loading = false;
+        this.alertas.error('Error', 'No se pudieron cargar los clientes');
+      }
+    });
+  }
+
+  /**
+   * Mapear cliente desde backend (PascalCase) a frontend (camelCase)
+   */
+  private mapearClienteDesdeBackend(data: any): Cliente {
+    return {
+      id: data.idCliente || data.id,
+      nombreApellido: data.nombreApellido || data.NombreApellido,
+      telefono: data.telefono || data.Telefono,
+      email: data.email || data.Email,
+      razonSocial: data.razonSocial || data.RazonSocial,
+      cuit: data.cuit || data.Cuit,
+      tipoCliente: data.tipoCliente || data.TipoCliente,
+      idEstadoCliente: data.idEstadoCliente || data.IdEstadoCliente,
+      fechaAlta: data.fechaAlta || data.FechaAlta,
+      observaciones: data.observaciones || data.Observaciones,
+      idDireccion: data.idDireccion || data.IdDireccion
+    };
+  }
+
+  /**
+   * Filtrar clientes por término de búsqueda
+   */
   get clientesFiltrados(): Cliente[] {
     if (!this.terminoBusqueda) {
       return this.clientes;
     }
     const termino = this.terminoBusqueda.toLowerCase();
     return this.clientes.filter(c => 
-      c.nombre.toLowerCase().includes(termino) ||
-      c.apellido.toLowerCase().includes(termino) ||
-      c.empresa.toLowerCase().includes(termino) ||
-      c.email.toLowerCase().includes(termino)
+      (c.nombreApellido?.toLowerCase().includes(termino)) ||
+      (c.razonSocial?.toLowerCase().includes(termino)) ||
+      (c.email?.toLowerCase().includes(termino)) ||
+      (c.cuit?.toLowerCase().includes(termino))
     );
   }
 
@@ -57,7 +102,8 @@ export class ClientesComponent implements OnInit {
   }
 
   abrirFormularioEditar(cliente: Cliente, event: Event): void {
-    event.stopPropagation(); // Evita que se abra el detalle
+    event.stopPropagation();
+    // Crear una copia del cliente para editar
     this.clienteSeleccionado = { ...cliente };
     this.mostrarFormulario = true;
   }
@@ -65,6 +111,7 @@ export class ClientesComponent implements OnInit {
   cerrarFormulario(): void {
     this.mostrarFormulario = false;
     this.clienteSeleccionado = null;
+    this.cargarClientes();
   }
 
   abrirDetalle(cliente: Cliente): void {
@@ -77,18 +124,84 @@ export class ClientesComponent implements OnInit {
     this.clienteDetalle = null;
   }
 
-  async eliminarCliente(id: number, event: Event): Promise<void> {
-    event.stopPropagation(); // Evita que se abra el detalle
+  /**
+   * Eliminar cliente con confirmación
+   */
+  async eliminarCliente(cliente: Cliente, event: Event): Promise<void> {
+    event.stopPropagation();
     
+    if (!cliente.id) {
+      this.alertas.error('Error', 'Cliente sin ID válido');
+      return;
+    }
+
     const confirmado = await this.alertas.confirmar(
       '¿Eliminar cliente?',
-      'Esta acción no se puede deshacer',
+      `Se eliminará a ${cliente.nombreApellido || 'este cliente'}. Esta acción no se puede deshacer.`,
       'Sí, eliminar'
     );
 
     if (confirmado) {
-      this.clientesService.eliminarCliente(id);
-      this.alertas.success('Cliente eliminado', 'El cliente se eliminó correctamente');
+      this.clientesService.eliminarCliente(cliente.id).subscribe({
+        next: () => {
+          this.alertas.success('Cliente eliminado', 'El cliente se eliminó correctamente');
+          this.cargarClientes();
+        },
+        error: (err) => {
+          console.error('Error al eliminar:', err);
+          this.alertas.error('Error', 'No se pudo eliminar el cliente');
+        }
+      });
     }
+  }
+
+  /**
+   * Función helper para formatear fecha
+   */
+  formatearFecha(fecha: Date | string | undefined): string {
+    if (!fecha) return '-';
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+
+  /**
+   * Obtener clase CSS según el tipo de cliente
+   */
+  getTipoClass(tipo: string): string {
+    const tipos: { [key: string]: string } = {
+      'Regular': 'tipo-regular',
+      'Premium': 'tipo-premium',
+      'Corporativo': 'tipo-corporativo',
+      'Gobierno': 'tipo-gobierno'
+    };
+    return tipos[tipo] || 'tipo-default';
+  }
+
+  /**
+   * Obtener clase CSS según el estado
+   */
+  getEstadoClass(estadoId?: number): string {
+    const estados: { [key: number]: string } = {
+      1: 'badge-activo',
+      2: 'badge-inactivo',
+      3: 'badge-pendiente'
+    };
+    return estados[estadoId || 1] || 'badge-default';
+  }
+
+  /**
+   * Obtener texto del estado
+   */
+  getEstadoTexto(estadoId?: number): string {
+    const estados: { [key: number]: string } = {
+      1: 'Activo',
+      2: 'Inactivo',
+      3: 'Suspendido'
+    };
+    return estados[estadoId || 1] || 'Desconocido';
   }
 }

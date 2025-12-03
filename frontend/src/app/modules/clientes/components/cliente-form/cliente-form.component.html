@@ -13,11 +13,11 @@
           <h2>{{ titulo }}</h2>
           <p class="subtitle">{{ esEdicion ? 'Actualiza la información del cliente' : 'Ingresa los datos del nuevo cliente' }}</p>
         </div>
-    </div>
+      </div>
       <button class="btn-close" (click)="cancelar()" aria-label="Cerrar">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-         <line x1="18" y1="6" x2="6" y2="18"></line>
-         <line x1="6" y1="6" x2="18" y2="18"></line>
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </button>
     </div>
@@ -36,9 +36,9 @@
           </h3>
           
           <div class="form-row">
-            <div class="form-field">
-              <label for="nombre">
-                Nombre <span class="required">*</span>
+            <div class="form-field full-width">
+              <label for="nombreApellido">
+                Nombre y Apellido <span class="required">*</span>
               </label>
               <div class="input-wrapper">
                 <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -47,42 +47,17 @@
                 </svg>
                 <input 
                   type="text" 
-                  id="nombre"
-                  formControlName="nombre"
-                  placeholder="Ingrese el nombre"
-                  [class.error]="formulario.get('nombre')?.invalid && formulario.get('nombre')?.touched"
+                  id="nombreApellido"
+                  formControlName="nombreApellido"
+                  placeholder="Ingrese nombre y apellido completo"
+                  [class.error]="tieneError('nombreApellido')"
                 >
               </div>
-              <span class="error-message" *ngIf="formulario.get('nombre')?.invalid && formulario.get('nombre')?.touched">
+              <span class="error-message" *ngIf="tieneError('nombreApellido')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
-                El nombre es requerido (mínimo 2 caracteres)
-              </span>
-            </div>
-
-            <div class="form-field">
-              <label for="apellido">
-                Apellido <span class="required">*</span>
-              </label>
-              <div class="input-wrapper">
-                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                <input 
-                  type="text" 
-                  id="apellido"
-                  formControlName="apellido"
-                  placeholder="Ingrese el apellido"
-                  [class.error]="formulario.get('apellido')?.invalid && formulario.get('apellido')?.touched"
-                >
-              </div>
-              <span class="error-message" *ngIf="formulario.get('apellido')?.invalid && formulario.get('apellido')?.touched">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                </svg>
-                El apellido es requerido (mínimo 2 caracteres)
+                {{ obtenerMensajeError('nombreApellido') }}
               </span>
             </div>
           </div>
@@ -101,20 +76,20 @@
                   id="telefono"
                   formControlName="telefono"
                   placeholder="+54 351 123-4567"
-                  [class.error]="formulario.get('telefono')?.invalid && formulario.get('telefono')?.touched"
+                  [class.error]="tieneError('telefono')"
                 >
               </div>
-              <span class="error-message" *ngIf="formulario.get('telefono')?.invalid && formulario.get('telefono')?.touched">
+              <span class="error-message" *ngIf="tieneError('telefono')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
-                El teléfono es requerido
+                {{ obtenerMensajeError('telefono') }}
               </span>
             </div>
 
             <div class="form-field">
               <label for="email">
-                Email Corporativo <span class="required">*</span>
+                Email <span class="required">*</span>
               </label>
               <div class="input-wrapper">
                 <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -126,57 +101,32 @@
                   id="email"
                   formControlName="email"
                   placeholder="correo@empresa.com"
-                  [class.error]="formulario.get('email')?.invalid && formulario.get('email')?.touched"
+                  [class.error]="tieneError('email')"
                 >
               </div>
-              <span class="error-message" *ngIf="formulario.get('email')?.invalid && formulario.get('email')?.touched">
+              <span class="error-message" *ngIf="tieneError('email')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
-                Ingresa un email corporativo válido
+                {{ obtenerMensajeError('email') }}
               </span>
             </div>
           </div>
         </div>
 
-        <!-- SECCIÓN 2: Información Corporativa -->
+        <!-- SECCIÓN 2: Información Fiscal -->
         <div class="form-section">
           <h3 class="section-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
               <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
             </svg>
-            Información Corporativa
+            Información Fiscal
           </h3>
           
           <div class="form-row">
             <div class="form-field">
-              <label for="empresa">
-                Empresa <span class="required">*</span>
-              </label>
-              <div class="input-wrapper">
-                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                </svg>
-                <input 
-                  type="text" 
-                  id="empresa"
-                  formControlName="empresa"
-                  placeholder="Nombre de la empresa"
-                  [class.error]="formulario.get('empresa')?.invalid && formulario.get('empresa')?.touched"
-                >
-              </div>
-              <span class="error-message" *ngIf="formulario.get('empresa')?.invalid && formulario.get('empresa')?.touched">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                </svg>
-                La empresa es requerida
-              </span>
-            </div>
-
-            <div class="form-field">
-              <label for="razon_social">
+              <label for="razonSocial">
                 Razón Social
               </label>
               <div class="input-wrapper">
@@ -185,15 +135,13 @@
                 </svg>
                 <input 
                   type="text" 
-                  id="razon_social"
-                  formControlName="razon_social"
+                  id="razonSocial"
+                  formControlName="razonSocial"
                   placeholder="Razón Social S.A."
                 >
               </div>
             </div>
-          </div>
 
-          <div class="form-row">
             <div class="form-field">
               <label for="cuit">
                 CUIT <span class="required">*</span>
@@ -211,19 +159,21 @@
                   formControlName="cuit"
                   placeholder="20-12345678-9"
                   maxlength="13"
-                  [class.error]="formulario.get('cuit')?.invalid && formulario.get('cuit')?.touched"
+                  [class.error]="tieneError('cuit')"
                 >
               </div>
-              <span class="error-message" *ngIf="formulario.get('cuit')?.invalid && formulario.get('cuit')?.touched">
+              <span class="error-message" *ngIf="tieneError('cuit')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
-                Formato válido: XX-XXXXXXXX-X
+                {{ obtenerMensajeError('cuit') }}
               </span>
             </div>
+          </div>
 
+          <div class="form-row">
             <div class="form-field">
-              <label for="tipo_cliente">
+              <label for="tipoCliente">
                 Tipo de Cliente <span class="required">*</span>
               </label>
               <div class="input-wrapper">
@@ -234,9 +184,9 @@
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
                 <select 
-                  id="tipo_cliente"
-                  formControlName="tipo_cliente"
-                  [class.error]="formulario.get('tipo_cliente')?.invalid && formulario.get('tipo_cliente')?.touched"
+                  id="tipoCliente"
+                  formControlName="tipoCliente"
+                  [class.error]="tieneError('tipoCliente')"
                 >
                   <option value="">Seleccione un tipo</option>
                   <option value="Regular">Regular</option>
@@ -245,11 +195,38 @@
                   <option value="Gobierno">Gobierno</option>
                 </select>
               </div>
-              <span class="error-message" *ngIf="formulario.get('tipo_cliente')?.invalid && formulario.get('tipo_cliente')?.touched">
+              <span class="error-message" *ngIf="tieneError('tipoCliente')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
-                Selecciona un tipo de cliente
+                {{ obtenerMensajeError('tipoCliente') }}
+              </span>
+            </div>
+
+            <div class="form-field">
+              <label for="idEstadoCliente">
+                Estado <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 6v6l4 2"></path>
+                </svg>
+                <select 
+                  id="idEstadoCliente"
+                  formControlName="idEstadoCliente"
+                  [class.error]="tieneError('idEstadoCliente')"
+                >
+                  <option value="1">Activo</option>
+                  <option value="2">Inactivo</option>
+                  <option value="3">Suspendido</option>
+                </select>
+              </div>
+              <span class="error-message" *ngIf="tieneError('idEstadoCliente')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {{ obtenerMensajeError('idEstadoCliente') }}
               </span>
             </div>
           </div>
@@ -286,7 +263,6 @@
         </div>
 
         <!-- Footer con botones -->
-         <!-- Footer con botones -->
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" (click)="cancelar()">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

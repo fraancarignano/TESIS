@@ -26,70 +26,74 @@ import { Cliente } from '../models/cliente.model';
         </div>
 
         <div class="modal-body">
-          <!-- Información Personal -->
+          <!-- Información Principal -->
           <div class="seccion">
             <div class="seccion-titulo">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
-              <span>Información Personal</span>
+              <span>Información Principal</span>
             </div>
             <div class="campos-grid">
               <div class="campo">
-                <label>Nombre</label>
-                <div class="valor">{{ cliente.nombre }}</div>
-              </div>
-              <div class="campo">
-                <label>Apellido</label>
-                <div class="valor">{{ cliente.apellido }}</div>
+                <label>Nombre / Apellido</label>
+                <div class="valor">{{ cliente?.nombreApellido }}</div>
               </div>
               <div class="campo">
                 <label>Teléfono</label>
-                <div class="valor">{{ cliente.telefono }}</div>
+                <div class="valor">{{ cliente?.telefono }}</div>
               </div>
               <div class="campo">
-                <label>Email Corporativo</label>
-                <div class="valor">{{ cliente.email }}</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Información Corporativa -->
-          <div class="seccion">
-            <div class="seccion-titulo">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-              </svg>
-              <span>Información Corporativa</span>
-            </div>
-            <div class="campos-grid">
-              <div class="campo">
-                <label>Empresa</label>
-                <div class="valor">{{ cliente.empresa }}</div>
-              </div>
-              <div class="campo">
-                <label>Razón Social</label>
-                <div class="valor">{{ cliente.razonSocial || '-' }}</div>
-              </div>
-              <div class="campo">
-                <label>CUIT</label>
-                <div class="valor">{{ cliente.cuit }}</div>
+                <label>Email</label>
+                <div class="valor">{{ cliente?.email }}</div>
               </div>
               <div class="campo">
                 <label>Tipo de Cliente</label>
                 <div class="valor">
                   <span class="badge" [ngClass]="getTipoClienteClass()">
-                    {{ cliente.tipoCliente }}
+                    {{ cliente?.tipoCliente }}
                   </span>
                 </div>
               </div>
             </div>
           </div>
 
+          <!-- Información Fiscal -->
+          <div class="seccion">
+            <div class="seccion-titulo">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+              <span>Información Fiscal</span>
+            </div>
+            <div class="campos-grid">
+              <div class="campo">
+                <label>Razón Social</label>
+                <div class="valor">{{ cliente?.razonSocial || '-' }}</div>
+              </div>
+              <div class="campo">
+                <label>CUIT</label>
+                <div class="valor">{{ cliente?.cuit }}</div>
+              </div>
+              <div class="campo">
+                <label>Estado</label>
+                <div class="valor">
+                  <span class="badge" [ngClass]="getEstadoClass()">
+                    {{ getEstadoTexto() }}
+                  </span>
+                </div>
+              </div>
+              <div class="campo">
+                <label>Fecha de Alta</label>
+                <div class="valor">{{ formatearFecha(cliente?.fechaAlta) }}</div>
+              </div>
+            </div>
+          </div>
+
           <!-- Observaciones -->
-          <div class="seccion" *ngIf="cliente.observaciones">
+          <div class="seccion" *ngIf="cliente?.observaciones">
             <div class="seccion-titulo">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -101,7 +105,7 @@ import { Cliente } from '../models/cliente.model';
               <span>Observaciones</span>
             </div>
             <div class="observaciones-texto">
-              {{ cliente.observaciones }}
+              {{ cliente?.observaciones }}
             </div>
           </div>
         </div>
@@ -275,19 +279,41 @@ import { Cliente } from '../models/cliente.model';
       font-weight: 600;
     }
 
-    .badge.mayorista {
+    /* Tipos de cliente */
+    .badge.regular {
       background: #e3f2fd;
-      color: #1976d2;
+      color: #1565c0;
     }
 
-    .badge.minorista {
+    .badge.premium {
       background: #f3e5f5;
       color: #7b1fa2;
     }
 
     .badge.corporativo {
+      background: #e8eaf6;
+      color: #3949ab;
+    }
+
+    .badge.gobierno {
+      background: #e0f2f1;
+      color: #00695c;
+    }
+
+    /* Estados */
+    .badge.badge-activo {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .badge.badge-inactivo {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .badge.badge-pendiente {
       background: #fff3e0;
-      color: #e65100;
+      color: #ef6c00;
     }
 
     .observaciones-texto {
@@ -355,10 +381,43 @@ export class ClienteDetalleModalComponent {
   @Output() cerrar = new EventEmitter<void>();
 
   getTipoClienteClass(): string {
+    if (!this.cliente || !this.cliente.tipoCliente) {
+      return '';
+    }
+
     const tipo = this.cliente.tipoCliente.toLowerCase();
-    if (tipo.includes('mayorista')) return 'mayorista';
-    if (tipo.includes('minorista')) return 'minorista';
+    if (tipo.includes('regular')) return 'regular';
+    if (tipo.includes('premium')) return 'premium';
     if (tipo.includes('corporativo')) return 'corporativo';
+    if (tipo.includes('gobierno')) return 'gobierno';
     return '';
+  }
+
+  getEstadoClass(): string {
+    const estados: { [key: number]: string } = {
+      1: 'badge-activo',
+      2: 'badge-inactivo',
+      3: 'badge-pendiente'
+    };
+    return estados[this.cliente?.idEstadoCliente || 1] || '';
+  }
+
+  getEstadoTexto(): string {
+    const estados: { [key: number]: string } = {
+      1: 'Activo',
+      2: 'Inactivo',
+      3: 'Pendiente'
+    };
+    return estados[this.cliente?.idEstadoCliente || 1] || 'Desconocido';
+  }
+
+  formatearFecha(fecha: Date | string | undefined): string {
+    if (!fecha) return '-';
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   }
 }
