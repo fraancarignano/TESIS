@@ -154,3 +154,9 @@
   overflow-y: auto;
   background-color: #f5f5f5;
 }
+
+/* Cuando no hay sidebar, el main ocupa todo el ancho */
+.main-content.sin-sidebar {
+  margin-left: 0;
+  width: 100%;
+}

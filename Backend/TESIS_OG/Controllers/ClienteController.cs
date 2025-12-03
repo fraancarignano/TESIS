@@ -68,6 +68,51 @@ namespace TESIS_OG.Controllers
             return Ok(clientes);
         }
 
+        // POST: api/Cliente/Buscar (Búsqueda dinámica)
+        [HttpPost("Buscar")]
+        public IActionResult BuscarClientes([FromBody] ClienteSearchDTO filtros)
+        {
+            var query = _context.Clientes.AsQueryable();
+
+            // Filtro por NombreApellido (búsqueda parcial, insensible a mayúsculas)
+            if (!string.IsNullOrWhiteSpace(filtros.NombreApellido))
+            {
+                query = query.Where(c => c.NombreApellido != null &&
+                                         c.NombreApellido.ToLower().Contains(filtros.NombreApellido.ToLower()));
+            }
+
+            // Filtro por RazonSocial (búsqueda parcial, insensible a mayúsculas)
+            if (!string.IsNullOrWhiteSpace(filtros.RazonSocial))
+            {
+                query = query.Where(c => c.RazonSocial != null &&
+                                         c.RazonSocial.ToLower().Contains(filtros.RazonSocial.ToLower()));
+            }
+
+            // Filtro por TipoCliente (búsqueda exacta, insensible a mayúsculas)
+            if (!string.IsNullOrWhiteSpace(filtros.TipoCliente))
+            {
+                query = query.Where(c => c.TipoCliente.ToLower() == filtros.TipoCliente.ToLower());
+            }
+
+            // Ejecutar la consulta y mapear a DTO
+            var resultados = query
+                .Select(c => new ClienteIndexDTO
+                {
+                    IdCliente = c.IdCliente,
+                    NombreApellido = c.NombreApellido,
+                    RazonSocial = c.RazonSocial,
+                    TipoCliente = c.TipoCliente,
+                    Cuit = c.Cuit,
+                    Telefono = c.Telefono,
+                    Email = c.Email,
+                    FechaAlta = c.FechaAlta,
+                    IdEstadoCliente = c.IdEstadoCliente
+                })
+                .ToList();
+
+            return Ok(resultados);
+        }
+
         // GET: api/Cliente/{id} (Obtener uno para editar)
         [HttpGet("{id}")]
         public IActionResult ObtenerCliente(int id)
