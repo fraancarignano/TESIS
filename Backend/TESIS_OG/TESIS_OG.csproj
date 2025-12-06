@@ -34,7 +34,6 @@
     <Folder Include="Helpers\" />
     <Folder Include="Interfaces\" />
     <Folder Include="Models\" />
-    <Folder Include="Services\ClientesService\" />
     <Folder Include="Services\InventarioService\" />
     <Folder Include="Services\ScrapService\" />
     <Folder Include="Services\ProyectosService\" />

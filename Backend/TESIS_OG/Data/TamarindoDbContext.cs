@@ -67,9 +67,9 @@ public partial class TamarindoDbContext : DbContext
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
-        // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        //=> optionsBuilder.UseSqlServer("Data Source=NOTEBOOKACER;Initial Catalog=TamarindoDB;Integrated Security=True;Encrypt=False;");
+//    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+//   => optionsBuilder.UseSqlServer("Server=DESKTOP-VVVV704\SERVIDOR3;Database=TamarindoDB_Dev;Integrated Security=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -99,38 +99,77 @@ public partial class TamarindoDbContext : DbContext
             entity.ToTable("Cliente");
 
             entity.Property(e => e.IdCliente).HasColumnName("id_Cliente");
-            entity.Property(e => e.Cuit)
+
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("nombre");
+
+            entity.Property(e => e.Apellido)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("apellido");
+
+            entity.Property(e => e.TipoDocumento)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("tipo_documento");
+
+            entity.Property(e => e.NumeroDocumento)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("numero_documento");
+
+            entity.Property(e => e.CuitCuil)
                 .HasMaxLength(15)
                 .IsUnicode(false)
-                .HasColumnName("cuit");
-            entity.Property(e => e.Email)
-                .HasMaxLength(100)
-                .IsUnicode(false)
-                .HasColumnName("email");
-            entity.Property(e => e.FechaAlta).HasColumnName("fecha_Alta");
-            entity.Property(e => e.IdDireccion).HasColumnName("id_Direccion");
-            entity.Property(e => e.IdEstadoCliente).HasColumnName("id_EstadoCliente");
-            entity.Property(e => e.NombreApellido)
-                .HasMaxLength(80)
-                .IsUnicode(false)
-                .HasColumnName("nombre_apellido");
-            entity.Property(e => e.Observaciones)
-                .HasMaxLength(200)
-                .IsUnicode(false)
-                .HasColumnName("observaciones");
+                .HasColumnName("cuit_cuil");
+
             entity.Property(e => e.RazonSocial)
                 .HasMaxLength(80)
                 .IsUnicode(false)
                 .HasColumnName("razon_social");
-            entity.Property(e => e.Telefono)
-                .HasMaxLength(30)
-                .IsUnicode(false)
-                .HasColumnName("telefono");
+
             entity.Property(e => e.TipoCliente)
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasColumnName("tipo_Cliente");
 
+            entity.Property(e => e.Telefono)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasColumnName("telefono");
+
+            entity.Property(e => e.Email)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("email");
+
+            entity.Property(e => e.Ciudad)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("ciudad");
+
+            entity.Property(e => e.Provincia)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("provincia");
+
+            entity.Property(e => e.IdEstadoCliente)
+                .HasColumnName("id_EstadoCliente");
+
+            entity.Property(e => e.FechaAlta)
+                .HasColumnName("fecha_Alta");
+
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("observaciones");
+
+            entity.Property(e => e.IdDireccion)
+                .HasColumnName("id_Direccion");
+
+            // Relaciones (si existen en tu BD)
             entity.HasOne(d => d.IdDireccionNavigation).WithMany(p => p.Clientes)
                 .HasForeignKey(d => d.IdDireccion)
                 .HasConstraintName("FK__Cliente__id_Dire__32E0915F");

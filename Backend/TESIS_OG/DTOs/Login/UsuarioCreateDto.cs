@@ -17,7 +17,7 @@ namespace TESIS_OG.DTOs.Login
         public string Email { get; set; } = null!;
 
         [Required(ErrorMessage = "La contraseña es obligatoria")]
-        [StringLength(100, MinimumLength = 6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
+        [StringLength(100, MinimumLength = 4, ErrorMessage = "La contraseña debe tener al menos 4 caracteres")]
         public string Contraseña { get; set; } = null!;
 
         [Required(ErrorMessage = "El rol es obligatorio")]

@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TESIS_OG.Data;
+using TESIS_OG.Services.ClienteService;
 using TESIS_OG.Services.UsuariosService;
 
 namespace TESIS_OG
@@ -13,38 +15,33 @@ namespace TESIS_OG
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Database
             builder.Services.AddDbContext<TamarindoDbContext>(options =>
-                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
-
-            // Add services to the container.
+            // Services
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
             builder.Services.AddScoped<IAuthService, AuthService>();
-
-            // --- AGREGA ESTA LÍNEA ---
             builder.Services.AddRazorPages();
 
-
+            // ========== CORS - SOLO UNA VEZ AQUÍ ==========
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowAngular",
-                    policy =>
-                    {
-                        policy.WithOrigins("http://localhost:4200")
-                              .AllowAnyHeader()
-                              .AllowAnyMethod()
-                              .AllowCredentials();
-                    });
+                options.AddPolicy("AllowAngular", policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
             });
 
             // JWT Authentication
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"];
-            // VALIDACIÓN: Asegura que la clave existe
+
             if (string.IsNullOrEmpty(secretKey))
             {
                 throw new InvalidOperationException(
@@ -57,7 +54,7 @@ namespace TESIS_OG
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-                .AddJwtBearer(options =>
+            .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -70,10 +67,9 @@ namespace TESIS_OG
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
                 };
             });
+            builder.Services.AddScoped<IClienteService, ClienteService>();
 
             var app = builder.Build();
-
-
 
             if (app.Environment.IsDevelopment())
             {
@@ -82,17 +78,16 @@ namespace TESIS_OG
             }
 
             app.UseHttpsRedirection();
+
+            // ========== ACTIVAR CORS AQUÍ ==========
             app.UseCors("AllowAngular");
+
+            app.UseAuthentication();
             app.UseAuthorization();
-            // --- AGREGA ESTAS LÍNEAS ---
-            app.UseStaticFiles(); // Para que cargue el CSS y estilos
-            app.MapRazorPages();  // Para que funcionen las rutas /Clientes
-                                  // ---------------------------
+
             app.MapControllers();
 
             app.Run();
-
-
         }
     }
 }
