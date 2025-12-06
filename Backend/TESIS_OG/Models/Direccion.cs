@@ -19,8 +19,6 @@ public partial class Direccion
 
     public int IdPais { get; set; }
 
-    public virtual ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();
-
     public virtual Ciudad IdCiudadNavigation { get; set; } = null!;
 
     public virtual Pai IdPaisNavigation { get; set; } = null!;

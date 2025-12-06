@@ -11,6 +11,8 @@ public partial class Ciudad
 
     public int IdProvincia { get; set; }
 
+    public virtual ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();
+
     public virtual ICollection<Direccion> Direccions { get; set; } = new List<Direccion>();
 
     public virtual Provincium IdProvinciaNavigation { get; set; } = null!;

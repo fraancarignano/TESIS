@@ -5,13 +5,14 @@
         public int IdCliente { get; set; }
         public string TipoCliente { get; set; } = null!;
 
-        // Mostrar nombre según el tipo
+        // Nombre completo combinado
         public string NombreCompleto
         {
             get
             {
-                    return $"{Nombre} {Apellido}";
-                    
+                if (!string.IsNullOrEmpty(RazonSocial))
+                    return RazonSocial;
+                return $"{Nombre} {Apellido}".Trim();
             }
         }
 
@@ -22,9 +23,15 @@
         public string? CuitCuil { get; set; }
         public string? Telefono { get; set; }
         public string? Email { get; set; }
-        public string? Ciudad { get; set; }
-        public string? Provincia { get; set; }
-        public string? NombreEstado { get; set; }
+        public string? Direccion { get; set; }
+        public string? CodigoPostal { get; set; }
+
+
+        public string? NombreCiudad { get; set; }  
+        public string? NombreProvincia { get; set; }  
+
+        public int IdEstadoCliente { get; set; }
+        public string? NombreEstado { get; set; }  
         public DateOnly FechaAlta { get; set; }
     }
 }

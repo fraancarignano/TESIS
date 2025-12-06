@@ -17,58 +17,52 @@ namespace TESIS_OG.Services.ClienteService
         public async Task<ClienteIndexDTO?> CrearClienteAsync(ClienteCreateDTO clienteDto)
         {
             // Validaciones de negocio según el tipo
-            if (clienteDto.TipoCliente == "Persona Fisica")
+            if (clienteDto.TipoDocumento == "DNI")
             {
-                // Validar campos obligatorios para Persona Física
-                if (string.IsNullOrEmpty(clienteDto.Nombre) || string.IsNullOrEmpty(clienteDto.Apellido))
-                {
-                    return null; // Faltan datos requeridos
-                }
+                if (string.IsNullOrEmpty(clienteDto.TipoDocumento))
+                    return null;
 
                 // Verificar documento duplicado
                 if (!string.IsNullOrEmpty(clienteDto.NumeroDocumento))
                 {
                     var existeDocumento = await _context.Clientes
                         .AnyAsync(c => c.NumeroDocumento == clienteDto.NumeroDocumento);
-
-                    if (existeDocumento)
-                        return null; // Documento duplicado
+                    if (existeDocumento) return null;
                 }
             }
-            else if (clienteDto.TipoCliente == "Persona Juridica")
+            else if (clienteDto.TipoDocumento == "CUIT/CUIL")
             {
-                // Validar campos obligatorios para Persona Jurídica
-                if (string.IsNullOrEmpty(clienteDto.RazonSocial))
-                {
-                    return null; // Falta Razón Social
-                }
+                if (string.IsNullOrEmpty(clienteDto.TipoDocumento))
+                    return null;
 
                 // Verificar CUIT duplicado
                 if (!string.IsNullOrEmpty(clienteDto.CuitCuil))
                 {
                     var existeCuit = await _context.Clientes
                         .AnyAsync(c => c.CuitCuil == clienteDto.CuitCuil);
-
-                    if (existeCuit)
-                        return null; // CUIT duplicado
+                    if (existeCuit) return null;
                 }
             }
 
             // Verificar que el estado exista
             var estadoExiste = await _context.EstadoClientes
                 .AnyAsync(e => e.IdEstadoCliente == clienteDto.IdEstadoCliente);
+            if (!estadoExiste) return null;
 
-            if (!estadoExiste)
-                return null; // Estado no válido
-
-            // Si tiene dirección, verificar que exista
-            if (clienteDto.IdDireccion.HasValue)
+            // ⭐ Validar Ciudad si se proporciona
+            if (clienteDto.IdCiudad.HasValue)
             {
-                var direccionExiste = await _context.Direccions
-                    .AnyAsync(d => d.IdDireccion == clienteDto.IdDireccion.Value);
+                var ciudadExiste = await _context.Ciudads
+                    .AnyAsync(c => c.IdCiudad == clienteDto.IdCiudad.Value);
+                if (!ciudadExiste) return null;
+            }
 
-                if (!direccionExiste)
-                    return null; // Dirección no válida
+            // ⭐ Validar Provincia si se proporciona
+            if (clienteDto.IdProvincia.HasValue)
+            {
+                var provinciaExiste = await _context.Provincia
+                    .AnyAsync(p => p.IdProvincia == clienteDto.IdProvincia.Value);
+                if (!provinciaExiste) return null;
             }
 
             // Crear el cliente
@@ -83,9 +77,10 @@ namespace TESIS_OG.Services.ClienteService
                 CuitCuil = clienteDto.CuitCuil,
                 Telefono = clienteDto.Telefono,
                 Email = clienteDto.Email,
-                Ciudad = clienteDto.Ciudad,
-                Provincia = clienteDto.Provincia,
-                IdDireccion = clienteDto.IdDireccion,
+                Direccion = clienteDto.Direccion, 
+                CodigoPostal = clienteDto.CodigoPostal,
+                IdCiudad = clienteDto.IdCiudad, 
+                IdProvincia = clienteDto.IdProvincia, 
                 IdEstadoCliente = clienteDto.IdEstadoCliente,
                 FechaAlta = DateOnly.FromDateTime(DateTime.Now),
                 Observaciones = clienteDto.Observaciones
@@ -101,6 +96,8 @@ namespace TESIS_OG.Services.ClienteService
         {
             var clientes = await _context.Clientes
                 .Include(c => c.IdEstadoClienteNavigation)
+                .Include(c => c.IdCiudadNavigation) // ⭐ Incluir Ciudad
+                .Include(c => c.IdProvinciaNavigation) // ⭐ Incluir Provincia
                 .Select(c => new ClienteIndexDTO
                 {
                     IdCliente = c.IdCliente,
@@ -112,8 +109,11 @@ namespace TESIS_OG.Services.ClienteService
                     CuitCuil = c.CuitCuil,
                     Telefono = c.Telefono,
                     Email = c.Email,
-                    Ciudad = c.Ciudad,
-                    Provincia = c.Provincia,
+                    Direccion = c.Direccion,
+                    CodigoPostal = c.CodigoPostal,
+                    NombreCiudad = c.IdCiudadNavigation != null ? c.IdCiudadNavigation.NombreCiudad : null, // ⭐
+                    NombreProvincia = c.IdProvinciaNavigation != null ? c.IdProvinciaNavigation.NombreProvincia : null, // ⭐
+                    IdEstadoCliente = c.IdEstadoCliente,
                     NombreEstado = c.IdEstadoClienteNavigation.NombreEstado,
                     FechaAlta = c.FechaAlta
                 })
@@ -127,6 +127,8 @@ namespace TESIS_OG.Services.ClienteService
         {
             var cliente = await _context.Clientes
                 .Include(c => c.IdEstadoClienteNavigation)
+                .Include(c => c.IdCiudadNavigation) // ⭐
+                .Include(c => c.IdProvinciaNavigation) // ⭐
                 .Where(c => c.IdCliente == id)
                 .Select(c => new ClienteIndexDTO
                 {
@@ -139,8 +141,11 @@ namespace TESIS_OG.Services.ClienteService
                     CuitCuil = c.CuitCuil,
                     Telefono = c.Telefono,
                     Email = c.Email,
-                    Ciudad = c.Ciudad,
-                    Provincia = c.Provincia,
+                    Direccion = c.Direccion,
+                    CodigoPostal = c.CodigoPostal,
+                    NombreCiudad = c.IdCiudadNavigation != null ? c.IdCiudadNavigation.NombreCiudad : null,
+                    NombreProvincia = c.IdProvinciaNavigation != null ? c.IdProvinciaNavigation.NombreProvincia : null,
+                    IdEstadoCliente = c.IdEstadoCliente,
                     NombreEstado = c.IdEstadoClienteNavigation.NombreEstado,
                     FechaAlta = c.FechaAlta
                 })
@@ -152,9 +157,7 @@ namespace TESIS_OG.Services.ClienteService
         public async Task<ClienteIndexDTO?> ActualizarClienteAsync(int id, ClienteEditDTO clienteDto)
         {
             var cliente = await _context.Clientes.FindAsync(id);
-
-            if (cliente == null)
-                return null;
+            if (cliente == null) return null;
 
             // Validaciones según el tipo
             if (clienteDto.TipoCliente == "Persona Fisica")
@@ -162,14 +165,11 @@ namespace TESIS_OG.Services.ClienteService
                 if (string.IsNullOrEmpty(clienteDto.Nombre) || string.IsNullOrEmpty(clienteDto.Apellido))
                     return null;
 
-                // Verificar documento duplicado (excepto el mismo cliente)
                 if (!string.IsNullOrEmpty(clienteDto.NumeroDocumento))
                 {
                     var existeDocumento = await _context.Clientes
                         .AnyAsync(c => c.NumeroDocumento == clienteDto.NumeroDocumento && c.IdCliente != id);
-
-                    if (existeDocumento)
-                        return null;
+                    if (existeDocumento) return null;
                 }
             }
             else if (clienteDto.TipoCliente == "Persona Juridica")
@@ -177,15 +177,28 @@ namespace TESIS_OG.Services.ClienteService
                 if (string.IsNullOrEmpty(clienteDto.RazonSocial))
                     return null;
 
-                // Verificar CUIT duplicado (excepto el mismo cliente)
                 if (!string.IsNullOrEmpty(clienteDto.CuitCuil))
                 {
                     var existeCuit = await _context.Clientes
                         .AnyAsync(c => c.CuitCuil == clienteDto.CuitCuil && c.IdCliente != id);
-
-                    if (existeCuit)
-                        return null;
+                    if (existeCuit) return null;
                 }
+            }
+
+            // ⭐ Validar Ciudad si se proporciona
+            if (clienteDto.IdCiudad.HasValue)
+            {
+                var ciudadExiste = await _context.Ciudads
+                    .AnyAsync(c => c.IdCiudad == clienteDto.IdCiudad.Value);
+                if (!ciudadExiste) return null;
+            }
+
+            // ⭐ Validar Provincia si se proporciona
+            if (clienteDto.IdProvincia.HasValue)
+            {
+                var provinciaExiste = await _context.Provincia
+                    .AnyAsync(p => p.IdProvincia == clienteDto.IdProvincia.Value);
+                if (!provinciaExiste) return null;
             }
 
             // Actualizar campos
@@ -198,9 +211,10 @@ namespace TESIS_OG.Services.ClienteService
             cliente.CuitCuil = clienteDto.CuitCuil;
             cliente.Telefono = clienteDto.Telefono;
             cliente.Email = clienteDto.Email;
-            cliente.Ciudad = clienteDto.Ciudad;
-            cliente.Provincia = clienteDto.Provincia;
-            cliente.IdDireccion = clienteDto.IdDireccion;
+            cliente.Direccion = clienteDto.Direccion; 
+            cliente.CodigoPostal = clienteDto.CodigoPostal;
+            cliente.IdCiudad = clienteDto.IdCiudad; 
+            cliente.IdProvincia = clienteDto.IdProvincia; 
             cliente.IdEstadoCliente = clienteDto.IdEstadoCliente;
             cliente.Observaciones = clienteDto.Observaciones;
 
@@ -212,9 +226,7 @@ namespace TESIS_OG.Services.ClienteService
         public async Task<bool> EliminarClienteAsync(int id)
         {
             var cliente = await _context.Clientes.FindAsync(id);
-
-            if (cliente == null)
-                return false;
+            if (cliente == null) return false;
 
             _context.Clientes.Remove(cliente);
             await _context.SaveChangesAsync();
@@ -226,6 +238,8 @@ namespace TESIS_OG.Services.ClienteService
         {
             var query = _context.Clientes
                 .Include(c => c.IdEstadoClienteNavigation)
+                .Include(c => c.IdCiudadNavigation) 
+                .Include(c => c.IdProvinciaNavigation) 
                 .AsQueryable();
 
             // Aplicar filtros
@@ -234,6 +248,9 @@ namespace TESIS_OG.Services.ClienteService
 
             if (!string.IsNullOrEmpty(filtros.Nombre))
                 query = query.Where(c => c.Nombre!.Contains(filtros.Nombre));
+
+            if (!string.IsNullOrEmpty(filtros.Apellido)) // ⭐ Agregado
+                query = query.Where(c => c.Apellido!.Contains(filtros.Apellido));
 
             if (!string.IsNullOrEmpty(filtros.RazonSocial))
                 query = query.Where(c => c.RazonSocial!.Contains(filtros.RazonSocial));
@@ -250,11 +267,14 @@ namespace TESIS_OG.Services.ClienteService
             if (filtros.IdEstadoCliente.HasValue)
                 query = query.Where(c => c.IdEstadoCliente == filtros.IdEstadoCliente.Value);
 
-            if (!string.IsNullOrEmpty(filtros.Ciudad))
-                query = query.Where(c => c.Ciudad!.Contains(filtros.Ciudad));
+            if (!string.IsNullOrEmpty(filtros.CodigoPostal))
+                query = query.Where(c => c.CodigoPostal == filtros.CodigoPostal);
 
-            if (!string.IsNullOrEmpty(filtros.Provincia))
-                query = query.Where(c => c.Provincia!.Contains(filtros.Provincia));
+            if (filtros.IdCiudad.HasValue)
+                query = query.Where(c => c.IdCiudad == filtros.IdCiudad.Value);
+
+            if (filtros.IdProvincia.HasValue)
+                query = query.Where(c => c.IdProvincia == filtros.IdProvincia.Value);
 
             var clientes = await query
                 .Select(c => new ClienteIndexDTO
@@ -268,8 +288,11 @@ namespace TESIS_OG.Services.ClienteService
                     CuitCuil = c.CuitCuil,
                     Telefono = c.Telefono,
                     Email = c.Email,
-                    Ciudad = c.Ciudad,
-                    Provincia = c.Provincia,
+                    Direccion = c.Direccion,
+                    CodigoPostal = c.CodigoPostal,
+                    NombreCiudad = c.IdCiudadNavigation != null ? c.IdCiudadNavigation.NombreCiudad : null,
+                    NombreProvincia = c.IdProvinciaNavigation != null ? c.IdProvinciaNavigation.NombreProvincia : null,
+                    IdEstadoCliente = c.IdEstadoCliente,
                     NombreEstado = c.IdEstadoClienteNavigation.NombreEstado,
                     FechaAlta = c.FechaAlta
                 })

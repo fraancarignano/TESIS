@@ -13,6 +13,8 @@ public partial class Provincium
 
     public virtual ICollection<Ciudad> Ciudads { get; set; } = new List<Ciudad>();
 
+    public virtual ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();
+
     public virtual ICollection<Direccion> Direccions { get; set; } = new List<Direccion>();
 
     public virtual Pai IdPaisNavigation { get; set; } = null!;
