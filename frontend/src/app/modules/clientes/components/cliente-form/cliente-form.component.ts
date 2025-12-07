@@ -23,8 +23,15 @@ export class ClienteFormComponent implements OnInit {
   provincias: Provincia[] = [];
   ciudades: Ciudad[] = [];
   estadosCliente: EstadoCliente[] = [];
-  tiposCliente = ['Persona Física', 'Persona Jurídica'];
-  tiposDocumento = ['DNI', 'CUIT', 'CUIL', 'Pasaporte'];
+  
+  // Para discriminar en el UI (NO se guarda en BD)
+  tiposPersona = ['Física', 'Jurídica'];
+  
+  // Para guardar en la BD (regla de negocio)
+  tiposCliente = ['Mayorista', 'Minorista', 'Otro'];
+  
+  tiposDocumento = ['DNI', 'CUIL',];
+
 
   constructor(
     private fb: FormBuilder,
@@ -32,31 +39,34 @@ export class ClienteFormComponent implements OnInit {
     private alertas: AlertasService
   ) {
     this.formulario = this.fb.group({
-      // Tipo de cliente (determina qué campos mostrar)
-      tipoCliente: ['Persona Física', [Validators.required]],
-      
-      // Campos para Persona Física
-      nombre: [''],
-      apellido: [''],
-      tipoDocumento: ['DNI'],
-      numeroDocumento: [''],
-      
-      // Campos para Persona Jurídica
-      razonSocial: [''],
-      cuitCuil: [''],
-      
-      // Campos comunes
-      telefono: ['', [Validators.required]],
-      email: ['', [Validators.required, Validators.email]],
-      idEstadoCliente: [1, [Validators.required]],
-      observaciones: [''],
-      
-      // Ubicación
-      idProvincia: [null],
-      idCiudad: [null],
-      direccion: [''],
-      codigoPostal: ['']
-    });
+  // Campo TEMPORAL (solo para el form, NO se envía a la BD)
+  tiposPersona: ['Física', [Validators.required]], // ← Solo UI
+  
+  // Campo REAL que se guarda en la BD
+  tipoCliente: ['', [Validators.required]], // ← Mayorista/Minorista/Otro
+  
+  // Campos para Persona Física
+  nombre: [''],
+  apellido: [''],
+  tipoDocumento: ['DNI'],
+  numeroDocumento: [''],
+  
+  // Campos para Persona Jurídica
+  razonSocial: [''],
+  cuitCuil: [''],
+  
+  // Campos comunes
+  telefono: ['', [Validators.required]],
+  email: ['', [Validators.required, Validators.email]],
+  idEstadoCliente: [1, [Validators.required]],
+  observaciones: [''],
+  
+  // Ubicación
+  idProvincia: [null],
+  idCiudad: [null],
+  direccion: [''],
+  codigoPostal: ['']
+  });
   }
 
   ngOnInit(): void {
@@ -121,39 +131,38 @@ export class ClienteFormComponent implements OnInit {
    * Configurar validaciones dinámicas según tipo de cliente
    */
   configurarValidacionesDinamicas(): void {
-    this.formulario.get('tipoCliente')?.valueChanges.subscribe(tipo => {
-      this.limpiarValidaciones();
+  this.formulario.get('tiposPersona')?.valueChanges.subscribe(tipo => { // ← Cambiar aquí
+    this.limpiarValidaciones();
+    
+    if (tipo === 'Física') { // ← No "Persona Física"
+      // Validaciones para Persona Física
+      this.formulario.get('nombre')?.setValidators([Validators.required, Validators.minLength(2)]);
+      this.formulario.get('apellido')?.setValidators([Validators.required, Validators.minLength(2)]);
+      this.formulario.get('tipoDocumento')?.setValidators([Validators.required]);
+      this.formulario.get('numeroDocumento')?.setValidators([Validators.required]);
       
-      if (tipo === 'Persona Física') {
-        // Validaciones para Persona Física
-        this.formulario.get('nombre')?.setValidators([Validators.required, Validators.minLength(2)]);
-        this.formulario.get('apellido')?.setValidators([Validators.required, Validators.minLength(2)]);
-        this.formulario.get('tipoDocumento')?.setValidators([Validators.required]);
-        this.formulario.get('numeroDocumento')?.setValidators([Validators.required]);
-        
-        // Limpiar campos de Persona Jurídica
-        this.formulario.patchValue({ 
-          razonSocial: '',
-          cuitCuil: ''
-        });
-      } else if (tipo === 'Persona Jurídica') {
-        // Validaciones para Persona Jurídica
-        this.formulario.get('razonSocial')?.setValidators([Validators.required, Validators.minLength(3)]);
-        this.formulario.get('cuitCuil')?.setValidators([Validators.required, Validators.pattern(/^\d{2}-\d{8}-\d$/)]);
-        
-        // Limpiar campos de Persona Física
-        this.formulario.patchValue({ 
-          nombre: '',
-          apellido: '',
-          tipoDocumento: '',
-          numeroDocumento: ''
-        });
-      }
+      // Limpiar campos de Persona Jurídica
+      this.formulario.patchValue({ 
+        razonSocial: '',
+        cuitCuil: ''
+      });
+    } else if (tipo === 'Jurídica') { // ← No "Persona Jurídica"
+      // Validaciones para Persona Jurídica
+      this.formulario.get('razonSocial')?.setValidators([Validators.required, Validators.minLength(3)]);
+      this.formulario.get('cuitCuil')?.setValidators([Validators.required, Validators.pattern(/^\d{2}-\d{8}-\d$/)]);
       
-      this.actualizarValidaciones();
-    });
-  }
-
+      // Limpiar campos de Persona Física
+      this.formulario.patchValue({ 
+        nombre: '',
+        apellido: '',
+        tipoDocumento: '',
+        numeroDocumento: ''
+      });
+    }
+    
+    this.actualizarValidaciones();
+  });
+}
   /**
    * Limpiar todas las validaciones de campos opcionales
    */
@@ -182,49 +191,50 @@ export class ClienteFormComponent implements OnInit {
    * Cargar datos del cliente en edición
    */
   cargarDatosCliente(): void {
-    if (!this.cliente) return;
-    
-    this.formulario.patchValue({
-      tipoCliente: this.cliente.tipoCliente,
-      nombre: this.cliente.nombre || '',
-      apellido: this.cliente.apellido || '',
-      tipoDocumento: this.cliente.tipoDocumento || 'DNI',
-      numeroDocumento: this.cliente.numeroDocumento || '',
-      razonSocial: this.cliente.razonSocial || '',
-      cuitCuil: this.cliente.cuitCuil || '',
-      telefono: this.cliente.telefono || '',
-      email: this.cliente.email || '',
-      idEstadoCliente: this.cliente.idEstadoCliente,
-      observaciones: this.cliente.observaciones || '',
-      idProvincia: this.cliente.idProvincia || null,
-      idCiudad: this.cliente.idCiudad || null,
-      direccion: this.cliente.direccion || '',
-      codigoPostal: this.cliente.codigoPostal || ''
+  if (!this.cliente) return;
+  
+  // Inferir tipo de persona desde los datos
+  const tiposPersona = this.cliente.razonSocial ? 'Jurídica' : 'Física';
+  
+  this.formulario.patchValue({
+    tiposPersona: tiposPersona, // ← Inferido
+    tipoCliente: this.cliente.tipoCliente, // ← Mayorista/Minorista/Otro
+    nombre: this.cliente.nombre || '',
+    apellido: this.cliente.apellido || '',
+    tipoDocumento: this.cliente.tipoDocumento || 'DNI',
+    numeroDocumento: this.cliente.numeroDocumento || '',
+    razonSocial: this.cliente.razonSocial || '',
+    cuitCuil: this.cliente.cuitCuil || '',
+    telefono: this.cliente.telefono || '',
+    email: this.cliente.email || '',
+    idEstadoCliente: this.cliente.idEstadoCliente,
+    observaciones: this.cliente.observaciones || '',
+    idProvincia: this.cliente.idProvincia || null,
+    idCiudad: this.cliente.idCiudad || null,
+    direccion: this.cliente.direccion || '',
+    codigoPostal: this.cliente.codigoPostal || ''
+  });
+
+  // Si tiene provincia, cargar las ciudades
+  if (this.cliente.idProvincia) {
+    this.clientesService.obtenerCiudadesPorProvincia(this.cliente.idProvincia).subscribe({
+      next: (data) => {
+        this.ciudades = data;
+      }
     });
-
-    // Si tiene provincia, cargar las ciudades
-    if (this.cliente.idProvincia) {
-      this.clientesService.obtenerCiudadesPorProvincia(this.cliente.idProvincia).subscribe({
-        next: (data) => {
-          this.ciudades = data;
-        }
-      });
-    }
   }
-
+}
+  /*
   /**
    * Verificar si es Persona Física
    */
   esPersonaFisica(): boolean {
-    return this.formulario.get('tipoCliente')?.value === 'Persona Física';
-  }
+  return this.formulario.get('tiposPersona')?.value === 'Física'; // ← Cambiar
+}
 
-  /**
-   * Verificar si es Persona Jurídica
-   */
-  esPersonaJuridica(): boolean {
-    return this.formulario.get('tipoCliente')?.value === 'Persona Jurídica';
-  }
+esPersonaJuridica(): boolean {
+  return this.formulario.get('tiposPersona')?.value === 'Jurídica'; // ← Cambiar
+}
 
   /**
    * Guardar o actualizar cliente
@@ -271,38 +281,39 @@ export class ClienteFormComponent implements OnInit {
    * Preparar datos del cliente según el tipo
    */
   prepararDatosCliente(): any {
-    const formValue = this.formulario.value;
-    
-    const cliente: any = {
-      tipoCliente: formValue.tipoCliente,
-      telefono: formValue.telefono || null,
-      email: formValue.email || null,
-      idEstadoCliente: formValue.idEstadoCliente,
-      observaciones: formValue.observaciones || null,
-      idProvincia: formValue.idProvincia || null,
-      idCiudad: formValue.idCiudad || null,
-      direccion: formValue.direccion || null,
-      codigoPostal: formValue.codigoPostal || null
-    };
+  const formValue = this.formulario.value;
+  
+  const cliente: any = {
+    // tiposPersona NO se envía ← IMPORTANTE
+    tipoCliente: formValue.tipoCliente, // ← Este SÍ (Mayorista/Minorista/Otro)
+    telefono: formValue.telefono || null,
+    email: formValue.email || null,
+    idEstadoCliente: formValue.idEstadoCliente,
+    observaciones: formValue.observaciones || null,
+    idProvincia: formValue.idProvincia || null,
+    idCiudad: formValue.idCiudad || null,
+    direccion: formValue.direccion || null,
+    codigoPostal: formValue.codigoPostal || null
+  };
 
-    if (this.esPersonaFisica()) {
-      cliente.nombre = formValue.nombre;
-      cliente.apellido = formValue.apellido;
-      cliente.tipoDocumento = formValue.tipoDocumento;
-      cliente.numeroDocumento = formValue.numeroDocumento;
-      cliente.razonSocial = null;
-      cliente.cuitCuil = null;
-    } else {
-      cliente.razonSocial = formValue.razonSocial;
-      cliente.cuitCuil = formValue.cuitCuil;
-      cliente.nombre = null;
-      cliente.apellido = null;
-      cliente.tipoDocumento = null;
-      cliente.numeroDocumento = null;
-    }
-
-    return cliente;
+  if (this.esPersonaFisica()) {
+    cliente.nombre = formValue.nombre;
+    cliente.apellido = formValue.apellido;
+    cliente.tipoDocumento = formValue.tipoDocumento;
+    cliente.numeroDocumento = formValue.numeroDocumento;
+    cliente.razonSocial = null;
+    cliente.cuitCuil = null;
+  } else {
+    cliente.razonSocial = formValue.razonSocial;
+    cliente.cuitCuil = formValue.cuitCuil;
+    cliente.nombre = null;
+    cliente.apellido = null;
+    cliente.tipoDocumento = null;
+    cliente.numeroDocumento = null;
   }
+
+  return cliente;
+}
 
   /**
    * Cancelar con confirmación si hay cambios

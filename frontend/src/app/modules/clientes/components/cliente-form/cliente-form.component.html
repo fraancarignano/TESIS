@@ -26,7 +26,7 @@
     <div class="modal-body">
       <form [formGroup]="formulario" (ngSubmit)="guardar()">
         
-        <!-- SECCIÓN 0: Tipo de Cliente -->
+        <!-- SECCIÓN 0: Tipo de Persona -->
         <div class="form-section">
           <h3 class="section-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -35,13 +35,13 @@
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
-            Tipo de Cliente
+            Tipo de Persona
           </h3>
           
           <div class="form-row">
             <div class="form-field full-width">
-              <label for="tipoCliente">
-                Tipo de Cliente <span class="required">*</span>
+              <label for="tiposPersona">
+                Tipo de Persona <span class="required">*</span>
               </label>
               <div class="input-wrapper">
                 <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -51,24 +51,25 @@
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
                 <select 
-                  id="tipoCliente"
-                  formControlName="tipoCliente"
-                  [class.error]="tieneError('tipoCliente')"
+                  id="tiposPersona"
+                  formControlName="tiposPersona"
+                  [class.error]="tieneError('tiposPersona')"
                 >
-                  <option value="">Seleccione un tipo</option>
-                  <option *ngFor="let tipo of tiposCliente" [value]="tipo">{{ tipo }}</option>
+                  
+                  <option *ngFor="let tipo of tiposPersona" [value]="tipo">{{ tipo }}</option>
                 </select>
               </div>
-              <span class="error-message" *ngIf="tieneError('tipoCliente')">
+              <span class="error-message" *ngIf="tieneError('tiposPersona')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
-                {{ obtenerMensajeError('tipoCliente') }}
+                {{ obtenerMensajeError('tiposPersona') }}
               </span>
             </div>
           </div>
         </div>
 
+   
         <!-- SECCIÓN 1: Información Personal (Persona Física) -->
         <div class="form-section" *ngIf="esPersonaFisica()">
           <h3 class="section-title">
@@ -188,6 +189,7 @@
             </div>
           </div>
         </div>
+        
 
         <!-- SECCIÓN 1 ALTERNATIVA: Información Fiscal (Persona Jurídica) -->
         <div class="form-section" *ngIf="esPersonaJuridica()">
@@ -425,36 +427,64 @@
             Información Adicional
           </h3>
           
-          <div class="form-row">
-            <div class="form-field">
-              <label for="idEstadoCliente">
-                Estado <span class="required">*</span>
-              </label>
-              <div class="input-wrapper">
-                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M12 6v6l4 2"></path>
-                </svg>
-                <select 
-                  id="idEstadoCliente"
-                  formControlName="idEstadoCliente"
-                  [class.error]="tieneError('idEstadoCliente')"
-                >
-                  <option value="">Seleccione estado</option>
-                  <option *ngFor="let estado of estadosCliente" [value]="estado.idEstadoCliente">
+ <div class="form-row inline-fields">
+    
+    <div class="form-field">
+        <label for="idEstadoCliente">
+            Estado <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+            </svg>
+            <select 
+                id="idEstadoCliente"
+                formControlName="idEstadoCliente"
+                [class.error]="tieneError('idEstadoCliente')"
+            >
+                <option value="">Seleccione estado</option>
+                <option *ngFor="let estado of estadosCliente" [value]="estado.idEstadoCliente">
                     {{ estado.nombre }}
-                  </option>
-                </select>
-              </div>
-              <span class="error-message" *ngIf="tieneError('idEstadoCliente')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                </svg>
-                {{ obtenerMensajeError('idEstadoCliente') }}
-              </span>
-            </div>
-          </div>
+                </option>
+            </select>
+        </div>
+        <span class="error-message" *ngIf="tieneError('idEstadoCliente')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            {{ obtenerMensajeError('idEstadoCliente') }}
+        </span>
+    </div>
 
+    <div class="form-field"> <label for="tipoCliente">
+            Categoría del Cliente <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <select 
+                id="tipoCliente"
+                formControlName="tipoCliente"
+                [class.error]="tieneError('tipoCliente')"
+            >
+                <option value="">Seleccione categoría</option>
+                <option *ngFor="let tipo of tiposCliente" [value]="tipo">{{ tipo }}</option>
+            </select>
+        </div>
+        <span class="error-message" *ngIf="tieneError('tipoCliente')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            {{ obtenerMensajeError('tipoCliente') }}
+        </span>
+    </div>
+    
+</div>
           <div class="form-row">
             <div class="form-field full-width">
               <label for="observaciones">
