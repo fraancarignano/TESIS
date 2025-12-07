@@ -47,8 +47,7 @@ export class ClientesComponent implements OnInit {
     
     this.clientesService.obtenerClientes().subscribe({
       next: (data) => {
-        // Mapear respuesta del backend (PascalCase) a camelCase
-        this.clientes = data.map(c => this.mapearClienteDesdeBackend(c));
+        this.clientes = data;
         this.loading = false;
         console.log('Clientes cargados:', this.clientes);
       },
@@ -62,25 +61,6 @@ export class ClientesComponent implements OnInit {
   }
 
   /**
-   * Mapear cliente desde backend (PascalCase) a frontend (camelCase)
-   */
-  private mapearClienteDesdeBackend(data: any): Cliente {
-    return {
-      id: data.idCliente || data.id,
-      nombreApellido: data.nombreApellido || data.NombreApellido,
-      telefono: data.telefono || data.Telefono,
-      email: data.email || data.Email,
-      razonSocial: data.razonSocial || data.RazonSocial,
-      cuit: data.cuit || data.Cuit,
-      tipoCliente: data.tipoCliente || data.TipoCliente,
-      idEstadoCliente: data.idEstadoCliente || data.IdEstadoCliente,
-      fechaAlta: data.fechaAlta || data.FechaAlta,
-      observaciones: data.observaciones || data.Observaciones,
-      idDireccion: data.idDireccion || data.IdDireccion
-    };
-  }
-
-  /**
    * Filtrar clientes por término de búsqueda
    */
   get clientesFiltrados(): Cliente[] {
@@ -89,11 +69,35 @@ export class ClientesComponent implements OnInit {
     }
     const termino = this.terminoBusqueda.toLowerCase();
     return this.clientes.filter(c => 
-      (c.nombreApellido?.toLowerCase().includes(termino)) ||
+      (c.nombre?.toLowerCase().includes(termino)) ||
+      (c.apellido?.toLowerCase().includes(termino)) ||
       (c.razonSocial?.toLowerCase().includes(termino)) ||
       (c.email?.toLowerCase().includes(termino)) ||
-      (c.cuit?.toLowerCase().includes(termino))
+      (c.cuitCuil?.toLowerCase().includes(termino)) ||
+      (c.numeroDocumento?.toLowerCase().includes(termino))
     );
+  }
+
+  /**
+   * Obtener nombre completo del cliente
+   */
+  obtenerNombreCompleto(cliente: Cliente): string {
+    if (cliente.tipoCliente === 'Persona Física') {
+      return `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim();
+    } else {
+      return cliente.razonSocial || 'Sin nombre';
+    }
+  }
+
+  /**
+   * Obtener identificación del cliente (DNI/CUIT)
+   */
+  obtenerIdentificacion(cliente: Cliente): string {
+    if (cliente.tipoCliente === 'Persona Física') {
+      return cliente.numeroDocumento || '-';
+    } else {
+      return cliente.cuitCuil || '-';
+    }
   }
 
   abrirFormularioNuevo(): void {
@@ -130,19 +134,20 @@ export class ClientesComponent implements OnInit {
   async eliminarCliente(cliente: Cliente, event: Event): Promise<void> {
     event.stopPropagation();
     
-    if (!cliente.id) {
+    if (!cliente.idCliente) {
       this.alertas.error('Error', 'Cliente sin ID válido');
       return;
     }
 
+    const nombreCliente = this.obtenerNombreCompleto(cliente);
     const confirmado = await this.alertas.confirmar(
       '¿Eliminar cliente?',
-      `Se eliminará a ${cliente.nombreApellido || 'este cliente'}. Esta acción no se puede deshacer.`,
+      `Se eliminará a ${nombreCliente}. Esta acción no se puede deshacer.`,
       'Sí, eliminar'
     );
 
     if (confirmado) {
-      this.clientesService.eliminarCliente(cliente.id).subscribe({
+      this.clientesService.eliminarCliente(cliente.idCliente).subscribe({
         next: () => {
           this.alertas.success('Cliente eliminado', 'El cliente se eliminó correctamente');
           this.cargarClientes();
@@ -173,10 +178,8 @@ export class ClientesComponent implements OnInit {
    */
   getTipoClass(tipo: string): string {
     const tipos: { [key: string]: string } = {
-      'Regular': 'tipo-regular',
-      'Premium': 'tipo-premium',
-      'Corporativo': 'tipo-corporativo',
-      'Gobierno': 'tipo-gobierno'
+      'Persona Física': 'tipo-fisica',
+      'Persona Jurídica': 'tipo-juridica'
     };
     return tipos[tipo] || 'tipo-default';
   }
@@ -188,7 +191,7 @@ export class ClientesComponent implements OnInit {
     const estados: { [key: number]: string } = {
       1: 'badge-activo',
       2: 'badge-inactivo',
-      3: 'badge-pendiente'
+      3: 'badge-suspendido'
     };
     return estados[estadoId || 1] || 'badge-default';
   }
@@ -203,5 +206,12 @@ export class ClientesComponent implements OnInit {
       3: 'Suspendido'
     };
     return estados[estadoId || 1] || 'Desconocido';
+  }
+
+  /**
+   * Obtener icono según tipo de cliente
+   */
+  getTipoIcon(tipo: string): string {
+    return tipo === 'Persona Física' ? '' : '';
   }
 }

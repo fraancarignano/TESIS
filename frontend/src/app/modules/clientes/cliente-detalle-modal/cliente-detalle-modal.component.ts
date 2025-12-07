@@ -26,30 +26,20 @@ import { Cliente } from '../models/cliente.model';
         </div>
 
         <div class="modal-body">
-          <!-- Información Principal -->
+          <!-- Tipo de Cliente -->
           <div class="seccion">
             <div class="seccion-titulo">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
-              <span>Información Principal</span>
+              <span>Tipo de Cliente</span>
             </div>
             <div class="campos-grid">
               <div class="campo">
-                <label>Nombre / Apellido</label>
-                <div class="valor">{{ cliente?.nombreApellido }}</div>
-              </div>
-              <div class="campo">
-                <label>Teléfono</label>
-                <div class="valor">{{ cliente?.telefono }}</div>
-              </div>
-              <div class="campo">
-                <label>Email</label>
-                <div class="valor">{{ cliente?.email }}</div>
-              </div>
-              <div class="campo">
-                <label>Tipo de Cliente</label>
+                <label>Tipo</label>
                 <div class="valor">
                   <span class="badge" [ngClass]="getTipoClienteClass()">
                     {{ cliente?.tipoCliente }}
@@ -59,8 +49,37 @@ import { Cliente } from '../models/cliente.model';
             </div>
           </div>
 
-          <!-- Información Fiscal -->
-          <div class="seccion">
+          <!-- Información Personal (si es Persona Física) -->
+          <div class="seccion" *ngIf="esPersonaFisica()">
+            <div class="seccion-titulo">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>Información Personal</span>
+            </div>
+            <div class="campos-grid">
+              <div class="campo">
+                <label>Nombre</label>
+                <div class="valor">{{ cliente?.nombre || '-' }}</div>
+              </div>
+              <div class="campo">
+                <label>Apellido</label>
+                <div class="valor">{{ cliente?.apellido || '-' }}</div>
+              </div>
+              <div class="campo">
+                <label>Tipo de Documento</label>
+                <div class="valor">{{ cliente?.tipoDocumento || '-' }}</div>
+              </div>
+              <div class="campo">
+                <label>Número de Documento</label>
+                <div class="valor">{{ cliente?.numeroDocumento || '-' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información Fiscal (si es Persona Jurídica) -->
+          <div class="seccion" *ngIf="esPersonaJuridica()">
             <div class="seccion-titulo">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
@@ -74,9 +93,63 @@ import { Cliente } from '../models/cliente.model';
                 <div class="valor">{{ cliente?.razonSocial || '-' }}</div>
               </div>
               <div class="campo">
-                <label>CUIT</label>
-                <div class="valor">{{ cliente?.cuit }}</div>
+                <label>CUIT / CUIL</label>
+                <div class="valor">{{ cliente?.cuitCuil || '-' }}</div>
               </div>
+            </div>
+          </div>
+
+          <!-- Información de Contacto -->
+          <div class="seccion">
+            <div class="seccion-titulo">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              <span>Información de Contacto</span>
+            </div>
+            <div class="campos-grid">
+              <div class="campo">
+                <label>Teléfono</label>
+                <div class="valor">{{ cliente?.telefono || '-' }}</div>
+              </div>
+              <div class="campo">
+                <label>Email</label>
+                <div class="valor">{{ cliente?.email || '-' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ubicación -->
+          <div class="seccion" *ngIf="cliente?.direccion || cliente?.codigoPostal">
+            <div class="seccion-titulo">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span>Ubicación</span>
+            </div>
+            <div class="campos-grid">
+              <div class="campo" *ngIf="cliente?.direccion">
+                <label>Dirección</label>
+                <div class="valor">{{ cliente?.direccion }}</div>
+              </div>
+              <div class="campo" *ngIf="cliente?.codigoPostal">
+                <label>Código Postal</label>
+                <div class="valor">{{ cliente?.codigoPostal }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estado y Fecha -->
+          <div class="seccion">
+            <div class="seccion-titulo">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+              </svg>
+              <span>Estado y Registro</span>
+            </div>
+            <div class="campos-grid">
               <div class="campo">
                 <label>Estado</label>
                 <div class="valor">
@@ -280,24 +353,14 @@ import { Cliente } from '../models/cliente.model';
     }
 
     /* Tipos de cliente */
-    .badge.regular {
+    .badge.tipo-fisica {
       background: #e3f2fd;
       color: #1565c0;
     }
 
-    .badge.premium {
+    .badge.tipo-juridica {
       background: #f3e5f5;
       color: #7b1fa2;
-    }
-
-    .badge.corporativo {
-      background: #e8eaf6;
-      color: #3949ab;
-    }
-
-    .badge.gobierno {
-      background: #e0f2f1;
-      color: #00695c;
     }
 
     /* Estados */
@@ -311,7 +374,7 @@ import { Cliente } from '../models/cliente.model';
       color: #c62828;
     }
 
-    .badge.badge-pendiente {
+    .badge.badge-suspendido {
       background: #fff3e0;
       color: #ef6c00;
     }
@@ -380,37 +443,63 @@ export class ClienteDetalleModalComponent {
   @Input() cliente!: Cliente;
   @Output() cerrar = new EventEmitter<void>();
 
+  /**
+   * Verificar si es Persona Física
+   */
+  esPersonaFisica(): boolean {
+    return this.cliente?.tipoCliente === 'Persona Física';
+  }
+
+  /**
+   * Verificar si es Persona Jurídica
+   */
+  esPersonaJuridica(): boolean {
+    return this.cliente?.tipoCliente === 'Persona Jurídica';
+  }
+
+  /**
+   * Obtener clase CSS según tipo de cliente
+   */
   getTipoClienteClass(): string {
     if (!this.cliente || !this.cliente.tipoCliente) {
       return '';
     }
 
-    const tipo = this.cliente.tipoCliente.toLowerCase();
-    if (tipo.includes('regular')) return 'regular';
-    if (tipo.includes('premium')) return 'premium';
-    if (tipo.includes('corporativo')) return 'corporativo';
-    if (tipo.includes('gobierno')) return 'gobierno';
-    return '';
+    const tipos: { [key: string]: string } = {
+      'Persona Física': 'tipo-fisica',
+      'Persona Jurídica': 'tipo-juridica'
+    };
+
+    return tipos[this.cliente.tipoCliente] || '';
   }
 
+  /**
+   * Obtener clase CSS según estado
+   */
   getEstadoClass(): string {
     const estados: { [key: number]: string } = {
       1: 'badge-activo',
       2: 'badge-inactivo',
-      3: 'badge-pendiente'
+      3: 'badge-suspendido'
     };
     return estados[this.cliente?.idEstadoCliente || 1] || '';
   }
 
+  /**
+   * Obtener texto del estado
+   */
   getEstadoTexto(): string {
     const estados: { [key: number]: string } = {
       1: 'Activo',
       2: 'Inactivo',
-      3: 'Pendiente'
+      3: 'Suspendido'
     };
     return estados[this.cliente?.idEstadoCliente || 1] || 'Desconocido';
   }
 
+  /**
+   * Formatear fecha
+   */
   formatearFecha(fecha: Date | string | undefined): string {
     if (!fecha) return '-';
     const date = new Date(fecha);

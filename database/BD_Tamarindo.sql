@@ -1,11 +1,3 @@
--- =========================================
--- CREAR BASE DE DATOS
--- =========================================
-CREATE DATABASE TamarindoDB;
-GO
-
-USE TamarindoDB;
-GO
 
 -- =========================================
 -- TABLAS MAESTRAS
@@ -20,16 +12,9 @@ GO
 CREATE TABLE Provincia (
     id_Provincia INT IDENTITY(1,1) PRIMARY KEY,
     nombre_Provincia VARCHAR(50) NOT NULL,
+    localidad VARCHAR(50) NULL,
     id_Pais INT NOT NULL,
     FOREIGN KEY (id_Pais) REFERENCES Pais(id_Pais)
-);
-GO
-
-CREATE TABLE Localidad (
-    id_Localidad INT IDENTITY PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    id_Provincia INT NOT NULL,
-    FOREIGN KEY (id_Provincia) REFERENCES Provincia(id_Provincia)
 );
 GO
 
@@ -37,9 +22,7 @@ CREATE TABLE Ciudad (
     id_Ciudad INT IDENTITY(1,1) PRIMARY KEY,
     nombre_Ciudad VARCHAR(50) NOT NULL,
     id_Provincia INT NOT NULL,
-    id_Localidad INT NOT NULL,
-    FOREIGN KEY (id_Provincia) REFERENCES Provincia(id_Provincia),
-    FOREIGN KEY (id_Localidad) REFERENCES Localidad(id_Localidad)
+    FOREIGN KEY (id_Provincia) REFERENCES Provincia(id_Provincia)
 );
 GO
 
@@ -49,11 +32,9 @@ CREATE TABLE Direccion (
     numero VARCHAR(10),
     codigo_Postal VARCHAR(10),
     id_Ciudad INT NOT NULL,
-    id_Localidad INT NOT NULL,
     id_Provincia INT NOT NULL,
     id_Pais INT NOT NULL,
     FOREIGN KEY (id_Ciudad) REFERENCES Ciudad(id_Ciudad),
-    FOREIGN KEY (id_Localidad) REFERENCES Localidad(id_Localidad),
     FOREIGN KEY (id_Provincia) REFERENCES Provincia(id_Provincia),
     FOREIGN KEY (id_Pais) REFERENCES Pais(id_Pais)
 );
@@ -67,8 +48,8 @@ GO
 
 CREATE TABLE Cliente (
     id_Cliente INT IDENTITY(1,1) PRIMARY KEY,
-    nombre VARCHAR(50),
-    apellido VARCHAR(50),
+    nombre VARCHAR(80),
+    apellido VARCHAR(80),
     razon_social VARCHAR(80),
     tipo_Cliente VARCHAR(20) NOT NULL,
     cuit VARCHAR(15),
@@ -295,6 +276,3 @@ CREATE TABLE Historial_Usuario (
     FOREIGN KEY (id_Usuario) REFERENCES Usuario(id_Usuario)
 );
 GO
-
-
-

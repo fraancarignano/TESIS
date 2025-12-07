@@ -1,73 +1,65 @@
-/**
- * Interface del modelo Cliente (para mostrar datos)
- * Corresponde a la tabla de clientes en la base de datos
- */
 export interface Cliente {
-  id?: number;
-  nombreApellido: string;
+  idCliente: number;
+  // Campos según tipo (Física o Jurídica - NO se almacena)
+  nombre?: string;  // Obligatorio si es Persona Física
+  apellido?: string; // Obligatorio si es Persona Física
+  razonSocial?: string; // Obligatorio si es Persona Jurídica
+  
+  // Tipo de documento
+  tipoDocumento?: string; // 'DNI' o 'CUIT/CUIL'
+  numeroDocumento?: string; // Obligatorio
+  
+  // Campos obligatorios
+  tipoCliente: string; // Mayorista, Minorista, Otro
   telefono: string;
   email: string;
-  razonSocial?: string;
-  cuit: string;
-  tipoCliente: string;
-  idEstadoCliente?: number;
-  estadoCliente?: {
-    id: number;
-    nombre: string;
-  };
-  fechaAlta: string | Date;
+  idEstadoCliente: number; // Activo, Inactivo, Suspendido, En revisión
+  idCiudad: number;
+  idProvincia: number;
+  
+  // Campos opcionales
+  direccion?: string;
+  codigoPostal?: string;
   observaciones?: string;
-  idDireccion?: number;
+  
+  // Otros
+  fechaAlta: string;
+  cuitCuil?: string; // DEPRECATED - usar numeroDocumento
 }
 
-/**
- * Tipos de cliente disponibles
- */
-export enum TipoCliente {
-  REGULAR = 'Regular',
-  PREMIUM = 'Premium',
-  CORPORATIVO = 'Corporativo',
-  GOBIERNO = 'Gobierno'
-}
-
-/**
- * Estados de cliente disponibles
- */
-export enum EstadoCliente {
-  ACTIVO = 1,
-  INACTIVO = 2,
-  SUSPENDIDO = 3
-}
-
-/**
- * DTO para crear un nuevo cliente
- * ⭐ Usa PascalCase para coincidir con el backend C#
- */
 export interface NuevoCliente {
-  NombreApellido: string;
-  Telefono: string;
-  Email: string;
-  RazonSocial?: string;
-  Cuit: string;
-  TipoCliente: string;
-  IdEstadoCliente: number;
-  Observaciones?: string;
-  IdDireccion?: number;
+  nombre?: string;
+  apellido?: string;
+  razonSocial?: string;
+  tipoDocumento: string;
+  numeroDocumento: string;
+  tipoCliente: string;
+  telefono: string;
+  email: string;
+  idEstadoCliente: number;
+  idCiudad: number;
+  idProvincia: number;
+  direccion?: string;
+  codigoPostal?: string;
+  observaciones?: string;
 }
 
-/**
- * DTO para actualizar un cliente existente
- * ⭐ Usa PascalCase para coincidir con el backend C#
- */
-export interface ActualizarCliente {
-  id: number;  // ← id en minúscula para la URL
-  NombreApellido: string;
-  Telefono: string;
-  Email: string;
-  RazonSocial?: string;
-  Cuit: string;
-  TipoCliente: string;
-  IdEstadoCliente: number;
-  Observaciones?: string;
-  IdDireccion?: number;
+export interface ActualizarCliente extends NuevoCliente {
+  idCliente: number;
+}
+
+export interface Provincia {
+  idProvincia: number;
+  nombre: string;
+}
+
+export interface Ciudad {
+  idCiudad: number;
+  nombre: string;
+  idProvincia: number;
+}
+
+export interface EstadoCliente {
+  idEstadoCliente: number;
+  nombre: string;
 }

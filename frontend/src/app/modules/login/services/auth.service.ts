@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:7163/api/Login/login'; // Ajustá el puerto según tu backend
+  private apiUrl = 'https://localhost:7163/api/Login/login'; // Ajustá el puerto según tu backend
 
   constructor(
     private http: HttpClient,

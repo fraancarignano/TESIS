@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ClientesService } from '../../services/clientes.service';
-import { Cliente } from '../../models/cliente.model';
+import { Cliente, Provincia, Ciudad, EstadoCliente } from '../../models/cliente.model';
 import { AlertasService } from '../../../../core/services/alertas';
 
 @Component({
@@ -18,39 +18,212 @@ export class ClienteFormComponent implements OnInit {
 
   formulario: FormGroup;
   esEdicion = false;
+  
+  // Datos para los selects
+  provincias: Provincia[] = [];
+  ciudades: Ciudad[] = [];
+  estadosCliente: EstadoCliente[] = [];
+  tiposCliente = ['Persona Física', 'Persona Jurídica'];
+  tiposDocumento = ['DNI', 'CUIT', 'CUIL', 'Pasaporte'];
 
   constructor(
     private fb: FormBuilder,
     private clientesService: ClientesService,
     private alertas: AlertasService
   ) {
-    // Formulario con los campos exactos del HTML
     this.formulario = this.fb.group({
-      nombreApellido: ['', [Validators.required, Validators.minLength(2)]],
+      // Tipo de cliente (determina qué campos mostrar)
+      tipoCliente: ['Persona Física', [Validators.required]],
+      
+      // Campos para Persona Física
+      nombre: [''],
+      apellido: [''],
+      tipoDocumento: ['DNI'],
+      numeroDocumento: [''],
+      
+      // Campos para Persona Jurídica
+      razonSocial: [''],
+      cuitCuil: [''],
+      
+      // Campos comunes
       telefono: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
-      razonSocial: [''],
-      cuit: ['', [Validators.required, Validators.pattern(/^\d{2}-\d{8}-\d$/)]],
-      tipoCliente: ['', [Validators.required]],
-      idEstadoCliente: [1, [Validators.required]], // Estado del cliente
-      observaciones: ['']
+      idEstadoCliente: [1, [Validators.required]],
+      observaciones: [''],
+      
+      // Ubicación
+      idProvincia: [null],
+      idCiudad: [null],
+      direccion: [''],
+      codigoPostal: ['']
     });
   }
 
   ngOnInit(): void {
+    this.cargarDatosIniciales();
+    this.configurarValidacionesDinamicas();
+    this.configurarCascadaProvinciaCiudad();
+    
     if (this.cliente) {
       this.esEdicion = true;
-      this.formulario.patchValue({
-        nombreApellido: this.cliente.nombreApellido,
-        telefono: this.cliente.telefono,
-        email: this.cliente.email,
-        razonSocial: this.cliente.razonSocial,
-        cuit: this.cliente.cuit,
-        tipoCliente: this.cliente.tipoCliente,
-        idEstadoCliente: this.cliente.idEstadoCliente || 1,
-        observaciones: this.cliente.observaciones
+      this.cargarDatosCliente();
+    }
+  }
+
+  /**
+   * Cargar datos iniciales (provincias y estados)
+   */
+  cargarDatosIniciales(): void {
+    // Cargar provincias
+    this.clientesService.obtenerProvincias().subscribe({
+      next: (data) => {
+        this.provincias = data;
+      },
+      error: (err) => {
+        console.error('Error al cargar provincias:', err);
+      }
+    });
+
+    // Cargar estados de cliente
+    this.clientesService.obtenerEstadosCliente().subscribe({
+      next: (data) => {
+        this.estadosCliente = data;
+      },
+      error: (err) => {
+        console.error('Error al cargar estados:', err);
+      }
+    });
+  }
+
+  /**
+   * Configurar cascada Provincia -> Ciudad
+   */
+  configurarCascadaProvinciaCiudad(): void {
+    this.formulario.get('idProvincia')?.valueChanges.subscribe(idProvincia => {
+      if (idProvincia) {
+        this.clientesService.obtenerCiudadesPorProvincia(idProvincia).subscribe({
+          next: (data) => {
+            this.ciudades = data;
+          },
+          error: (err) => {
+            console.error('Error al cargar ciudades:', err);
+            this.ciudades = [];
+          }
+        });
+      } else {
+        this.ciudades = [];
+        this.formulario.patchValue({ idCiudad: null });
+      }
+    });
+  }
+
+  /**
+   * Configurar validaciones dinámicas según tipo de cliente
+   */
+  configurarValidacionesDinamicas(): void {
+    this.formulario.get('tipoCliente')?.valueChanges.subscribe(tipo => {
+      this.limpiarValidaciones();
+      
+      if (tipo === 'Persona Física') {
+        // Validaciones para Persona Física
+        this.formulario.get('nombre')?.setValidators([Validators.required, Validators.minLength(2)]);
+        this.formulario.get('apellido')?.setValidators([Validators.required, Validators.minLength(2)]);
+        this.formulario.get('tipoDocumento')?.setValidators([Validators.required]);
+        this.formulario.get('numeroDocumento')?.setValidators([Validators.required]);
+        
+        // Limpiar campos de Persona Jurídica
+        this.formulario.patchValue({ 
+          razonSocial: '',
+          cuitCuil: ''
+        });
+      } else if (tipo === 'Persona Jurídica') {
+        // Validaciones para Persona Jurídica
+        this.formulario.get('razonSocial')?.setValidators([Validators.required, Validators.minLength(3)]);
+        this.formulario.get('cuitCuil')?.setValidators([Validators.required, Validators.pattern(/^\d{2}-\d{8}-\d$/)]);
+        
+        // Limpiar campos de Persona Física
+        this.formulario.patchValue({ 
+          nombre: '',
+          apellido: '',
+          tipoDocumento: '',
+          numeroDocumento: ''
+        });
+      }
+      
+      this.actualizarValidaciones();
+    });
+  }
+
+  /**
+   * Limpiar todas las validaciones de campos opcionales
+   */
+  limpiarValidaciones(): void {
+    this.formulario.get('nombre')?.clearValidators();
+    this.formulario.get('apellido')?.clearValidators();
+    this.formulario.get('tipoDocumento')?.clearValidators();
+    this.formulario.get('numeroDocumento')?.clearValidators();
+    this.formulario.get('razonSocial')?.clearValidators();
+    this.formulario.get('cuitCuil')?.clearValidators();
+  }
+
+  /**
+   * Actualizar validaciones de todos los campos
+   */
+  actualizarValidaciones(): void {
+    this.formulario.get('nombre')?.updateValueAndValidity();
+    this.formulario.get('apellido')?.updateValueAndValidity();
+    this.formulario.get('tipoDocumento')?.updateValueAndValidity();
+    this.formulario.get('numeroDocumento')?.updateValueAndValidity();
+    this.formulario.get('razonSocial')?.updateValueAndValidity();
+    this.formulario.get('cuitCuil')?.updateValueAndValidity();
+  }
+
+  /**
+   * Cargar datos del cliente en edición
+   */
+  cargarDatosCliente(): void {
+    if (!this.cliente) return;
+    
+    this.formulario.patchValue({
+      tipoCliente: this.cliente.tipoCliente,
+      nombre: this.cliente.nombre || '',
+      apellido: this.cliente.apellido || '',
+      tipoDocumento: this.cliente.tipoDocumento || 'DNI',
+      numeroDocumento: this.cliente.numeroDocumento || '',
+      razonSocial: this.cliente.razonSocial || '',
+      cuitCuil: this.cliente.cuitCuil || '',
+      telefono: this.cliente.telefono || '',
+      email: this.cliente.email || '',
+      idEstadoCliente: this.cliente.idEstadoCliente,
+      observaciones: this.cliente.observaciones || '',
+      idProvincia: this.cliente.idProvincia || null,
+      idCiudad: this.cliente.idCiudad || null,
+      direccion: this.cliente.direccion || '',
+      codigoPostal: this.cliente.codigoPostal || ''
+    });
+
+    // Si tiene provincia, cargar las ciudades
+    if (this.cliente.idProvincia) {
+      this.clientesService.obtenerCiudadesPorProvincia(this.cliente.idProvincia).subscribe({
+        next: (data) => {
+          this.ciudades = data;
+        }
       });
     }
+  }
+
+  /**
+   * Verificar si es Persona Física
+   */
+  esPersonaFisica(): boolean {
+    return this.formulario.get('tipoCliente')?.value === 'Persona Física';
+  }
+
+  /**
+   * Verificar si es Persona Jurídica
+   */
+  esPersonaJuridica(): boolean {
+    return this.formulario.get('tipoCliente')?.value === 'Persona Jurídica';
   }
 
   /**
@@ -58,12 +231,12 @@ export class ClienteFormComponent implements OnInit {
    */
   guardar(): void {
     if (this.formulario.valid) {
-      const clienteData = this.formulario.value;
+      const clienteData = this.prepararDatosCliente();
       
-      if (this.esEdicion && this.cliente?.id) {
+      if (this.esEdicion && this.cliente?.idCliente) {
         // Actualizar cliente existente
         this.clientesService.actualizarCliente({ 
-          id: this.cliente.id,
+          idCliente: this.cliente.idCliente,
           ...clienteData
         }).subscribe({
           next: () => {
@@ -89,10 +262,46 @@ export class ClienteFormComponent implements OnInit {
         });
       }
     } else {
-      // Formulario inválido
       this.marcarCamposComoTocados();
       this.alertas.warning('Formulario incompleto', 'Por favor completa todos los campos requeridos');
     }
+  }
+
+  /**
+   * Preparar datos del cliente según el tipo
+   */
+  prepararDatosCliente(): any {
+    const formValue = this.formulario.value;
+    
+    const cliente: any = {
+      tipoCliente: formValue.tipoCliente,
+      telefono: formValue.telefono || null,
+      email: formValue.email || null,
+      idEstadoCliente: formValue.idEstadoCliente,
+      observaciones: formValue.observaciones || null,
+      idProvincia: formValue.idProvincia || null,
+      idCiudad: formValue.idCiudad || null,
+      direccion: formValue.direccion || null,
+      codigoPostal: formValue.codigoPostal || null
+    };
+
+    if (this.esPersonaFisica()) {
+      cliente.nombre = formValue.nombre;
+      cliente.apellido = formValue.apellido;
+      cliente.tipoDocumento = formValue.tipoDocumento;
+      cliente.numeroDocumento = formValue.numeroDocumento;
+      cliente.razonSocial = null;
+      cliente.cuitCuil = null;
+    } else {
+      cliente.razonSocial = formValue.razonSocial;
+      cliente.cuitCuil = formValue.cuitCuil;
+      cliente.nombre = null;
+      cliente.apellido = null;
+      cliente.tipoDocumento = null;
+      cliente.numeroDocumento = null;
+    }
+
+    return cliente;
   }
 
   /**

@@ -1,14 +1,17 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators'; // ← Agregar este import
-import { Cliente, NuevoCliente, ActualizarCliente } from '../models/cliente.model'; // ← Agregar ActualizarCliente
+import { catchError, tap } from 'rxjs/operators';
+import { Cliente, NuevoCliente, ActualizarCliente, Provincia, Ciudad, EstadoCliente } from '../models/cliente.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClientesService {
   private apiUrl = 'https://localhost:7163/api/Cliente';
+  private provinciaUrl = 'https://localhost:7163/api/Provincia'; // Ajusta según tu API
+  private ciudadUrl = 'https://localhost:7163/api/Ciudad'; // Ajusta según tu API
+  private estadoClienteUrl = 'https://localhost:7163/api/EstadoCliente'; // Ajusta según tu API
 
   constructor(private http: HttpClient) {}
 
@@ -36,7 +39,7 @@ export class ClientesService {
    * Crear nuevo Cliente
    */
   agregarCliente(cliente: NuevoCliente): Observable<Cliente> {
-    return this.http.post<Cliente>(this.apiUrl, cliente).pipe( // ← Cambiar PUT a POST
+    return this.http.post<Cliente>(this.apiUrl, cliente).pipe(
       tap(data => console.log('Cliente creado:', data)),
       catchError(this.handleError)
     );
@@ -46,8 +49,8 @@ export class ClientesService {
    * Actualizar cliente existente
    */
   actualizarCliente(cliente: ActualizarCliente): Observable<Cliente> {
-    const { id, ...datos } = cliente;
-    return this.http.put<Cliente>(`${this.apiUrl}/${id}`, datos).pipe(
+    const { idCliente, ...datos } = cliente;
+    return this.http.put<Cliente>(`${this.apiUrl}/${idCliente}`, datos).pipe(
       tap(data => console.log('Cliente actualizado:', data)),
       catchError(this.handleError)
     );
@@ -64,19 +67,46 @@ export class ClientesService {
   }
 
   /**
+   * Obtener todas las provincias
+   */
+  obtenerProvincias(): Observable<Provincia[]> {
+    return this.http.get<Provincia[]>(this.provinciaUrl).pipe(
+      tap(data => console.log('Provincias obtenidas:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Obtener ciudades por provincia
+   */
+  obtenerCiudadesPorProvincia(idProvincia: number): Observable<Ciudad[]> {
+    return this.http.get<Ciudad[]>(`${this.ciudadUrl}/provincia/${idProvincia}`).pipe(
+      tap(data => console.log('Ciudades obtenidas:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Obtener todos los estados de cliente
+   */
+  obtenerEstadosCliente(): Observable<EstadoCliente[]> {
+    return this.http.get<EstadoCliente[]>(this.estadoClienteUrl).pipe(
+      tap(data => console.log('Estados obtenidos:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
    * Manejo de errores HTTP
    */
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Ocurrió un error desconocido';
     
     if (error.error instanceof ErrorEvent) {
-      // Error del lado del cliente
       errorMessage = `Error: ${error.error.message}`;
     } else {
-      // Error del lado del servidor
       errorMessage = `Código: ${error.status}\nMensaje: ${error.message}`;
       
-      // Mensajes específicos según el código de error
       switch (error.status) {
         case 404:
           errorMessage = 'Recurso no encontrado';
@@ -85,7 +115,7 @@ export class ClientesService {
           errorMessage = 'Error interno del servidor';
           break;
         case 0:
-          errorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo en http://localhost:7163';
+          errorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo en https://localhost:7163';
           break;
       }
     }
