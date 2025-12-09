@@ -12,8 +12,6 @@ import { filter } from 'rxjs/operators';
 })
 export class AppComponent {
   title = 'tamarindo';
-  mostrarSidebar = true;
-
   constructor(private router: Router) {
     // Escuchar cambios de ruta
     this.router.events.pipe(
@@ -23,4 +21,6 @@ export class AppComponent {
       this.mostrarSidebar = !event.url.includes('/login');
     });
   }
+  mostrarSidebar = true;
+  
 }

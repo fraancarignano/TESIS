@@ -216,7 +216,7 @@ export class ClienteFormComponent implements OnInit {
   });
 
   // Si tiene provincia, cargar las ciudades
-  if (this.cliente.idProvincia) {
+  if (this.cliente.nombreProvincia) {
     this.clientesService.obtenerCiudadesPorProvincia(this.cliente.idProvincia).subscribe({
       next: (data) => {
         this.ciudades = data;

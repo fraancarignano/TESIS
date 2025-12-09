@@ -3,7 +3,6 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Cliente, NuevoCliente, ActualizarCliente, Provincia, Ciudad, EstadoCliente } from '../models/cliente.model';
-
 @Injectable({
   providedIn: 'root'
 })

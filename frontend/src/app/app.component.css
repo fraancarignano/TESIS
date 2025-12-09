@@ -75,7 +75,7 @@
   }
 
   &.active {
-    background-color: rgba(255, 87, 34, 0.15);
+    background-color: rgba(248, 248, 248, 0.15);
     color: #ff5722;
     border-left: 3px solid #ff5722;
   }

@@ -1,6 +1,10 @@
 export interface Cliente {
   idCliente: number;
-  // Campos según tipo (Física o Jurídica - NO se almacena)
+  
+  // Campo calculado por el backend
+  nombreCompleto?: string;
+  
+  // Campos según tipo (Física o Jurídica)
   nombre?: string;  // Obligatorio si es Persona Física
   apellido?: string; // Obligatorio si es Persona Física
   razonSocial?: string; // Obligatorio si es Persona Jurídica
@@ -14,8 +18,17 @@ export interface Cliente {
   telefono: string;
   email: string;
   idEstadoCliente: number; // Activo, Inactivo, Suspendido, En revisión
+  
+  // Ubicación (IDs)
   idCiudad: number;
   idProvincia: number;
+  
+  // Ubicación (Nombres - enviados por el backend)
+  nombreCiudad?: string;
+  nombreProvincia?: string;
+  
+  // Estado (Nombre - enviado por el backend)
+  nombreEstado?: string; // "Activo", "Inactivo", etc.
   
   // Campos opcionales
   direccion?: string;
@@ -31,17 +44,18 @@ export interface NuevoCliente {
   nombre?: string;
   apellido?: string;
   razonSocial?: string;
-  tipoDocumento: string;
-  numeroDocumento: string;
+  tipoDocumento?: string;
+  numeroDocumento?: string;
   tipoCliente: string;
   telefono: string;
   email: string;
   idEstadoCliente: number;
-  idCiudad: number;
-  idProvincia: number;
+  idCiudad?: number;
+  idProvincia?: number;
   direccion?: string;
   codigoPostal?: string;
   observaciones?: string;
+  cuitCuil?: string;
 }
 
 export interface ActualizarCliente extends NuevoCliente {

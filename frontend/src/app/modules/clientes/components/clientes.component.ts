@@ -5,6 +5,7 @@ import { ClientesService } from '../services/clientes.service';
 import { Cliente } from '../models/cliente.model';
 import { ClienteFormComponent } from './cliente-form/cliente-form.component';
 import { ClienteDetalleModalComponent } from '../cliente-detalle-modal/cliente-detalle-modal.component';
+import { ClienteFiltrosComponent, FiltrosCliente } from './cliente-filtros/cliente-filtros.component';
 import { AlertasService } from '../../../core/services/alertas';
 
 @Component({
@@ -14,7 +15,8 @@ import { AlertasService } from '../../../core/services/alertas';
     CommonModule, 
     FormsModule, 
     ClienteFormComponent,
-    ClienteDetalleModalComponent
+    ClienteDetalleModalComponent,
+    ClienteFiltrosComponent
   ],
   templateUrl: './clientes.component.html',
   styleUrls: ['./clientes.component.css']
@@ -28,6 +30,9 @@ export class ClientesComponent implements OnInit {
   terminoBusqueda = '';
   loading = false;
   error = false;
+
+  // Filtros aplicados
+  filtrosActuales: FiltrosCliente | null = null;
 
   constructor(
     private alertas: AlertasService,
@@ -50,6 +55,16 @@ export class ClientesComponent implements OnInit {
         this.clientes = data;
         this.loading = false;
         console.log('Clientes cargados:', this.clientes);
+        
+        // 🔍 DEBUG: Ver estructura de ubicación
+        if (this.clientes.length > 0) {
+          console.log('Primer cliente (ubicación):', {
+            idCiudad: this.clientes[0].nombreCiudad,
+            idProvincia: this.clientes[0].nombreProvincia,
+            tipoIdCiudad: typeof this.clientes[0].nombreCiudad,
+            tipoIdProvincia: typeof this.clientes[0].nombreProvincia
+          });
+        }
       },
       error: (err) => {
         console.error('Error al cargar clientes:', err);
@@ -61,43 +76,123 @@ export class ClientesComponent implements OnInit {
   }
 
   /**
-   * Filtrar clientes por término de búsqueda
+   * Filtrar clientes por término de búsqueda y filtros avanzados
    */
   get clientesFiltrados(): Cliente[] {
-    if (!this.terminoBusqueda) {
-      return this.clientes;
+    let resultado = [...this.clientes];
+
+    // 1. Aplicar búsqueda por texto
+    if (this.terminoBusqueda) {
+      const termino = this.terminoBusqueda.toLowerCase();
+      resultado = resultado.filter(c => 
+        (c.nombre?.toLowerCase().includes(termino)) ||
+        (c.apellido?.toLowerCase().includes(termino)) ||
+        (c.razonSocial?.toLowerCase().includes(termino)) ||
+        (c.email?.toLowerCase().includes(termino)) ||
+        (c.numeroDocumento?.toLowerCase().includes(termino)) ||
+        (c.cuitCuil?.toLowerCase().includes(termino)) ||
+        (c.telefono?.toLowerCase().includes(termino))
+      );
     }
-    const termino = this.terminoBusqueda.toLowerCase();
-    return this.clientes.filter(c => 
-      (c.nombre?.toLowerCase().includes(termino)) ||
-      (c.apellido?.toLowerCase().includes(termino)) ||
-      (c.razonSocial?.toLowerCase().includes(termino)) ||
-      (c.email?.toLowerCase().includes(termino)) ||
-      (c.cuitCuil?.toLowerCase().includes(termino)) ||
-      (c.numeroDocumento?.toLowerCase().includes(termino))
-    );
+
+    // 2. Aplicar filtros avanzados
+    if (this.filtrosActuales) {
+      // Filtrar por estados
+      if (this.filtrosActuales.estados && this.filtrosActuales.estados.length > 0) {
+        resultado = resultado.filter(c => 
+          this.filtrosActuales!.estados.includes(c.idEstadoCliente)
+        );
+      }
+
+      // Filtrar por tipos de cliente
+      if (this.filtrosActuales.tiposCliente && this.filtrosActuales.tiposCliente.length > 0) {
+        resultado = resultado.filter(c => 
+          this.filtrosActuales!.tiposCliente.includes(c.tipoCliente)
+        );
+      }
+
+      // Filtrar por provincia
+      if (this.filtrosActuales.idProvincia) {
+        resultado = resultado.filter(c => c.nombreProvincia === this.filtrosActuales!.idProvincia);
+      }
+
+      // Filtrar por ciudad
+      if (this.filtrosActuales.idCiudad) {
+        resultado = resultado.filter(c => c.nombreEstado === this.filtrosActuales!.idCiudad);
+      }
+
+      // Filtrar por rango de fechas
+      if (this.filtrosActuales.fechaDesde) {
+        const fechaDesde = new Date(this.filtrosActuales.fechaDesde);
+        fechaDesde.setHours(0, 0, 0, 0); // Inicio del día
+        resultado = resultado.filter(c => {
+          const fechaAlta = new Date(c.fechaAlta);
+          return fechaAlta >= fechaDesde;
+        });
+      }
+
+      if (this.filtrosActuales.fechaHasta) {
+        const fechaHasta = new Date(this.filtrosActuales.fechaHasta);
+        fechaHasta.setHours(23, 59, 59, 999); // Fin del día
+        resultado = resultado.filter(c => {
+          const fechaAlta = new Date(c.fechaAlta);
+          return fechaAlta <= fechaHasta;
+        });
+      }
+
+      // Filtrar por tipo de documento
+      if (this.filtrosActuales.tipoDocumento) {
+        resultado = resultado.filter(c => c.tipoDocumento === this.filtrosActuales!.tipoDocumento);
+      }
+    }
+
+    return resultado;
   }
 
   /**
-   * Obtener nombre completo del cliente
+   * Manejar cambios en los filtros
    */
-  obtenerNombreCompleto(cliente: Cliente): string {
-    if (cliente.tipoCliente === 'Persona Física') {
-      return `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim();
-    } else {
-      return cliente.razonSocial || 'Sin nombre';
-    }
+  onFiltrosChange(filtros: FiltrosCliente | null): void {
+  // Si filtros es null o está vacío, no aplicar filtros
+  if (!filtros || (filtros.estados.length === 0 && filtros.tiposCliente.length === 0 && 
+      !filtros.idProvincia && !filtros.idCiudad && !filtros.fechaDesde && 
+      !filtros.fechaHasta && !filtros.tipoDocumento)) {
+    this.filtrosActuales = null;
+  } else {
+    this.filtrosActuales = filtros;
   }
+}
+
+  /**
+   * Limpiar todos los filtros
+   */
+  limpiarFiltros(): void {
+    this.filtrosActuales = null;
+    this.terminoBusqueda = '';
+  }
+
+  
+
+  // /**
+  //  * Obtener nombre completo del cliente
+  //  */
+  
+  obtenerNombreCompleto(cliente: Cliente): string {
+    return cliente.nombreCompleto || 'Sin nombre';
+  }
+  
+  
 
   /**
    * Obtener identificación del cliente (DNI/CUIT)
    */
   obtenerIdentificacion(cliente: Cliente): string {
-    if (cliente.tipoCliente === 'Persona Física') {
-      return cliente.numeroDocumento || '-';
-    } else {
-      return cliente.cuitCuil || '-';
+    if (cliente.numeroDocumento) {
+      return cliente.numeroDocumento;
     }
+
+    // Fallback a cuitCuil si existe (campo deprecated)
+    return cliente.cuitCuil || '-';
   }
 
   abrirFormularioNuevo(): void {
@@ -136,6 +231,7 @@ export class ClientesComponent implements OnInit {
     
     if (!cliente.idCliente) {
       this.alertas.error('Error', 'Cliente sin ID válido');
+      console.error('Cliente sin ID:', cliente);
       return;
     }
 
@@ -147,6 +243,8 @@ export class ClientesComponent implements OnInit {
     );
 
     if (confirmado) {
+      console.log('Eliminando cliente con ID:', cliente.idCliente);
+      
       this.clientesService.eliminarCliente(cliente.idCliente).subscribe({
         next: () => {
           this.alertas.success('Cliente eliminado', 'El cliente se eliminó correctamente');
@@ -179,7 +277,10 @@ export class ClientesComponent implements OnInit {
   getTipoClass(tipo: string): string {
     const tipos: { [key: string]: string } = {
       'Persona Física': 'tipo-fisica',
-      'Persona Jurídica': 'tipo-juridica'
+      'Persona Jurídica': 'tipo-juridica',
+      'Mayorista': 'tipo-mayorista',
+      'Minorista': 'tipo-minorista',
+      'Otro': 'tipo-otro'
     };
     return tipos[tipo] || 'tipo-default';
   }
@@ -191,7 +292,8 @@ export class ClientesComponent implements OnInit {
     const estados: { [key: number]: string } = {
       1: 'badge-activo',
       2: 'badge-inactivo',
-      3: 'badge-suspendido'
+      3: 'badge-suspendido',
+      4: 'badge-revision'
     };
     return estados[estadoId || 1] || 'badge-default';
   }
@@ -203,9 +305,28 @@ export class ClientesComponent implements OnInit {
     const estados: { [key: number]: string } = {
       1: 'Activo',
       2: 'Inactivo',
-      3: 'Suspendido'
+      3: 'Suspendido',
+      4: 'En revisión'
     };
     return estados[estadoId || 1] || 'Desconocido';
+  }
+
+  /**
+   * Obtener texto de ubicación del cliente
+   */
+  obtenerUbicacion(cliente: any): string {
+    const ciudad = cliente.nombreCiudad;
+    const provincia = cliente.nombreProvincia;
+    
+    if (!ciudad && !provincia) {
+      return '-';
+    }
+    
+    const partes: string[] = [];
+    if (ciudad) partes.push(ciudad);
+    if (provincia) partes.push(provincia);
+    
+    return partes.join(', ');
   }
 
   /**
