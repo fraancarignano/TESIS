@@ -1,162 +1,139 @@
+/* app.component.css */
 .app-layout {
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background-color: #f5f5f5;
 }
 
-/* === SIDEBAR === */
 .sidebar {
   width: 250px;
-  background-color: #111827;
+  background: #1a1a2e;
+  color: white;
   display: flex;
   flex-direction: column;
-  color: white;
-  transition: width 0.3s ease;
+  transition: transform 0.3s ease;
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  transition: margin-left 0.3s ease;
+}
+
+.main-content.sin-sidebar {
+  margin-left: 0;
+  width: 100%;
 }
 
 .logo {
-  background-color: #ff5722;
-  padding: 12px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  padding: 20px;
+  font-size: 24px;
+  font-weight: bold;
   text-align: center;
-  margin: 8px;
-  border-radius: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* === NAVEGACIÓN === */
 .nav-menu {
   flex: 1;
   padding: 20px 0;
-  overflow-y: auto;
-  
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: white;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-  }
 }
 
 .nav-item {
   display: flex;
-  flex-direction: column;
-  align-items: left;
-  padding: 16px 8px;
-  color: #ffffff;
+  align-items: center;
+  padding: 15px 25px;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
-  transition: all 0.2s ease;
-  margin: 4px 8px;
-  border-radius: 6px;
+  transition: all 0.3s ease;
   cursor: pointer;
-
-  .icon {
-    font-size: 15px;
-    margin-bottom: 6px;
-  }
-
-  .text {
-    font-size: 15px;
-    font-weight: 500;
-    text-align: left;
-  }
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #ffffff;
-  }
-
-  &.active {
-    background-color: rgba(248, 248, 248, 0.15);
-    color: #ff5722;
-    border-left: 3px solid #ff5722;
-  }
 }
 
-/* === PERFIL DE USUARIO === */
-.user-profile {
-  background-color: #ff5722;
-  padding: 12px;
-  display: flex;
-  align-items: left;
-  gap: 8px;
-  margin: 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
 
-  &:hover {
-    background-color: #e64a19;
-  }
+.nav-item.active {
+  background: rgba(79, 172, 254, 0.2);
+  color: #4facfe;
+  border-left: 3px solid #4facfe;
+}
+
+.user-profile {
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .avatar {
-  position: relative;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   overflow: hidden;
+  position: relative;
   flex-shrink: 0;
+}
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-  .avatar-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.2);
-    font-size: 14px;
-    font-weight: 600;
-    color: white;
-  }
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
 }
 
 .user-info {
-  display: none; 
-  flex-direction: column;
-  overflow: hidden;
+  flex: 1;
+  min-width: 0; /* Para que el texto se trunque correctamente */
 }
 
 .user-name {
-  font-size: 13px;
   font-weight: 600;
-  color: white;
+  font-size: 14px;
+  margin-bottom: 8px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.user-email {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.8);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* === CONTENIDO PRINCIPAL === */
-.main-content {
-  flex: 1;
-  overflow-y: auto;
-  background-color: #f5f5f5;
-}
-
-/* Cuando no hay sidebar, el main ocupa todo el ancho */
-.main-content.sin-sidebar {
-  margin-left: 0;
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
   width: 100%;
+  justify-content: center;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 59, 48, 0.2);
+  border-color: rgba(255, 59, 48, 0.5);
+  transform: translateY(-1px);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+}
+
+.logout-btn svg {
+  width: 16px;
+  height: 16px;
 }
