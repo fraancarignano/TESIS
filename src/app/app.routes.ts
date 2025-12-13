@@ -18,12 +18,12 @@ export const routes: Routes = [
     canActivate: [authGuard] // ✅ Protege la ruta
   },
   {
-      path: 'proyectos',
-      loadComponent: () => import('./modules/proyectos/components/proyectos.component').then(m => m.ProyectosComponent),
-      canActivate: [authGuard] // ✅ Protege la ruta
+    path: 'proyectos',
+    loadComponent: () => import('./modules/proyectos/components/proyectos.component').then(m => m.ProyectosComponent),
+    canActivate: [authGuard] // ✅ Protege la ruta
   },
   {
     path: '**',
-    redirectTo: '/proyectos' // ✅ Rutas no encontradas van a clientes (el guard redirigirá al login si no está autenticado)
+    redirectTo: '/clientes' // ✅ Rutas no encontradas van a clientes (el guard redirigirá al login si no está autenticado)
   }
 ];

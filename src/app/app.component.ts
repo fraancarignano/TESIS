@@ -42,7 +42,7 @@ export class AppComponent {
   obtenerNombreUsuario(): string {
     const usuario = this.authService.obtenerUsuarioActual();
     if (usuario) {
-      return `${usuario.nombreUsuario}`.trim();
+      return `${usuario.nombreUsuario} `.trim();
     }
     return 'Usuario';
   }
