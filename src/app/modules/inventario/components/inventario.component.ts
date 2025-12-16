@@ -29,9 +29,19 @@ export class InventarioComponent implements OnInit {
   constructor(private insumosService: InsumosService) {}
 
   ngOnInit(): void {
-    this.insumosService.getInsumos().subscribe(
-      insumos => this.insumos = insumos
-    );
+    this.cargarInsumos();
+  }
+
+  cargarInsumos(): void {
+    this.insumosService.getInsumos().subscribe({
+      next: (insumos) => {
+        this.insumos = insumos;
+      },
+      error: (error) => {
+        console.error('Error al cargar insumos:', error);
+        alert('Error al cargar los insumos');
+      }
+    });
   }
 
   get insumosFiltrados(): Insumo[] {
@@ -61,6 +71,7 @@ export class InventarioComponent implements OnInit {
   cerrarFormulario(): void {
     this.mostrarFormulario = false;
     this.insumoSeleccionado = null;
+    this.cargarInsumos(); // Recargar después de crear/editar
   }
 
   abrirDetalle(insumo: Insumo): void {
@@ -77,7 +88,16 @@ export class InventarioComponent implements OnInit {
     event.stopPropagation();
     
     if (confirm('¿Está seguro de eliminar este insumo?')) {
-      this.insumosService.eliminarInsumo(id);
+      this.insumosService.eliminarInsumo(id).subscribe({
+        next: () => {
+          alert('Insumo eliminado correctamente');
+          this.cargarInsumos();
+        },
+        error: (error) => {
+          console.error('Error al eliminar:', error);
+          alert('Error al eliminar el insumo');
+        }
+      });
     }
   }
 
@@ -89,7 +109,15 @@ export class InventarioComponent implements OnInit {
     const indexActual = estados.indexOf(insumo.estado || 'Disponible');
     const nuevoEstado = estados[(indexActual + 1) % estados.length];
     
-    this.insumosService.cambiarEstado(insumo.idInsumo!, nuevoEstado);
+    this.insumosService.cambiarEstado(insumo.idInsumo!, nuevoEstado).subscribe({
+      next: () => {
+        this.cargarInsumos();
+      },
+      error: (error) => {
+        console.error('Error al cambiar estado:', error);
+        alert('Error al cambiar el estado');
+      }
+    });
   }
 
   getEstadoClass(estado?: string): string {
