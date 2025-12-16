@@ -6,6 +6,7 @@ using System.Text;
 using TESIS_OG.Data;
 using TESIS_OG.Services.ClienteService;
 using TESIS_OG.Services.UsuariosService;
+using TESIS_OG.Services.InsumoService;
 
 namespace TESIS_OG
 {
@@ -26,7 +27,7 @@ namespace TESIS_OG
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddRazorPages();
 
-            // ========== CORS - SOLO UNA VEZ AQUÕ ==========
+            // ========== CORS - SOLO UNA VEZ AQU√ç ==========
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular", policy =>
@@ -67,8 +68,9 @@ namespace TESIS_OG
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
                 };
             });
-            builder.Services.AddScoped<IClienteService, ClienteService>();
 
+            builder.Services.AddScoped<IClienteService, ClienteService>();
+            builder.Services.AddScoped<IInsumoService, InsumoService>();
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
@@ -79,7 +81,7 @@ namespace TESIS_OG
 
             app.UseHttpsRedirection();
 
-            // ========== ACTIVAR CORS AQUÕ ==========
+            // ========== ACTIVAR CORS AQU√ç ==========
             app.UseCors("AllowAngular");
 
             app.UseAuthentication();
