@@ -178,4 +178,6 @@ export class AuthService {
   navegarADashboard(): void {
     this.router.navigate(['/dashboard']);
   }
+
+  
 }
