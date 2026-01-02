@@ -1,28 +1,44 @@
-// src/app/proyectos/proyectos.component.ts
-
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { Proyecto, EstadoProyecto, generarCodigoProyecto } from '../models/proyecto.model';
+import { ProyectosService } from '../services/proyectos.service';
+import { ProyectoFormComponent } from './nuevo-proyecto-modal/proyecto-form.component'
+
+
+
+import { 
+  Proyecto, 
+  ProyectoVista, 
+  EstadoProyecto,
+  proyectoToVista,
+  calcularProgresoGeneral 
+} from '../models/proyecto.model';
 
 @Component({
   selector: 'app-proyectos',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule, ProyectoFormComponent ],
   templateUrl: './proyectos.component.html',
   styleUrls: ['./proyectos.component.css']
 })
-export class ProyectosComponent {
+export class ProyectosComponent implements OnInit {
+  
+  // Estados de carga
+  loading = false;
+  error = false;
   
   // Búsqueda
   terminoBusqueda: string = '';
   
   // Estados para las columnas Kanban
-  proyectosPendientes: Proyecto[] = [];
-  proyectosEnProceso: Proyecto[] = [];
-  proyectosFinalizados: Proyecto[] = [];
-  proyectosArchivados: Proyecto[] = [];
+  proyectosPendientes: ProyectoVista[] = [];
+  proyectosEnProceso: ProyectoVista[] = [];
+  proyectosFinalizados: ProyectoVista[] = [];
+  proyectosArchivados: ProyectoVista[] = [];
+  
+  // Todos los proyectos (para filtrado)
+  todosLosProyectos: Proyecto[] = [];
   
   // Estadísticas
   get totalProyectosActivos(): number {
@@ -43,158 +59,90 @@ export class ProyectosComponent {
     
     if (todosProyectos.length === 0) return 0;
     
-    const sumaScrap = todosProyectos.reduce((sum, p) => sum + p.scrapPorcentaje, 0);
-    return Math.round((sumaScrap / todosProyectos.length) * 10) / 10;
+    const proyectosConScrap = todosProyectos.filter(p => p.scrapPorcentaje);
+    if (proyectosConScrap.length === 0) return 0;
+    
+    const sumaScrap = proyectosConScrap.reduce((sum, p) => sum + (p.scrapPorcentaje || 0), 0);
+    return Math.round((sumaScrap / proyectosConScrap.length) * 10) / 10;
   }
   
   // Modal
   mostrarModalNuevoProyecto: boolean = false;
-  proyectoSeleccionado: Proyecto | null = null;
+  proyectoSeleccionado: ProyectoVista | null = null;
   mostrarModalDetalle: boolean = false;
   
-  constructor() {
-    this.cargarDatosHardcoded();
+  constructor(private proyectosService: ProyectosService) {}
+  
+  ngOnInit(): void {
+    this.cargarProyectos();
   }
   
-  // Cargar datos de ejemplo (hardcoded)
-  cargarDatosHardcoded(): void {
-    const ahora = new Date();
-
-        // Proyecto pendiente 
-            this.proyectosPendientes = [
-        {
-            id: '4',
-            codigo: 'P-2025-004',
-            clienteId: 'c4',
-            clienteNombre: 'Fashion Store',
-            tipoPrenda: 'Remeras Puma',
-            cantidadTotal: 800,
-            cantidadProducida: 0,
-            materiales: [
-            { id: 'm4', nombre: 'Tela Jersey', cantidad: 400, unidad: 'metros', costoUnitario: 18 }
-            ],
-            costoMaterialEstimado: 14400,
-            fechaInicio: new Date(2025, 1, 1),
-            fechaEstimadaFin: new Date(2025, 2, 30),
-            estado: 'pendiente',
-            avanceEtapas: {
-            diseño: 0,
-            corte: 0,
-            confeccion: 0,
-            calidad: 0
-            },
-            scrapGenerado: 0,
-            scrapPorcentaje: 0,
-            observaciones: [],
-            fechaCreacion: new Date(2025, 0, 20),
-            fechaUltimaModificacion: ahora,
-            usuarioCreador: 'admin'
-        }
-        ];
+  /**
+   * Cargar proyectos desde el backend
+   */
+  cargarProyectos(): void {
+    this.loading = true;
+    this.error = false;
     
-    // Proyecto en proceso
-    this.proyectosEnProceso = [
-      {
-        id: '1',
-        codigo: 'P-2025-001',
-        clienteId: 'c1',
-        clienteNombre: 'Deportes Max',
-        tipoPrenda: 'Camisetas Nike Dri-FIT',
-        cantidadTotal: 1000,
-        cantidadProducida: 850,
-        materiales: [
-          { id: 'm1', nombre: 'Tela Poliéster', cantidad: 500, unidad: 'metros', costoUnitario: 15 }
-        ],
-        costoMaterialEstimado: 15500,
-        fechaInicio: new Date(2025, 0, 15),
-        fechaEstimadaFin: new Date(2025, 2, 15),
-        estado: 'en-proceso',
-        avanceEtapas: {
-          diseño: 100,
-          corte: 100,
-          confeccion: 85,
-          calidad: 60
-        },
-        scrapGenerado: 102,
-        scrapPorcentaje: 8.0,
-        observaciones: [],
-        fechaCreacion: new Date(2025, 0, 10),
-        fechaUltimaModificacion: ahora,
-        usuarioCreador: 'admin'
+    this.proyectosService.obtenerProyectos().subscribe({
+      next: (proyectos) => {
+        this.todosLosProyectos = proyectos;
+        this.organizarProyectosPorEstado(proyectos);
+        this.loading = false;
+        console.log('Proyectos cargados:', proyectos);
+      },
+      error: (err) => {
+        console.error('Error al cargar proyectos:', err);
+        this.error = true;
+        this.loading = false;
       }
-    ];
-    
-    // Proyecto archivado
-    this.proyectosArchivados = [
-      {
-        id: '2',
-        codigo: 'P-2025-002',
-        clienteId: 'c2',
-        clienteNombre: 'Athletic Pro',
-        tipoPrenda: 'Pantalones Adidas',
-        cantidadTotal: 500,
-        cantidadProducida: 420,
-        materiales: [
-          { id: 'm2', nombre: 'Tela Algodón', cantidad: 300, unidad: 'metros', costoUnitario: 12 }
-        ],
-        costoMaterialEstimado: 12500,
-        fechaInicio: new Date(2024, 11, 1),
-        fechaEstimadaFin: new Date(2025, 1, 1),
-        estado: 'archivado',
-        avanceEtapas: {
-          diseño: 100,
-          corte: 100,
-          confeccion: 100,
-          calidad: 100
-        },
-        scrapGenerado: 94,
-        scrapPorcentaje: 18.8,
-        observaciones: [],
-        fechaCreacion: new Date(2024, 10, 25),
-        fechaUltimaModificacion: new Date(2024, 11, 30),
-        usuarioCreador: 'admin'
-      }
-    ];
-    
-    // Proyecto finalizado
-    this.proyectosFinalizados = [
-      {
-        id: '3',
-        codigo: 'P-2025-003',
-        clienteId: 'c3',
-        clienteNombre: 'Sport Zone',
-        tipoPrenda: 'Camperas Umbro',
-        cantidadTotal: 300,
-        cantidadProducida: 300,
-        materiales: [
-          { id: 'm3', nombre: 'Tela Impermeable', cantidad: 200, unidad: 'metros', costoUnitario: 25 }
-        ],
-        costoMaterialEstimado: 9000,
-        fechaInicio: new Date(2025, 0, 5),
-        fechaEstimadaFin: new Date(2025, 1, 20),
-        fechaFinReal: new Date(2025, 1, 18),
-        estado: 'finalizado',
-        avanceEtapas: {
-          diseño: 100,
-          corte: 100,
-          confeccion: 100,
-          calidad: 100
-        },
-        scrapGenerado: 12,
-        scrapPorcentaje: 4.0,
-        observaciones: [],
-        fechaCreacion: new Date(2025, 0, 1),
-        fechaUltimaModificacion: new Date(2025, 1, 18),
-        usuarioCreador: 'admin'
-      }
-    ];
+    });
   }
   
-  // Drag & Drop
-  drop(event: CdkDragDrop<Proyecto[]>): void {
+  /**
+   * Organizar proyectos en columnas Kanban según su estado
+   */
+  organizarProyectosPorEstado(proyectos: Proyecto[]): void {
+    // Limpiar columnas
+    this.proyectosPendientes = [];
+    this.proyectosEnProceso = [];
+    this.proyectosFinalizados = [];
+    this.proyectosArchivados = [];
+    
+    // Convertir a ProyectoVista y distribuir
+    proyectos.forEach(proyecto => {
+      const proyectoVista = proyectoToVista(proyecto);
+      
+      switch (proyecto.estado) {
+        case 'Pendiente':
+          this.proyectosPendientes.push(proyectoVista);
+          break;
+        case 'En Proceso':
+          this.proyectosEnProceso.push(proyectoVista);
+          break;
+        case 'Finalizado':
+          this.proyectosFinalizados.push(proyectoVista);
+          break;
+        case 'Archivado':
+        case 'Cancelado':
+        case 'Pausado':
+          this.proyectosArchivados.push(proyectoVista);
+          break;
+      }
+    });
+  }
+  
+  /**
+   * Drag & Drop entre columnas
+   */
+  drop(event: CdkDragDrop<ProyectoVista[]>): void {
     if (event.previousContainer === event.container) {
+      // Movimiento dentro de la misma columna
       moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
     } else {
+      // Movimiento entre columnas diferentes
+      const proyecto = event.previousContainer.data[event.previousIndex];
+      
       transferArrayItem(
         event.previousContainer.data,
         event.container.data,
@@ -202,61 +150,165 @@ export class ProyectosComponent {
         event.currentIndex
       );
       
-      // Actualizar el estado del proyecto según la columna destino
-      const proyecto = event.container.data[event.currentIndex];
-      proyecto.estado = this.obtenerEstadoPorContainer(event.container.id);
+      // Obtener el nuevo estado según la columna destino
+      const nuevoEstado = this.obtenerEstadoPorContainer(event.container.id);
+      
+      // Actualizar en el backend
+      if (proyecto.idProyecto) {
+        this.actualizarEstadoProyecto(proyecto.idProyecto, nuevoEstado);
+      }
     }
   }
   
-  obtenerEstadoPorContainer(containerId: string): EstadoProyecto {
-    switch(containerId) {
-      case 'pendientes': return 'pendiente';
-      case 'en-proceso': return 'en-proceso';
-      case 'finalizados': return 'finalizado';
-      case 'archivados': return 'archivado';
-      default: return 'pendiente';
-    }
+  /**
+   * Obtener estado según el ID del contenedor
+   */
+  obtenerEstadoPorContainer(containerId: string): string {
+    const mapeo: Record<string, string> = {
+      'pendientes': 'Pendiente',
+      'en-proceso': 'En Proceso',
+      'finalizados': 'Finalizado',
+      'archivados': 'Archivado'
+    };
+    return mapeo[containerId] || 'Pendiente';
   }
   
-  // Acciones
+  /**
+   * Actualizar estado del proyecto en el backend
+   */
+  actualizarEstadoProyecto(id: number, estado: string): void {
+    this.proyectosService.cambiarEstado(id, estado).subscribe({
+      next: () => {
+        console.log(`Proyecto ${id} actualizado a estado: ${estado}`);
+        // Opcionalmente mostrar notificación de éxito
+      },
+      error: (err) => {
+        console.error('Error al actualizar estado:', err);
+        // Recargar proyectos para restaurar el estado anterior
+        this.cargarProyectos();
+        // Opcionalmente mostrar notificación de error
+      }
+    });
+  }
+  
+  /**
+   * Abrir modal para nuevo proyecto
+   */
   abrirModalNuevoProyecto(): void {
     this.mostrarModalNuevoProyecto = true;
   }
   
+  /**
+   * Cerrar modal de nuevo proyecto
+   */
   cerrarModalNuevoProyecto(): void {
     this.mostrarModalNuevoProyecto = false;
+    this.cargarProyectos(); // Recargar lista
   }
   
-  verDetalleProyecto(proyecto: Proyecto): void {
+  /**
+   * Ver detalle de un proyecto
+   */
+  verDetalleProyecto(proyecto: ProyectoVista): void {
     this.proyectoSeleccionado = proyecto;
     this.mostrarModalDetalle = true;
   }
   
+  /**
+   * Cerrar modal de detalle
+   */
   cerrarModalDetalle(): void {
     this.mostrarModalDetalle = false;
     this.proyectoSeleccionado = null;
   }
   
-  // Búsqueda (por ahora básica)
+  /**
+   * Filtrar proyectos por búsqueda
+   */
+  filtrarProyectos(proyectos: ProyectoVista[]): ProyectoVista[] {
+    if (!this.terminoBusqueda) {
+      return proyectos;
+    }
+    
+    const termino = this.terminoBusqueda.toLowerCase();
+    return proyectos.filter(p => 
+      p.nombreProyecto?.toLowerCase().includes(termino) ||
+      p.clienteNombre?.toLowerCase().includes(termino) ||
+      p.codigoProyecto?.toLowerCase().includes(termino) ||
+      p.tipoPrenda?.toLowerCase().includes(termino)
+    );
+  }
+  
+  /**
+   * Obtener proyectos filtrados para cada columna
+   */
   get proyectosFiltrados() {
-    // Esto lo implementamos después si querés
     return {
-      pendientes: this.proyectosPendientes,
-      enProceso: this.proyectosEnProceso,
-      finalizados: this.proyectosFinalizados,
-      archivados: this.proyectosArchivados
+      pendientes: this.filtrarProyectos(this.proyectosPendientes),
+      enProceso: this.filtrarProyectos(this.proyectosEnProceso),
+      finalizados: this.filtrarProyectos(this.proyectosFinalizados),
+      archivados: this.filtrarProyectos(this.proyectosArchivados)
     };
   }
   
+  /**
+   * Exportar proyectos
+   */
   exportarProyectos(): void {
     console.log('Exportar proyectos...');
-    // Implementar después
+    // TODO: Implementar exportación (PDF/Excel)
   }
   
-  // Helper para obtener clase de badge scrap
-  getScrapClass(porcentaje: number): string {
+  /**
+   * Eliminar (archivar) proyecto
+   */
+  eliminarProyecto(proyecto: ProyectoVista, event: Event): void {
+    event.stopPropagation();
+    
+    if (!proyecto.idProyecto) return;
+    
+    if (confirm(`¿Está seguro de archivar el proyecto "${proyecto.nombreProyecto}"?`)) {
+      this.proyectosService.eliminarProyecto(proyecto.idProyecto).subscribe({
+        next: () => {
+          console.log('Proyecto archivado exitosamente');
+          this.cargarProyectos();
+          // Opcionalmente mostrar notificación de éxito
+        },
+        error: (err) => {
+          console.error('Error al archivar proyecto:', err);
+          // Opcionalmente mostrar notificación de error
+        }
+      });
+    }
+  }
+  
+  /**
+   * Helper para obtener clase de badge scrap
+   */
+  getScrapClass(porcentaje?: number | null): string {
+    if (!porcentaje) return 'scrap-bajo';
     if (porcentaje >= 10) return 'scrap-alto';
     if (porcentaje >= 5) return 'scrap-medio';
     return 'scrap-bajo';
+  }
+  
+  /**
+   * Formatear fecha para mostrar
+   */
+  formatearFecha(fecha?: string | null): string {
+    if (!fecha) return '-';
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  }
+  
+  /**
+   * Obtener progreso general del proyecto
+   */
+  obtenerProgresoGeneral(proyecto: ProyectoVista): number {
+    return proyecto.progresoGeneral;
   }
 }

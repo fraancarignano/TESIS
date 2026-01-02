@@ -57,8 +57,8 @@ export class ClienteFiltrosComponent implements OnInit {
   fechaHasta = '';
 
   constructor(
-    private provinciaService: ProvinciaService,
-    private ciudadService: CiudadService,
+   // private provinciaService: ProvinciaService,
+   // private ciudadService: CiudadService,
     private clientesService: ClientesService
   ) {}
 
@@ -68,7 +68,7 @@ export class ClienteFiltrosComponent implements OnInit {
   }
 
   cargarProvincias(): void {
-    this.provinciaService.obtenerProvincias().subscribe({
+    this.clientesService.obtenerProvincias().subscribe({
       next: (data) => {
         this.provincias = data;
       },
@@ -83,8 +83,9 @@ export class ClienteFiltrosComponent implements OnInit {
     this.ciudades = [];
     
     if (this.provinciaSeleccionada) {
-        this.clientesService.obtenerCiudadesPorProvincia(this.provinciaSeleccionada).subscribe({        next: (data) => {
-          this.ciudades = data;
+        this.clientesService.obtenerCiudadesPorProvincia(this.provinciaSeleccionada).subscribe({
+            next: (data) => { 
+            this.ciudades = data;
         },
         error: (err) => {
           console.error('Error al cargar ciudades:', err);

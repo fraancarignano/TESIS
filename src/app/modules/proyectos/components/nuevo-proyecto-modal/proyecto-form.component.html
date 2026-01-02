@@ -1,0 +1,116 @@
+<div class="modal-overlay" (click)="cancelar()">
+  <div class="modal-container project-modal" (click)="$event.stopPropagation()">
+    
+    <div class="modal-header">
+      <div class="header-content">
+        <div class="icon-badge">
+          <i class="fas fa-folder-plus"></i>
+        </div>
+        <div class="header-text">
+          <h2>Nuevo Proyecto</h2>
+          <p class="subtitle">Ingresa los datos del proyecto</p>
+        </div>
+      </div>
+      <button class="btn-close" (click)="cancelar()" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="formulario" (ngSubmit)="guardar()">
+        
+        <div class="form-row">
+          <div class="form-field">
+            <label>Cliente *</label>
+            <select formControlName="idCliente">
+              <option value="">Seleccionar cliente...</option>
+              <option *ngFor="let cliente of clientes" [value]="cliente.idCliente">
+                {{ cliente.nombreCompleto }}
+              </option>
+            </select>
+            <small class="error-text" *ngIf="formulario.get('idCliente')?.touched && formulario.get('idCliente')?.errors?.['required']">
+              El cliente es obligatorio
+            </small>
+          </div>
+          <div class="form-field">
+            <label>Nombre del Proyecto *</label>
+            <input type="text" formControlName="nombreProyecto" placeholder="Ej: Camisetas Nike 2025">
+          </div>
+        </div>
+
+        <div class="form-row three-cols">
+          <div class="form-field">
+            <label>Tipo de Prenda</label>
+            <input type="text" formControlName="tipoPrenda" placeholder="Ej: Camisetas">
+          </div>
+          <div class="form-field">
+            <label>Prioridad</label>
+            <select formControlName="prioridad">
+              <option *ngFor="let p of prioridades" [value]="p">{{ p | titlecase }}</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Cantidad Total</label>
+            <input type="number" formControlName="cantidadTotal" placeholder="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label>Fecha de Inicio *</label>
+            <input type="date" formControlName="fechaInicio">
+          </div>
+          <div class="form-field">
+            <label>Fecha Estimada de Fin</label>
+            <input type="date" formControlName="fechaFin">
+          </div>
+        </div>
+        
+        <div class="insumos-container full-width">
+          <label class="section-title">Asignar Materiales</label>
+          <div class="insumos-selector">
+            <select #insumoSelect class="select-insumo">
+              <option value="">Elegir Insumo...</option>
+              <option *ngFor="let i of listaInsumosDB" [value]="i.idInsumo">
+                {{i.nombreInsumo}} (Stock: {{i.stockActual}})
+              </option>
+            </select>
+            
+            <input type="number" #cantInsumo placeholder="Cant." class="input-cant" min="1">
+            
+            <button type="button" class="btn-add" 
+              (click)="agregarInsumoALista(insumoSelect.value, cantInsumo.value); insumoSelect.value=''; cantInsumo.value=''">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+
+          <div class="insumos-badges" *ngIf="insumosSeleccionados.length > 0">
+            <span class="badge-insumo" *ngFor="let item of insumosSeleccionados; let i = index">
+              {{item.nombre}} ({{item.cantidad}} {{item.unidad}})
+              <i class="fas fa-times delete-icon" (click)="quitarInsumo(i)"></i>
+            </span>
+          </div>
+          <p class="no-insumos" *ngIf="insumosSeleccionados.length === 0">No hay materiales asignados.</p>
+        </div>
+
+        <div class="form-field full-width">
+          <label>Descripción</label>
+          <textarea formControlName="descripcion" rows="2" placeholder="Notas adicionales sobre la confección..."></textarea>
+        </div>
+
+        <div class="error-general" *ngIf="errorMensaje">{{ errorMensaje }}</div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cancelar()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="cargando || formulario.invalid">
+            <span *ngIf="!cargando">Crear Proyecto</span>
+            <span *ngIf="cargando" class="spinner-inline">Guardando...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

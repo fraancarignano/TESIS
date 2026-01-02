@@ -1,329 +1,104 @@
 <div class="proyectos-container">
-  
-  <!-- Header -->
   <div class="header">
     <div class="breadcrumb">
       <span class="breadcrumb-item">Proyectos</span>
       <span class="breadcrumb-separator">></span>
       <span class="breadcrumb-item active">Principal</span>
     </div>
-    
+
     <div class="header-actions">
       <div class="busqueda">
         <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <path d="m21 21-4.35-4.35"></path>
         </svg>
-        <input 
-          type="text" 
-          class="input-busqueda" 
-          placeholder="Buscar en Proyectos..."
-          [(ngModel)]="terminoBusqueda"
-        >
+        <input type="text" class="input-busqueda" placeholder="Buscar en Proyectos..." [(ngModel)]="terminoBusqueda">
       </div>
       <button class="btn btn-primary" (click)="abrirModalNuevoProyecto()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="16"></line>
-        <line x1="8" y1="12" x2="16" y2="12"></line>
-        </svg>
         Nuevo Proyecto
       </button>
-      
       <button class="btn btn-secondary" (click)="exportarProyectos()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
         Exportar
       </button>
     </div>
   </div>
-  
-  <!-- Sección de Resumen -->
-  <div class="seccion-header">
-    <h2 class="seccion-titulo">Resumen General</h2>
-  </div>
-  
-  <!-- Estadísticas -->
+
   <div class="estadisticas-wrapper">
     <div class="estadisticas">
       <div class="stat-card stat-activos">
         <div class="stat-numero">{{ totalProyectosActivos }}</div>
         <div class="stat-label">Proyectos Activos</div>
       </div>
-      
       <div class="stat-card stat-archivados">
         <div class="stat-numero">{{ totalProyectosArchivados }}</div>
         <div class="stat-label">Proyectos Archivados</div>
       </div>
-      
       <div class="stat-card stat-scrap">
         <div class="stat-numero">{{ promedioScrap }}%</div>
         <div class="stat-label">% Scrap Promedio</div>
       </div>
     </div>
   </div>
-  
-  <!-- Sección de Tablero -->
-  <div class="seccion-header">
-    <h2 class="seccion-titulo">Tablero de Proyectos</h2>
-  </div>
-  
-  <!-- Tablero Kanban -->
+
   <div class="kanban-board">
     
-    <!-- Columna: Pendientes -->
     <div class="kanban-column">
       <div class="column-header pendiente">
         <span class="column-badge">Pendiente</span>
       </div>
-      <div 
-        class="column-content"
-        cdkDropList
-        id="pendientes"
-        [cdkDropListData]="proyectosPendientes"
-        [cdkDropListConnectedTo]="['en-proceso', 'finalizados', 'archivados']"
-        (cdkDropListDropped)="drop($event)"
-      >
-        <div 
-          class="proyecto-card"
-          *ngFor="let proyecto of proyectosPendientes"
-          cdkDrag
-        >
+      <div class="column-content" cdkDropList id="pendientes" [cdkDropListData]="proyectosPendientes"
+        [cdkDropListConnectedTo]="['en-proceso', 'finalizados', 'archivados']" (cdkDropListDropped)="drop($event)">
+        
+        <div class="proyecto-card" *ngFor="let proyecto of proyectosPendientes" cdkDrag>
           <div class="proyecto-header">
-            <span class="proyecto-codigo">{{ proyecto.codigo }}</span>
+            <span class="proyecto-codigo">{{ proyecto.codigoProyecto }}</span>
           </div>
-          
           <div class="proyecto-info">
-            <div class="info-row">
-              <span class="info-label">Cliente:</span>
-              <span class="info-value">{{ proyecto.clienteNombre }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Producto:</span>
-              <span class="info-value">{{ proyecto.tipoPrenda }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Cantidad:</span>
-              <span class="info-value">{{ proyecto.cantidadProducida }}/{{ proyecto.cantidadTotal }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Costo Material:</span>
-              <span class="info-value">${{ proyecto.costoMaterialEstimado.toLocaleString() }}</span>
-            </div>
+            <div class="info-row"><span>Cliente:</span> <span>{{ proyecto.clienteNombre }}</span></div>
+            <div class="info-row"><span>Cantidad:</span> <span>{{ proyecto.cantidadProducida || 0 }}/{{ proyecto.cantidadTotal }}</span></div>
           </div>
-          
           <div class="proyecto-footer">
-            <div class="scrap-badge" [ngClass]="getScrapClass(proyecto.scrapPorcentaje)">
-              ${{ proyecto.scrapGenerado }} en Scrap
-              <span class="scrap-porcentaje">{{ proyecto.scrapPorcentaje }}% del costo total</span>
-            </div>
-            <button class="btn-ver-detalle" (click)="verDetalleProyecto(proyecto)">
-              VER DETALLES
-            </button>
+            <button class="btn-ver-detalle" (click)="verDetalleProyecto(proyecto)">VER DETALLES</button>
           </div>
         </div>
-        
         <div class="column-empty" *ngIf="proyectosPendientes.length === 0">
           <p>No hay proyectos pendientes</p>
         </div>
       </div>
     </div>
-    
-    <!-- Columna: En Proceso -->
+
     <div class="kanban-column">
       <div class="column-header en-proceso">
         <span class="column-badge">En Proceso</span>
       </div>
-      <div 
-        class="column-content"
-        cdkDropList
-        id="en-proceso"
-        [cdkDropListData]="proyectosEnProceso"
-        [cdkDropListConnectedTo]="['pendientes', 'finalizados', 'archivados']"
-        (cdkDropListDropped)="drop($event)"
-      >
-        <div 
-          class="proyecto-card"
-          *ngFor="let proyecto of proyectosEnProceso"
-          cdkDrag
-        >
+      <div class="column-content" cdkDropList id="en-proceso" [cdkDropListData]="proyectosEnProceso"
+        [cdkDropListConnectedTo]="['pendientes', 'finalizados', 'archivados']" (cdkDropListDropped)="drop($event)">
+        
+        <div class="proyecto-card" *ngFor="let proyecto of proyectosEnProceso" cdkDrag>
           <div class="proyecto-header">
-            <span class="proyecto-codigo">{{ proyecto.codigo }}</span>
+            <span class="proyecto-codigo">{{ proyecto.codigoProyecto }}</span>
           </div>
-          
           <div class="proyecto-info">
-            <div class="info-row">
-              <span class="info-label">Cliente:</span>
-              <span class="info-value">{{ proyecto.clienteNombre }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Producto:</span>
-              <span class="info-value">{{ proyecto.tipoPrenda }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Cantidad:</span>
-              <span class="info-value">{{ proyecto.cantidadProducida }}/{{ proyecto.cantidadTotal }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Costo Material:</span>
-              <span class="info-value">${{ proyecto.costoMaterialEstimado.toLocaleString() }}</span>
-            </div>
+            <div class="info-row"><span>Cliente:</span> <span>{{ proyecto.clienteNombre }}</span></div>
+            <div class="info-row"><span>Cantidad:</span> <span>{{ proyecto.cantidadProducida }}/{{ proyecto.cantidadTotal }}</span></div>
           </div>
-          
           <div class="proyecto-footer">
-            <div class="scrap-badge" [ngClass]="getScrapClass(proyecto.scrapPorcentaje)">
-              ${{ proyecto.scrapGenerado }} en Scrap
-              <span class="scrap-porcentaje">{{ proyecto.scrapPorcentaje }}% del costo total</span>
-            </div>
-            <button class="btn-ver-detalle" (click)="verDetalleProyecto(proyecto)">
-              VER DETALLES
-            </button>
+            <button class="btn-ver-detalle" (click)="verDetalleProyecto(proyecto)">VER DETALLES</button>
           </div>
         </div>
-        
         <div class="column-empty" *ngIf="proyectosEnProceso.length === 0">
           <p>No hay proyectos en proceso</p>
         </div>
       </div>
     </div>
-    
-    <!-- Columna: Finalizados -->
-    <div class="kanban-column">
-      <div class="column-header finalizado">
-        <span class="column-badge">Finalizados</span>
-      </div>
-      <div 
-        class="column-content"
-        cdkDropList
-        id="finalizados"
-        [cdkDropListData]="proyectosFinalizados"
-        [cdkDropListConnectedTo]="['pendientes', 'en-proceso', 'archivados']"
-        (cdkDropListDropped)="drop($event)"
-      >
-        <div 
-          class="proyecto-card"
-          *ngFor="let proyecto of proyectosFinalizados"
-          cdkDrag
-        >
-          <div class="proyecto-header">
-            <span class="proyecto-codigo">{{ proyecto.codigo }}</span>
-          </div>
-          
-          <div class="proyecto-info">
-            <div class="info-row">
-              <span class="info-label">Cliente:</span>
-              <span class="info-value">{{ proyecto.clienteNombre }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Producto:</span>
-              <span class="info-value">{{ proyecto.tipoPrenda }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Cantidad:</span>
-              <span class="info-value">{{ proyecto.cantidadProducida }}/{{ proyecto.cantidadTotal }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Costo Material:</span>
-              <span class="info-value">${{ proyecto.costoMaterialEstimado.toLocaleString() }}</span>
-            </div>
-          </div>
-          
-          <div class="proyecto-footer">
-            <div class="scrap-badge" [ngClass]="getScrapClass(proyecto.scrapPorcentaje)">
-              ${{ proyecto.scrapGenerado }} en Scrap
-              <span class="scrap-porcentaje">{{ proyecto.scrapPorcentaje }}% del costo total</span>
-            </div>
-            <button class="btn-ver-detalle" (click)="verDetalleProyecto(proyecto)">
-              VER DETALLES
-            </button>
-          </div>
-        </div>
-        
-        <div class="column-empty" *ngIf="proyectosFinalizados.length === 0">
-          <p>No hay proyectos finalizados</p>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Columna: Archivados -->
-    <div class="kanban-column">
-      <div class="column-header archivado">
-        <span class="column-badge">Archivados</span>
-      </div>
-      <div 
-        class="column-content"
-        cdkDropList
-        id="archivados"
-        [cdkDropListData]="proyectosArchivados"
-        [cdkDropListConnectedTo]="['pendientes', 'en-proceso', 'finalizados']"
-        (cdkDropListDropped)="drop($event)"
-      >
-        <div 
-          class="proyecto-card"
-          *ngFor="let proyecto of proyectosArchivados"
-          cdkDrag
-        >
-          <div class="proyecto-header">
-            <span class="proyecto-codigo">{{ proyecto.codigo }}</span>
-          </div>
-          
-          <div class="proyecto-info">
-            <div class="info-row">
-              <span class="info-label">Cliente:</span>
-              <span class="info-value">{{ proyecto.clienteNombre }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Producto:</span>
-              <span class="info-value">{{ proyecto.tipoPrenda }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Cantidad:</span>
-              <span class="info-value">{{ proyecto.cantidadProducida }}/{{ proyecto.cantidadTotal }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Costo Material:</span>
-              <span class="info-value">${{ proyecto.costoMaterialEstimado.toLocaleString() }}</span>
-            </div>
-          </div>
-          
-          <div class="proyecto-footer">
-            <div class="scrap-badge" [ngClass]="getScrapClass(proyecto.scrapPorcentaje)">
-              ${{ proyecto.scrapGenerado }} en Scrap
-              <span class="scrap-porcentaje">{{ proyecto.scrapPorcentaje }}% del costo total</span>
-            </div>
-            <button class="btn-ver-detalle" (click)="verDetalleProyecto(proyecto)">
-              VER DETALLES
-            </button>
-          </div>
-        </div>
-        
-        <div class="column-empty" *ngIf="proyectosArchivados.length === 0">
-          <p>No hay proyectos archivados</p>
-        </div>
-      </div>
-    </div>
-    
-  </div> <!-- Cierre de kanban-board -->
-  
-</div> <!-- Cierre de proyectos-container -->
 
-<!-- Modal Nuevo Proyecto -->
-<div class="modal-overlay" *ngIf="mostrarModalNuevoProyecto" (click)="cerrarModalNuevoProyecto()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <h2>Nuevo Proyecto</h2>
-    <p>Formulario en construcción...</p>
-    <button class="btn btn-secondary" (click)="cerrarModalNuevoProyecto()">Cerrar</button>
-  </div>
-</div>
+    
+    </div> </div> <app-proyecto-form *ngIf="mostrarModalNuevoProyecto" (cerrar)="cerrarModalNuevoProyecto()"></app-proyecto-form>
 
-<!-- Modal Detalle -->
 <div class="modal-overlay" *ngIf="mostrarModalDetalle" (click)="cerrarModalDetalle()">
-  <div class="modal-content modal-detalle" (click)="$event.stopPropagation()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
     <h2>Detalle del Proyecto</h2>
-    <p *ngIf="proyectoSeleccionado">{{ proyectoSeleccionado.codigo }} - {{ proyectoSeleccionado.clienteNombre }}</p>
+    <p *ngIf="proyectoSeleccionado">{{ proyectoSeleccionado.codigoProyecto }} - {{ proyectoSeleccionado.clienteNombre }}</p>
     <button class="btn btn-secondary" (click)="cerrarModalDetalle()">Cerrar</button>
   </div>
 </div>
