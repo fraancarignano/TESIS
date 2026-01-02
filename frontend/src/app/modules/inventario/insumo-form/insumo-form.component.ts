@@ -161,18 +161,266 @@ import { InsumosService } from '../services/insumos.service';
 
         <div class="modal-footer">
           <button class="btn-cancelar" (click)="cerrar.emit()">Cancelar</button>
-          <button class="btn-guardar" (click)="guardar()" [disabled]="guardando">
-            {{ guardando ? 'Guardando...' : (esEdicion ? 'Guardar cambios' : 'Crear insumo') }}
+          <button class="btn-guardar" (click)="guardar()">
+            {{ esEdicion ? 'Guardar cambios' : 'Crear insumo' }}
           </button>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    /* ... (mantén todos los estilos que ya tienes) ... */
-    .btn-guardar:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-container {
+      background: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 900px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
+      padding: 24px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .icon-wrapper {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 12px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .modal-header p {
+      margin: 4px 0 0 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .btn-cerrar {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cerrar:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .seccion {
+      margin-bottom: 28px;
+    }
+
+    .seccion:last-child {
+      margin-bottom: 0;
+    }
+
+    .seccion-titulo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      color: #ff5722;
+      font-weight: 600;
+      font-size: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f5f5f5;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    .requerido {
+      color: #f44336;
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #ff5722;
+      box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.1);
+    }
+
+    .form-group input::placeholder {
+      color: #999;
+    }
+
+    .alerta-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: #fff3e0;
+      border-left: 3px solid #ff9800;
+      border-radius: 6px;
+      color: #e65100;
+      font-size: 13px;
+      margin-top: 16px;
+    }
+
+    .alerta-info svg {
+      flex-shrink: 0;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #f0f0f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .btn-cancelar {
+      background: #f5f5f5;
+      color: #333;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cancelar:hover {
+      background: #e0e0e0;
+      transform: translateY(-1px);
+    }
+
+    .btn-guardar {
+      background: #ff5722;
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .btn-guardar:hover {
+      background: #e64a19;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+    }
+
+    @media (max-width: 768px) {
+      .modal-container {
+        width: 95%;
+        max-height: 95vh;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-header {
+        padding: 20px;
+      }
+
+      .modal-header h2 {
+        font-size: 18px;
+      }
+
+      .modal-body {
+        padding: 20px;
+      }
     }
   `]
 })
@@ -193,21 +441,12 @@ export class InsumoFormComponent implements OnInit {
   tiposInsumo: TipoInsumo[] = [];
   proveedores: Proveedor[] = [];
   esEdicion = false;
-  guardando = false;
 
   constructor(private insumosService: InsumosService) {}
 
   ngOnInit(): void {
-    // Cargar tipos de insumo y proveedores
-    this.insumosService.getTiposInsumo().subscribe({
-      next: (tipos) => this.tiposInsumo = tipos,
-      error: (error) => console.error('Error al cargar tipos:', error)
-    });
-
-    this.insumosService.getProveedores().subscribe({
-      next: (proveedores) => this.proveedores = proveedores,
-      error: (error) => console.error('Error al cargar proveedores:', error)
-    });
+    this.tiposInsumo = this.insumosService.getTiposInsumo();
+    this.proveedores = this.insumosService.getProveedores();
 
     if (this.insumo) {
       this.esEdicion = true;
@@ -242,22 +481,12 @@ export class InsumoFormComponent implements OnInit {
       return;
     }
 
-    this.guardando = true;
+    if (this.esEdicion) {
+      this.insumosService.actualizarInsumo(this.formulario);
+    } else {
+      this.insumosService.agregarInsumo(this.formulario);
+    }
 
-    const operacion = this.esEdicion
-      ? this.insumosService.actualizarInsumo(this.formulario)
-      : this.insumosService.agregarInsumo(this.formulario);
-
-    operacion.subscribe({
-      next: () => {
-        alert(this.esEdicion ? 'Insumo actualizado correctamente' : 'Insumo creado correctamente');
-        this.cerrar.emit();
-      },
-      error: (error) => {
-        console.error('Error al guardar:', error);
-        alert('Error al guardar el insumo. Verifique que no exista un insumo con el mismo nombre.');
-        this.guardando = false;
-      }
-    });
+    this.cerrar.emit();
   }
 }
