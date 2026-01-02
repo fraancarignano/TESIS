@@ -1,9 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using TESIS_OG.Models;
 
-namespace TESIS_OG.Data;
+namespace TESIS_OG.Models;
 
 public partial class TamarindoDbContext : DbContext
 {
@@ -15,7 +14,9 @@ public partial class TamarindoDbContext : DbContext
         : base(options)
     {
     }
+
     public virtual DbSet<AreaProduccion> AreaProduccions { get; set; }
+
     public virtual DbSet<AvanceAreaProyecto> AvanceAreaProyectos { get; set; }
 
     public virtual DbSet<Ciudad> Ciudads { get; set; }
@@ -68,55 +69,61 @@ public partial class TamarindoDbContext : DbContext
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
-  protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-      => optionsBuilder.UseSqlServer("Server=DESKTOP-VVVV704\\SERVIDOR3;Database=TamarindoDB_Dev;Integrated Security=True;TrustServerCertificate=True;");
+        => optionsBuilder.UseSqlServer("Server=DESKTOP-VVVV704\\SERVIDOR3;Database=TamarindoDB_Dev;Integrated Security=True;TrustServerCertificate=True;Encrypt=False;MultipleActiveResultSets=True;");
 
-  protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AreaProduccion>(entity =>
+        {
+            entity.HasKey(e => e.IdArea).HasName("PK__AreaProd__2FC141AAE659E0BB");
 
-    modelBuilder.Entity<AreaProduccion>(entity =>
-    {
-      // Esto es lo que resuelve el error del mensaje original
-      entity.HasKey(e => e.IdArea).HasName("PK__AreaProd__2FC141AAE659E0BB");
+            entity.ToTable("AreaProduccion");
 
-      entity.ToTable("AreaProduccion");
+            entity.HasIndex(e => e.NombreArea, "UQ__AreaProd__D5E8EEB5EF7793F6").IsUnique();
 
-      entity.Property(e => e.IdArea).HasColumnName("IdArea");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.Estado)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Activo");
+            entity.Property(e => e.NombreArea)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+        });
 
-      entity.Property(e => e.NombreArea)
-          .HasMaxLength(100)
-          .IsUnicode(false)
-          .HasColumnName("NombreArea");
+        modelBuilder.Entity<AvanceAreaProyecto>(entity =>
+        {
+            entity.HasKey(e => e.IdAvanceArea).HasName("PK__AvanceAr__9DF91CFC2A177CDD");
 
-      entity.Property(e => e.Descripcion)
-          .HasMaxLength(255)
-          .IsUnicode(false)
-          .HasColumnName("Descripcion");
+            entity.ToTable("AvanceAreaProyecto");
 
-      entity.Property(e => e.Estado)
-          .HasMaxLength(20)
-          .IsUnicode(false)
-          .HasColumnName("Estado");
+            entity.Property(e => e.FechaActualizacion)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(500)
+                .IsUnicode(false);
 
-      entity.Property(e => e.Orden).HasColumnName("Orden");
-    });
+            entity.HasOne(d => d.IdAreaNavigation).WithMany(p => p.AvanceAreaProyectos)
+                .HasForeignKey(d => d.IdArea)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_AvanceArea_Area");
 
-    modelBuilder.Entity<AvanceAreaProyecto>(entity =>
-    {
-      entity.HasKey(e => e.IdAvanceArea).HasName("PK__AvanceAr__9DF91CFC2A177CDD");
-      entity.ToTable("AvanceAreaProyecto");
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.AvanceAreaProyectos)
+                .HasForeignKey(d => d.IdProyecto)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_AvanceArea_Proyecto");
 
-      entity.Property(e => e.IdAvanceArea).HasColumnName("IdAvanceArea");
-      entity.Property(e => e.IdProyecto).HasColumnName("IdProyecto");
-      entity.Property(e => e.IdArea).HasColumnName("IdArea");
-      entity.Property(e => e.PorcentajeAvance).HasColumnName("PorcentajeAvance").HasColumnType("decimal(5, 2)");
-      entity.Property(e => e.FechaActualizacion).HasColumnName("FechaActualizacion");
-      entity.Property(e => e.IdUsuarioRegistro).HasColumnName("IdUsuarioRegistro");
-      entity.Property(e => e.Observaciones).HasColumnName("Observaciones").IsUnicode(false);
-    });
+            entity.HasOne(d => d.IdUsuarioRegistroNavigation).WithMany(p => p.AvanceAreaProyectos)
+                .HasForeignKey(d => d.IdUsuarioRegistro)
+                .HasConstraintName("FK_AvanceArea_Usuario");
+        });
 
-    modelBuilder.Entity<Ciudad>(entity =>
+        modelBuilder.Entity<Ciudad>(entity =>
         {
             entity.HasKey(e => e.IdCiudad).HasName("PK__Ciudad__0640366C18C83610");
 
@@ -611,7 +618,23 @@ public partial class TamarindoDbContext : DbContext
         {
             entity.HasKey(e => e.IdProyecto).HasName("PK__Proyecto__2544884CB2E93B2C");
 
+            entity.HasIndex(e => e.CodigoProyecto, "UQ__Proyecto__B872EA9EFAEA8A4E").IsUnique();
+
             entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            entity.Property(e => e.AreaActual)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasDefaultValue("Gerencia y Administración");
+            entity.Property(e => e.AvanceControlCalidad).HasDefaultValue(0);
+            entity.Property(e => e.AvanceDepositoLogistica).HasDefaultValue(0);
+            entity.Property(e => e.AvanceDiseñoDesarrollo).HasDefaultValue(0);
+            entity.Property(e => e.AvanceEtiquetadoEmpaquetado).HasDefaultValue(0);
+            entity.Property(e => e.AvanceGerenciaAdmin).HasDefaultValue(0);
+            entity.Property(e => e.CantidadProducida).HasDefaultValue(0);
+            entity.Property(e => e.CodigoProyecto)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.CostoMaterialEstimado).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Descripcion)
                 .HasMaxLength(200)
                 .IsUnicode(false)
@@ -632,6 +655,15 @@ public partial class TamarindoDbContext : DbContext
                 .IsUnicode(false)
                 .IsFixedLength()
                 .HasColumnName("prioridad");
+            entity.Property(e => e.ScrapPorcentaje)
+                .HasDefaultValue(0m)
+                .HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.ScrapTotal)
+                .HasDefaultValue(0m)
+                .HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TipoEstacion)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.TipoPrenda)
                 .HasMaxLength(50)
                 .IsUnicode(false)
@@ -641,6 +673,10 @@ public partial class TamarindoDbContext : DbContext
                 .HasForeignKey(d => d.IdCliente)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Proyectos__id_Cl__5629CD9C");
+
+            entity.HasOne(d => d.IdUsuarioEncargadoNavigation).WithMany(p => p.Proyectos)
+                .HasForeignKey(d => d.IdUsuarioEncargado)
+                .HasConstraintName("FK_Proyecto_UsuarioEncargado");
         });
 
         modelBuilder.Entity<Rol>(entity =>
@@ -689,9 +725,13 @@ public partial class TamarindoDbContext : DbContext
             entity.ToTable("Scrap");
 
             entity.Property(e => e.IdScrap).HasColumnName("id_Scrap");
+            entity.Property(e => e.AreaOcurrencia)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.CantidadScrap)
                 .HasColumnType("decimal(9, 0)")
                 .HasColumnName("cantidad_Scrap");
+            entity.Property(e => e.CostoScrap).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Destino)
                 .HasMaxLength(50)
                 .IsUnicode(false)

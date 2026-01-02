@@ -23,6 +23,8 @@ public partial class Usuario
 
     public DateOnly? UltimoAcceso { get; set; }
 
+    public virtual ICollection<AvanceAreaProyecto> AvanceAreaProyectos { get; set; } = new List<AvanceAreaProyecto>();
+
     public virtual ICollection<HistorialUsuario> HistorialUsuarios { get; set; } = new List<HistorialUsuario>();
 
     public virtual Rol IdRolNavigation { get; set; } = null!;
@@ -30,4 +32,6 @@ public partial class Usuario
     public virtual ICollection<InventarioMovimiento> InventarioMovimientos { get; set; } = new List<InventarioMovimiento>();
 
     public virtual ICollection<ObservacionProyecto> ObservacionProyectos { get; set; } = new List<ObservacionProyecto>();
+
+    public virtual ICollection<Proyecto> Proyectos { get; set; } = new List<Proyecto>();
 }

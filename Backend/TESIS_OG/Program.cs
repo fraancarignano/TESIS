@@ -5,8 +5,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TESIS_OG.Data;
 using TESIS_OG.Services.ClienteService;
-using TESIS_OG.Services.UsuariosService;
 using TESIS_OG.Services.InsumoService;
+using TESIS_OG.Services.ProyectoService;
+using TESIS_OG.Services.ProyectosService;
+using TESIS_OG.Services.UsuariosService;
 
 namespace TESIS_OG
 {
@@ -26,9 +28,10 @@ namespace TESIS_OG
             builder.Services.AddSwaggerGen();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddRazorPages();
+            builder.Services.AddScoped<IProyectosService, ProyectoService>();
 
-            // ========== CORS - SOLO UNA VEZ AQUÍ ==========
-            builder.Services.AddCors(options =>
+      // ========== CORS - SOLO UNA VEZ AQUÍ ==========
+      builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular", policy =>
                 {

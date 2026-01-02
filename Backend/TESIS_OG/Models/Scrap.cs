@@ -19,6 +19,10 @@ public partial class Scrap
 
     public DateTime FechaRegistro { get; set; }
 
+    public string? AreaOcurrencia { get; set; }
+
+    public decimal? CostoScrap { get; set; }
+
     public virtual Insumo IdInsumoNavigation { get; set; } = null!;
 
     public virtual Proyecto IdProyectoNavigation { get; set; } = null!;

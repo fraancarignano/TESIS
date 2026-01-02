@@ -7,9 +7,9 @@ namespace TESIS_OG.Services.InsumoService
 {
   public class InsumoService : IInsumoService
   {
-    private readonly TamarindoDbContext _context;
+    private readonly Data.TamarindoDbContext _context;
 
-    public InsumoService(TamarindoDbContext context)
+    public InsumoService(Data.TamarindoDbContext context)
     {
       _context = context;
     }

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -11,10 +11,10 @@ namespace TESIS_OG.Services.UsuariosService
 {
     public class AuthService : IAuthService
     {
-        private readonly TamarindoDbContext _context;
+        private readonly Data.TamarindoDbContext _context;
         private readonly IConfiguration _configuration;
 
-        public AuthService(TamarindoDbContext context, IConfiguration configuration)
+        public AuthService(Data.TamarindoDbContext context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;
