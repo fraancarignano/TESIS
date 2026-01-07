@@ -2,6 +2,38 @@
 // INTERFACES PRINCIPALES
 // ============================================
 
+import { 
+  AREAS_PRODUCCION, 
+  getAreaActual, 
+  calcularProgresoGeneralPorAreas,
+  getResumenAreas,
+  ResumenAreas
+} from '../constants/areas.constants';
+
+/**
+ * Obtener información detallada de avance por áreas
+ */
+export interface DetalleAvanceAreas {
+  areaActual?: string;
+  progresoGeneral: number;
+  areasCompletadas: number;
+  totalAreas: number;
+  resumen: ResumenAreas;
+}
+
+export function getDetalleAvanceAreas(proyecto: Proyecto): DetalleAvanceAreas {
+  const resumen = getResumenAreas(proyecto);
+  const areaActualObj = getAreaActual(proyecto);
+  
+  return {
+    areaActual: areaActualObj?.nombreCorto,
+    progresoGeneral: calcularProgresoGeneralPorAreas(proyecto),
+    areasCompletadas: resumen.completadas,
+    totalAreas: AREAS_PRODUCCION.length,
+    resumen
+  };
+}
+
 export interface Proyecto {
   idProyecto?: number;
   idCliente: number;

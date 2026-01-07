@@ -1,113 +1,116 @@
 <div class="modal-overlay" (click)="cancelar()">
-  <div class="modal-container project-modal" (click)="$event.stopPropagation()">
+  <div class="modal-container compact" (click)="$event.stopPropagation()">
     
+    <!-- HEADER COMPACTO -->
     <div class="modal-header">
-      <div class="header-content">
-        <div class="icon-badge">
-          <i class="fas fa-folder-plus"></i>
-        </div>
-        <div class="header-text">
-          <h2>Nuevo Proyecto</h2>
-          <p class="subtitle">Ingresa los datos del proyecto</p>
-        </div>
-      </div>
-      <button class="btn-close" (click)="cancelar()" aria-label="Cerrar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
+      <h2><i class="fas fa-folder-plus"></i> Nuevo Proyecto</h2>
+      <button class="btn-close" (click)="cancelar()">×</button>
     </div>
 
-    <div class="modal-body">
+    <!-- BODY SIN SCROLL -->
+    <div class="modal-body-compact">
       <form [formGroup]="formulario" (ngSubmit)="guardar()">
         
-        <div class="form-row">
-          <div class="form-field">
+        <!-- ROW 1: Cliente + Nombre + Tipo -->
+        <div class="grid-3">
+          <div class="field">
             <label>Cliente *</label>
             <select formControlName="idCliente">
-              <option value="">Seleccionar cliente...</option>
-              <option *ngFor="let cliente of clientes" [value]="cliente.idCliente">
-                {{ cliente.nombreCompleto }}
-              </option>
+              <option value="">Seleccionar...</option>
+              <option *ngFor="let c of clientes" [value]="c.idCliente">{{c.nombreCompleto}}</option>
             </select>
-            <small class="error-text" *ngIf="formulario.get('idCliente')?.touched && formulario.get('idCliente')?.errors?.['required']">
-              El cliente es obligatorio
-            </small>
           </div>
-          <div class="form-field">
-            <label>Nombre del Proyecto *</label>
-            <input type="text" formControlName="nombreProyecto" placeholder="Ej: Camisetas Nike 2025">
+          <div class="field">
+            <label>Nombre Proyecto *</label>
+            <input type="text" formControlName="nombreProyecto" placeholder="Ej: Remeras 2026">
+          </div>
+          <div class="field">
+            <label>Tipo Prenda *</label>
+            <select formControlName="tipoPrenda">
+              <option value="">Tipo...</option>
+              <option *ngFor="let t of tiposPrenda" [value]="t">{{t}}</option>
+            </select>
           </div>
         </div>
 
-        <div class="form-row three-cols">
-          <div class="form-field">
-            <label>Tipo de Prenda</label>
-            <input type="text" formControlName="tipoPrenda" placeholder="Ej: Camisetas">
+        <!-- ROW 2: Cantidad + Prioridad + Estación + Usuario -->
+        <div class="grid-4">
+          <div class="field">
+            <label>Cantidad *</label>
+            <input type="number" formControlName="cantidadTotal" placeholder="0" min="1">
           </div>
-          <div class="form-field">
+          <div class="field">
             <label>Prioridad</label>
             <select formControlName="prioridad">
-              <option *ngFor="let p of prioridades" [value]="p">{{ p | titlecase }}</option>
+              <option *ngFor="let p of prioridades" [value]="p">{{p | titlecase}}</option>
             </select>
           </div>
-          <div class="form-field">
-            <label>Cantidad Total</label>
-            <input type="number" formControlName="cantidadTotal" placeholder="0">
+          <div class="field">
+            <label>Estación</label>
+            <select formControlName="tipoEstacion">
+              <option value="">Seleccionar...</option>
+              <option *ngFor="let e of tiposEstacion" [value]="e">{{e}}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Encargado</label>
+            <select formControlName="idUsuarioEncargado">
+              <option value="">Sin asignar</option>
+              <option *ngFor="let u of usuarios" [value]="u.idUsuario">
+                {{u.nombreUsuario}} {{u.apellidoUsuario}}
+              </option>
+            </select>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-field">
-            <label>Fecha de Inicio *</label>
+        <!-- ROW 3: Fechas + Materiales -->
+        <div class="grid-2">
+          <div class="field">
+            <label>Inicio *</label>
             <input type="date" formControlName="fechaInicio">
           </div>
-          <div class="form-field">
-            <label>Fecha Estimada de Fin</label>
+          <div class="field">
+            <label>Fin Estimado</label>
             <input type="date" formControlName="fechaFin">
           </div>
         </div>
-        
-        <div class="insumos-container full-width">
-          <label class="section-title">Asignar Materiales</label>
-          <div class="insumos-selector">
-            <select #insumoSelect class="select-insumo">
-              <option value="">Elegir Insumo...</option>
-              <option *ngFor="let i of listaInsumosDB" [value]="i.idInsumo">
-                {{i.nombreInsumo}} (Stock: {{i.stockActual}})
-              </option>
-            </select>
-            
-            <input type="number" #cantInsumo placeholder="Cant." class="input-cant" min="1">
-            
-            <button type="button" class="btn-add" 
-              (click)="agregarInsumoALista(insumoSelect.value, cantInsumo.value); insumoSelect.value=''; cantInsumo.value=''">
-              <i class="fas fa-plus"></i>
-            </button>
-          </div>
 
-          <div class="insumos-badges" *ngIf="insumosSeleccionados.length > 0">
-            <span class="badge-insumo" *ngFor="let item of insumosSeleccionados; let i = index">
-              {{item.nombre}} ({{item.cantidad}} {{item.unidad}})
-              <i class="fas fa-times delete-icon" (click)="quitarInsumo(i)"></i>
+        <!-- MATERIALES COMPACTO -->
+        <div class="materiales-compact">
+          <label><i class="fas fa-box"></i> Materiales</label>
+          <div class="mat-row">
+            <select #insumo class="flex-2">
+              <option value="">Insumo...</option>
+              <option *ngFor="let i of listaInsumosDB" [value]="i.idInsumo">{{i.nombreInsumo}}</option>
+            </select>
+            <input type="number" #cant placeholder="Cant" class="flex-1" min="1">
+            <input type="number" #desp placeholder="Desp%" class="flex-1" min="0">
+            <button type="button" class="btn-add-mini" 
+              (click)="agregarInsumoALista(insumo.value, cant.value, desp.value); insumo.value=''; cant.value=''; desp.value=''">+</button>
+          </div>
+          
+          <div class="mat-chips" *ngIf="insumosSeleccionados.length > 0">
+            <span class="chip" *ngFor="let m of insumosSeleccionados; let i=index">
+              {{m.nombre}} ({{m.cantidad}})
+              <i class="fas fa-times" (click)="quitarInsumo(i)"></i>
             </span>
           </div>
-          <p class="no-insumos" *ngIf="insumosSeleccionados.length === 0">No hay materiales asignados.</p>
         </div>
 
-        <div class="form-field full-width">
+        <!-- DESCRIPCIÓN (OPCIONAL) -->
+        <div class="field">
           <label>Descripción</label>
-          <textarea formControlName="descripcion" rows="2" placeholder="Notas adicionales sobre la confección..."></textarea>
+          <textarea formControlName="descripcion" rows="2" placeholder="Notas..."></textarea>
         </div>
 
-        <div class="error-general" *ngIf="errorMensaje">{{ errorMensaje }}</div>
+        <!-- ERROR -->
+        <div class="alert-mini" *ngIf="errorMensaje">{{errorMensaje}}</div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="cancelar()">Cancelar</button>
-          <button type="submit" class="btn btn-primary" [disabled]="cargando || formulario.invalid">
-            <span *ngIf="!cargando">Crear Proyecto</span>
-            <span *ngIf="cargando" class="spinner-inline">Guardando...</span>
+        <!-- FOOTER -->
+        <div class="footer-compact">
+          <button type="button" class="btn-sec" (click)="cancelar()" [disabled]="cargando">Cancelar</button>
+          <button type="submit" class="btn-pri" [disabled]="cargando || formulario.invalid">
+            {{cargando ? 'Guardando...' : 'Crear Proyecto'}}
           </button>
         </div>
       </form>

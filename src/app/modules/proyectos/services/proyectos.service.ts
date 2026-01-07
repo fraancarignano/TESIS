@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
-//import { environment } from '../../../../environments/environment';
 import { 
   Proyecto, 
   ProyectoVista,
@@ -22,7 +21,7 @@ import {
   providedIn: 'root'
 })
 export class ProyectosService {
-   private apiUrl = 'https://localhost:7163/api/Proyecto';
+  private apiUrl = 'https://localhost:7163/api/Proyecto';
   
   private proyectosSubject = new BehaviorSubject<Proyecto[]>([]);
   public proyectos$ = this.proyectosSubject.asObservable();
@@ -159,18 +158,38 @@ export class ProyectosService {
   }
 
   /**
-   * Manejo de errores
+   * Manejo de errores MEJORADO
    */
   private handleError(error: HttpErrorResponse) {
+    console.error('🔴 HTTP Error completo:', error);
+    
     let errorMessage = 'Ocurrió un error desconocido';
 
     if (error.error instanceof ErrorEvent) {
+      // Error del lado del cliente
       errorMessage = `Error: ${error.error.message}`;
     } else {
+      // Error del lado del servidor
       if (error.status === 404) {
         errorMessage = 'Proyecto no encontrado';
       } else if (error.status === 400) {
-        errorMessage = error.error?.message || 'Datos inválidos';
+        // Intentar extraer el mensaje del backend
+        if (typeof error.error === 'string') {
+          errorMessage = error.error;
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error.error?.errors) {
+          // Errores de validación de .NET
+          const errors = error.error.errors;
+          const errorMessages = Object.keys(errors).map(key => 
+            `${key}: ${errors[key].join(', ')}`
+          );
+          errorMessage = errorMessages.join(' | ');
+        } else if (error.error?.title) {
+          errorMessage = error.error.title;
+        } else {
+          errorMessage = 'Datos inválidos. Verifica los campos del formulario.';
+        }
       } else if (error.status === 0) {
         errorMessage = 'No se puede conectar con el servidor';
       } else {
@@ -178,6 +197,12 @@ export class ProyectosService {
       }
     }
 
-    return throwError(() => new Error(errorMessage));
+    // Retornar el error HTTP completo para mejor debugging
+    return throwError(() => ({
+      message: errorMessage,
+      status: error.status,
+      statusText: error.statusText,
+      error: error.error
+    }));
   }
 }
