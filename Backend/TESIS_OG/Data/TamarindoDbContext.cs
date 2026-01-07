@@ -68,9 +68,9 @@ public partial class TamarindoDbContext : DbContext
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
-  protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-      => optionsBuilder.UseSqlServer("Server=DESKTOP-VVVV704\\SERVIDOR3;Database=TamarindoDB_Dev;Integrated Security=True;TrustServerCertificate=True;");
+//  protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+//      => optionsBuilder.UseSqlServer("Server=DESKTOP-VVVV704\\SERVIDOR3;Database=TamarindoDB_Dev;Integrated Security=True;TrustServerCertificate=True;");
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -607,43 +607,98 @@ public partial class TamarindoDbContext : DbContext
                 .HasConstraintName("FK__Provincia__id_Pa__267ABA7A");
         });
 
-        modelBuilder.Entity<Proyecto>(entity =>
-        {
-            entity.HasKey(e => e.IdProyecto).HasName("PK__Proyecto__2544884CB2E93B2C");
+    modelBuilder.Entity<Proyecto>(entity =>
+    {
+      entity.HasKey(e => e.IdProyecto).HasName("PK__Proyecto__2544884CB2E93B2C");
 
-            entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
-            entity.Property(e => e.Descripcion)
-                .HasMaxLength(200)
-                .IsUnicode(false)
-                .HasColumnName("descripcion");
-            entity.Property(e => e.Estado)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasColumnName("estado");
-            entity.Property(e => e.FechaFin).HasColumnName("fecha_Fin");
-            entity.Property(e => e.FechaInicio).HasColumnName("fecha_Inicio");
-            entity.Property(e => e.IdCliente).HasColumnName("id_Cliente");
-            entity.Property(e => e.NombreProyecto)
-                .HasMaxLength(80)
-                .IsUnicode(false)
-                .HasColumnName("nombre_Proyecto");
-            entity.Property(e => e.Prioridad)
-                .HasMaxLength(1)
-                .IsUnicode(false)
-                .IsFixedLength()
-                .HasColumnName("prioridad");
-            entity.Property(e => e.TipoPrenda)
-                .HasMaxLength(50)
-                .IsUnicode(false)
-                .HasColumnName("tipo_Prenda");
+      entity.ToTable("Proyectos");
 
-            entity.HasOne(d => d.IdClienteNavigation).WithMany(p => p.Proyectos)
-                .HasForeignKey(d => d.IdCliente)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Proyectos__id_Cl__5629CD9C");
-        });
+      entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
 
-        modelBuilder.Entity<Rol>(entity =>
+      entity.Property(e => e.IdCliente).HasColumnName("id_Cliente");
+
+      entity.Property(e => e.NombreProyecto)
+          .HasMaxLength(80)
+          .IsUnicode(false)
+          .HasColumnName("nombre_Proyecto");
+
+      entity.Property(e => e.TipoPrenda)
+          .HasMaxLength(50)
+          .IsUnicode(false)
+          .HasColumnName("tipo_Prenda");
+
+      entity.Property(e => e.Descripcion)
+          .HasMaxLength(200)
+          .IsUnicode(false)
+          .HasColumnName("descripcion");
+
+      entity.Property(e => e.Prioridad)
+          .HasMaxLength(1)
+          .IsUnicode(false)
+          .IsFixedLength()
+          .HasColumnName("prioridad");
+
+      entity.Property(e => e.Estado)
+          .HasMaxLength(20)
+          .IsUnicode(false)
+          .HasColumnName("estado");
+
+      entity.Property(e => e.FechaInicio).HasColumnName("fecha_Inicio");
+      entity.Property(e => e.FechaFin).HasColumnName("fecha_Fin");
+      entity.Property(e => e.CantidadTotal).HasColumnName("CantidadTotal");
+      entity.Property(e => e.CantidadProducida).HasColumnName("CantidadProducida");
+      entity.Property(e => e.IdUsuarioEncargado).HasColumnName("IdUsuarioEncargado");
+
+      entity.Property(e => e.TipoEstacion)
+          .HasMaxLength(50)
+          .IsUnicode(false)
+          .HasColumnName("TipoEstacion");
+
+      entity.Property(e => e.CodigoProyecto)
+          .HasMaxLength(20)
+          .IsUnicode(false)
+          .HasColumnName("CodigoProyecto");
+
+      entity.Property(e => e.AreaActual)
+          .HasMaxLength(100)
+          .IsUnicode(false)
+          .HasColumnName("AreaActual");
+
+      entity.Property(e => e.AvanceGerenciaAdmin).HasColumnName("AvanceGerenciaAdmin");
+      entity.Property(e => e.AvanceDiseñoDesarrollo).HasColumnName("AvanceDiseñoDesarrollo");
+      entity.Property(e => e.AvanceControlCalidad).HasColumnName("AvanceControlCalidad");
+      entity.Property(e => e.AvanceEtiquetadoEmpaquetado).HasColumnName("AvanceEtiquetadoEmpaquetado");
+      entity.Property(e => e.AvanceDepositoLogistica).HasColumnName("AvanceDepositoLogistica");
+
+      entity.Property(e => e.CostoMaterialEstimado)
+          .HasColumnType("decimal(10, 2)")
+          .HasColumnName("CostoMaterialEstimado");
+
+      entity.Property(e => e.ScrapTotal)
+          .HasColumnType("decimal(10, 2)")
+          .HasColumnName("ScrapTotal");
+
+      entity.Property(e => e.ScrapPorcentaje)
+          .HasColumnType("decimal(5, 2)")
+          .HasColumnName("ScrapPorcentaje");
+
+      // ✅ Relación con Cliente
+      entity.HasOne(d => d.IdClienteNavigation)
+          .WithMany(p => p.Proyectos)
+          .HasForeignKey(d => d.IdCliente)
+          .OnDelete(DeleteBehavior.ClientSetNull)
+          .HasConstraintName("FK__Proyectos__id_Cl__6A30C649");
+
+      // ✅ Relación con Usuario Encargado
+      // ESTO ES CRÍTICO: Mapear con la colección Proyectos de Usuario
+      entity.HasOne(d => d.IdUsuarioEncargadoNavigation)
+          .WithMany(p => p.Proyectos)  // ← Usa la colección que está en Usuario.cs
+          .HasForeignKey(d => d.IdUsuarioEncargado)
+          .OnDelete(DeleteBehavior.Restrict)
+          .HasConstraintName("FK_Proyecto_UsuarioEncargado");
+    });
+
+    modelBuilder.Entity<Rol>(entity =>
         {
             entity.HasKey(e => e.IdRol).HasName("PK__Rol__76482FD262C3FB13");
 
