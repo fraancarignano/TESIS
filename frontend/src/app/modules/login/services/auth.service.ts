@@ -172,10 +172,12 @@ export class AuthService {
 
   // ==================== NAVEGACIÓN ====================
   navegarAClientes(): void {
-    this.router.navigate(['/clientes']);
+    this.router.navigate(['/proyectos']);
   }
 
   navegarADashboard(): void {
     this.router.navigate(['/dashboard']);
   }
+
+  
 }

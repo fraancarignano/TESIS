@@ -18,7 +18,19 @@ export const routes: Routes = [
     canActivate: [authGuard] // ✅ Protege la ruta
   },
   {
+    path: 'proyectos',
+    loadComponent: () => import('./modules/proyectos/components/proyectos.component').then(m => m.ProyectosComponent),
+    canActivate: [authGuard] // ✅ Protege la ruta
+  },
+  {
+  path: 'inventario',
+  loadComponent: () => import('./modules/inventario/components/inventario.component').then(m => m.InventarioComponent),
+  canActivate: [authGuard]
+  },
+  
+  {
     path: '**',
     redirectTo: '/clientes' // ✅ Rutas no encontradas van a clientes (el guard redirigirá al login si no está autenticado)
   }
+
 ];

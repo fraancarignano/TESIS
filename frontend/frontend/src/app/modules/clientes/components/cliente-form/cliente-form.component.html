@@ -1,0 +1,524 @@
+<div class="modal-overlay" (click)="cancelar()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <!-- Header con gradiente -->
+    <div class="modal-header">
+      <div class="header-content">
+        <div class="icon-badge">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h2>{{ titulo }}</h2>
+          <p class="subtitle">{{ esEdicion ? 'Actualiza la información del cliente' : 'Ingresa los datos del nuevo cliente' }}</p>
+        </div>
+      </div>
+      <button class="btn-close" (click)="cancelar()" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Contenido del formulario -->
+    <div class="modal-body">
+      <form [formGroup]="formulario" (ngSubmit)="guardar()">
+        
+        <!-- SECCIÓN 0: Tipo de Persona -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Tipo de Persona
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-field full-width">
+              <label for="tiposPersona">
+                Tipo de Persona <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <select 
+                  id="tiposPersona"
+                  formControlName="tiposPersona"
+                  [class.error]="tieneError('tiposPersona')"
+                >
+                  
+                  <option *ngFor="let tipo of tiposPersona" [value]="tipo">{{ tipo }}</option>
+                </select>
+              </div>
+              <span class="error-message" *ngIf="tieneError('tiposPersona')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {{ obtenerMensajeError('tiposPersona') }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+   
+        <!-- SECCIÓN 1: Información Personal (Persona Física) -->
+        <div class="form-section" *ngIf="esPersonaFisica()">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Información Personal
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-field">
+              <label for="nombre">
+                Nombre <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <input 
+                  type="text" 
+                  id="nombre"
+                  formControlName="nombre"
+                  placeholder="Ingrese el nombre"
+                  [class.error]="tieneError('nombre')"
+                >
+              </div>
+              <span class="error-message" *ngIf="tieneError('nombre')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {{ obtenerMensajeError('nombre') }}
+              </span>
+            </div>
+
+            <div class="form-field">
+              <label for="apellido">
+                Apellido <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <input 
+                  type="text" 
+                  id="apellido"
+                  formControlName="apellido"
+                  placeholder="Ingrese el apellido"
+                  [class.error]="tieneError('apellido')"
+                >
+              </div>
+              <span class="error-message" *ngIf="tieneError('apellido')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {{ obtenerMensajeError('apellido') }}
+              </span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="tipoDocumento">
+                Tipo de Documento <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                  <line x1="7" y1="8" x2="17" y2="8"></line>
+                  <line x1="7" y1="12" x2="17" y2="12"></line>
+                  <line x1="7" y1="16" x2="13" y2="16"></line>
+                </svg>
+                <select 
+                  id="tipoDocumento"
+                  formControlName="tipoDocumento"
+                  [class.error]="tieneError('tipoDocumento')"
+                >
+                  <option value="">Seleccione tipo</option>
+                  <option *ngFor="let tipo of tiposDocumento" [value]="tipo">{{ tipo }}</option>
+                </select>
+              </div>
+              <span class="error-message" *ngIf="tieneError('tipoDocumento')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {{ obtenerMensajeError('tipoDocumento') }}
+              </span>
+            </div>
+
+            <div class="form-field">
+              <label for="numeroDocumento">
+                Número de Documento <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                  <line x1="7" y1="8" x2="17" y2="8"></line>
+                  <line x1="7" y1="12" x2="17" y2="12"></line>
+                  <line x1="7" y1="16" x2="13" y2="16"></line>
+                </svg>
+                <input 
+                  type="text" 
+                  id="numeroDocumento"
+                  formControlName="numeroDocumento"
+                  placeholder="12345678"
+                  [class.error]="tieneError('numeroDocumento')"
+                >
+              </div>
+              <span class="error-message" *ngIf="tieneError('numeroDocumento')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {{ obtenerMensajeError('numeroDocumento') }}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+
+        <!-- SECCIÓN 1 ALTERNATIVA: Información Fiscal (Persona Jurídica) -->
+        <div class="form-section" *ngIf="esPersonaJuridica()">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            Información Fiscal
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-field full-width">
+              <label for="razonSocial">
+                Razón Social <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                </svg>
+                <input 
+                  type="text" 
+                  id="razonSocial"
+                  formControlName="razonSocial"
+                  placeholder="Empresa S.A."
+                  [class.error]="tieneError('razonSocial')"
+                >
+              </div>
+              <span class="error-message" *ngIf="tieneError('razonSocial')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {{ obtenerMensajeError('razonSocial') }}
+              </span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field full-width">
+              <label for="cuitCuil">
+                CUIT / CUIL <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                  <line x1="7" y1="8" x2="17" y2="8"></line>
+                  <line x1="7" y1="12" x2="17" y2="12"></line>
+                  <line x1="7" y1="16" x2="13" y2="16"></line>
+                </svg>
+                <input 
+                  type="text" 
+                  id="cuitCuil"
+                  formControlName="cuitCuil"
+                  placeholder="20-12345678-9"
+                  maxlength="13"
+                  [class.error]="tieneError('cuitCuil')"
+                >
+              </div>
+              <span class="error-message" *ngIf="tieneError('cuitCuil')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {{ obtenerMensajeError('cuitCuil') }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 2: Información de Contacto -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+            Información de Contacto
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-field">
+              <label for="telefono">
+                Teléfono <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+                <input 
+                  type="tel" 
+                  id="telefono"
+                  formControlName="telefono"
+                  placeholder="+54 351 123-4567"
+                  [class.error]="tieneError('telefono')"
+                >
+              </div>
+              <span class="error-message" *ngIf="tieneError('telefono')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {{ obtenerMensajeError('telefono') }}
+              </span>
+            </div>
+
+            <div class="form-field">
+              <label for="email">
+                Email <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                <input 
+                  type="email" 
+                  id="email"
+                  formControlName="email"
+                  placeholder="correo@empresa.com"
+                  [class.error]="tieneError('email')"
+                >
+              </div>
+              <span class="error-message" *ngIf="tieneError('email')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                {{ obtenerMensajeError('email') }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 3: Ubicación -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            Ubicación
+          </h3>
+          
+          <div class="form-row">
+            <div class="form-field">
+              <label for="idProvincia">
+                Provincia
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <select 
+                  id="idProvincia"
+                  formControlName="idProvincia"
+                >
+                  <option [value]="null">Seleccione provincia</option>
+                  <option *ngFor="let provincia of provincias" [value]="provincia.idProvincia">
+                    {{ provincia.nombre }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="idCiudad">
+                Ciudad
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <select 
+                  id="idCiudad"
+                  formControlName="idCiudad"
+                  [disabled]="!formulario.get('idProvincia')?.value"
+                >
+                  <option [value]="null">Seleccione ciudad</option>
+                  <option *ngFor="let ciudad of ciudades" [value]="ciudad.idCiudad">
+                    {{ ciudad.nombre }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="direccion">
+                Dirección
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <input 
+                  type="text" 
+                  id="direccion"
+                  formControlName="direccion"
+                  placeholder="Calle 123"
+                >
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="codigoPostal">
+                Código Postal
+              </label>
+              <div class="input-wrapper">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                  <path d="M7 15h0M2 9.5h20"></path>
+                </svg>
+                <input 
+                  type="text" 
+                  id="codigoPostal"
+                  formControlName="codigoPostal"
+                  placeholder="5000"
+                  maxlength="10"
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 4: Estado y Observaciones -->
+        <div class="form-section">
+          <h3 class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Información Adicional
+          </h3>
+          
+ <div class="form-row inline-fields">
+    
+    <div class="form-field">
+        <label for="idEstadoCliente">
+            Estado <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+            </svg>
+            <select 
+                id="idEstadoCliente"
+                formControlName="idEstadoCliente"
+                [class.error]="tieneError('idEstadoCliente')"
+            >
+                <option value="">Seleccione estado</option>
+                <option *ngFor="let estado of estadosCliente" [value]="estado.idEstadoCliente">
+                    {{ estado.nombre }}
+                </option>
+            </select>
+        </div>
+        <span class="error-message" *ngIf="tieneError('idEstadoCliente')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            {{ obtenerMensajeError('idEstadoCliente') }}
+        </span>
+    </div>
+
+    <div class="form-field"> <label for="tipoCliente">
+            Categoría del Cliente <span class="required">*</span>
+        </label>
+        <div class="input-wrapper">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <select 
+                id="tipoCliente"
+                formControlName="tipoCliente"
+                [class.error]="tieneError('tipoCliente')"
+            >
+                <option value="">Seleccione categoría</option>
+                <option *ngFor="let tipo of tiposCliente" [value]="tipo">{{ tipo }}</option>
+            </select>
+        </div>
+        <span class="error-message" *ngIf="tieneError('tipoCliente')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            {{ obtenerMensajeError('tipoCliente') }}
+        </span>
+    </div>
+    
+</div>
+          <div class="form-row">
+            <div class="form-field full-width">
+              <label for="observaciones">
+                Observaciones
+              </label>
+              <div class="input-wrapper">
+                <textarea 
+                  id="observaciones"
+                  formControlName="observaciones"
+                  placeholder="Notas adicionales sobre el cliente..."
+                  rows="4"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer con botones -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cancelar()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="formulario.invalid">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            {{ esEdicion ? 'Actualizar Cliente' : 'Registrar Cliente' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

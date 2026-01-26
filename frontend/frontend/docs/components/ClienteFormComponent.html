@@ -1,0 +1,1663 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>tamarindo-escmb documentation</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+	   <link rel="stylesheet" href="../styles/style.css">
+        <link rel="stylesheet" href="../styles/dark.css">
+    </head>
+    <body>
+          <script>
+               // Blocking script to avoid flickering dark mode
+               // Dark mode toggle button
+               var useDark = window.matchMedia('(prefers-color-scheme: dark)');
+               var darkModeState = useDark.matches;
+               var $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               var $darkModeToggles = document.querySelectorAll('.dark-mode-switch');
+               var darkModeStateLocal = localStorage.getItem('compodoc_darkmode-state');
+
+               function checkToggle(check) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].checked = check;
+                    }
+               }
+
+               function toggleDarkMode(state) {
+                    if (window.localStorage) {
+                         localStorage.setItem('compodoc_darkmode-state', state);
+                    }
+
+                    checkToggle(state);
+
+                    const hasClass = document.body.classList.contains('dark');
+
+                    if (state) {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.add('dark');
+                         }
+                         if (!hasClass) {
+                              document.body.classList.add('dark');
+                         }
+                    } else {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.remove('dark');
+                         }
+                         if (hasClass) {
+                              document.body.classList.remove('dark');
+                         }
+                    }
+               }
+
+               useDark.addEventListener('change', function (evt) {
+                    toggleDarkMode(evt.matches);
+               });
+               if (darkModeStateLocal) {
+                    darkModeState = darkModeStateLocal === 'true';
+               }
+               toggleDarkMode(darkModeState);
+          </script>
+          <script>
+              // --- Iframe navigation tracking for Template Playground ---
+              function sendCurrentUrlToParent() {
+                  if (window.parent && window.parent !== window) {
+                      window.parent.postMessage({
+                          type: 'compodoc-iframe-navigate',
+                          url: window.location.pathname + window.location.hash
+                      }, '*');
+                  }
+              }
+              window.addEventListener('hashchange', sendCurrentUrlToParent, false);
+              window.addEventListener('popstate', sendCurrentUrlToParent, false);
+              window.addEventListener('DOMContentLoaded', sendCurrentUrlToParent, false);
+          </script>
+
+        <div class="navbar navbar-default navbar-fixed-top d-md-none p-0">
+               <div class="d-flex">
+                    <a href="../" class="navbar-brand">tamarindo-escmb documentation</a>
+                    <button type="button" class="btn btn-default btn-menu ion-ios-menu" id="btn-menu"></button>
+               </div>
+        </div>
+
+        <div class="xs-menu menu" id="mobile-menu">
+                <div id="book-search-input" role="search"><input type="text" placeholder="Type to search"></div>            <compodoc-menu></compodoc-menu>
+        </div>
+
+        <div class="container-fluid main">
+           <div class="row main">
+               <div class="d-none d-md-block menu">
+                   <compodoc-menu mode="normal"></compodoc-menu>
+               </div>
+               <!-- START CONTENT -->
+               <div class="content component">
+                   <div class="content-data">
+
+
+
+
+
+
+
+
+<ol class="breadcrumb">
+  <li class="breadcrumb-item">Components</li>
+  <li class="breadcrumb-item"
+  >
+  ClienteFormComponent</li>
+</ol>
+
+<ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a href="#info" class="nav-link active"
+                role="tab" id="info-tab" data-bs-toggle="tab" data-link="info">Info</a>
+        </li>
+        <li class="nav-item">
+            <a href="#source" class="nav-link"
+                role="tab" id="source-tab" data-bs-toggle="tab" data-link="source">Source</a>
+        </li>
+        <li class="nav-item">
+            <a href="#templateData" class="nav-link"
+                role="tab" id="templateData-tab" data-bs-toggle="tab" data-link="template">Template</a>
+        </li>
+        <li class="nav-item">
+            <a href="#styleData" class="nav-link"
+                role="tab" id="styleData-tab" data-bs-toggle="tab" data-link="style">Styles</a>
+        </li>
+        <li class="nav-item">
+            <a href="#tree" class="nav-link"
+                role="tab" id="tree-tab" data-bs-toggle="tab" data-link="dom-tree">DOM Tree</a>
+        </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade active in" id="info"><p class="comment">
+    <h3>File</h3>
+</p>
+<p class="comment">
+    <code>src/app/modules/clientes/components/cliente-form/cliente-form.component.ts</code>
+</p>
+
+
+
+
+    <p class="comment">
+        <h3>Implements</h3>
+    </p>
+    <p class="comment">
+                <code>OnInit</code>
+    </p>
+
+
+<section data-compodoc="block-metadata">
+    <h3>Metadata</h3>
+    <table class="table table-sm table-hover metadata">
+        <tbody>
+
+
+
+
+
+
+
+
+
+
+
+
+            <tr>
+                <td class="col-md-3">selector</td>
+                <td class="col-md-9"><code>app-cliente-form</code></td>
+            </tr>
+
+            <tr>
+                <td class="col-md-3">standalone</td>
+                <td class="col-md-9"><code>true</code></td>
+            </tr>
+
+            <tr>
+                <td class="col-md-3">imports</td>
+                <td class="col-md-9">
+                            <code>CommonModule</code>
+                            <code>ReactiveFormsModule</code>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="col-md-3">styleUrls</td>
+                <td class="col-md-9"><code>./cliente-form.component.css</code></td>
+            </tr>
+
+
+
+            <tr>
+                <td class="col-md-3">templateUrl</td>
+                <td class="col-md-9"><code>./cliente-form.component.html</code></td>
+            </tr>
+
+
+
+
+
+
+
+
+        </tbody>
+    </table>
+</section>
+
+    <section data-compodoc="block-index">
+    <h3 id="index">Index</h3>
+    <table class="table table-sm table-bordered index-table">
+        <tbody>
+                <tr>
+                    <td class="col-md-4">
+                        <h6><b>Properties</b></h6>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <ul class="index-list">
+                            <li>
+                                <a href="#esEdicion" >esEdicion</a>
+                            </li>
+                            <li>
+                                <a href="#formulario" >formulario</a>
+                            </li>
+                        </ul>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="col-md-4">
+                        <h6><b>Methods</b></h6>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <ul class="index-list">
+                            <li>
+                                    <span class="modifier">Async</span>
+                                <a href="#cancelar" >cancelar</a>
+                            </li>
+                            <li>
+                                <a href="#guardar" >guardar</a>
+                            </li>
+                            <li>
+                                    <span class="modifier">Private</span>
+                                <a href="#marcarCamposComoTocados" >marcarCamposComoTocados</a>
+                            </li>
+                            <li>
+                                <a href="#ngOnInit" >ngOnInit</a>
+                            </li>
+                        </ul>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="col-md-4">
+                        <h6><b>Inputs</b></h6>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <ul class="index-list">
+                            <li>
+                                <a href="#cliente" >cliente</a>
+                            </li>
+                        </ul>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="col-md-4">
+                        <h6><b>Outputs</b></h6>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <ul class="index-list">
+                            <li>
+                                <a href="#cerrar" >cerrar</a>
+                            </li>
+                        </ul>
+                    </td>
+                </tr>
+
+
+
+                    <tr>
+                        <td class="col-md-4">
+                            <h6><b>Accessors</b></h6>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-md-4">
+                            <ul class="index-list">
+                                <li>
+                                    <a href="#titulo" >titulo</a>
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+        </tbody>
+    </table>
+</section>
+
+    <section data-compodoc="block-constructor">
+    <h3 id="constructor">Constructor</h3>
+        <table class="table table-sm table-bordered">
+            <tbody>
+                <tr>
+                    <td class="col-md-4">
+<code>constructor(fb: FormBuilder, clientesService: <a href="../injectables/ClientesService.html" target="_self">ClientesService</a>, alertas: <a href="../injectables/AlertasService.html" target="_self">AlertasService</a>)</code>
+                    </td>
+                </tr>
+                        <tr>
+                            <td class="col-md-4">
+                                <div class="io-line">Defined in <a href="" data-line="20" class="link-to-prism">src/app/modules/clientes/components/cliente-form/cliente-form.component.ts:20</a></div>
+                            </td>
+                        </tr>
+
+                <tr>
+                    <td class="col-md-4">
+                            <div>
+                                    <b>Parameters :</b>
+                                    <table class="params">
+                                        <thead>
+                                            <tr>
+                                                <td>Name</td>
+                                                    <td>Type</td>
+                                                <td>Optional</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                                <tr>
+                                                        <td>fb</td>
+                                                  
+                                                        <td>
+                                                                    <code>FormBuilder</code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                                <tr>
+                                                        <td>clientesService</td>
+                                                  
+                                                        <td>
+                                                                        <code><a href="../injectables/ClientesService.html" target="_self" >ClientesService</a></code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                                <tr>
+                                                        <td>alertas</td>
+                                                  
+                                                        <td>
+                                                                        <code><a href="../injectables/AlertasService.html" target="_self" >AlertasService</a></code>
+                                                        </td>
+                                                  
+                                                    <td>
+                                                            No
+                                                    </td>
+                                                    
+                                                </tr>
+                                        </tbody>
+                                    </table>
+                            </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+</section>
+
+    <section data-compodoc="block-inputs">
+    <h3 id="inputs">Inputs</h3>
+        <table class="table table-sm table-bordered">
+            <tbody>
+                <tr>
+                    <td class="col-md-4">
+                        <a name="cliente"></a>
+                        <b>cliente</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <i>Type : </i>        <code><a href="../interfaces/Cliente.html" target="_self" >Cliente | null</a></code>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <i>Default value : </i><code>null</code>
+                    </td>
+                </tr>
+                        <tr>
+                            <td class="col-md-2" colspan="2">
+                                    <div class="io-line">Defined in <a href="" data-line="16" class="link-to-prism">src/app/modules/clientes/components/cliente-form/cliente-form.component.ts:16</a></div>
+                            </td>
+                        </tr>
+            </tbody>
+        </table>
+</section>
+    <section data-compodoc="block-outputs">
+    <h3 id="outputs">Outputs</h3>
+        <table class="table table-sm table-bordered">
+            <tbody>
+                <tr>
+                    <td class="col-md-4">
+                        <a name="cerrar"></a>
+                        <b>cerrar</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <i>Type : </i>    <code>EventEmitter</code>
+
+                    </td>
+                </tr>
+                        <tr>
+                            <td class="col-md-2" colspan="2">
+                                    <div class="io-line">Defined in <a href="" data-line="17" class="link-to-prism">src/app/modules/clientes/components/cliente-form/cliente-form.component.ts:17</a></div>
+                            </td>
+                        </tr>
+            </tbody>
+        </table>
+</section>
+
+
+    <section data-compodoc="block-methods">
+    
+    <h3 id="methods">
+        Methods
+    </h3>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="cancelar"></a>
+                    <span class="name">
+                            <span class="modifier">Async</span>
+                        <span ><b>cancelar</b></span>
+                        <a href="#cancelar"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>cancelar()</code>
+                </td>
+            </tr>
+
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="71"
+                                    class="link-to-prism">src/app/modules/clientes/components/cliente-form/cliente-form.component.ts:71</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                        <div class="io-description">
+                            <b>Returns : </b>    <code>Promise&lt;void&gt;</code>
+
+                        </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="guardar"></a>
+                    <span class="name">
+                        <span ><b>guardar</b></span>
+                        <a href="#guardar"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+<code>guardar()</code>
+                </td>
+            </tr>
+
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="52"
+                                    class="link-to-prism">src/app/modules/clientes/components/cliente-form/cliente-form.component.ts:52</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                        <div class="io-description">
+                            <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >void</a></code>
+
+                        </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="marcarCamposComoTocados"></a>
+                    <span class="name">
+                            <span class="modifier">Private</span>
+                        <span ><b>marcarCamposComoTocados</b></span>
+                        <a href="#marcarCamposComoTocados"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>marcarCamposComoTocados()</code>
+                </td>
+            </tr>
+
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="86"
+                                    class="link-to-prism">src/app/modules/clientes/components/cliente-form/cliente-form.component.ts:86</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                        <div class="io-description">
+                            <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >void</a></code>
+
+                        </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="ngOnInit"></a>
+                    <span class="name">
+                        <span ><b>ngOnInit</b></span>
+                        <a href="#ngOnInit"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+<code>ngOnInit()</code>
+                </td>
+            </tr>
+
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="45"
+                                    class="link-to-prism">src/app/modules/clientes/components/cliente-form/cliente-form.component.ts:45</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                        <div class="io-description">
+                            <b>Returns : </b>        <code><a href="https://www.typescriptlang.org/docs/handbook/basic-types.html" target="_blank" >void</a></code>
+
+                        </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+    <section data-compodoc="block-properties">
+    
+    <h3 id="inputs">
+        Properties
+    </h3>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="esEdicion"></a>
+                    <span class="name">
+                        <span ><b>esEdicion</b></span>
+                        <a href="#esEdicion"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <i>Type : </i>    <code>unknown</code>
+
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <i>Default value : </i><code>false</code>
+                    </td>
+                </tr>
+                    <tr>
+                        <td class="col-md-4">
+                                <div class="io-line">Defined in <a href="" data-line="20" class="link-to-prism">src/app/modules/clientes/components/cliente-form/cliente-form.component.ts:20</a></div>
+                        </td>
+                    </tr>
+
+
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="formulario"></a>
+                    <span class="name">
+                        <span ><b>formulario</b></span>
+                        <a href="#formulario"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <i>Type : </i>    <code>FormGroup</code>
+
+                    </td>
+                </tr>
+                    <tr>
+                        <td class="col-md-4">
+                                <div class="io-line">Defined in <a href="" data-line="19" class="link-to-prism">src/app/modules/clientes/components/cliente-form/cliente-form.component.ts:19</a></div>
+                        </td>
+                    </tr>
+
+
+        </tbody>
+    </table>
+</section>
+
+    <section data-compodoc="block-accessors">
+    <h3 id="accessors">
+        Accessors
+    </h3>
+        <table class="table table-sm table-bordered">
+            <tbody>
+                <tr>
+                    <td class="col-md-4">
+                        <a name="titulo"></a>
+                        <span class="name"><b>titulo</b><a href="#titulo"><span class="icon ion-ios-link"></span></a></span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="col-md-4">
+                        <span class="accessor"><b>get</b><code>titulo()</code></span>
+                    </td>
+                </tr>
+                            <tr>
+                                <td class="col-md-4">
+                                    <div class="io-line">Defined in <a href="" data-line="92" class="link-to-prism">src/app/modules/clientes/components/cliente-form/cliente-form.component.ts:92</a></div>
+                                </td>
+                            </tr>
+
+            </tbody>
+        </table>
+</section>
+</div>
+
+
+    <div class="tab-pane fade  tab-source-code" id="source">
+        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Component, Input, Output, EventEmitter, OnInit } from &#x27;@angular/core&#x27;;
+import { CommonModule } from &#x27;@angular/common&#x27;;
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from &#x27;@angular/forms&#x27;;
+import { ClientesService } from &#x27;../../services/clientes.service&#x27;;
+import { Cliente } from &#x27;../../models/cliente.model&#x27;;
+import { AlertasService } from &#x27;../../../../core/services/alertas&#x27;;
+
+@Component({
+  selector: &#x27;app-cliente-form&#x27;,
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: &#x27;./cliente-form.component.html&#x27;,
+  styleUrls: [&#x27;./cliente-form.component.css&#x27;]
+})
+export class ClienteFormComponent implements OnInit {
+  @Input() cliente: Cliente | null &#x3D; null;
+  @Output() cerrar &#x3D; new EventEmitter&lt;void&gt;();
+
+  formulario: FormGroup;
+  esEdicion &#x3D; false;
+
+  constructor(
+    private fb: FormBuilder,
+    private clientesService: ClientesService,
+    private alertas: AlertasService
+  ) {
+    this.formulario &#x3D; this.fb.group({
+      // Información Personal
+      nombre: [&#x27;&#x27;, [Validators.required, Validators.minLength(2)]],
+      apellido: [&#x27;&#x27;, [Validators.required, Validators.minLength(2)]],
+      telefono: [&#x27;&#x27;, [Validators.required]],
+      email: [&#x27;&#x27;, [Validators.required, Validators.email]],
+      
+      // Información Corporativa
+      empresa: [&#x27;&#x27;, [Validators.required]],
+      razon_social: [&#x27;&#x27;], // Opcional
+      cuit: [&#x27;&#x27;, [Validators.required, Validators.pattern(/^\d{2}-\d{8}-\d$/)]],
+      tipo_cliente: [&#x27;&#x27;, [Validators.required]],
+      
+      // Información Adicional
+      observaciones: [&#x27;&#x27;] // Opcional
+    });
+  }
+
+  ngOnInit(): void {
+    if (this.cliente) {
+      this.esEdicion &#x3D; true;
+      this.formulario.patchValue(this.cliente);
+    }
+  }
+
+  guardar(): void {
+    if (this.formulario.valid) {
+      const clienteData &#x3D; this.formulario.value;
+      
+      if (this.esEdicion &amp;&amp; this.cliente?.id) {
+        this.clientesService.actualizarCliente({ ...clienteData, id: this.cliente.id });
+        this.alertas.success(&#x27;¡Cliente actualizado!&#x27;, &#x27;Los cambios se guardaron correctamente&#x27;); 
+      } else {
+        this.clientesService.agregarCliente(clienteData);
+        this.alertas.success(&#x27;¡Cliente registrado!&#x27;, &#x27;El nuevo cliente se agregó correctamente&#x27;);
+
+      }
+      
+      this.cerrar.emit();
+    } else {
+      this.marcarCamposComoTocados();
+    }
+  }
+
+  async cancelar(): Promise&lt;void&gt; {
+  if (this.formulario.dirty) {
+    const confirmado &#x3D; await this.alertas.confirmar(
+      &#x27;¿Descartar cambios?&#x27;,
+      &#x27;Los datos ingresados se perderán&#x27;,
+      &#x27;Sí, salir&#x27;
+    );
+    
+    if (confirmado) {
+      this.cerrar.emit();
+    }
+    } else {
+    this.cerrar.emit();
+  }
+}
+private marcarCamposComoTocados(): void {
+  Object.keys(this.formulario.controls).forEach(key &#x3D;&gt; {
+    this.formulario.get(key)?.markAsTouched();
+  });
+}
+
+  get titulo(): string {
+    return this.esEdicion ? &#x27;Modificar Cliente&#x27; : &#x27;Nuevo Cliente&#x27;;
+  }
+}</code></pre>
+    </div>
+
+    <div class="tab-pane fade " id="templateData">
+        <pre class="line-numbers"><code class="language-html">&lt;div class&#x3D;&quot;modal-overlay&quot; (click)&#x3D;&quot;cancelar()&quot;&gt;
+  &lt;div class&#x3D;&quot;modal-container&quot; (click)&#x3D;&quot;$event.stopPropagation()&quot;&gt;
+    &lt;!-- Header con gradiente --&gt;
+    &lt;div class&#x3D;&quot;modal-header&quot;&gt;
+      &lt;div class&#x3D;&quot;header-content&quot;&gt;
+        &lt;div class&#x3D;&quot;icon-badge&quot;&gt;
+          &lt;svg width&#x3D;&quot;32&quot; height&#x3D;&quot;32&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+            &lt;path d&#x3D;&quot;M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2&quot;&gt;&lt;/path&gt;
+            &lt;circle cx&#x3D;&quot;12&quot; cy&#x3D;&quot;7&quot; r&#x3D;&quot;4&quot;&gt;&lt;/circle&gt;
+          &lt;/svg&gt;
+        &lt;/div&gt;
+        &lt;div class&#x3D;&quot;header-text&quot;&gt;
+          &lt;h2&gt;{{ titulo }}&lt;/h2&gt;
+          &lt;p class&#x3D;&quot;subtitle&quot;&gt;{{ esEdicion ? &#x27;Actualiza la información del cliente&#x27; : &#x27;Ingresa los datos del nuevo cliente&#x27; }}&lt;/p&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+      &lt;button class&#x3D;&quot;btn-close&quot; (click)&#x3D;&quot;cancelar()&quot; aria-label&#x3D;&quot;Cerrar&quot;&gt;
+        &lt;svg width&#x3D;&quot;20&quot; height&#x3D;&quot;20&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2.5&quot;&gt;
+         &lt;line x1&#x3D;&quot;18&quot; y1&#x3D;&quot;6&quot; x2&#x3D;&quot;6&quot; y2&#x3D;&quot;18&quot;&gt;&lt;/line&gt;
+         &lt;line x1&#x3D;&quot;6&quot; y1&#x3D;&quot;6&quot; x2&#x3D;&quot;18&quot; y2&#x3D;&quot;18&quot;&gt;&lt;/line&gt;
+        &lt;/svg&gt;
+      &lt;/button&gt;
+    &lt;/div&gt;
+
+    &lt;!-- Contenido del formulario --&gt;
+    &lt;div class&#x3D;&quot;modal-body&quot;&gt;
+      &lt;form [formGroup]&#x3D;&quot;formulario&quot; (ngSubmit)&#x3D;&quot;guardar()&quot;&gt;
+        &lt;!-- SECCIÓN 1: Información Personal --&gt;
+        &lt;div class&#x3D;&quot;form-section&quot;&gt;
+          &lt;h3 class&#x3D;&quot;section-title&quot;&gt;
+            &lt;svg width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+              &lt;path d&#x3D;&quot;M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2&quot;&gt;&lt;/path&gt;
+              &lt;circle cx&#x3D;&quot;12&quot; cy&#x3D;&quot;7&quot; r&#x3D;&quot;4&quot;&gt;&lt;/circle&gt;
+            &lt;/svg&gt;
+            Información Personal
+          &lt;/h3&gt;
+          
+          &lt;div class&#x3D;&quot;form-row&quot;&gt;
+            &lt;div class&#x3D;&quot;form-field&quot;&gt;
+              &lt;label for&#x3D;&quot;nombre&quot;&gt;
+                Nombre &lt;span class&#x3D;&quot;required&quot;&gt;*&lt;/span&gt;
+              &lt;/label&gt;
+              &lt;div class&#x3D;&quot;input-wrapper&quot;&gt;
+                &lt;svg class&#x3D;&quot;input-icon&quot; width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+                  &lt;path d&#x3D;&quot;M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2&quot;&gt;&lt;/path&gt;
+                  &lt;circle cx&#x3D;&quot;12&quot; cy&#x3D;&quot;7&quot; r&#x3D;&quot;4&quot;&gt;&lt;/circle&gt;
+                &lt;/svg&gt;
+                &lt;input 
+                  type&#x3D;&quot;text&quot; 
+                  id&#x3D;&quot;nombre&quot;
+                  formControlName&#x3D;&quot;nombre&quot;
+                  placeholder&#x3D;&quot;Ingrese el nombre&quot;
+                  [class.error]&#x3D;&quot;formulario.get(&#x27;nombre&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;nombre&#x27;)?.touched&quot;
+                &gt;
+              &lt;/div&gt;
+              &lt;span class&#x3D;&quot;error-message&quot; *ngIf&#x3D;&quot;formulario.get(&#x27;nombre&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;nombre&#x27;)?.touched&quot;&gt;
+                &lt;svg width&#x3D;&quot;14&quot; height&#x3D;&quot;14&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;currentColor&quot;&gt;
+                  &lt;path d&#x3D;&quot;M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z&quot;/&gt;
+                &lt;/svg&gt;
+                El nombre es requerido (mínimo 2 caracteres)
+              &lt;/span&gt;
+            &lt;/div&gt;
+
+            &lt;div class&#x3D;&quot;form-field&quot;&gt;
+              &lt;label for&#x3D;&quot;apellido&quot;&gt;
+                Apellido &lt;span class&#x3D;&quot;required&quot;&gt;*&lt;/span&gt;
+              &lt;/label&gt;
+              &lt;div class&#x3D;&quot;input-wrapper&quot;&gt;
+                &lt;svg class&#x3D;&quot;input-icon&quot; width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+                  &lt;path d&#x3D;&quot;M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2&quot;&gt;&lt;/path&gt;
+                  &lt;circle cx&#x3D;&quot;12&quot; cy&#x3D;&quot;7&quot; r&#x3D;&quot;4&quot;&gt;&lt;/circle&gt;
+                &lt;/svg&gt;
+                &lt;input 
+                  type&#x3D;&quot;text&quot; 
+                  id&#x3D;&quot;apellido&quot;
+                  formControlName&#x3D;&quot;apellido&quot;
+                  placeholder&#x3D;&quot;Ingrese el apellido&quot;
+                  [class.error]&#x3D;&quot;formulario.get(&#x27;apellido&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;apellido&#x27;)?.touched&quot;
+                &gt;
+              &lt;/div&gt;
+              &lt;span class&#x3D;&quot;error-message&quot; *ngIf&#x3D;&quot;formulario.get(&#x27;apellido&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;apellido&#x27;)?.touched&quot;&gt;
+                &lt;svg width&#x3D;&quot;14&quot; height&#x3D;&quot;14&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;currentColor&quot;&gt;
+                  &lt;path d&#x3D;&quot;M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z&quot;/&gt;
+                &lt;/svg&gt;
+                El apellido es requerido (mínimo 2 caracteres)
+              &lt;/span&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+
+          &lt;div class&#x3D;&quot;form-row&quot;&gt;
+            &lt;div class&#x3D;&quot;form-field&quot;&gt;
+              &lt;label for&#x3D;&quot;telefono&quot;&gt;
+                Teléfono &lt;span class&#x3D;&quot;required&quot;&gt;*&lt;/span&gt;
+              &lt;/label&gt;
+              &lt;div class&#x3D;&quot;input-wrapper&quot;&gt;
+                &lt;svg class&#x3D;&quot;input-icon&quot; width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+                  &lt;path d&#x3D;&quot;M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z&quot;&gt;&lt;/path&gt;
+                &lt;/svg&gt;
+                &lt;input 
+                  type&#x3D;&quot;tel&quot; 
+                  id&#x3D;&quot;telefono&quot;
+                  formControlName&#x3D;&quot;telefono&quot;
+                  placeholder&#x3D;&quot;+54 351 123-4567&quot;
+                  [class.error]&#x3D;&quot;formulario.get(&#x27;telefono&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;telefono&#x27;)?.touched&quot;
+                &gt;
+              &lt;/div&gt;
+              &lt;span class&#x3D;&quot;error-message&quot; *ngIf&#x3D;&quot;formulario.get(&#x27;telefono&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;telefono&#x27;)?.touched&quot;&gt;
+                &lt;svg width&#x3D;&quot;14&quot; height&#x3D;&quot;14&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;currentColor&quot;&gt;
+                  &lt;path d&#x3D;&quot;M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z&quot;/&gt;
+                &lt;/svg&gt;
+                El teléfono es requerido
+              &lt;/span&gt;
+            &lt;/div&gt;
+
+            &lt;div class&#x3D;&quot;form-field&quot;&gt;
+              &lt;label for&#x3D;&quot;email&quot;&gt;
+                Email Corporativo &lt;span class&#x3D;&quot;required&quot;&gt;*&lt;/span&gt;
+              &lt;/label&gt;
+              &lt;div class&#x3D;&quot;input-wrapper&quot;&gt;
+                &lt;svg class&#x3D;&quot;input-icon&quot; width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+                  &lt;path d&#x3D;&quot;M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z&quot;&gt;&lt;/path&gt;
+                  &lt;polyline points&#x3D;&quot;22,6 12,13 2,6&quot;&gt;&lt;/polyline&gt;
+                &lt;/svg&gt;
+                &lt;input 
+                  type&#x3D;&quot;email&quot; 
+                  id&#x3D;&quot;email&quot;
+                  formControlName&#x3D;&quot;email&quot;
+                  placeholder&#x3D;&quot;correo@empresa.com&quot;
+                  [class.error]&#x3D;&quot;formulario.get(&#x27;email&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;email&#x27;)?.touched&quot;
+                &gt;
+              &lt;/div&gt;
+              &lt;span class&#x3D;&quot;error-message&quot; *ngIf&#x3D;&quot;formulario.get(&#x27;email&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;email&#x27;)?.touched&quot;&gt;
+                &lt;svg width&#x3D;&quot;14&quot; height&#x3D;&quot;14&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;currentColor&quot;&gt;
+                  &lt;path d&#x3D;&quot;M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z&quot;/&gt;
+                &lt;/svg&gt;
+                Ingresa un email corporativo válido
+              &lt;/span&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;!-- SECCIÓN 2: Información Corporativa --&gt;
+        &lt;div class&#x3D;&quot;form-section&quot;&gt;
+          &lt;h3 class&#x3D;&quot;section-title&quot;&gt;
+            &lt;svg width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+              &lt;rect x&#x3D;&quot;2&quot; y&#x3D;&quot;7&quot; width&#x3D;&quot;20&quot; height&#x3D;&quot;14&quot; rx&#x3D;&quot;2&quot; ry&#x3D;&quot;2&quot;&gt;&lt;/rect&gt;
+              &lt;path d&#x3D;&quot;M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16&quot;&gt;&lt;/path&gt;
+            &lt;/svg&gt;
+            Información Corporativa
+          &lt;/h3&gt;
+          
+          &lt;div class&#x3D;&quot;form-row&quot;&gt;
+            &lt;div class&#x3D;&quot;form-field&quot;&gt;
+              &lt;label for&#x3D;&quot;empresa&quot;&gt;
+                Empresa &lt;span class&#x3D;&quot;required&quot;&gt;*&lt;/span&gt;
+              &lt;/label&gt;
+              &lt;div class&#x3D;&quot;input-wrapper&quot;&gt;
+                &lt;svg class&#x3D;&quot;input-icon&quot; width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+                  &lt;rect x&#x3D;&quot;2&quot; y&#x3D;&quot;7&quot; width&#x3D;&quot;20&quot; height&#x3D;&quot;14&quot; rx&#x3D;&quot;2&quot; ry&#x3D;&quot;2&quot;&gt;&lt;/rect&gt;
+                  &lt;path d&#x3D;&quot;M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16&quot;&gt;&lt;/path&gt;
+                &lt;/svg&gt;
+                &lt;input 
+                  type&#x3D;&quot;text&quot; 
+                  id&#x3D;&quot;empresa&quot;
+                  formControlName&#x3D;&quot;empresa&quot;
+                  placeholder&#x3D;&quot;Nombre de la empresa&quot;
+                  [class.error]&#x3D;&quot;formulario.get(&#x27;empresa&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;empresa&#x27;)?.touched&quot;
+                &gt;
+              &lt;/div&gt;
+              &lt;span class&#x3D;&quot;error-message&quot; *ngIf&#x3D;&quot;formulario.get(&#x27;empresa&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;empresa&#x27;)?.touched&quot;&gt;
+                &lt;svg width&#x3D;&quot;14&quot; height&#x3D;&quot;14&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;currentColor&quot;&gt;
+                  &lt;path d&#x3D;&quot;M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z&quot;/&gt;
+                &lt;/svg&gt;
+                La empresa es requerida
+              &lt;/span&gt;
+            &lt;/div&gt;
+
+            &lt;div class&#x3D;&quot;form-field&quot;&gt;
+              &lt;label for&#x3D;&quot;razon_social&quot;&gt;
+                Razón Social
+              &lt;/label&gt;
+              &lt;div class&#x3D;&quot;input-wrapper&quot;&gt;
+                &lt;svg class&#x3D;&quot;input-icon&quot; width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+                  &lt;path d&#x3D;&quot;M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z&quot;&gt;&lt;/path&gt;
+                &lt;/svg&gt;
+                &lt;input 
+                  type&#x3D;&quot;text&quot; 
+                  id&#x3D;&quot;razon_social&quot;
+                  formControlName&#x3D;&quot;razon_social&quot;
+                  placeholder&#x3D;&quot;Razón Social S.A.&quot;
+                &gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+
+          &lt;div class&#x3D;&quot;form-row&quot;&gt;
+            &lt;div class&#x3D;&quot;form-field&quot;&gt;
+              &lt;label for&#x3D;&quot;cuit&quot;&gt;
+                CUIT &lt;span class&#x3D;&quot;required&quot;&gt;*&lt;/span&gt;
+              &lt;/label&gt;
+              &lt;div class&#x3D;&quot;input-wrapper&quot;&gt;
+                &lt;svg class&#x3D;&quot;input-icon&quot; width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+                  &lt;rect x&#x3D;&quot;3&quot; y&#x3D;&quot;4&quot; width&#x3D;&quot;18&quot; height&#x3D;&quot;16&quot; rx&#x3D;&quot;2&quot;&gt;&lt;/rect&gt;
+                  &lt;line x1&#x3D;&quot;7&quot; y1&#x3D;&quot;8&quot; x2&#x3D;&quot;17&quot; y2&#x3D;&quot;8&quot;&gt;&lt;/line&gt;
+                  &lt;line x1&#x3D;&quot;7&quot; y1&#x3D;&quot;12&quot; x2&#x3D;&quot;17&quot; y2&#x3D;&quot;12&quot;&gt;&lt;/line&gt;
+                  &lt;line x1&#x3D;&quot;7&quot; y1&#x3D;&quot;16&quot; x2&#x3D;&quot;13&quot; y2&#x3D;&quot;16&quot;&gt;&lt;/line&gt;
+                &lt;/svg&gt;
+                &lt;input 
+                  type&#x3D;&quot;text&quot; 
+                  id&#x3D;&quot;cuit&quot;
+                  formControlName&#x3D;&quot;cuit&quot;
+                  placeholder&#x3D;&quot;20-12345678-9&quot;
+                  maxlength&#x3D;&quot;13&quot;
+                  [class.error]&#x3D;&quot;formulario.get(&#x27;cuit&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;cuit&#x27;)?.touched&quot;
+                &gt;
+              &lt;/div&gt;
+              &lt;span class&#x3D;&quot;error-message&quot; *ngIf&#x3D;&quot;formulario.get(&#x27;cuit&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;cuit&#x27;)?.touched&quot;&gt;
+                &lt;svg width&#x3D;&quot;14&quot; height&#x3D;&quot;14&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;currentColor&quot;&gt;
+                  &lt;path d&#x3D;&quot;M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z&quot;/&gt;
+                &lt;/svg&gt;
+                Formato válido: XX-XXXXXXXX-X
+              &lt;/span&gt;
+            &lt;/div&gt;
+
+            &lt;div class&#x3D;&quot;form-field&quot;&gt;
+              &lt;label for&#x3D;&quot;tipo_cliente&quot;&gt;
+                Tipo de Cliente &lt;span class&#x3D;&quot;required&quot;&gt;*&lt;/span&gt;
+              &lt;/label&gt;
+              &lt;div class&#x3D;&quot;input-wrapper&quot;&gt;
+                &lt;svg class&#x3D;&quot;input-icon&quot; width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+                  &lt;path d&#x3D;&quot;M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2&quot;&gt;&lt;/path&gt;
+                  &lt;circle cx&#x3D;&quot;9&quot; cy&#x3D;&quot;7&quot; r&#x3D;&quot;4&quot;&gt;&lt;/circle&gt;
+                  &lt;path d&#x3D;&quot;M23 21v-2a4 4 0 0 0-3-3.87&quot;&gt;&lt;/path&gt;
+                  &lt;path d&#x3D;&quot;M16 3.13a4 4 0 0 1 0 7.75&quot;&gt;&lt;/path&gt;
+                &lt;/svg&gt;
+                &lt;select 
+                  id&#x3D;&quot;tipo_cliente&quot;
+                  formControlName&#x3D;&quot;tipo_cliente&quot;
+                  [class.error]&#x3D;&quot;formulario.get(&#x27;tipo_cliente&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;tipo_cliente&#x27;)?.touched&quot;
+                &gt;
+                  &lt;option value&#x3D;&quot;&quot;&gt;Seleccione un tipo&lt;/option&gt;
+                  &lt;option value&#x3D;&quot;Regular&quot;&gt;Regular&lt;/option&gt;
+                  &lt;option value&#x3D;&quot;Premium&quot;&gt;Premium&lt;/option&gt;
+                  &lt;option value&#x3D;&quot;Corporativo&quot;&gt;Corporativo&lt;/option&gt;
+                  &lt;option value&#x3D;&quot;Gobierno&quot;&gt;Gobierno&lt;/option&gt;
+                &lt;/select&gt;
+              &lt;/div&gt;
+              &lt;span class&#x3D;&quot;error-message&quot; *ngIf&#x3D;&quot;formulario.get(&#x27;tipo_cliente&#x27;)?.invalid &amp;&amp; formulario.get(&#x27;tipo_cliente&#x27;)?.touched&quot;&gt;
+                &lt;svg width&#x3D;&quot;14&quot; height&#x3D;&quot;14&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;currentColor&quot;&gt;
+                  &lt;path d&#x3D;&quot;M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z&quot;/&gt;
+                &lt;/svg&gt;
+                Selecciona un tipo de cliente
+              &lt;/span&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;!-- SECCIÓN 3: Información Adicional --&gt;
+        &lt;div class&#x3D;&quot;form-section&quot;&gt;
+          &lt;h3 class&#x3D;&quot;section-title&quot;&gt;
+            &lt;svg width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+              &lt;path d&#x3D;&quot;M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z&quot;&gt;&lt;/path&gt;
+              &lt;polyline points&#x3D;&quot;14 2 14 8 20 8&quot;&gt;&lt;/polyline&gt;
+              &lt;line x1&#x3D;&quot;16&quot; y1&#x3D;&quot;13&quot; x2&#x3D;&quot;8&quot; y2&#x3D;&quot;13&quot;&gt;&lt;/line&gt;
+              &lt;line x1&#x3D;&quot;16&quot; y1&#x3D;&quot;17&quot; x2&#x3D;&quot;8&quot; y2&#x3D;&quot;17&quot;&gt;&lt;/line&gt;
+              &lt;polyline points&#x3D;&quot;10 9 9 9 8 9&quot;&gt;&lt;/polyline&gt;
+            &lt;/svg&gt;
+            Información Adicional
+          &lt;/h3&gt;
+          
+          &lt;div class&#x3D;&quot;form-row&quot;&gt;
+            &lt;div class&#x3D;&quot;form-field full-width&quot;&gt;
+              &lt;label for&#x3D;&quot;observaciones&quot;&gt;
+                Observaciones
+              &lt;/label&gt;
+              &lt;div class&#x3D;&quot;input-wrapper&quot;&gt;
+                &lt;textarea 
+                  id&#x3D;&quot;observaciones&quot;
+                  formControlName&#x3D;&quot;observaciones&quot;
+                  placeholder&#x3D;&quot;Notas adicionales sobre el cliente...&quot;
+                  rows&#x3D;&quot;4&quot;
+                &gt;&lt;/textarea&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;!-- Footer con botones --&gt;
+         &lt;!-- Footer con botones --&gt;
+        &lt;div class&#x3D;&quot;modal-footer&quot;&gt;
+          &lt;button type&#x3D;&quot;button&quot; class&#x3D;&quot;btn btn-secondary&quot; (click)&#x3D;&quot;cancelar()&quot;&gt;
+            &lt;svg width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2&quot;&gt;
+              &lt;line x1&#x3D;&quot;18&quot; y1&#x3D;&quot;6&quot; x2&#x3D;&quot;6&quot; y2&#x3D;&quot;18&quot;&gt;&lt;/line&gt;
+              &lt;line x1&#x3D;&quot;6&quot; y1&#x3D;&quot;6&quot; x2&#x3D;&quot;18&quot; y2&#x3D;&quot;18&quot;&gt;&lt;/line&gt;
+            &lt;/svg&gt;
+            Cancelar
+          &lt;/button&gt;
+          &lt;button type&#x3D;&quot;submit&quot; class&#x3D;&quot;btn btn-primary&quot; [disabled]&#x3D;&quot;formulario.invalid&quot;&gt;
+            &lt;svg width&#x3D;&quot;18&quot; height&#x3D;&quot;18&quot; viewBox&#x3D;&quot;0 0 24 24&quot; fill&#x3D;&quot;none&quot; stroke&#x3D;&quot;currentColor&quot; stroke-width&#x3D;&quot;2.5&quot;&gt;
+              &lt;polyline points&#x3D;&quot;20 6 9 17 4 12&quot;&gt;&lt;/polyline&gt;
+            &lt;/svg&gt;
+            {{ esEdicion ? &#x27;Actualizar Cliente&#x27; : &#x27;Registrar Cliente&#x27; }}
+          &lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/form&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+    </div>
+
+    <div class="tab-pane fade " id="styleData">
+                <p class="comment">
+                    <code>./cliente-form.component.css</code>
+                </p>
+                <pre class="line-numbers"><code class="language-scss">/* &#x3D;&#x3D;&#x3D; MODAL OVERLAY &#x3D;&#x3D;&#x3D; */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* &#x3D;&#x3D;&#x3D; MODAL CONTAINER &#x3D;&#x3D;&#x3D; */
+.modal-container {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* &#x3D;&#x3D;&#x3D; HEADER &#x3D;&#x3D;&#x3D; */
+.modal-header {
+  background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
+  padding: 32px 32px 28px 32px;
+  position: relative;
+  border-bottom: 4px solid rgba(255, 255, 255, 0.2);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.icon-badge {
+  width: 64px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.icon-badge svg {
+  color: white;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.header-text h2 {
+  margin: 0;
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  margin: 6px 0 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.btn-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.btn-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+/* &#x3D;&#x3D;&#x3D; BODY &#x3D;&#x3D;&#x3D; */
+.modal-body {
+  padding: 32px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* &#x3D;&#x3D;&#x3D; FORM SECTIONS &#x3D;&#x3D;&#x3D; */
+.form-section {
+  margin-bottom: 32px;
+}
+
+.form-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title svg {
+  color: #ff5722;
+  flex-shrink: 0;
+}
+
+/* &#x3D;&#x3D;&#x3D; FORM ROW &#x3D;&#x3D;&#x3D; */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-row:last-child {
+  margin-bottom: 0;
+}
+
+/* &#x3D;&#x3D;&#x3D; FORM FIELD &#x3D;&#x3D;&#x3D; */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c3e50;
+  letter-spacing: 0.2px;
+}
+
+.required {
+  color: #ff5722;
+  margin-left: 2px;
+}
+
+/* &#x3D;&#x3D;&#x3D; INPUT WRAPPER &#x3D;&#x3D;&#x3D; */
+.input-wrapper {
+  position: relative;
+}
+
+.input-wrapper.no-icon select {
+  padding-left: 16px;
+}
+
+.input-wrapper input,
+.input-wrapper select,
+.input-wrapper textarea {
+  width: 100%;
+  padding: 14px 16px 14px 44px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: #fafafa;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.input-wrapper input::placeholder,
+.input-wrapper textarea::placeholder {
+  color: #999;
+  font-weight: 400;
+}
+
+.input-wrapper input:focus,
+.input-wrapper select:focus,
+.input-wrapper textarea:focus {
+  outline: none;
+  border-color: #ff5722;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(255, 87, 34, 0.1);
+}
+
+.input-wrapper input.error,
+.input-wrapper select.error,
+.input-wrapper textarea.error {
+  border-color: #f44336;
+  background: #fff5f5;
+}
+
+/* &#x3D;&#x3D;&#x3D; SELECT ESPECÍFICO &#x3D;&#x3D;&#x3D; */
+.input-wrapper select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns&#x3D;&#x27;http://www.w3.org/2000/svg&#x27; width&#x3D;&#x27;16&#x27; height&#x3D;&#x27;16&#x27; viewBox&#x3D;&#x27;0 0 24 24&#x27; fill&#x3D;&#x27;none&#x27; stroke&#x3D;&#x27;%23666&#x27; stroke-width&#x3D;&#x27;2&#x27; stroke-linecap&#x3D;&#x27;round&#x27; stroke-linejoin&#x3D;&#x27;round&#x27;%3E%3Cpolyline points&#x3D;&#x27;6 9 12 15 18 9&#x27;%3E%3C/polyline%3E%3C/svg%3E&quot;);
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 16px;
+}
+
+.input-wrapper select:focus {
+  background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns&#x3D;&#x27;http://www.w3.org/2000/svg&#x27; width&#x3D;&#x27;16&#x27; height&#x3D;&#x27;16&#x27; viewBox&#x3D;&#x27;0 0 24 24&#x27; fill&#x3D;&#x27;none&#x27; stroke&#x3D;&#x27;%23ff5722&#x27; stroke-width&#x3D;&#x27;2&#x27; stroke-linecap&#x3D;&#x27;round&#x27; stroke-linejoin&#x3D;&#x27;round&#x27;%3E%3Cpolyline points&#x3D;&#x27;6 9 12 15 18 9&#x27;%3E%3C/polyline%3E%3C/svg%3E&quot;);
+}
+
+.input-wrapper select option {
+  padding: 10px;
+  background: white;
+  color: #333;
+}
+
+/* &#x3D;&#x3D;&#x3D; TEXTAREA ESPECÍFICO &#x3D;&#x3D;&#x3D; */
+.input-wrapper textarea {
+  resize: vertical;
+  min-height: 100px;
+  padding: 14px 16px;
+  line-height: 1.6;
+}
+
+/* &#x3D;&#x3D;&#x3D; INPUT ICON &#x3D;&#x3D;&#x3D; */
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  pointer-events: none;
+  transition: color 0.3s ease;
+  z-index: 1;
+}
+
+.input-wrapper input:focus ~ .input-icon,
+.input-wrapper select:focus ~ .input-icon {
+  color: #ff5722;
+}
+
+/* &#x3D;&#x3D;&#x3D; ERROR MESSAGE &#x3D;&#x3D;&#x3D; */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #f44336;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.error-message svg {
+  flex-shrink: 0;
+}
+
+/* &#x3D;&#x3D;&#x3D; FOOTER &#x3D;&#x3D;&#x3D; */
+.modal-footer {
+  padding: 24px 32px;
+  background: #fafafa;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* &#x3D;&#x3D;&#x3D; BUTTONS &#x3D;&#x3D;&#x3D; */
+.btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  justify-content: center;
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-secondary {
+  background: white;
+  color: #666;
+  border: 2px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+  border-color: #ccc;
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* &#x3D;&#x3D;&#x3D; RESPONSIVE &#x3D;&#x3D;&#x3D; */
+@media (max-width: 768px) {
+  .modal-container {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .modal-header {
+    padding: 24px 20px;
+  }
+
+  .header-text h2 {
+    font-size: 22px;
+  }
+
+  .icon-badge {
+    width: 52px;
+    height: 52px;
+  }
+
+  .icon-badge svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .modal-body {
+    padding: 24px 20px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .modal-footer {
+    padding: 20px;
+    flex-direction: column-reverse;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
+.input-wrapper select {
+  padding: 14px 44px !important;
+  padding-right: 40px !important;  
+  appearance: none !important;  
+  background-color: #fafafa !important;
+  background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns&#x3D;&#x27;http://www.w3.org/2000/svg&#x27; width&#x3D;&#x27;16&#x27; height&#x3D;&#x27;16&#x27; viewBox&#x3D;&#x27;0 0 24 24&#x27; fill&#x3D;&#x27;none&#x27; stroke&#x3D;&#x27;%23666&#x27; stroke-width&#x3D;&#x27;2&#x27; stroke-linecap&#x3D;&#x27;round&#x27; stroke-linejoin&#x3D;&#x27;round&#x27;%3E%3Cpolyline points&#x3D;&#x27;6 9 12 15 18 9&#x27;%3E%3C/polyline%3E%3C/svg%3E&quot;) !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+}
+
+.input-wrapper select:focus {
+  background-color: white !important;
+  background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns&#x3D;&#x27;http://www.w3.org/2000/svg&#x27; width&#x3D;&#x27;16&#x27; height&#x3D;&#x27;16&#x27; viewBox&#x3D;&#x27;0 0 24 24&#x27; fill&#x3D;&#x27;none&#x27; stroke&#x3D;&#x27;%23ff5722&#x27; stroke-width&#x3D;&#x27;2&#x27; stroke-linecap&#x3D;&#x27;round&#x27; stroke-linejoin&#x3D;&#x27;round&#x27;%3E%3Cpolyline points&#x3D;&#x27;6 9 12 15 18 9&#x27;%3E%3C/polyline%3E%3C/svg%3E&quot;) !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+}
+
+/* Opciones del select */
+.input-wrapper select option {
+  padding: 8px 12px !important;
+  background: white !important;
+}</code></pre>
+    </div>
+
+    <div class="tab-pane fade " id="tree">
+        <div id="tree-container"></div>
+        <div class="tree-legend">
+            <div class="title">
+                <b>Legend</b>
+            </div>
+            <div>
+                <div class="color htmlelement"></div><span>Html element</span>
+            </div>
+            <div>
+                <div class="color component"></div><span>Component</span>
+            </div>
+            <div>
+                <div class="color directive"></div><span>Html element with directive</span>
+            </div>
+        </div>
+    </div>
+
+    
+</div>
+
+<script src="../js/libs/vis-network.min.js"></script>
+<script src="../js/libs/htmlparser.js"></script>
+<script src="../js/libs/deep-iterator.js"></script>
+<script>
+        var COMPONENT_TEMPLATE = '<div><div class="modal-overlay" (click)="cancelar()">  <div class="modal-container" (click)="$event.stopPropagation()">    <!-- Header con gradiente -->    <div class="modal-header">      <div class="header-content">        <div class="icon-badge">          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>            <circle cx="12" cy="7" r="4"></circle>          </svg>        </div>        <div class="header-text">          <h2>{{ titulo }}</h2>          <p class="subtitle">{{ esEdicion ? \'Actualiza la información del cliente\' : \'Ingresa los datos del nuevo cliente\' }}</p>        </div>    </div>      <button class="btn-close" (click)="cancelar()" aria-label="Cerrar">        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">         <line x1="18" y1="6" x2="6" y2="18"></line>         <line x1="6" y1="6" x2="18" y2="18"></line>        </svg>      </button>    </div>    <!-- Contenido del formulario -->    <div class="modal-body">      <form [formGroup]="formulario" (ngSubmit)="guardar()">        <!-- SECCIÓN 1: Información Personal -->        <div class="form-section">          <h3 class="section-title">            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>              <circle cx="12" cy="7" r="4"></circle>            </svg>            Información Personal          </h3>                    <div class="form-row">            <div class="form-field">              <label for="nombre">                Nombre <span class="required">*</span>              </label>              <div class="input-wrapper">                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>                  <circle cx="12" cy="7" r="4"></circle>                </svg>                <input                   type="text"                   id="nombre"                  formControlName="nombre"                  placeholder="Ingrese el nombre"                  [class.error]="formulario.get(\'nombre\')?.invalid && formulario.get(\'nombre\')?.touched"                >              </div>              <span class="error-message" *ngIf="formulario.get(\'nombre\')?.invalid && formulario.get(\'nombre\')?.touched">                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>                </svg>                El nombre es requerido (mínimo 2 caracteres)              </span>            </div>            <div class="form-field">              <label for="apellido">                Apellido <span class="required">*</span>              </label>              <div class="input-wrapper">                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>                  <circle cx="12" cy="7" r="4"></circle>                </svg>                <input                   type="text"                   id="apellido"                  formControlName="apellido"                  placeholder="Ingrese el apellido"                  [class.error]="formulario.get(\'apellido\')?.invalid && formulario.get(\'apellido\')?.touched"                >              </div>              <span class="error-message" *ngIf="formulario.get(\'apellido\')?.invalid && formulario.get(\'apellido\')?.touched">                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>                </svg>                El apellido es requerido (mínimo 2 caracteres)              </span>            </div>          </div>          <div class="form-row">            <div class="form-field">              <label for="telefono">                Teléfono <span class="required">*</span>              </label>              <div class="input-wrapper">                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>                </svg>                <input                   type="tel"                   id="telefono"                  formControlName="telefono"                  placeholder="+54 351 123-4567"                  [class.error]="formulario.get(\'telefono\')?.invalid && formulario.get(\'telefono\')?.touched"                >              </div>              <span class="error-message" *ngIf="formulario.get(\'telefono\')?.invalid && formulario.get(\'telefono\')?.touched">                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>                </svg>                El teléfono es requerido              </span>            </div>            <div class="form-field">              <label for="email">                Email Corporativo <span class="required">*</span>              </label>              <div class="input-wrapper">                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>                  <polyline points="22,6 12,13 2,6"></polyline>                </svg>                <input                   type="email"                   id="email"                  formControlName="email"                  placeholder="correo@empresa.com"                  [class.error]="formulario.get(\'email\')?.invalid && formulario.get(\'email\')?.touched"                >              </div>              <span class="error-message" *ngIf="formulario.get(\'email\')?.invalid && formulario.get(\'email\')?.touched">                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>                </svg>                Ingresa un email corporativo válido              </span>            </div>          </div>        </div>        <!-- SECCIÓN 2: Información Corporativa -->        <div class="form-section">          <h3 class="section-title">            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>            </svg>            Información Corporativa          </h3>                    <div class="form-row">            <div class="form-field">              <label for="empresa">                Empresa <span class="required">*</span>              </label>              <div class="input-wrapper">                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>                </svg>                <input                   type="text"                   id="empresa"                  formControlName="empresa"                  placeholder="Nombre de la empresa"                  [class.error]="formulario.get(\'empresa\')?.invalid && formulario.get(\'empresa\')?.touched"                >              </div>              <span class="error-message" *ngIf="formulario.get(\'empresa\')?.invalid && formulario.get(\'empresa\')?.touched">                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>                </svg>                La empresa es requerida              </span>            </div>            <div class="form-field">              <label for="razon_social">                Razón Social              </label>              <div class="input-wrapper">                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>                </svg>                <input                   type="text"                   id="razon_social"                  formControlName="razon_social"                  placeholder="Razón Social S.A."                >              </div>            </div>          </div>          <div class="form-row">            <div class="form-field">              <label for="cuit">                CUIT <span class="required">*</span>              </label>              <div class="input-wrapper">                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                  <rect x="3" y="4" width="18" height="16" rx="2"></rect>                  <line x1="7" y1="8" x2="17" y2="8"></line>                  <line x1="7" y1="12" x2="17" y2="12"></line>                  <line x1="7" y1="16" x2="13" y2="16"></line>                </svg>                <input                   type="text"                   id="cuit"                  formControlName="cuit"                  placeholder="20-12345678-9"                  maxlength="13"                  [class.error]="formulario.get(\'cuit\')?.invalid && formulario.get(\'cuit\')?.touched"                >              </div>              <span class="error-message" *ngIf="formulario.get(\'cuit\')?.invalid && formulario.get(\'cuit\')?.touched">                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>                </svg>                Formato válido: XX-XXXXXXXX-X              </span>            </div>            <div class="form-field">              <label for="tipo_cliente">                Tipo de Cliente <span class="required">*</span>              </label>              <div class="input-wrapper">                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>                  <circle cx="9" cy="7" r="4"></circle>                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>                </svg>                <select                   id="tipo_cliente"                  formControlName="tipo_cliente"                  [class.error]="formulario.get(\'tipo_cliente\')?.invalid && formulario.get(\'tipo_cliente\')?.touched"                >                  <option value="">Seleccione un tipo</option>                  <option value="Regular">Regular</option>                  <option value="Premium">Premium</option>                  <option value="Corporativo">Corporativo</option>                  <option value="Gobierno">Gobierno</option>                </select>              </div>              <span class="error-message" *ngIf="formulario.get(\'tipo_cliente\')?.invalid && formulario.get(\'tipo_cliente\')?.touched">                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>                </svg>                Selecciona un tipo de cliente              </span>            </div>          </div>        </div>        <!-- SECCIÓN 3: Información Adicional -->        <div class="form-section">          <h3 class="section-title">            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>              <polyline points="14 2 14 8 20 8"></polyline>              <line x1="16" y1="13" x2="8" y2="13"></line>              <line x1="16" y1="17" x2="8" y2="17"></line>              <polyline points="10 9 9 9 8 9"></polyline>            </svg>            Información Adicional          </h3>                    <div class="form-row">            <div class="form-field full-width">              <label for="observaciones">                Observaciones              </label>              <div class="input-wrapper">                <textarea                   id="observaciones"                  formControlName="observaciones"                  placeholder="Notas adicionales sobre el cliente..."                  rows="4"                ></textarea>              </div>            </div>          </div>        </div>        <!-- Footer con botones -->         <!-- Footer con botones -->        <div class="modal-footer">          <button type="button" class="btn btn-secondary" (click)="cancelar()">            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">              <line x1="18" y1="6" x2="6" y2="18"></line>              <line x1="6" y1="6" x2="18" y2="18"></line>            </svg>            Cancelar          </button>          <button type="submit" class="btn btn-primary" [disabled]="formulario.invalid">            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">              <polyline points="20 6 9 17 4 12"></polyline>            </svg>            {{ esEdicion ? \'Actualizar Cliente\' : \'Registrar Cliente\' }}          </button>        </div>      </form>    </div>  </div></div></div>'
+    var COMPONENTS = [{'name': 'App', 'selector': 'app-root'},{'name': 'AppComponent', 'selector': 'app-root'},{'name': 'ClienteFormComponent', 'selector': 'app-cliente-form'},{'name': 'ClientesComponent', 'selector': 'app-clientes'}];
+    var DIRECTIVES = [];
+    var ACTUAL_COMPONENT = {'name': 'ClienteFormComponent'};
+</script>
+<script src="../js/tree.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   </div><div class="search-results">
+    <div class="has-results">
+        <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+        <ul class="search-results-list"></ul>
+    </div>
+    <div class="no-results">
+        <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+    </div>
+</div>
+</div>
+               <!-- END CONTENT -->
+           </div>
+       </div>
+
+          <label class="dark-mode-switch">
+               <input type="checkbox">
+               <span class="slider">
+                    <svg class="slider-icon" viewBox="0 0 24 24" fill="none" height="20" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" width="20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+                    </svg>
+               </span>
+          </label>
+
+       <script>
+            var COMPODOC_CURRENT_PAGE_DEPTH = 1;
+            var COMPODOC_CURRENT_PAGE_CONTEXT = 'component';
+            var COMPODOC_CURRENT_PAGE_URL = 'ClienteFormComponent.html';
+            var MAX_SEARCH_RESULTS = 15;
+       </script>
+
+       <script>
+               $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               checkToggle(darkModeState);
+               if ($darkModeToggleSwitchers.length > 0) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].addEventListener('change', function (event) {
+                              darkModeState = !darkModeState;
+                              toggleDarkMode(darkModeState);
+                         });
+                    }
+               }
+          </script>
+
+       <script src="../js/libs/custom-elements.min.js"></script>
+       <script src="../js/libs/lit-html.js"></script>
+
+       <script src="../js/menu-wc.js" defer></script>
+       <script nomodule src="../js/menu-wc_es5.js" defer></script>
+
+       <script src="../js/libs/bootstrap-native.js"></script>
+
+       <script src="../js/libs/es6-shim.min.js"></script>
+       <script src="../js/libs/EventDispatcher.js"></script>
+       <script src="../js/libs/promise.min.js"></script>
+
+       <script src="../js/compodoc.js"></script>
+
+       <script src="../js/tabs.js"></script>
+       <script src="../js/menu.js"></script>
+       <script src="../js/libs/clipboard.min.js"></script>
+       <script src="../js/libs/prism.js"></script>
+       <script src="../js/sourceCode.js"></script>
+          <script src="../js/search/search.js"></script>
+          <script src="../js/search/lunr.min.js"></script>
+          <script src="../js/search/search-lunr.js"></script>
+          <script src="../js/search/search_index.js"></script>
+       <script src="../js/lazy-load-graphs.js"></script>
+
+
+    </body>
+</html>

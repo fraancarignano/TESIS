@@ -1,142 +1,180 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { Insumo, TipoInsumo, Proveedor } from '../models/insumo.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InsumosService {
-  // Datos mock de tipos de insumo
-  private tiposInsumo: TipoInsumo[] = [
-    { idTipoInsumo: 1, nombreTipo: 'Cuerinas', descripcion: 'Materiales tipo cuero' },
-    { idTipoInsumo: 2, nombreTipo: 'Friselina', descripcion: 'Telas no tejidas' },
-    { idTipoInsumo: 3, nombreTipo: 'Botones', descripcion: 'Accesorios de cierre' },
-    { idTipoInsumo: 4, nombreTipo: 'Hilos', descripcion: 'Materiales de costura' }
-  ];
+  private apiUrl = 'https://localhost:7163/api/Insumo';
+  private tipoInsumoUrl = 'https://localhost:7163/api/TipoInsumo';
+  private proveedorUrl = 'https://localhost:7163/api/Proveedor';
 
-  // Datos mock de proveedores
-  private proveedores: Proveedor[] = [
-    { idProveedor: 1, nombreProveedor: 'JJhonson', cuit: '20-12345678-9' },
-    { idProveedor: 2, nombreProveedor: 'Aton', cuit: '30-98765432-1' },
-    { idProveedor: 3, nombreProveedor: 'TextilPro', cuit: '27-55588899-3' }
-  ];
+  constructor(private http: HttpClient) {}
 
-  // Datos mock de insumos
-  private insumos: Insumo[] = [
-    {
-      idInsumo: 1,
-      nombreInsumo: 'CueRol',
-      idTipoInsumo: 1,
-      tipoInsumo: this.tiposInsumo[0],
-      unidadMedida: 'Kg',
-      stockActual: 20,
-      stockMinimo: 10,
-      fechaActualizacion: '2024-12-10',
-      idProveedor: 1,
-      proveedor: this.proveedores[0],
-      estado: 'En uso'
-    },
-    {
-      idInsumo: 2,
-      nombreInsumo: 'Friz24',
-      idTipoInsumo: 2,
-      tipoInsumo: this.tiposInsumo[1],
-      unidadMedida: 'Mts',
-      stockActual: 12,
-      stockMinimo: 15,
-      fechaActualizacion: '2024-12-08',
-      idProveedor: 1,
-      proveedor: this.proveedores[0],
-      estado: 'En uso'
-    },
-    {
-      idInsumo: 3,
-      nombreInsumo: 'Boton Clarc',
-      idTipoInsumo: 3,
-      tipoInsumo: this.tiposInsumo[2],
-      unidadMedida: 'Un',
-      stockActual: 100,
-      stockMinimo: 50,
-      fechaActualizacion: '2024-12-12',
-      idProveedor: 2,
-      proveedor: this.proveedores[1],
-      estado: 'A designar'
-    },
-    {
-      idInsumo: 4,
-      nombreInsumo: 'Hilo Poliester',
-      idTipoInsumo: 4,
-      tipoInsumo: this.tiposInsumo[3],
-      unidadMedida: 'Mts',
-      stockActual: 5,
-      stockMinimo: 20,
-      fechaActualizacion: '2024-12-05',
-      idProveedor: 3,
-      proveedor: this.proveedores[2],
-      estado: 'Agotado'
-    }
-  ];
-
-  private insumosSubject = new BehaviorSubject<Insumo[]>(this.insumos);
-
+  /**
+   * Obtener todos los insumos
+   */
   getInsumos(): Observable<Insumo[]> {
-    return this.insumosSubject.asObservable();
+    return this.http.get<any[]>(this.apiUrl).pipe(
+      tap(data => {
+        console.log('Insumos obtenidos:', data);
+      }),
+      catchError(this.handleError)
+    );
   }
 
-  getTiposInsumo(): TipoInsumo[] {
-    return this.tiposInsumo;
+  /**
+   * Obtener insumo por ID
+   */
+  getInsumoPorId(id: number): Observable<Insumo> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+      tap(data => console.log('Insumo obtenido:', data)),
+      catchError(this.handleError)
+    );
   }
 
-  getProveedores(): Proveedor[] {
-    return this.proveedores;
+  /**
+   * Obtener tipos de insumo
+   */
+  getTiposInsumo(): Observable<TipoInsumo[]> {
+    return this.http.get<TipoInsumo[]>(this.tipoInsumoUrl).pipe(
+      tap(data => console.log('Tipos de insumo obtenidos:', data)),
+      catchError(this.handleError)
+    );
   }
 
-  agregarInsumo(insumo: Insumo): void {
-    const nuevoId = Math.max(...this.insumos.map(i => i.idInsumo || 0)) + 1;
-    
-    // Buscar el tipo de insumo y proveedor para incluirlos
-    const tipo = this.tiposInsumo.find(t => t.idTipoInsumo === insumo.idTipoInsumo);
-    const proveedor = this.proveedores.find(p => p.idProveedor === insumo.idProveedor);
-    
-    const nuevoInsumo = { 
-      ...insumo, 
-      idInsumo: nuevoId,
-      tipoInsumo: tipo,
-      proveedor: proveedor,
-      fechaActualizacion: new Date().toISOString().split('T')[0]
+  /**
+   * Obtener proveedores
+   */
+  getProveedores(): Observable<Proveedor[]> {
+    return this.http.get<Proveedor[]>(this.proveedorUrl).pipe(
+      tap(data => console.log('Proveedores obtenidos:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Crear nuevo insumo
+   */
+  agregarInsumo(insumo: Insumo): Observable<any> {
+    const dto = this.mapToBackend(insumo);
+    return this.http.post(this.apiUrl, dto).pipe(
+      tap(data => console.log('Insumo creado:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Actualizar insumo existente
+   */
+  actualizarInsumo(insumo: Insumo): Observable<any> {
+    const dto = this.mapToBackend(insumo);
+    return this.http.put(`${this.apiUrl}/${insumo.idInsumo}`, dto).pipe(
+      tap(data => console.log('Insumo actualizado:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Eliminar insumo
+   */
+  eliminarInsumo(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => console.log('Insumo eliminado:', id)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Cambiar estado del insumo
+   */
+  cambiarEstado(id: number, nuevoEstado: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${id}/estado`, { nuevoEstado }).pipe(
+      tap(() => console.log('Estado cambiado:', { id, nuevoEstado })),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Buscar insumos con filtros
+   */
+  buscarInsumos(filtros: any): Observable<any[]> {
+    return this.http.post<any[]>(`${this.apiUrl}/buscar`, filtros).pipe(
+      tap(data => console.log('Insumos encontrados:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
+   * Mapear del backend al frontend
+   */
+  private mapToFrontend(data: any): Insumo {
+    return {
+      idInsumo: data.idInsumo,
+      nombreInsumo: data.nombreInsumo,
+      idTipoInsumo: data.idTipoInsumo,
+      tipoInsumo: data.nombreTipoInsumo ? {
+        idTipoInsumo: data.idTipoInsumo,
+        nombreTipo: data.nombreTipoInsumo,
+        descripcion: ''
+      } : undefined,
+      unidadMedida: data.unidadMedida,
+      stockActual: data.stockActual,
+      stockMinimo: data.stockMinimo,
+      fechaActualizacion: data.fechaActualizacion,
+      idProveedor: data.idProveedor,
+      proveedor: data.nombreProveedor ? {
+        idProveedor: data.idProveedor || 0,
+        nombreProveedor: data.nombreProveedor,
+        cuit: data.cuitProveedor
+      } : undefined,
+      estado: data.estado
     };
+  }
+
+  /**
+   * Mapear del frontend al backend para CREATE/UPDATE
+   */
+  private mapToBackend(insumo: Insumo): any {
+    return {
+      nombreInsumo: insumo.nombreInsumo,
+      idTipoInsumo: insumo.idTipoInsumo,
+      unidadMedida: insumo.unidadMedida,
+      stockActual: insumo.stockActual,
+      stockMinimo: insumo.stockMinimo,
+      idProveedor: insumo.idProveedor,
+      estado: insumo.estado
+    };
+  }
+
+  /**
+   * Manejo de errores HTTP
+   */
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = 'Ocurrió un error desconocido';
     
-    this.insumos.push(nuevoInsumo);
-    this.insumosSubject.next([...this.insumos]);
-  }
-
-  actualizarInsumo(insumo: Insumo): void {
-    const index = this.insumos.findIndex(i => i.idInsumo === insumo.idInsumo);
-    if (index !== -1) {
-      // Buscar el tipo de insumo y proveedor para incluirlos
-      const tipo = this.tiposInsumo.find(t => t.idTipoInsumo === insumo.idTipoInsumo);
-      const proveedor = this.proveedores.find(p => p.idProveedor === insumo.idProveedor);
+    if (error.error instanceof ErrorEvent) {
+      errorMessage = `Error: ${error.error.message}`;
+    } else {
+      errorMessage = `Código: ${error.status}\nMensaje: ${error.message}`;
       
-      this.insumos[index] = {
-        ...insumo,
-        tipoInsumo: tipo,
-        proveedor: proveedor,
-        fechaActualizacion: new Date().toISOString().split('T')[0]
-      };
-      this.insumosSubject.next([...this.insumos]);
+      switch (error.status) {
+        case 404:
+          errorMessage = 'Recurso no encontrado';
+          break;
+        case 500:
+          errorMessage = 'Error interno del servidor';
+          break;
+        case 0:
+          errorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo en https://localhost:7163';
+          break;
+      }
     }
-  }
-
-  eliminarInsumo(id: number): void {
-    this.insumos = this.insumos.filter(i => i.idInsumo !== id);
-    this.insumosSubject.next([...this.insumos]);
-  }
-
-  cambiarEstado(id: number, nuevoEstado: string): void {
-    const index = this.insumos.findIndex(i => i.idInsumo === id);
-    if (index !== -1) {
-      this.insumos[index].estado = nuevoEstado;
-      this.insumosSubject.next([...this.insumos]);
-    }
+    
+    console.error('Error en InsumosService:', errorMessage, error);
+    return throwError(() => new Error(errorMessage));
   }
 }

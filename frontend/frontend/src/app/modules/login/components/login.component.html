@@ -1,0 +1,105 @@
+<div class="login-container">
+    <div class="panel-izquierdo">
+        <div class="logo-container">
+            <div class="logo">TAMARINDO</div>
+            <div class="icono-caja">
+                <svg width="60" height="60" viewBox="0 0 100 100" fill="none">
+                    <path d="M50 10 L90 30 L90 70 L50 90 L10 70 L10 30 Z" stroke="white" stroke-width="4" fill="none"/>
+                    <path d="M50 10 L50 50 L90 30" stroke="white" stroke-width="4"/>
+                    <path d="M50 50 L10 30" stroke="white" stroke-width="4"/>
+                </svg>
+            </div>
+        </div>
+
+        <h1 class="titulo-principal">Sistema de Gestión Empresarial</h1>
+        <p class="subtitulo">Gestiona tus proyectos, clientes e inventario de forma eficiente y profesional</p>
+
+        <div class="caracteristicas">
+            <div class="caracteristica">
+                <span class="icono-check">✓</span>
+                <span>Control total de proyectos</span>
+            </div>
+            <div class="caracteristica">
+                <span class="icono-check">✓</span>
+                <span>Gestión de inventario en tiempo real</span>
+            </div>
+            <div class="caracteristica">
+                <span class="icono-check">✓</span>
+                <span>Reportes y análisis detallados</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            © 2025 Tamarindo. Todos los derechos reservados.
+        </div>
+    </div> <div class="panel-derecho">
+        <div class="formulario-login">
+            <h2 class="titulo-bienvenida">Bienvenido</h2>
+            <p class="subtitulo-form">Ingresa tus credenciales para acceder al sistema</p>
+
+            <form (ngSubmit)="iniciarSesion()">
+                <div class="campo">
+                    <label for="usuario">Usuario</label>
+                    <div class="input-wrapper">
+                        <span class="icono-input">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                        </span>
+                        <input
+                            type="text"
+                            id="usuario"
+                            [(ngModel)]="nombreUsuario"
+                            name="usuario"
+                            placeholder="Usuario"
+                            [disabled]="cargando"
+                            required
+                        />
+                    </div> </div> <div class="campo">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <span class="icono-input">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </span>
+                        <input
+                            [type]="mostrarPassword ? 'text' : 'password'"
+                            id="password"
+                            [(ngModel)]="password"
+                            name="password"
+                            placeholder="········"
+                            [disabled]="cargando"
+                            required
+                        />
+                        <button
+                            type="button"
+                            class="toggle-password"
+                            (click)="toggleMostrarPassword()"
+                            [disabled]="cargando"
+                        >
+                            <ng-container *ngIf="mostrarPassword; else hideIcon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.46m-1.77-1.77A9.97 9.97 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.08 2.54m-1.74 2.87l-2.48-2.48"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </ng-container>
+                            <ng-template #hideIcon>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </ng-template>
+                        </button>
+                    </div> </div> <button
+                    type="submit"
+                    class="btn-iniciar-sesion"
+                    [disabled]="cargando"
+                >
+                    {{ cargando ? 'Iniciando...' : 'Iniciar Sesión' }}
+                </button>
+            </form> </div> </div> </div>

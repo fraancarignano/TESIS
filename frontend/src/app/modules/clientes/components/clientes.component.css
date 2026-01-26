@@ -18,6 +18,46 @@
   padding: 0;
 }
 
+/* === BREADCRUMB === */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.breadcrumb-item {
+  color: #666;
+  font-weight: 400;
+}
+
+.breadcrumb-item.active {
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.breadcrumb-separator {
+  color: #ccc;
+}
+
+/* === HEADER ACTIONS === */
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+/* Ajuste para que la búsqueda no sea tan ancha */
+.header-actions .busqueda {
+  width: 400px;
+  max-width: 100%;
+}
+
 .header-content {
   flex: 1;
   max-width: 600px;
@@ -152,6 +192,78 @@
 .btn-secondary:hover {
   background: #f5f5f5;
   border-color: #ccc;
+}
+
+/* === DROPDOWN EXPORTAR === */
+.export-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.export-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.export-option {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-size: 14px;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.export-option:last-child {
+  border-bottom: none;
+}
+
+.export-option:hover {
+  background-color: #f5f5f5;
+}
+
+.export-option:active {
+  background-color: #ebebeb;
+}
+
+.export-option svg {
+  color: #666;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.export-option span {
+  white-space: nowrap;
+  font-size: 14px;
+  color: #333;
 }
 
 /* === LOADING === */
@@ -584,9 +696,29 @@
     max-width: 100%;
   }
 
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .export-dropdown {
+    width: 100%;
+  }
+
   .btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .export-menu {
+    right: 0;
+    left: 0;
+    width: 100%;
   }
 
   .filtros-activos {
