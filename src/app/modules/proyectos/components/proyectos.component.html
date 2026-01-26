@@ -1,4 +1,5 @@
 <div class="proyectos-container">
+  <!-- HEADER -->
   <div class="header">
     <div class="breadcrumb">
       <span class="breadcrumb-item">Proyectos</span>
@@ -23,6 +24,7 @@
     </div>
   </div>
 
+  <!-- ESTADÍSTICAS -->
   <div class="estadisticas-wrapper">
     <div class="estadisticas">
       <div class="stat-card stat-activos">
@@ -40,65 +42,122 @@
     </div>
   </div>
 
+  <!-- KANBAN BOARD -->
   <div class="kanban-board">
     
+    <!-- COLUMNA PENDIENTE -->
     <div class="kanban-column">
       <div class="column-header pendiente">
         <span class="column-badge">Pendiente</span>
       </div>
-      <div class="column-content" cdkDropList id="pendientes" [cdkDropListData]="proyectosPendientes"
-        [cdkDropListConnectedTo]="['en-proceso', 'finalizados', 'archivados']" (cdkDropListDropped)="drop($event)">
+      <div class="column-content" 
+           cdkDropList 
+           id="pendientes" 
+           [cdkDropListData]="proyectosFiltrados.pendientes"
+           [cdkDropListConnectedTo]="['en-proceso', 'finalizados', 'archivados']" 
+           (cdkDropListDropped)="drop($event)">
         
-        <div class="proyecto-card" *ngFor="let proyecto of proyectosPendientes" cdkDrag>
-          <div class="proyecto-header">
-            <span class="proyecto-codigo">{{ proyecto.codigoProyecto }}</span>
-          </div>
-          <div class="proyecto-info">
-            <div class="info-row"><span>Cliente:</span> <span>{{ proyecto.clienteNombre }}</span></div>
-            <div class="info-row"><span>Cantidad:</span> <span>{{ proyecto.cantidadProducida || 0 }}/{{ proyecto.cantidadTotal }}</span></div>
-          </div>
-          <div class="proyecto-footer">
-            <button class="btn-ver-detalle" (click)="verDetalleProyecto(proyecto)">VER DETALLES</button>
-          </div>
-        </div>
-        <div class="column-empty" *ngIf="proyectosPendientes.length === 0">
+        <app-proyecto-card 
+          *ngFor="let proyecto of proyectosFiltrados.pendientes" 
+          [proyecto]="proyecto"
+          (verDetalle)="verDetalleProyecto($event)"
+          cdkDrag>
+        </app-proyecto-card>
+
+        <div class="column-empty" *ngIf="proyectosFiltrados.pendientes.length === 0">
           <p>No hay proyectos pendientes</p>
         </div>
       </div>
     </div>
 
+    <!-- COLUMNA EN PROCESO -->
     <div class="kanban-column">
       <div class="column-header en-proceso">
         <span class="column-badge">En Proceso</span>
       </div>
-      <div class="column-content" cdkDropList id="en-proceso" [cdkDropListData]="proyectosEnProceso"
-        [cdkDropListConnectedTo]="['pendientes', 'finalizados', 'archivados']" (cdkDropListDropped)="drop($event)">
+      <div class="column-content" 
+           cdkDropList 
+           id="en-proceso" 
+           [cdkDropListData]="proyectosFiltrados.enProceso"
+           [cdkDropListConnectedTo]="['pendientes', 'finalizados', 'archivados']" 
+           (cdkDropListDropped)="drop($event)">
         
-        <div class="proyecto-card" *ngFor="let proyecto of proyectosEnProceso" cdkDrag>
-          <div class="proyecto-header">
-            <span class="proyecto-codigo">{{ proyecto.codigoProyecto }}</span>
-          </div>
-          <div class="proyecto-info">
-            <div class="info-row"><span>Cliente:</span> <span>{{ proyecto.clienteNombre }}</span></div>
-            <div class="info-row"><span>Cantidad:</span> <span>{{ proyecto.cantidadProducida }}/{{ proyecto.cantidadTotal }}</span></div>
-          </div>
-          <div class="proyecto-footer">
-            <button class="btn-ver-detalle" (click)="verDetalleProyecto(proyecto)">VER DETALLES</button>
-          </div>
-        </div>
-        <div class="column-empty" *ngIf="proyectosEnProceso.length === 0">
+        <app-proyecto-card 
+          *ngFor="let proyecto of proyectosFiltrados.enProceso" 
+          [proyecto]="proyecto"
+          (verDetalle)="verDetalleProyecto($event)"
+          cdkDrag>
+        </app-proyecto-card>
+
+        <div class="column-empty" *ngIf="proyectosFiltrados.enProceso.length === 0">
           <p>No hay proyectos en proceso</p>
         </div>
       </div>
     </div>
 
-    
-    </div> </div> <app-proyecto-form *ngIf="mostrarModalNuevoProyecto" (cerrar)="cerrarModalNuevoProyecto()"></app-proyecto-form>
+    <!-- COLUMNA FINALIZADO -->
+    <div class="kanban-column">
+      <div class="column-header finalizado">
+        <span class="column-badge">Finalizado</span>
+      </div>
+      <div class="column-content" 
+           cdkDropList 
+           id="finalizados" 
+           [cdkDropListData]="proyectosFiltrados.finalizados"
+           [cdkDropListConnectedTo]="['pendientes', 'en-proceso', 'archivados']" 
+           (cdkDropListDropped)="drop($event)">
+        
+        <app-proyecto-card 
+          *ngFor="let proyecto of proyectosFiltrados.finalizados" 
+          [proyecto]="proyecto"
+          (verDetalle)="verDetalleProyecto($event)"
+          cdkDrag>
+        </app-proyecto-card>
 
-<div class="modal-overlay" *ngIf="mostrarModalDetalle" (click)="cerrarModalDetalle()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <h2>Detalle del Proyecto</h2>
-    <p *ngIf="proyectoSeleccionado">{{ proyectoSeleccionado.codigoProyecto }} - {{ proyectoSeleccionado.clienteNombre }}</p>
-    <button class="btn btn-secondary" (click)="cerrarModalDetalle()">Cerrar</button>
+        <div class="column-empty" *ngIf="proyectosFiltrados.finalizados.length === 0">
+          <p>No hay proyectos finalizados</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMNA ARCHIVADO -->
+    <div class="kanban-column">
+      <div class="column-header archivado">
+        <span class="column-badge">Archivado</span>
+      </div>
+      <div class="column-content" 
+           cdkDropList 
+           id="archivados" 
+           [cdkDropListData]="proyectosFiltrados.archivados"
+           [cdkDropListConnectedTo]="['pendientes', 'en-proceso', 'finalizados']" 
+           (cdkDropListDropped)="drop($event)">
+        
+        <app-proyecto-card 
+          *ngFor="let proyecto of proyectosFiltrados.archivados" 
+          [proyecto]="proyecto"
+          (verDetalle)="verDetalleProyecto($event)"
+          cdkDrag>
+        </app-proyecto-card>
+
+        <div class="column-empty" *ngIf="proyectosFiltrados.archivados.length === 0">
+          <p>No hay proyectos archivados</p>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
+
+<!-- MODAL NUEVO PROYECTO -->
+<app-proyecto-form 
+  *ngIf="mostrarModalNuevoProyecto" 
+  (cerrar)="cerrarModalNuevoProyecto()">
+</app-proyecto-form>
+
+<!-- MODAL DETALLE -->
+<app-proyecto-detalle-modal
+  *ngIf="mostrarModalDetalle && proyectoSeleccionado"
+  [proyecto]="proyectoSeleccionado"
+  (cerrar)="cerrarModalDetalle()"
+  (actualizado)="cargarProyectos()">
+</app-proyecto-detalle-modal>

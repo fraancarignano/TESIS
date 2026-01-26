@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { ProyectosService } from '../services/proyectos.service';
 import { ProyectoFormComponent } from './nuevo-proyecto-modal/proyecto-form.component'
-
+import { ProyectoCardComponent } from './proyecto-card/proyecto-card.component';
+import { ProyectoDetalleModalComponent } from './proyecto-detalle-modal/proyecto-detalle-modal.component';
 
 
 import { 
@@ -18,7 +19,7 @@ import {
 @Component({
   selector: 'app-proyectos',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule, ProyectoFormComponent ],
+  imports: [CommonModule, FormsModule, DragDropModule, ProyectoFormComponent, ProyectoCardComponent, ProyectoDetalleModalComponent ],
   templateUrl: './proyectos.component.html',
   styleUrls: ['./proyectos.component.css']
 })

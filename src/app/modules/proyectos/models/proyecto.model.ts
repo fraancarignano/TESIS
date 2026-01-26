@@ -10,9 +10,7 @@ import {
   ResumenAreas
 } from '../constants/areas.constants';
 
-/**
- * Obtener información detallada de avance por áreas
- */
+
 export interface DetalleAvanceAreas {
   areaActual?: string;
   progresoGeneral: number;
@@ -45,7 +43,7 @@ export interface Proyecto {
   estado: EstadoProyecto;
   fechaInicio: string; // "2025-01-15"
   fechaFin?: string | null;
-  cantidadTotal?: number | null;
+  cantidadTotal: number;
   cantidadProducida?: number | null;
   idUsuarioEncargado?: number | null;
   nombreEncargado?: string | null;
