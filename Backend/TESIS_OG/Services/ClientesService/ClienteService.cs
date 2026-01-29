@@ -96,8 +96,8 @@ namespace TESIS_OG.Services.ClienteService
         {
             var clientes = await _context.Clientes
                 .Include(c => c.IdEstadoClienteNavigation)
-                .Include(c => c.IdCiudadNavigation) // ⭐ Incluir Ciudad
-                .Include(c => c.IdProvinciaNavigation) // ⭐ Incluir Provincia
+                .Include(c => c.IdCiudadNavigation)
+                .Include(c => c.IdProvinciaNavigation)
                 .Select(c => new ClienteIndexDTO
                 {
                     IdCliente = c.IdCliente,
@@ -111,8 +111,13 @@ namespace TESIS_OG.Services.ClienteService
                     Email = c.Email,
                     Direccion = c.Direccion,
                     CodigoPostal = c.CodigoPostal,
-                    NombreCiudad = c.IdCiudadNavigation != null ? c.IdCiudadNavigation.NombreCiudad : null, // ⭐
-                    NombreProvincia = c.IdProvinciaNavigation != null ? c.IdProvinciaNavigation.NombreProvincia : null, // ⭐
+
+                    // ✅ AGREGÁ ESTOS DOS
+                    IdCiudad = c.IdCiudad,
+                    IdProvincia = c.IdProvincia,
+
+                    NombreCiudad = c.IdCiudadNavigation != null ? c.IdCiudadNavigation.NombreCiudad : null,
+                    NombreProvincia = c.IdProvinciaNavigation != null ? c.IdProvinciaNavigation.NombreProvincia : null,
                     IdEstadoCliente = c.IdEstadoCliente,
                     NombreEstado = c.IdEstadoClienteNavigation.NombreEstado,
                     FechaAlta = c.FechaAlta
@@ -143,6 +148,10 @@ namespace TESIS_OG.Services.ClienteService
                     Email = c.Email,
                     Direccion = c.Direccion,
                     CodigoPostal = c.CodigoPostal,
+
+                    IdCiudad = c.IdCiudad,
+                    IdProvincia = c.IdProvincia,
+
                     NombreCiudad = c.IdCiudadNavigation != null ? c.IdCiudadNavigation.NombreCiudad : null,
                     NombreProvincia = c.IdProvinciaNavigation != null ? c.IdProvinciaNavigation.NombreProvincia : null,
                     IdEstadoCliente = c.IdEstadoCliente,
@@ -290,6 +299,10 @@ namespace TESIS_OG.Services.ClienteService
                     Email = c.Email,
                     Direccion = c.Direccion,
                     CodigoPostal = c.CodigoPostal,
+
+                    IdCiudad = c.IdCiudad,
+                    IdProvincia = c.IdProvincia,
+
                     NombreCiudad = c.IdCiudadNavigation != null ? c.IdCiudadNavigation.NombreCiudad : null,
                     NombreProvincia = c.IdProvinciaNavigation != null ? c.IdProvinciaNavigation.NombreProvincia : null,
                     IdEstadoCliente = c.IdEstadoCliente,
