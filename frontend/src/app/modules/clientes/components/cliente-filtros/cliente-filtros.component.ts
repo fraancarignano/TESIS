@@ -148,6 +148,14 @@ export class ClienteFiltrosComponent implements OnInit {
       tipoDocumento: this.tipoDocumentoSeleccionado || undefined
     };
 
+    // ✅ AGREGÁ ESTO
+  console.log('🔍 TIPOS:', {
+    idProvincia: typeof filtros.idProvincia,
+    valorProvincia: filtros.idProvincia,
+    idCiudad: typeof filtros.idCiudad,
+    valorCiudad: filtros.idCiudad
+  });
+
     this.filtrosChange.emit(filtros);
   }
 

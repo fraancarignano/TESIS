@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { AuthService } from './modules/login/services/auth.service';
-import { filter } from 'rxjs';
+import { filter } from 'rxjs/operators'; // ✅ Corregido el import
 import { AlertasService } from './core/services/alertas';
 
 @Component({
@@ -42,7 +42,7 @@ export class AppComponent {
   obtenerNombreUsuario(): string {
     const usuario = this.authService.obtenerUsuarioActual();
     if (usuario) {
-      return `${usuario.nombreUsuario} }`.trim();
+      return `${usuario.nombreUsuario}`.trim(); // ✅ Eliminé la llave extra
     }
     return 'Usuario';
   }
@@ -57,20 +57,15 @@ export class AppComponent {
     return 'U';
   }
 
-      async cerrarSesion(): Promise<void> {
-      const confirmar = await this.alertas.confirmar(
-        '¿Estás seguro de que deseas cerrar sesión?',
-        'Sí, cerrar sesión'
-      );
+  async cerrarSesion(): Promise<void> {
+    const confirmar = await this.alertas.confirmar(
+      '¿Cerrar sesión?', // ✅ Título más corto
+      '¿Estás seguro de que deseas cerrar sesión?',
+      'Sí, cerrar sesión'
+    );
 
-      if (confirmar) {
-        this.authService.cerrarSesion();
-      }
+    if (confirmar) {
+      this.authService.cerrarSesion();
     }
-
-
-   // cerrarSesion(): void {
-   // if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-   //   this.authService.cerrarSesion();
-  // }
   }
+}

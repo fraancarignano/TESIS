@@ -112,14 +112,32 @@ export class ClientesComponent implements OnInit {
       }
 
       // Filtrar por provincia
-      if (this.filtrosActuales.idProvincia) {
-        resultado = resultado.filter(c => c.nombreProvincia === this.filtrosActuales!.idProvincia);
-      }
+if (this.filtrosActuales.idProvincia) {
+  console.log('🌍 Filtrando por provincia:', this.filtrosActuales.idProvincia);
+  console.log('🌍 Clientes antes de filtrar:', resultado.length);
+  resultado = resultado.filter(c => {
+    const coincide = c.idProvincia === this.filtrosActuales!.idProvincia;
+    if (!coincide) {
+      console.log(`❌ Cliente ${c.idCliente} no coincide: tiene provincia ${c.idProvincia}`);
+    }
+    return coincide;
+  });
+  console.log('🌍 Clientes después de filtrar:', resultado.length);
+}
 
-      // Filtrar por ciudad
-      if (this.filtrosActuales.idCiudad) {
-        resultado = resultado.filter(c => c.nombreEstado === this.filtrosActuales!.idCiudad);
-      }
+// Filtrar por ciudad
+if (this.filtrosActuales.idCiudad) {
+  console.log('🏙️ Filtrando por ciudad:', this.filtrosActuales.idCiudad);
+  console.log('🏙️ Clientes antes de filtrar:', resultado.length);
+  resultado = resultado.filter(c => {
+    const coincide = c.idCiudad === this.filtrosActuales!.idCiudad;
+    if (!coincide) {
+      console.log(`❌ Cliente ${c.idCliente} no coincide: tiene ciudad ${c.idCiudad}`);
+    }
+    return coincide;
+  });
+  console.log('🏙️ Clientes después de filtrar:', resultado.length);
+}
 
       // Filtrar por rango de fechas
       if (this.filtrosActuales.fechaDesde) {
@@ -152,15 +170,15 @@ export class ClientesComponent implements OnInit {
   /**
    * Manejar cambios en los filtros
    */
-  onFiltrosChange(filtros: FiltrosCliente | null): void {
-  // Si filtros es null o está vacío, no aplicar filtros
-  if (!filtros || (filtros.estados.length === 0 && filtros.tiposCliente.length === 0 && 
-      !filtros.idProvincia && !filtros.idCiudad && !filtros.fechaDesde && 
-      !filtros.fechaHasta && !filtros.tipoDocumento)) {
-    this.filtrosActuales = null;
-  } else {
-    this.filtrosActuales = filtros;
-  }
+ onFiltrosChange(filtros: FiltrosCliente | null): void {
+  console.log('🔍 Filtros recibidos:', filtros); // DEBUG
+  
+  // Simplemente asignar los filtros tal cual vienen
+  this.filtrosActuales = filtros;
+  
+  // DEBUG: Ver qué clientes coinciden
+  console.log('📊 Clientes totales:', this.clientes.length);
+  console.log('📊 Clientes filtrados:', this.clientesFiltrados.length);
 }
 
   /**

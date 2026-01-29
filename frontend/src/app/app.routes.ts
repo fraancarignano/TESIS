@@ -1,11 +1,10 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
-//import { noAuthGuard } from './core/guards/no-auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/login', // ✅ Redirigir a clientes por defecto
+    redirectTo: '/login',
     pathMatch: 'full'
   },
   {
@@ -15,10 +14,15 @@ export const routes: Routes = [
   {
     path: 'clientes',
     loadComponent: () => import('./modules/clientes/components/clientes.component').then(m => m.ClientesComponent),
-    canActivate: [authGuard] // ✅ Protege la ruta
+    canActivate: [authGuard]
   },
   {
-    path: '**',
-    redirectTo: '/clientes' // ✅ Rutas no encontradas van a clientes (el guard redirigirá al login si no está autenticado)
+    path: 'ordenes', // ✅ ANTES del **
+    loadComponent: () => import('./modules/orden-compra/components/orden-compra.component').then(m => m.OrdenCompraComponent),
+    canActivate: [authGuard] // ✅ Con guard
+  },
+  {
+    path: '**', // ✅ SIEMPRE AL FINAL
+    redirectTo: '/clientes'
   }
 ];

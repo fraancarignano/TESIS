@@ -73,7 +73,7 @@
               class="select-filtro"
             >
               <option [value]="undefined">Todas las provincias</option>
-              <option *ngFor="let provincia of provincias" [value]="provincia.idProvincia">
+              <option *ngFor="let provincia of provincias" [ngValue]="provincia.idProvincia">
                 {{ provincia.nombre }}
               </option>
             </select>

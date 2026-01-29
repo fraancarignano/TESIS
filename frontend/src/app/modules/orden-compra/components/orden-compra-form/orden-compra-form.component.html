@@ -1,0 +1,215 @@
+<div class="modal-overlay" (click)="cerrarFormulario()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Nueva Orden de Compra</h2>
+      <button class="btn-close" (click)="cerrarFormulario()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <form>
+        <!-- Información General -->
+        <div class="form-section">
+          <h3>Información General</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nroOrden">Número de Orden *</label>
+              <input
+                type="text"
+                id="nroOrden"
+                [(ngModel)]="nroOrden"
+                name="nroOrden"
+                placeholder="OC-001"
+                [disabled]="cargando"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="proveedor">Proveedor *</label>
+              <select
+                id="proveedor"
+                [(ngModel)]="idProveedorSeleccionado"
+                name="proveedor"
+                (change)="onProveedorChange()"
+                [disabled]="cargando"
+                required
+              >
+                <option [ngValue]="undefined">Seleccione un proveedor</option>
+                <option *ngFor="let proveedor of proveedores" [ngValue]="proveedor.idProveedor">
+                  {{ proveedor.nombreProveedor }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="fechaSolicitud">Fecha de Solicitud *</label>
+              <input
+                type="date"
+                id="fechaSolicitud"
+                [(ngModel)]="fechaSolicitud"
+                name="fechaSolicitud"
+                [disabled]="cargando"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="fechaEntrega">Fecha de Entrega Estimada</label>
+              <input
+                type="date"
+                id="fechaEntrega"
+                [(ngModel)]="fechaEntregaEstimada"
+                name="fechaEntrega"
+                [disabled]="cargando"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="estado">Estado</label>
+            <select
+              id="estado"
+              [(ngModel)]="estado"
+              name="estado"
+              [disabled]="cargando"
+            >
+              <option value="Pendiente">Pendiente</option>
+              <option value="Aprobada">Aprobada</option>
+              <option value="Recibida">Recibida</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Agregar Insumos -->
+        <div class="form-section">
+          <h3>Agregar Insumos</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="insumo">Insumo</label>
+              <select
+                id="insumo"
+                [(ngModel)]="insumoSeleccionado"
+                name="insumo"
+                [disabled]="cargando || !idProveedorSeleccionado"
+              >
+                <option [ngValue]="undefined">Seleccione un insumo</option>
+                <option *ngFor="let insumo of insumosDisponibles" [ngValue]="insumo.idInsumo">
+                  {{ insumo.nombreInsumo }} (Stock: {{ insumo.stockActual }} {{ insumo.unidadMedida }})
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group form-group-small">
+              <label for="cantidad">Cantidad</label>
+              <input
+                type="number"
+                id="cantidad"
+                [(ngModel)]="cantidadInsumo"
+                name="cantidad"
+                min="1"
+                step="1"
+                [disabled]="cargando"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="precio">Precio Unitario</label>
+              <input
+                type="number"
+                id="precio"
+                [(ngModel)]="precioUnitarioInsumo"
+                name="precio"
+                min="0"
+                step="0.01"
+                [disabled]="cargando"
+              />
+            </div>
+
+            <div class="form-group form-group-button">
+              <button
+                type="button"
+                class="btn-add"
+                (click)="agregarInsumo()"
+                [disabled]="cargando || !insumoSeleccionado"
+              >
+                + Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de Insumos Agregados -->
+        <div class="form-section" *ngIf="detalles.length > 0">
+          <h3>Insumos en la Orden</h3>
+          
+          <div class="tabla-container">
+            <table class="tabla-insumos">
+              <thead>
+                <tr>
+                  <th>Insumo</th>
+                  <th>Cantidad</th>
+                  <th>Precio Unitario</th>
+                  <th>Subtotal</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let detalle of detalles">
+                  <td>{{ obtenerNombreInsumo(detalle.idInsumo) }}</td>
+                  <td>{{ detalle.cantidad }}</td>
+                  <td>${{ detalle.precioUnitario | number:'1.2-2' }}</td>
+                  <td>${{ detalle.subtotal | number:'1.2-2' }}</td>
+                  <td>
+                    <button
+                      type="button"
+                      class="btn-eliminar-insumo"
+                      (click)="eliminarInsumo(detalle.idInsumo)"
+                      [disabled]="cargando"
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3" class="text-right"><strong>TOTAL:</strong></td>
+                  <td colspan="2"><strong>${{ totalOrden | number:'1.2-2' }}</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Mensaje si no hay insumos -->
+        <div class="empty-state" *ngIf="detalles.length === 0">
+          <p>No hay insumos agregados. Agregue al menos un insumo para crear la orden.</p>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="cerrarFormulario()"
+        [disabled]="cargando"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="guardarOrden()"
+        [disabled]="cargando || detalles.length === 0"
+      >
+        {{ cargando ? 'Guardando...' : 'Crear Orden' }}
+      </button>
+    </div>
+  </div>
+</div>
