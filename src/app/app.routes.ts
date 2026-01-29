@@ -23,14 +23,28 @@ export const routes: Routes = [
     canActivate: [authGuard] // ✅ Protege la ruta
   },
   {
+    path: 'proyectos/crear',
+    loadComponent: () => import('./modules/proyectos/components/nuevo-proyecto-modal/proyecto-form.component').then(m => m.ProyectoFormComponent),
+    canActivate: [authGuard] 
+  },
+  {
   path: 'inventario',
   loadComponent: () => import('./modules/inventario/components/inventario.component').then(m => m.InventarioComponent),
   canActivate: [authGuard]
   },
-  
+  {
+  path: 'reportes/inventario',
+  loadComponent: () => import('./modules/reportes/Inventario/reporte-inventario-critico.component'),
+  canActivate: [authGuard]
+},
+{
+    path: 'ordenes',
+    loadComponent: () => import('./modules/orden-compra/components/orden-compra.component').then(m => m.OrdenCompraComponent),
+    canActivate: [authGuard]
+  },
   {
     path: '**',
-    redirectTo: '/clientes' // ✅ Rutas no encontradas van a clientes (el guard redirigirá al login si no está autenticado)
+    redirectTo: '/proyectos' 
   }
 
 ];

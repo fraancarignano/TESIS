@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InsumosService } from '../services/insumos.service';
-import { Insumo } from './../models/insumo.model';
+import { Insumo } from '../models/insumo.model';
 import { InsumoDetalleModalComponent } from '../insumo-detalle-modal/insumo-detalle-modal.component';
 import { InsumoFormComponent } from '../insumo-form/insumo-form.component';
 

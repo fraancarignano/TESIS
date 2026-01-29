@@ -6,6 +6,7 @@ import { AuthService } from './modules/login/services/auth.service';
 import { filter } from 'rxjs';
 import { AlertasService } from './core/services/alertas';
 
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -15,6 +16,8 @@ import { AlertasService } from './core/services/alertas';
 })
 export class AppComponent {
   mostrarSidebar = false;
+  reportesAbierto = false; 
+  proyectoAbierto = false; 
 
   constructor(
     private authService: AuthService,
@@ -64,10 +67,21 @@ export class AppComponent {
       );
 
       if (confirmar) {
+
+        this.reportesAbierto = false;
+        this.proyectoAbierto = false;
         this.authService.cerrarSesion();
       }
     }
 
+      toggleReportes() {
+      this.reportesAbierto = !this.reportesAbierto;
+    }
+      toggleProyectos() { 
+      this.proyectoAbierto = !this.proyectoAbierto;
+    }
+
+    
 
    // cerrarSesion(): void {
    // if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {

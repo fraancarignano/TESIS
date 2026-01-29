@@ -95,7 +95,7 @@
 
 .user-info {
   flex: 1;
-  min-width: 0; /* Para que el texto se trunque correctamente */
+  min-width: 0;
 }
 
 .user-name {
@@ -136,4 +136,46 @@
 .logout-btn svg {
   width: 16px;
   height: 16px;
+}
+
+/* Estilos para el menú desplegable */
+.nav-item-container {
+  width: 100%;
+}
+
+.nav-item.parent {
+  cursor: pointer;
+  user-select: none;
+}
+
+.nav-item.parent:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  opacity: 0;
+}
+
+.submenu.open {
+  max-height: 500px;
+  opacity: 1;
+}
+
+.nav-item.sub {
+  padding-left: 2.5rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.nav-item.sub:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-item.sub.active {
+  background-color: rgba(0, 149, 218, 0.2);
+  border-left: 3px solid #0095da;
 }

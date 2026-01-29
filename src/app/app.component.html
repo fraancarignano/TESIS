@@ -1,15 +1,33 @@
 <!-- app.component.html -->
 <div class="app-layout">
-  <!-- Sidebar - Solo se muestra si NO estás en login -->
   <aside class="sidebar" *ngIf="mostrarSidebar">
     <div class="logo">
       TAMARINDO
     </div>
     
-      <a routerLink="/proyectos" routerLinkActive="active" class="nav-item">
-        <span class="text">Proyectos</span>
-      </a>
-      
+    <nav class="nav-menu">
+
+      <!-- Proyectos con submenu -->
+      <div class="nav-item-container">
+        <a routerLink="/proyectos" 
+          routerLinkActive="active" 
+          class="nav-item parent" 
+          [class.active]="proyectoAbierto"
+          (click)="toggleProyectos()">
+          <span class="text">Proyectos</span>
+        </a>
+        
+        <div class="submenu" [class.open]="proyectoAbierto">
+          <a routerLink="/proyectos/crear" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Crear Proyecto</span>
+          </a>
+          <a routerLink="/proyectos/historial" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Consultar Historial de Proyectos</span>
+          </a>
+        </div>
+      </div>
+
+            
       <a routerLink="/clientes" routerLinkActive="active" class="nav-item">
         <span class="text">Clientes</span>
       </a>
@@ -18,15 +36,37 @@
         <span class="text">Inventario</span>
       </a>
 
-      <a routerLink="/reportes" routerLinkActive="active" class="nav-item">
-        <span class="text">Reportes</span>
-      </a>
-            
+      <!-- Reportes con submenu -->
+      <div class="nav-item-container">
+        <div class="nav-item parent" 
+             [class.active]="reportesAbierto"
+             (click)="toggleReportes()">
+          <span class="text">Reportes</span>
+        </div>
+        
+        <div class="submenu" [class.open]="reportesAbierto">
+          <a routerLink="/reportes/proyectos" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Reporte de Proyectos</span>
+          </a>
+          <a routerLink="/reportes/inventario" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Reporte de Inventario</span>
+          </a>
+          <a routerLink="/reportes/financiero" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Reporte Financiero</span>
+          </a>
+          <a routerLink="/reportes/clientes" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Reporte de Clientes</span>
+          </a>
+        </div>
+      </div>
+                  
       <a routerLink="/usuarios" routerLinkActive="active" class="nav-item">
         <span class="text">Usuarios</span>
       </a>
-      
-      <nav class="nav-menu">
+
+      <a routerLink="/ordenes" routerLinkActive="active" class="nav-item">
+        <span class="text">Órdenes de Compra</span>
+      </a>
     </nav>
 
     <div class="user-profile">
@@ -48,7 +88,6 @@
     </div>
   </aside>
 
-  <!-- Contenido principal -->
   <main class="main-content" [class.sin-sidebar]="!mostrarSidebar">
     <router-outlet></router-outlet>
   </main>

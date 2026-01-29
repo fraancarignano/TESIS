@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrdenCompraService } from '../../services/orden-compra.service';
 import { NuevaOrdenCompra, DetalleOrdenCompraDTO, Proveedor, Insumo } from '../../models/orden-compra.model';
-import { AlertasService } from '../../../../core/services/alertas';
+import { AlertasService } from '../../../../../../No-Frontend/src/app/core/services/alertas';
 
 @Component({
   selector: 'app-orden-compra-form',

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { OrdenCompraService } from '../services/orden-compra.service';
 import { OrdenCompra } from '../models/orden-compra.model';
 import { OrdenCompraFormComponent } from './orden-compra-form/orden-compra-form.component';
-import { AlertasService } from '../../../core/services/alertas';
+import { AlertasService } from '../../../../../No-Frontend/src/app/core/services/alertas';
 
 @Component({
   selector: 'app-orden-compra',
