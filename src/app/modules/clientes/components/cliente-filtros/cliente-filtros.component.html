@@ -1,0 +1,158 @@
+<div class="filtros-container">
+  <!-- Barra de filtros principal -->
+  <div class="filtros-barra">
+    <button class="btn-filtros-toggle" (click)="toggleFiltrosAvanzados()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="4" y1="21" x2="4" y2="14"></line>
+        <line x1="4" y1="10" x2="4" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12" y2="3"></line>
+        <line x1="20" y1="21" x2="20" y2="16"></line>
+        <line x1="20" y1="12" x2="20" y2="3"></line>
+        <line x1="1" y1="14" x2="7" y2="14"></line>
+        <line x1="9" y1="8" x2="15" y2="8"></line>
+        <line x1="17" y1="16" x2="23" y2="16"></line>
+      </svg>
+      Filtros
+      <span class="badge-contador" *ngIf="contadorFiltrosActivos > 0">
+        {{ contadorFiltrosActivos }}
+      </span>
+    </button>
+
+    <!-- Estado - Filtros básicos siempre visibles -->
+    <div class="filtros-basicos">
+      <span class="filtros-label">Estado:</span>
+      <div class="chips-container">
+        <button 
+          *ngFor="let estado of estadosDisponibles"
+          class="chip"
+          [class.chip-active]="estado.seleccionado"
+          (click)="toggleEstado(estado)"
+        >
+          {{ estado.nombre }}
+          <svg *ngIf="estado.seleccionado" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de filtros avanzados -->
+  <div class="filtros-avanzados" *ngIf="mostrarFiltrosAvanzados">
+    <div class="filtros-panel">
+      
+      <!-- Tipo de Cliente -->
+      <div class="filtro-seccion">
+        <label class="filtro-titulo">Tipo de Cliente</label>
+        <div class="chips-container">
+          <button 
+            *ngFor="let tipo of tiposClienteDisponibles"
+            class="chip"
+            [class.chip-active]="tipo.seleccionado"
+            (click)="toggleTipoCliente(tipo)"
+          >
+            {{ tipo.valor }}
+            <svg *ngIf="tipo.seleccionado" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Ubicación -->
+      <div class="filtro-seccion">
+        <label class="filtro-titulo">Ubicación</label>
+        <div class="filtro-grid">
+          <div class="filtro-campo">
+            <label for="provincia">Provincia</label>
+            <select 
+              id="provincia"
+              [(ngModel)]="provinciaSeleccionada"
+              (change)="onProvinciaChange(); aplicarFiltros()"
+              class="select-filtro"
+            >
+              <option [value]="undefined">Todas las provincias</option>
+              <option *ngFor="let provincia of provincias" [value]="provincia.idProvincia">
+                {{ provincia.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div class="filtro-campo">
+            <label for="ciudad">Ciudad</label>
+            <select 
+              id="ciudad"
+              [(ngModel)]="ciudadSeleccionada"
+              (change)="aplicarFiltros()"
+              class="select-filtro"
+              [disabled]="!provinciaSeleccionada"
+            >
+              <option [value]="null">Seleccione ciudad</option>
+              <option 
+              *ngFor="let ciudad of ciudades" 
+              [ngValue]="ciudad.idCiudad"
+              >
+              {{ $any(ciudad).nombre }} 
+            </option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fecha de Alta -->
+      <div class="filtro-seccion">
+        <label class="filtro-titulo">Fecha de Alta</label>
+        <div class="filtro-grid">
+          <div class="filtro-campo">
+            <label for="fechaDesde">Desde</label>
+            <input 
+              type="date"
+              id="fechaDesde"
+              [(ngModel)]="fechaDesde"
+              (change)="aplicarFiltros()"
+              class="input-filtro"
+            >
+          </div>
+
+          <div class="filtro-campo">
+            <label for="fechaHasta">Hasta</label>
+            <input 
+              type="date"
+              id="fechaHasta"
+              [(ngModel)]="fechaHasta"
+              (change)="aplicarFiltros()"
+              class="input-filtro"
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Tipo de Documento -->
+      <div class="filtro-seccion">
+        <label class="filtro-titulo">Tipo de Documento</label>
+        <select 
+          [(ngModel)]="tipoDocumentoSeleccionado"
+          (change)="aplicarFiltros()"
+          class="select-filtro"
+        >
+          <option value="">Todos</option>
+          <option *ngFor="let tipo of tiposDocumento" [value]="tipo">
+            {{ tipo }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="filtros-acciones">
+        <button class="btn btn-secondary" (click)="limpiarFiltros()">
+          Limpiar filtros
+        </button>
+        <button class="btn btn-primary" (click)="aplicarFiltros()">
+          Aplicar filtros
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

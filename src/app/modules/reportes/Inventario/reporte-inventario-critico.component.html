@@ -1,0 +1,164 @@
+<div class="reporte-inventario-container">
+  <!-- Cabecera -->
+  <div class="reporte-header">
+    <h1>Reporte de Inventario Crítico</h1>
+    <button class="btn-recargar" (click)="cargarDatos()" [disabled]="loading">
+      <i class="bi bi-arrow-clockwise"></i>
+      {{ loading ? 'Cargando...' : 'Recargar' }}
+    </button>
+  </div>
+
+  <!-- Estado de carga -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Cargando reporte...</p>
+  </div>
+
+  <!-- Estado de error -->
+  <div *ngIf="error && !loading" class="error-container">
+    <i class="bi bi-exclamation-triangle"></i>
+    <h3>Error al cargar el reporte</h3>
+    <p>{{ mensajeError }}</p>
+    <button class="btn-retry" (click)="cargarDatos()">Reintentar</button>
+  </div>
+
+  <!-- Contenido del reporte -->
+  <div *ngIf="datosReporte && !loading && !error" class="reporte-content">
+    
+    <!-- Tarjetas de resumen -->
+    <div class="resumen-cards">
+      
+      <!-- Card: Total Monitoreados -->
+      <div class="card card-info">
+        <div class="card-icon">
+          <i class="bi bi-box-seam"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ datosReporte.totalInsumosMonitoreados }}</h3>
+          <p>Total Monitoreados</p>
+        </div>
+      </div>
+
+      <!-- Card: Agotados -->
+      <div class="card card-danger">
+        <div class="card-icon">
+          <i class="bi bi-exclamation-octagon"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ datosReporte.insumosAgotados }}</h3>
+          <p>Agotados</p>
+        </div>
+      </div>
+
+      <!-- Card: Críticos -->
+      <div class="card card-warning">
+        <div class="card-icon">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ datosReporte.insumosCriticos }}</h3>
+          <p>Críticos</p>
+        </div>
+      </div>
+
+      <!-- Card: Bajos -->
+      <div class="card card-yellow">
+        <div class="card-icon">
+          <i class="bi bi-dash-circle"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ datosReporte.insumosBajos }}</h3>
+          <p>Stock Bajo</p>
+        </div>
+      </div>
+
+      <!-- Card: Alerta -->
+      <div class="card card-alert">
+        <div class="card-icon">
+          <i class="bi bi-info-circle"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ datosReporte.insumosAlerta }}</h3>
+          <p>En Alerta</p>
+        </div>
+      </div>
+
+      <!-- Card: Porcentaje Criticidad -->
+      <div class="card card-percentage">
+        <div class="card-icon">
+          <i class="bi bi-percent"></i>
+        </div>
+        <div class="card-content">
+          <h3>{{ datosReporte.porcentajeCriticidad }}%</h3>
+          <p>Criticidad</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Mensaje si no hay datos -->
+    <div *ngIf="datosReporte.insumos.length === 0" class="no-data">
+      <i class="bi bi-inbox"></i>
+      <p>No hay insumos registrados en el sistema</p>
+    </div>
+
+    <!-- Gráfico Principal - SIEMPRE se muestra si hay insumos -->
+    <div class="grafico-principal" *ngIf="datosReporte.insumos.length > 0">
+      <canvas #chartStockVsMinimo></canvas>
+    </div>
+
+    <!-- Tabla de Insumos - SIEMPRE se muestra si hay insumos -->
+    <div class="tabla-container" *ngIf="datosReporte.insumos.length > 0">
+      <div class="tabla-header">
+        <h2>Inventario Completo</h2>
+        <span class="badge-total">{{ datosReporte.insumos.length }} insumos</span>
+      </div>
+
+      <div class="tabla-wrapper">
+        <table class="tabla-insumos">
+          <thead>
+            <tr>
+              <th>Insumo</th>
+              <th>Tipo</th>
+              <th>Stock Actual</th>
+              <th>Stock Mínimo</th>
+              <th>Unidad</th>
+              <th>Criticidad</th>
+              <th *ngIf="tieneDiasRestantes()">Días Restantes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let insumo of datosReporte.insumos" [class]="getFilaClass(insumo.nivelCriticidad)">
+              <td class="insumo-nombre">
+                <i class="bi bi-box-seam"></i>
+                <strong>{{ insumo.nombreInsumo }}</strong>
+              </td>
+              <td>{{ insumo.tipoInsumo }}</td>
+              <td class="text-center">
+                <span class="stock-valor">{{ insumo.stockActual }}</span>
+              </td>
+              <td class="text-center">
+                <span class="stock-minimo">{{ insumo.stockMinimo }}</span>
+              </td>
+              <td class="text-center">{{ insumo.unidadMedida }}</td>
+              <td class="text-center">
+                <span [class]="getBadgeClass(insumo.nivelCriticidad)">
+                  {{ insumo.nivelCriticidad }}
+                </span>
+              </td>
+              <td class="text-center" *ngIf="tieneDiasRestantes()">
+                <span *ngIf="insumo.diasRestantes !== null && insumo.diasRestantes !== undefined">
+                  {{ insumo.diasRestantes }} días
+                </span>
+                <span *ngIf="insumo.diasRestantes === null || insumo.diasRestantes === undefined">
+                  -
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>

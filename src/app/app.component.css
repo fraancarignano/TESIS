@@ -1,0 +1,181 @@
+/* app.component.css */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 250px;
+  background: #1a1a2e;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  transition: margin-left 0.3s ease;
+}
+
+.main-content.sin-sidebar {
+  margin-left: 0;
+  width: 100%;
+}
+
+.logo {
+  padding: 20px;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-menu {
+  flex: 1;
+  padding: 20px 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 25px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-item.active {
+  background: rgba(79, 172, 254, 0.2);
+  color: #4facfe;
+  border-left: 3px solid #4facfe;
+}
+
+.user-profile {
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  justify-content: center;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 59, 48, 0.2);
+  border-color: rgba(255, 59, 48, 0.5);
+  transform: translateY(-1px);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+}
+
+.logout-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Estilos para el menú desplegable */
+.nav-item-container {
+  width: 100%;
+}
+
+.nav-item.parent {
+  cursor: pointer;
+  user-select: none;
+}
+
+.nav-item.parent:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  opacity: 0;
+}
+
+.submenu.open {
+  max-height: 500px;
+  opacity: 1;
+}
+
+.nav-item.sub {
+  padding-left: 2.5rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.nav-item.sub:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-item.sub.active {
+  background-color: rgba(0, 149, 218, 0.2);
+  border-left: 3px solid #0095da;
+}

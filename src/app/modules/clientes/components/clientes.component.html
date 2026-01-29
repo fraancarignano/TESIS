@@ -1,0 +1,281 @@
+<div class="clientes-container">
+<!-- Header -->
+<div class="header">
+  <div class="breadcrumb">
+    <span class="breadcrumb-item">Clientes</span>
+    <span class="breadcrumb-separator">></span>
+    <span class="breadcrumb-item active">Gestión</span>
+  </div>
+  
+  <div class="header-actions">
+    <div class="busqueda">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <input 
+        type="text" 
+        class="input-busqueda" 
+        placeholder="Buscar por nombre, razón social, email, documento..."
+        [(ngModel)]="terminoBusqueda"
+      >
+    </div>
+    
+    <button class="btn btn-primary" (click)="abrirFormularioNuevo()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="16"></line>
+        <line x1="8" y1="12" x2="16" y2="12"></line>
+      </svg>
+      Nuevo Cliente
+    </button>
+    
+      <div class="export-dropdown">
+      <button class="btn btn-secondary" (click)="toggleMenuExportar()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Exportar
+      </button>
+
+      <!-- Menú desplegable -->
+      <div class="export-menu" *ngIf="mostrarMenuExportar">
+        <button class="export-option" (click)="exportarPDF()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span>Exportar a PDF</span>
+        </button>
+
+        <button class="export-option" (click)="exportarExcel()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <rect x="8" y="12" width="8" height="6"></rect>
+          </svg>
+          <span>Exportar a Excel</span>
+        </button>
+
+        <button class="export-option" (click)="exportarCSV()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          <span>Exportar a CSV</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- ⭐ Componente de Filtros Avanzados -->
+  <app-cliente-filtros 
+    (filtrosChange)="onFiltrosChange($event)"
+  ></app-cliente-filtros>
+
+  <!-- Indicador de filtros activos -->
+  <div *ngIf="filtrosActuales" class="filtros-activos">
+    <span class="filtro-label">Filtros aplicados</span>
+    <button class="btn-limpiar-filtros" (click)="limpiarFiltros()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+      Limpiar filtros
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Cargando clientes...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="error-state">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#f44336" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <h3>Error al cargar los clientes</h3>
+    <button class="btn btn-secondary" (click)="cargarClientes()">
+      Reintentar
+    </button>
+  </div>
+
+  <!-- Tabla de clientes -->
+  <div *ngIf="!loading && !error" class="tabla-wrapper">
+    <table class="tabla-clientes">
+      <thead>
+        <tr>
+          <th>Nombre / Razón Social</th>
+          <th>Tipo Cliente</th>
+          <th>Estado</th>
+          <th>Teléfono</th>
+          <th>Email</th>
+          <th>Documento</th>
+          <th>Ubicación</th>
+          <th>Fecha Alta</th>
+          <th class="th-acciones">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr 
+          *ngFor="let cliente of clientesFiltrados" 
+          class="fila-cliente"
+          (click)="abrirDetalle(cliente)"
+        >
+          <!-- Nombre y razón social -->
+          <td class="td-nombre">
+            <div class="cliente-info">
+              <span class="nombre-principal">
+                {{ obtenerNombreCompleto(cliente) }}
+              </span>
+              <span class="tipo-persona" [class.tipo-fisica]="cliente.tipoCliente === 'Persona Física'" 
+                                        [class.tipo-juridica]="cliente.tipoCliente === 'Persona Jurídica'">
+                {{ getTipoIcon(cliente.tipoCliente) }}
+              </span>
+            </div>
+          </td>
+
+          <!-- Tipo cliente -->
+          <td>
+            <span class="badge badge-tipo" [ngClass]="getTipoClass(cliente.tipoCliente)">
+              {{ cliente.tipoCliente }}
+            </span>
+          </td>
+
+          <!-- Estado -->
+          <td>
+            <span class="badge" [ngClass]="getEstadoClass(cliente.idEstadoCliente)">
+              {{ getEstadoTexto(cliente.idEstadoCliente) }}
+            </span>
+          </td>
+
+          <!-- Teléfono -->
+          <td class="td-telefono">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-inline">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+            {{ cliente.telefono }}
+          </td>
+
+          <!-- Email -->
+          <td class="td-email">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-inline">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            {{ cliente.email }}
+          </td>
+
+          <!-- Documento (DNI/CUIT) -->
+          <td class="td-documento">
+            <div class="documento-info">
+              <span class="tipo-doc">{{ cliente.tipoDocumento || 'DNI' }}:</span>
+              <span class="numero-doc">{{ obtenerIdentificacion(cliente) }}</span>
+            </div>
+          </td>
+
+          <!-- Ubicación -->
+          <td class="td-ubicacion">
+            <div *ngIf="obtenerUbicacion(cliente) !== '-'" class="ubicacion-info">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-inline">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span class="ubicacion-text">{{ obtenerUbicacion(cliente) }}</span>
+            </div>
+            <span *ngIf="obtenerUbicacion(cliente) === '-'" class="text-muted">-</span>
+          </td>
+
+          <!-- Fecha Alta -->
+          <td class="td-fecha">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-inline">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            {{ formatearFecha(cliente.fechaAlta) }}
+          </td>
+
+          <!-- Acciones -->
+          <td class="td-acciones">
+            <div class="acciones">
+              <button 
+                class="btn-icon btn-edit" 
+                (click)="abrirFormularioEditar(cliente, $event)"
+                title="Editar cliente"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button 
+                class="btn-icon btn-delete" 
+                (click)="eliminarCliente(cliente, $event)"
+                title="Eliminar cliente"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Sin resultados -->
+    <div *ngIf="clientesFiltrados.length === 0 && !loading" class="sin-resultados">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+      <h3>No se encontraron clientes</h3>
+      <p *ngIf="terminoBusqueda || filtrosActuales">Intenta ajustar los filtros o el término de búsqueda</p>
+      <p *ngIf="!terminoBusqueda && !filtrosActuales">Aún no hay clientes registrados</p>
+      <button class="btn btn-primary" (click)="abrirFormularioNuevo()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Agregar primer cliente
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer Info -->
+  <div *ngIf="!loading && !error && clientes.length > 0" class="footer-info">
+    <p>
+      Mostrando <strong>{{ clientesFiltrados.length }}</strong> de <strong>{{ clientes.length }}</strong> clientes
+      <span *ngIf="filtrosActuales || terminoBusqueda" class="filtros-badge">
+        (filtrado)
+      </span>
+    </p>
+  </div>
+</div>
+
+<!-- Modales -->
+<app-cliente-form 
+  *ngIf="mostrarFormulario"
+  [cliente]="clienteSeleccionado"
+  (cerrar)="cerrarFormulario()"
+></app-cliente-form>
+
+<app-cliente-detalle-modal
+  *ngIf="mostrarDetalle && clienteDetalle"
+  [cliente]="clienteDetalle"
+  (cerrar)="cerrarDetalle()"
+></app-cliente-detalle-modal>
