@@ -6,6 +6,7 @@ using System.Text;
 using TESIS_OG.Data;
 using TESIS_OG.Services.ClienteService;
 using TESIS_OG.Services.InsumoService;
+using TESIS_OG.Services.OrdenCompraService;
 using TESIS_OG.Services.ProyectoService;
 using TESIS_OG.Services.ProyectosService;
 using TESIS_OG.Services.UsuariosService;
@@ -73,6 +74,7 @@ namespace TESIS_OG
             });
 
             builder.Services.AddScoped<IClienteService, ClienteService>();
+            builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
             builder.Services.AddScoped<IInsumoService, InsumoService>();
             var app = builder.Build();
 

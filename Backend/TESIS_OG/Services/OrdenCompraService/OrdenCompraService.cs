@@ -7,9 +7,9 @@ namespace TESIS_OG.Services.OrdenCompraService
 {
     public class OrdenCompraService : IOrdenCompraService
     {
-        private readonly Models.TamarindoDbContext _context;
+        private readonly Data.TamarindoDbContext _context;
 
-        public OrdenCompraService(Models.TamarindoDbContext context)
+        public OrdenCompraService(Data.TamarindoDbContext context)
         {
             _context = context;
         }
