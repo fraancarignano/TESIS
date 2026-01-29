@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { AuthService } from './modules/login/services/auth.service';
-import { filter } from 'rxjs/operators'; // ✅ Corregido el import
+import { filter } from 'rxjs/operators';
 import { AlertasService } from './core/services/alertas';
 
 @Component({
@@ -42,7 +42,7 @@ export class AppComponent {
   obtenerNombreUsuario(): string {
     const usuario = this.authService.obtenerUsuarioActual();
     if (usuario) {
-      return `${usuario.nombreUsuario}`.trim(); // ✅ Eliminé la llave extra
+      return `${usuario.nombreUsuario}`.trim();
     }
     return 'Usuario';
   }
@@ -59,7 +59,7 @@ export class AppComponent {
 
   async cerrarSesion(): Promise<void> {
     const confirmar = await this.alertas.confirmar(
-      '¿Cerrar sesión?', // ✅ Título más corto
+      '¿Cerrar sesión?',
       '¿Estás seguro de que deseas cerrar sesión?',
       'Sí, cerrar sesión'
     );

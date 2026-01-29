@@ -1,0 +1,354 @@
+<div class="modal-overlay" (click)="cerrarModal()">
+  <div class="modal-detalle" (click)="$event.stopPropagation()">
+    
+    <!-- HEADER -->
+    <div class="modal-header">
+      <div class="header-info">
+        <h2>{{ proyecto.nombreProyecto }}</h2>
+        <div class="meta-info">
+          <span class="codigo">{{ proyecto.codigoProyecto }}</span>
+          <span class="separador">•</span>
+          <span class="cliente">{{ proyecto.clienteNombre }}</span>
+        </div>
+      </div>
+      <button class="btn-close" (click)="cerrarModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- PROGRESO GENERAL -->
+    <div class="progreso-general">
+      <div class="progreso-header">
+        <span>Progreso General</span>
+        <span class="valor">{{ proyecto.progresoGeneral }}%</span>
+      </div>
+      <div class="barra-progreso">
+        <div class="barra-fill" [style.width.%]="proyecto.progresoGeneral"></div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button 
+        class="tab" 
+        [class.active]="tabActiva === 'info'"
+        (click)="tabActiva = 'info'">
+        <i class="fas fa-info-circle"></i>
+        Información
+      </button>
+      <button 
+        class="tab" 
+        [class.active]="tabActiva === 'areas'"
+        (click)="tabActiva = 'areas'">
+        <i class="fas fa-tasks"></i>
+        Áreas y Avances
+      </button>
+      <button 
+        class="tab" 
+        [class.active]="tabActiva === 'materiales'"
+        (click)="tabActiva = 'materiales'">
+        <i class="fas fa-box"></i>
+        Materiales
+      </button>
+      <button 
+        class="tab" 
+        [class.active]="tabActiva === 'observaciones'"
+        (click)="tabActiva = 'observaciones'">
+        <i class="fas fa-comment"></i>
+        Observaciones
+      </button>
+    </div>
+
+    <!-- CONTENIDO -->
+    <div class="modal-content">
+      
+      <!-- TAB: INFORMACIÓN -->
+      <div class="tab-content" *ngIf="tabActiva === 'info'">
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Tipo de Prenda</label>
+            <span>{{ proyecto.tipoPrenda || 'No especificado' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Prioridad</label>
+            <span class="badge" [ngClass]="'badge-' + proyecto.prioridad">
+              {{ proyecto.prioridad }}
+            </span>
+          </div>
+          <div class="info-item">
+            <label>Estado</label>
+            <span>{{ proyecto.estado }}</span>
+          </div>
+          <div class="info-item">
+            <label>Cantidad Total</label>
+            <span>{{ proyecto.cantidadTotal }} unidades</span>
+          </div>
+          <div class="info-item">
+            <label>Cantidad Producida</label>
+            <span>{{ proyecto.cantidadProducida || 0 }} unidades</span>
+          </div>
+          <div class="info-item">
+            <label>Fecha Inicio</label>
+            <span>{{ formatearFecha(proyecto.fechaInicio) }}</span>
+          </div>
+          <div class="info-item">
+            <label>Fecha Fin</label>
+            <span>{{ formatearFecha(proyecto.fechaFin) }}</span>
+          </div>
+          <div class="info-item">
+            <label>Días Transcurridos</label>
+            <span>{{ proyecto.diasTranscurridos }} días</span>
+          </div>
+          <div class="info-item full-width" *ngIf="proyecto.descripcion">
+            <label>Descripción</label>
+            <p>{{ proyecto.descripcion }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: ÁREAS Y AVANCES -->
+      <div class="tab-content" *ngIf="tabActiva === 'areas'">
+        <div class="areas-layout">
+          
+          <!-- LISTA DE ÁREAS -->
+          <div class="areas-lista">
+            <div 
+              class="area-item" 
+              *ngFor="let area of AREAS"
+              [class.seleccionada]="areaSeleccionada?.id === area.id"
+              [class.completa]="estaCompleta(area)"
+              [class.en-progreso]="enProgreso(area)"
+              (click)="seleccionarArea(area)">
+              
+              <div class="area-icon" [style.background-color]="area.color">
+                <i class="fas" [ngClass]="area.icono"></i>
+              </div>
+              
+              <div class="area-info">
+                <div class="area-nombre">{{ area.nombre }}</div>
+                <div class="area-progreso">
+                  <div class="mini-barra">
+                    <div class="mini-fill" 
+                         [style.width.%]="getAvanceArea(area)"
+                         [style.background-color]="area.color">
+                    </div>
+                  </div>
+                  <span class="porcentaje">{{ getAvanceArea(area) }}%</span>
+                </div>
+              </div>
+              
+              <div class="area-estado">
+                <i class="fas" 
+                   [ngClass]="getIconoEstadoArea(area)"
+                   [style.color]="getColorEstadoArea(area)">
+                </i>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL DE ACTUALIZACIÓN -->
+          <div class="area-detalle" *ngIf="areaSeleccionada">
+            <h3>
+              <i class="fas" [ngClass]="areaSeleccionada.icono" [style.color]="areaSeleccionada.color"></i>
+              {{ areaSeleccionada.nombre }}
+            </h3>
+            <p class="descripcion">{{ areaSeleccionada.descripcion }}</p>
+
+            <div class="form-actualizar">
+              
+              <!-- CONTROL DE AVANCE CON BOTONES -->
+              <div class="form-group">
+                <label>Avance Actual: {{ getAvanceArea(areaSeleccionada) }}%</label>
+                
+                <div class="avance-control">
+                  <!-- Botones de decremento rápido -->
+                  <button 
+                    class="btn-cantidad btn-decrement-large" 
+                    (click)="ajustarAvance(-10)"
+                    [disabled]="nuevoAvance <= 0"
+                    title="Restar 10%">
+                    <i class="fas fa-angle-double-left"></i>
+                    <span>10</span>
+                  </button>
+                  
+                  <button 
+                    class="btn-cantidad btn-decrement" 
+                    (click)="ajustarAvance(-5)"
+                    [disabled]="nuevoAvance <= 0"
+                    title="Restar 5%">
+                    <i class="fas fa-minus"></i>
+                    <span>5</span>
+                  </button>
+                  
+                  <button 
+                    class="btn-cantidad btn-decrement-small" 
+                    (click)="ajustarAvance(-1)"
+                    [disabled]="nuevoAvance <= 0"
+                    title="Restar 1%">
+                    <i class="fas fa-minus"></i>
+                  </button>
+
+                  <!-- Display central -->
+                  <div class="avance-display">
+                    <div class="avance-numero">{{ nuevoAvance }}</div>
+                    <div class="avance-label">%</div>
+                  </div>
+
+                  <!-- Botones de incremento rápido -->
+                  <button 
+                    class="btn-cantidad btn-increment-small" 
+                    (click)="ajustarAvance(1)"
+                    [disabled]="nuevoAvance >= 100"
+                    title="Sumar 1%">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                  
+                  <button 
+                    class="btn-cantidad btn-increment" 
+                    (click)="ajustarAvance(5)"
+                    [disabled]="nuevoAvance >= 100"
+                    title="Sumar 5%">
+                    <span>5</span>
+                    <i class="fas fa-plus"></i>
+                  </button>
+                  
+                  <button 
+                    class="btn-cantidad btn-increment-large" 
+                    (click)="ajustarAvance(10)"
+                    [disabled]="nuevoAvance >= 100"
+                    title="Sumar 10%">
+                    <span>10</span>
+                    <i class="fas fa-angle-double-right"></i>
+                  </button>
+                </div>
+
+                <!-- Barra visual del progreso -->
+                <div class="progreso-visual">
+                  <div class="progreso-bar">
+                    <div 
+                      class="progreso-fill" 
+                      [style.width.%]="nuevoAvance"
+                      [style.background-color]="areaSeleccionada.color">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Botones rápidos -->
+                <div class="botones-rapidos">
+                  <button 
+                    class="btn-rapido" 
+                    (click)="nuevoAvance = 0"
+                    [class.active]="nuevoAvance === 0">
+                    0%
+                  </button>
+                  <button 
+                    class="btn-rapido" 
+                    (click)="nuevoAvance = 25"
+                    [class.active]="nuevoAvance === 25">
+                    25%
+                  </button>
+                  <button 
+                    class="btn-rapido" 
+                    (click)="nuevoAvance = 50"
+                    [class.active]="nuevoAvance === 50">
+                    50%
+                  </button>
+                  <button 
+                    class="btn-rapido" 
+                    (click)="nuevoAvance = 75"
+                    [class.active]="nuevoAvance === 75">
+                    75%
+                  </button>
+                  <button 
+                    class="btn-rapido" 
+                    (click)="nuevoAvance = 100"
+                    [class.active]="nuevoAvance === 100">
+                    100%
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Observaciones (opcional)</label>
+                <textarea 
+                  [(ngModel)]="observacionAvance" 
+                  rows="3"
+                  placeholder="Agrega detalles sobre este avance...">
+                </textarea>
+              </div>
+
+              <button 
+                class="btn-actualizar" 
+                (click)="actualizarAvance()"
+                [disabled]="guardandoAvance">
+                <i class="fas" [ngClass]="guardandoAvance ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                {{ guardandoAvance ? 'Guardando...' : 'Guardar Avance' }}
+              </button>
+
+              <div class="siguiente-area" *ngIf="siguienteArea && puedeAvanzarSiguienteArea">
+                <button class="btn-siguiente" (click)="avanzarSiguienteArea()">
+                  <i class="fas fa-arrow-right"></i>
+                  Continuar a {{ siguienteArea.nombreCorto }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: MATERIALES -->
+      <div class="tab-content" *ngIf="tabActiva === 'materiales'">
+        <div class="materiales-lista">
+          <div class="material-item" *ngFor="let material of proyecto.materiales">
+            <div class="material-info">
+              <span class="material-nombre">{{ material.nombreInsumo }}</span>
+              <span class="material-cantidad">
+                {{ material.cantidadAsignada }} {{ material.unidadMedida }}
+              </span>
+            </div>
+            <div class="material-detalle" *ngIf="material.cantidadUtilizada">
+              <small>Utilizado: {{ material.cantidadUtilizada }}</small>
+            </div>
+          </div>
+          <div class="empty-state" *ngIf="!proyecto.materiales || proyecto.materiales.length === 0">
+            <i class="fas fa-box-open"></i>
+            <p>No hay materiales asignados</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: OBSERVACIONES -->
+      <div class="tab-content" *ngIf="tabActiva === 'observaciones'">
+        <div class="observaciones-form">
+          <textarea 
+            [(ngModel)]="nuevaObservacion" 
+            rows="3"
+            placeholder="Escribe una observación...">
+          </textarea>
+          <button 
+            class="btn-agregar-obs" 
+            (click)="agregarObservacion()"
+            [disabled]="!nuevaObservacion.trim() || guardandoObservacion">
+            <i class="fas fa-plus"></i>
+            Agregar Observación
+          </button>
+        </div>
+
+        <div class="observaciones-lista">
+          <div class="observacion-item" *ngFor="let obs of proyecto.observaciones">
+            <div class="obs-header">
+              <span class="obs-usuario">{{ obs.nombreUsuario }}</span>
+              <span class="obs-fecha">{{ formatearFecha(obs.fecha) }}</span>
+            </div>
+            <p class="obs-texto">{{ obs.descripcion }}</p>
+          </div>
+          <div class="empty-state" *ngIf="!proyecto.observaciones || proyecto.observaciones.length === 0">
+            <i class="fas fa-comment-slash"></i>
+            <p>No hay observaciones</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,119 @@
+<div class="modal-overlay" (click)="cancelar()">
+  <div class="modal-container compact" (click)="$event.stopPropagation()">
+    
+    <!-- HEADER COMPACTO -->
+    <div class="modal-header">
+      <h2><i class="fas fa-folder-plus"></i> Nuevo Proyecto</h2>
+      <button class="btn-close" (click)="cancelar()">×</button>
+    </div>
+
+    <!-- BODY SIN SCROLL -->
+    <div class="modal-body-compact">
+      <form [formGroup]="formulario" (ngSubmit)="guardar()">
+        
+        <!-- ROW 1: Cliente + Nombre + Tipo -->
+        <div class="grid-3">
+          <div class="field">
+            <label>Cliente *</label>
+            <select formControlName="idCliente">
+              <option value="">Seleccionar...</option>
+              <option *ngFor="let c of clientes" [value]="c.idCliente">{{c.nombreCompleto}}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Nombre Proyecto *</label>
+            <input type="text" formControlName="nombreProyecto" placeholder="Ej: Remeras 2026">
+          </div>
+          <div class="field">
+            <label>Tipo Prenda *</label>
+            <select formControlName="tipoPrenda">
+              <option value="">Tipo...</option>
+              <option *ngFor="let t of tiposPrenda" [value]="t">{{t}}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ROW 2: Cantidad + Prioridad + Estación + Usuario -->
+        <div class="grid-4">
+          <div class="field">
+            <label>Cantidad *</label>
+            <input type="number" formControlName="cantidadTotal" placeholder="0" min="1">
+          </div>
+          <div class="field">
+            <label>Prioridad</label>
+            <select formControlName="prioridad">
+              <option *ngFor="let p of prioridades" [value]="p">{{p | titlecase}}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Estación</label>
+            <select formControlName="tipoEstacion">
+              <option value="">Seleccionar...</option>
+              <option *ngFor="let e of tiposEstacion" [value]="e">{{e}}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Encargado</label>
+            <select formControlName="idUsuarioEncargado">
+              <option value="">Sin asignar</option>
+              <option *ngFor="let u of usuarios" [value]="u.idUsuario">
+                {{u.nombreUsuario}} {{u.apellidoUsuario}}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ROW 3: Fechas + Materiales -->
+        <div class="grid-2">
+          <div class="field">
+            <label>Inicio *</label>
+            <input type="date" formControlName="fechaInicio">
+          </div>
+          <div class="field">
+            <label>Fin Estimado</label>
+            <input type="date" formControlName="fechaFin">
+          </div>
+        </div>
+
+        <!-- MATERIALES COMPACTO -->
+        <div class="materiales-compact">
+          <label><i class="fas fa-box"></i> Materiales</label>
+          <div class="mat-row">
+            <select #insumo class="flex-2">
+              <option value="">Insumo...</option>
+              <option *ngFor="let i of listaInsumosDB" [value]="i.idInsumo">{{i.nombreInsumo}}</option>
+            </select>
+            <input type="number" #cant placeholder="Cant" class="flex-1" min="1">
+            <input type="number" #desp placeholder="Desp%" class="flex-1" min="0">
+            <button type="button" class="btn-add-mini" 
+              (click)="agregarInsumoALista(insumo.value, cant.value, desp.value); insumo.value=''; cant.value=''; desp.value=''">+</button>
+          </div>
+          
+          <div class="mat-chips" *ngIf="insumosSeleccionados.length > 0">
+            <span class="chip" *ngFor="let m of insumosSeleccionados; let i=index">
+              {{m.nombre}} ({{m.cantidad}})
+              <i class="fas fa-times" (click)="quitarInsumo(i)"></i>
+            </span>
+          </div>
+        </div>
+
+        <!-- DESCRIPCIÓN (OPCIONAL) -->
+        <div class="field">
+          <label>Descripción</label>
+          <textarea formControlName="descripcion" rows="2" placeholder="Notas..."></textarea>
+        </div>
+
+        <!-- ERROR -->
+        <div class="alert-mini" *ngIf="errorMensaje">{{errorMensaje}}</div>
+
+        <!-- FOOTER -->
+        <div class="footer-compact">
+          <button type="button" class="btn-sec" (click)="cancelar()" [disabled]="cargando">Cancelar</button>
+          <button type="submit" class="btn-pri" [disabled]="cargando || formulario.invalid">
+            {{cargando ? 'Guardando...' : 'Crear Proyecto'}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

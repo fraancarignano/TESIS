@@ -1,0 +1,55 @@
+<!-- app.component.html -->
+<div class="app-layout">
+  <!-- Sidebar - Solo se muestra si NO estás en login -->
+  <aside class="sidebar" *ngIf="mostrarSidebar">
+    <div class="logo">
+      TAMARINDO
+    </div>
+    
+      <a routerLink="/proyectos" routerLinkActive="active" class="nav-item">
+        <span class="text">Proyectos</span>
+      </a>
+      
+      <a routerLink="/clientes" routerLinkActive="active" class="nav-item">
+        <span class="text">Clientes</span>
+      </a>
+      
+      <a routerLink="/inventario" routerLinkActive="active" class="nav-item">
+        <span class="text">Inventario</span>
+      </a>
+
+      <a routerLink="/reportes" routerLinkActive="active" class="nav-item">
+        <span class="text">Reportes</span>
+      </a>
+            
+      <a routerLink="/usuarios" routerLinkActive="active" class="nav-item">
+        <span class="text">Usuarios</span>
+      </a>
+      
+      <nav class="nav-menu">
+    </nav>
+
+    <div class="user-profile">
+      <div class="avatar">
+        <img src="assets/avatar.jpg" alt="User" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="avatar-placeholder">{{ obtenerIniciales() }}</div>
+      </div>
+      <div class="user-info">
+        <div class="user-name">{{ obtenerNombreUsuario() }}</div>
+        <button class="logout-btn" (click)="cerrarSesion()" title="Cerrar sesión">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Cerrar sesión</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Contenido principal -->
+  <main class="main-content" [class.sin-sidebar]="!mostrarSidebar">
+    <router-outlet></router-outlet>
+  </main>
+</div>

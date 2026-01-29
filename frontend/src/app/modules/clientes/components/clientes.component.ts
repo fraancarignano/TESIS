@@ -7,6 +7,7 @@ import { ClienteFormComponent } from './cliente-form/cliente-form.component';
 import { ClienteDetalleModalComponent } from '../cliente-detalle-modal/cliente-detalle-modal.component';
 import { ClienteFiltrosComponent, FiltrosCliente } from './cliente-filtros/cliente-filtros.component';
 import { AlertasService } from '../../../core/services/alertas';
+import { ExportService } from '../../../core/services/export.service';
 
 @Component({
   selector: 'app-clientes',
@@ -34,9 +35,12 @@ export class ClientesComponent implements OnInit {
   // Filtros aplicados
   filtrosActuales: FiltrosCliente | null = null;
 
+   mostrarMenuExportar = false;
+
   constructor(
     private alertas: AlertasService,
-    private clientesService: ClientesService
+    private clientesService: ClientesService,
+    private exportService: ExportService
   ) {}
 
   ngOnInit(): void {
@@ -180,6 +184,86 @@ if (this.filtrosActuales.idCiudad) {
   console.log('📊 Clientes totales:', this.clientes.length);
   console.log('📊 Clientes filtrados:', this.clientesFiltrados.length);
 }
+
+/**
+   * Toggle del menú de exportación
+   */
+  toggleMenuExportar(): void {
+    this.mostrarMenuExportar = !this.mostrarMenuExportar;
+    console.log('Menu exportar:', this.mostrarMenuExportar);
+  }
+
+  /**
+   * Exportar a PDF
+   */
+  exportarPDF(): void {
+    const clientesParaExportar = this.clientesFiltrados;
+    
+    if (clientesParaExportar.length === 0) {
+      this.alertas.warning('Sin datos', 'No hay clientes para exportar');
+      return;
+    }
+
+    try {
+      this.exportService.exportarPDF(clientesParaExportar);
+      this.alertas.success(
+        'Exportación exitosa', 
+        `Se exportaron ${clientesParaExportar.length} clientes a PDF`
+      );
+      this.mostrarMenuExportar = false;
+    } catch (error) {
+      console.error('Error al exportar PDF:', error);
+      this.alertas.error('Error', 'No se pudo generar el PDF');
+    }
+  }
+
+  /**
+   * Exportar a Excel
+   */
+  exportarExcel(): void {
+    const clientesParaExportar = this.clientesFiltrados;
+    
+    if (clientesParaExportar.length === 0) {
+      this.alertas.warning('Sin datos', 'No hay clientes para exportar');
+      return;
+    }
+
+    try {
+      this.exportService.exportarExcel(clientesParaExportar);
+      this.alertas.success(
+        'Exportación exitosa', 
+        `Se exportaron ${clientesParaExportar.length} clientes a Excel`
+      );
+      this.mostrarMenuExportar = false;
+    } catch (error) {
+      console.error('Error al exportar Excel:', error);
+      this.alertas.error('Error', 'No se pudo generar el archivo Excel');
+    }
+  }
+
+  /**
+   * Exportar a CSV
+   */
+  exportarCSV(): void {
+    const clientesParaExportar = this.clientesFiltrados;
+    
+    if (clientesParaExportar.length === 0) {
+      this.alertas.warning('Sin datos', 'No hay clientes para exportar');
+      return;
+    }
+
+    try {
+      this.exportService.exportarCSV(clientesParaExportar);
+      this.alertas.success(
+        'Exportación exitosa', 
+        `Se exportaron ${clientesParaExportar.length} clientes a CSV`
+      );
+      this.mostrarMenuExportar = false;
+    } catch (error) {
+      console.error('Error al exportar CSV:', error);
+      this.alertas.error('Error', 'No se pudo generar el archivo CSV');
+    }
+  }
 
   /**
    * Limpiar todos los filtros

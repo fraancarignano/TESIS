@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TESIS_OG.Data;
 using TESIS_OG.DTOs.Clientes;
 using TESIS_OG.Models;
@@ -7,9 +7,9 @@ namespace TESIS_OG.Services.ClienteService
 {
     public class ClienteService : IClienteService
     {
-        private readonly TamarindoDbContext _context;
+        private readonly Data.TamarindoDbContext _context;
 
-        public ClienteService(TamarindoDbContext context)
+        public ClienteService(Data.TamarindoDbContext context)
         {
             _context = context;
         }

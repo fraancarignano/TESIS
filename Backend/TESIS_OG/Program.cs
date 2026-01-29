@@ -5,91 +5,98 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TESIS_OG.Data;
 using TESIS_OG.Services.ClienteService;
-using TESIS_OG.Services.OrdenCompraService;
+using TESIS_OG.Services.OrdenCompraService; 
+using TESIS_OG.Services.InsumoService; 
+using TESIS_OG.Services.ProyectoService; 
+using TESIS_OG.Services.ProyectosService; 
 using TESIS_OG.Services.UsuariosService;
 
 namespace TESIS_OG
 {
-    public class Program
+  public class Program
+  {
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
+      var builder = WebApplication.CreateBuilder(args);
+
+      // Database
+      builder.Services.AddDbContext<TamarindoDbContext>(options =>
+          options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+      // Services
+      builder.Services.AddControllers();
+      builder.Services.AddEndpointsApiExplorer();
+      builder.Services.AddSwaggerGen();
+      builder.Services.AddScoped<IAuthService, AuthService>();
+      builder.Services.AddRazorPages();
+
+      // ‚úÖ Todos los servicios juntos
+      builder.Services.AddScoped<IClienteService, ClienteService>();
+      builder.Services.AddScoped<IInsumoService, InsumoService>();
+      builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
+      builder.Services.AddScoped<IProyectosService, ProyectoService>();
+
+      // ========== CORS - SOLO UNA VEZ AQU√ç ==========
+      builder.Services.AddCors(options =>
+      {
+        options.AddPolicy("AllowAngular", policy =>
         {
-            var builder = WebApplication.CreateBuilder(args);
+          policy.WithOrigins("http://localhost:4200")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+      });
 
-            // Database
-            builder.Services.AddDbContext<TamarindoDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+      // JWT Authentication
+      var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+      var secretKey = jwtSettings["SecretKey"];
 
-            // Services
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddScoped<IAuthService, AuthService>();
-            builder.Services.AddRazorPages();
-            builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
+      if (string.IsNullOrEmpty(secretKey))
+      {
+        throw new InvalidOperationException(
+            "JWT SecretKey no configurada. Verifica appsettings.json"
+        );
+      }
 
-            // ========== CORS - SOLO UNA VEZ AQUÕ ==========
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowAngular", policy =>
-                {
-                    policy.WithOrigins("http://localhost:4200")
-                          .AllowAnyHeader()
-                          .AllowAnyMethod()
-                          .AllowCredentials();
-                });
-            });
+      builder.Services.AddAuthentication(options =>
+      {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+      })
+      .AddJwtBearer(options =>
+      {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+          ValidateIssuer = true,
+          ValidateAudience = true,
+          ValidateLifetime = true,
+          ValidateIssuerSigningKey = true,
+          ValidIssuer = jwtSettings["Issuer"],
+          ValidAudience = jwtSettings["Audience"],
+          IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        };
+      });
 
-            // JWT Authentication
-            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"];
+      var app = builder.Build();
 
-            if (string.IsNullOrEmpty(secretKey))
-            {
-                throw new InvalidOperationException(
-                    "JWT SecretKey no configurada. Verifica appsettings.json"
-                );
-            }
+      if (app.Environment.IsDevelopment())
+      {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+      }
 
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
-                };
-            });
-            builder.Services.AddScoped<IClienteService, ClienteService>();
+      app.UseHttpsRedirection();
 
-            var app = builder.Build();
+      // ========== ACTIVAR CORS AQU√ç ==========
+      app.UseCors("AllowAngular");
 
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+      app.UseAuthentication();
+      app.UseAuthorization();
 
-            app.UseHttpsRedirection();
+      app.MapControllers();
 
-            // ========== ACTIVAR CORS AQUÕ ==========
-            app.UseCors("AllowAngular");
-
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.MapControllers();
-
-            app.Run();
-        }
+      app.Run();
     }
+  }
 }

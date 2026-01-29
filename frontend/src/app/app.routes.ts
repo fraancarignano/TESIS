@@ -17,12 +17,22 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'ordenes', // ✅ ANTES del **
-    loadComponent: () => import('./modules/orden-compra/components/orden-compra.component').then(m => m.OrdenCompraComponent),
-    canActivate: [authGuard] // ✅ Con guard
+    path: 'proyectos',
+    loadComponent: () => import('./modules/proyectos/components/proyectos.component').then(m => m.ProyectosComponent),
+    canActivate: [authGuard]
   },
   {
-    path: '**', // ✅ SIEMPRE AL FINAL
+    path: 'inventario',
+    loadComponent: () => import('./modules/inventario/components/inventario.component').then(m => m.InventarioComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'ordenes',
+    loadComponent: () => import('./modules/orden-compra/components/orden-compra.component').then(m => m.OrdenCompraComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: '**',
     redirectTo: '/clientes'
   }
 ];

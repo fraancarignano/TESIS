@@ -1,0 +1,100 @@
+<div class="inventario-container">
+  <div class="header">
+    <div class="breadcrumb">
+      <span>Inventario</span>
+      <span class="separator">></span>
+      <span class="active">Principal</span>
+    </div>
+    
+    <div class="actions-bar">
+      <div class="search-box">
+        <input 
+          type="text" 
+          placeholder="Buscar en Inventario..."
+          [(ngModel)]="terminoBusqueda"
+        >
+      </div>
+      <button class="btn-nuevo" (click)="abrirFormularioNuevo()">
+        <span>+</span> Agregar nuevo insumo
+      </button>
+    </div>
+  </div>
+
+  <div class="tabla-inventario">
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Unidad</th>
+          <th>Proveedor</th>
+          <th>Stock Actual</th>
+          <th style="text-align: center;">Estado</th>
+          <th style="text-align: right;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr 
+          *ngFor="let insumo of insumosFiltrados" 
+          class="fila-clickeable"
+          (click)="abrirDetalle(insumo)"
+        >
+          <td>
+            <div class="nombre-con-alerta">
+              {{ insumo.nombreInsumo }}
+              <span 
+                *ngIf="stockBajo(insumo)" 
+                class="alerta-stock"
+                title="Stock por debajo del mínimo"
+              >
+                ⚠️
+              </span>
+            </div>
+          </td>
+          <td>{{ insumo.tipoInsumo?.nombreTipo || '-' }}</td>
+          <td>{{ insumo.unidadMedida }}</td>
+          <td>{{ insumo.proveedor?.nombreProveedor || '-' }}</td>
+          <td>
+            <span [class.stock-bajo]="stockBajo(insumo)">
+              {{ insumo.stockActual }} {{ insumo.unidadMedida }}
+            </span>
+          </td>
+          <td style="text-align: center;">
+            <span 
+              class="badge-estado"
+              [ngClass]="getEstadoClass(insumo.estado)"
+              (click)="cambiarEstado(insumo, $event)"
+            >
+              {{ insumo.estado || 'Disponible' }}
+            </span>
+          </td>
+          <td class="acciones">
+            <button class="btn-eliminar" (click)="eliminarInsumo(insumo.idInsumo!, $event)">
+              Eliminar
+            </button>
+            <button class="btn-modificar" (click)="abrirFormularioEditar(insumo, $event)">
+              Modificar
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="insumosFiltrados.length === 0">
+          <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+            No se encontraron insumos
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<app-insumo-form 
+  *ngIf="mostrarFormulario"
+  [insumo]="insumoSeleccionado"
+  (cerrar)="cerrarFormulario()"
+></app-insumo-form>
+
+<app-insumo-detalle-modal
+  *ngIf="mostrarDetalle"
+  [insumo]="insumoDetalle!"
+  (cerrar)="cerrarDetalle()"
+></app-insumo-detalle-modal>
