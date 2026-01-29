@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TESIS_OG.Data;
 using TESIS_OG.Services.ClienteService;
+using TESIS_OG.Services.OrdenCompraService;
 using TESIS_OG.Services.UsuariosService;
 
 namespace TESIS_OG
@@ -25,6 +26,7 @@ namespace TESIS_OG
             builder.Services.AddSwaggerGen();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddRazorPages();
+            builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
 
             // ========== CORS - SOLO UNA VEZ AQUÍ ==========
             builder.Services.AddCors(options =>
