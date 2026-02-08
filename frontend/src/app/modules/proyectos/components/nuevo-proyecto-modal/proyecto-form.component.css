@@ -235,3 +235,61 @@ textarea { resize: none; font-family: inherit; }
 .mat-chips::-webkit-scrollbar-track { background: #f1f1f1; }
 .mat-chips::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
 .mat-chips::-webkit-scrollbar-thumb:hover { background: #999; }
+
+/* === MODO PANTALLA COMPLETA === */
+.fullscreen-container {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #fafafa;
+  min-height: 100vh;
+}
+
+.fullscreen-header {
+  margin-bottom: 32px;
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.fullscreen-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 500;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fullscreen-header h1 i {
+  color: #ff5722;
+}
+
+.fullscreen-body {
+  background: white;
+  padding: 32px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.fullscreen-body form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.materiales-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+}

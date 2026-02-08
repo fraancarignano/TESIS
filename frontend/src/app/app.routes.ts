@@ -28,6 +28,11 @@ export const routes: Routes = [
     canActivate: [authGuard] 
   },
   {
+    path: 'proyectos/lista',
+    loadComponent: () => import('./modules/proyectos/components/proyecto-lista/proyecto-list.component').then(m => m.ProyectoListComponent),
+    canActivate: [authGuard] 
+  },
+  {
   path: 'inventario',
   loadComponent: () => import('./modules/inventario/components/inventario.component').then(m => m.InventarioComponent),
   canActivate: [authGuard]

@@ -1,6 +1,7 @@
-import { Component, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Output, EventEmitter, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ProyectosService } from '../../services/proyectos.service';
 import { CrearProyectoDTO } from '../../models/proyecto.model';
 import { ClientesService } from '../../../clientes/services/clientes.service';
@@ -18,6 +19,7 @@ import { Usuario } from '../../../login/models/auth.model';
   styleUrls: ['./proyecto-form.component.css']
 })
 export class ProyectoFormComponent implements OnInit {
+  @Input() esModal: boolean = false; // Nueva propiedad
   @Output() cerrar = new EventEmitter<void>();
   
   formulario!: FormGroup; 
@@ -45,7 +47,8 @@ export class ProyectoFormComponent implements OnInit {
     private proyectosService: ProyectosService,
     private clientesService: ClientesService,
     private insumosService: InsumosService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router // Agregar Router
   ) {
     this.crearFormulario();
   }
@@ -65,7 +68,6 @@ export class ProyectoFormComponent implements OnInit {
   private cargarUsuarios(): void {
     this.authService.obtenerUsuarios().subscribe({
       next: (data) => {
-        // Filtrar solo usuarios activos
         this.usuarios = data.filter(u => u.estado === 'Activo');
         console.log('Usuarios activos cargados:', this.usuarios);
       },
@@ -182,7 +184,13 @@ export class ProyectoFormComponent implements OnInit {
 
     this.proyectosService.crearProyecto(dto).subscribe({
       next: () => {
-        this.cerrar.emit();
+        if (this.esModal) {
+          // Si es modal, emitir evento de cierre
+          this.cerrar.emit();
+        } else {
+          // Si es pantalla completa, navegar a la lista
+          this.router.navigate(['/proyectos']);
+        }
       },
       error: (err) => {
         this.errorMensaje = this.extraerMensajeError(err);
@@ -221,6 +229,12 @@ export class ProyectoFormComponent implements OnInit {
   }
 
   cancelar(): void {
-    this.cerrar.emit();
+    if (this.esModal) {
+      // Si es modal, emitir evento de cierre
+      this.cerrar.emit();
+    } else {
+      // Si es pantalla completa, navegar a la lista
+      this.router.navigate(['/proyectos']);
+    }
   }
 }
