@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\fraan\\OneDrive\\Documentos\\GitHub\\TESIS\\Backend\\TESIS_OG\\TESIS_OG.csproj": {}
+    "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\TESIS_OG.csproj": {}
   },
   "projects": {
-    "C:\\Users\\fraan\\OneDrive\\Documentos\\GitHub\\TESIS\\Backend\\TESIS_OG\\TESIS_OG.csproj": {
+    "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\TESIS_OG.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\fraan\\OneDrive\\Documentos\\GitHub\\TESIS\\Backend\\TESIS_OG\\TESIS_OG.csproj",
+        "projectUniqueName": "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\TESIS_OG.csproj",
         "projectName": "TESIS_OG",
-        "projectPath": "C:\\Users\\fraan\\OneDrive\\Documentos\\GitHub\\TESIS\\Backend\\TESIS_OG\\TESIS_OG.csproj",
-        "packagesPath": "C:\\Users\\fraan\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\fraan\\OneDrive\\Documentos\\GitHub\\TESIS\\Backend\\TESIS_OG\\obj\\",
+        "projectPath": "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\TESIS_OG.csproj",
+        "packagesPath": "C:\\Users\\alans\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\fraan\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\alans\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -44,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.200"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net8.0": {
@@ -110,7 +110,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.201/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

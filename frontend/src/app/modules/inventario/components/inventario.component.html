@@ -5,20 +5,19 @@
       <span class="separator">></span>
       <span class="active">Principal</span>
     </div>
-    
+
     <div class="actions-bar">
       <div class="search-box">
-        <input 
-          type="text" 
-          placeholder="Buscar en Inventario..."
-          [(ngModel)]="terminoBusqueda"
-        >
+        <input type="text" placeholder="Buscar en Inventario..." [(ngModel)]="terminoBusqueda"
+          (ngModelChange)="aplicarFiltrosAvanzados()">
       </div>
       <button class="btn-nuevo" (click)="abrirFormularioNuevo()">
         <span>+</span> Agregar nuevo insumo
       </button>
     </div>
   </div>
+
+  <app-insumo-filtros (filtrosChange)="onFiltrosChange($event)"></app-insumo-filtros>
 
   <div class="tabla-inventario">
     <table>
@@ -34,19 +33,11 @@
         </tr>
       </thead>
       <tbody>
-        <tr 
-          *ngFor="let insumo of insumosFiltrados" 
-          class="fila-clickeable"
-          (click)="abrirDetalle(insumo)"
-        >
+        <tr *ngFor="let insumo of insumosFiltrados" class="fila-clickeable" (click)="abrirDetalle(insumo)">
           <td>
             <div class="nombre-con-alerta">
               {{ insumo.nombreInsumo }}
-              <span 
-                *ngIf="stockBajo(insumo)" 
-                class="alerta-stock"
-                title="Stock por debajo del mínimo"
-              >
+              <span *ngIf="stockBajo(insumo)" class="alerta-stock" title="Stock por debajo del mínimo">
                 ⚠️
               </span>
             </div>
@@ -60,11 +51,8 @@
             </span>
           </td>
           <td style="text-align: center;">
-            <span 
-              class="badge-estado"
-              [ngClass]="getEstadoClass(insumo.estado)"
-              (click)="cambiarEstado(insumo, $event)"
-            >
+            <span class="badge-estado" [ngClass]="getEstadoClass(insumo.estado)"
+              (click)="cambiarEstado(insumo, $event)">
               {{ insumo.estado || 'Disponible' }}
             </span>
           </td>
@@ -87,14 +75,8 @@
   </div>
 </div>
 
-<app-insumo-form 
-  *ngIf="mostrarFormulario"
-  [insumo]="insumoSeleccionado"
-  (cerrar)="cerrarFormulario()"
-></app-insumo-form>
+<app-insumo-form *ngIf="mostrarFormulario" [insumo]="insumoSeleccionado"
+  (cerrar)="cerrarFormulario()"></app-insumo-form>
 
-<app-insumo-detalle-modal
-  *ngIf="mostrarDetalle"
-  [insumo]="insumoDetalle!"
-  (cerrar)="cerrarDetalle()"
-></app-insumo-detalle-modal>
+<app-insumo-detalle-modal *ngIf="mostrarDetalle" [insumo]="insumoDetalle!"
+  (cerrar)="cerrarDetalle()"></app-insumo-detalle-modal>

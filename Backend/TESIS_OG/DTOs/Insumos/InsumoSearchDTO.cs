@@ -8,5 +8,7 @@ namespace TESIS_OG.DTOs.Insumos
     public int? IdProveedor { get; set; }
     public string? Estado { get; set; }
     public bool? SoloStockBajo { get; set; } // Para filtrar insumos con stock bajo
+    public DateOnly? FechaDesde { get; set; }
+    public DateOnly? FechaHasta { get; set; }
   }
 }

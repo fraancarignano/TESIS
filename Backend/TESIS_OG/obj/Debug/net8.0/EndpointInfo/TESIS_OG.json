@@ -1753,6 +1753,16 @@
           "soloStockBajo": {
             "type": "boolean",
             "nullable": true
+          },
+          "fechaDesde": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "fechaHasta": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
           }
         },
         "additionalProperties": false

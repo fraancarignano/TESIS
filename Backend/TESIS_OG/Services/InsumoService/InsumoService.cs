@@ -181,6 +181,13 @@ namespace TESIS_OG.Services.InsumoService
       if (filtros.SoloStockBajo == true)
         query = query.Where(i => i.StockMinimo.HasValue && i.StockActual < i.StockMinimo.Value);
 
+      // Filtro por rango de fechas
+      if (filtros.FechaDesde.HasValue)
+        query = query.Where(i => i.FechaActualizacion >= filtros.FechaDesde.Value);
+
+      if (filtros.FechaHasta.HasValue)
+        query = query.Where(i => i.FechaActualizacion <= filtros.FechaHasta.Value);
+
       var insumos = await query
           .Select(i => new InsumoIndexDTO
           {

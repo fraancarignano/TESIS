@@ -5,6 +5,7 @@ import { InsumosService } from '../services/insumos.service';
 import { Insumo } from './../models/insumo.model';
 import { InsumoDetalleModalComponent } from '../insumo-detalle-modal/insumo-detalle-modal.component';
 import { InsumoFormComponent } from '../insumo-form/insumo-form.component';
+import { InsumoFiltrosComponent, FiltrosInsumo } from './insumo-filtros/insumo-filtros.component';
 
 @Component({
   selector: 'app-inventario',
@@ -13,7 +14,8 @@ import { InsumoFormComponent } from '../insumo-form/insumo-form.component';
     CommonModule,
     FormsModule,
     InsumoDetalleModalComponent,
-    InsumoFormComponent
+    InsumoFormComponent,
+    InsumoFiltrosComponent
   ],
   templateUrl: './inventario.component.html',
   styleUrls: ['./inventario.component.css']
@@ -25,8 +27,9 @@ export class InventarioComponent implements OnInit {
   insumoSeleccionado: Insumo | null = null;
   insumoDetalle: Insumo | null = null;
   terminoBusqueda = '';
+  filtrosActivos: FiltrosInsumo = {};
 
-  constructor(private insumosService: InsumosService) {}
+  constructor(private insumosService: InsumosService) { }
 
   ngOnInit(): void {
     this.cargarInsumos();
@@ -39,22 +42,38 @@ export class InventarioComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error al cargar insumos:', error);
-        alert('Error al cargar los insumos');
+      }
+    });
+  }
+
+  onFiltrosChange(filtros: FiltrosInsumo): void {
+    this.filtrosActivos = filtros;
+    this.aplicarFiltrosAvanzados();
+  }
+
+  aplicarFiltrosAvanzados(): void {
+    if (Object.keys(this.filtrosActivos).length === 0 && !this.terminoBusqueda) {
+      this.cargarInsumos();
+      return;
+    }
+
+    const searchDto: FiltrosInsumo = {
+      ...this.filtrosActivos,
+      nombreInsumo: this.terminoBusqueda || undefined
+    };
+
+    this.insumosService.buscarInsumos(searchDto).subscribe({
+      next: (insumos) => {
+        this.insumos = insumos;
+      },
+      error: (err) => {
+        console.error('Error al buscar insumos:', err);
       }
     });
   }
 
   get insumosFiltrados(): Insumo[] {
-    if (!this.terminoBusqueda) {
-      return this.insumos;
-    }
-    const termino = this.terminoBusqueda.toLowerCase();
-    return this.insumos.filter(i =>
-      i.nombreInsumo.toLowerCase().includes(termino) ||
-      i.tipoInsumo?.nombreTipo.toLowerCase().includes(termino) ||
-      i.proveedor?.nombreProveedor.toLowerCase().includes(termino) ||
-      i.unidadMedida.toLowerCase().includes(termino)
-    );
+    return this.insumos;
   }
 
   abrirFormularioNuevo(): void {
@@ -86,7 +105,7 @@ export class InventarioComponent implements OnInit {
 
   eliminarInsumo(id: number, event: Event): void {
     event.stopPropagation();
-    
+
     if (confirm('¿Está seguro de eliminar este insumo?')) {
       this.insumosService.eliminarInsumo(id).subscribe({
         next: () => {
@@ -103,12 +122,12 @@ export class InventarioComponent implements OnInit {
 
   cambiarEstado(insumo: Insumo, event: Event): void {
     event.stopPropagation();
-    
+
     // Ciclo de estados
     const estados = ['En uso', 'A designar', 'Agotado', 'Disponible'];
     const indexActual = estados.indexOf(insumo.estado || 'Disponible');
     const nuevoEstado = estados[(indexActual + 1) % estados.length];
-    
+
     this.insumosService.cambiarEstado(insumo.idInsumo!, nuevoEstado).subscribe({
       next: () => {
         this.cargarInsumos();
@@ -122,7 +141,7 @@ export class InventarioComponent implements OnInit {
 
   getEstadoClass(estado?: string): string {
     if (!estado) return 'estado-disponible';
-    
+
     switch (estado.toLowerCase()) {
       case 'en uso':
         return 'estado-en-uso';
