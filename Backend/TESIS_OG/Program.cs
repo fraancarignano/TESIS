@@ -91,6 +91,7 @@ namespace TESIS_OG
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+                app.UseHttpsRedirection(); // solo aquí
             }
 
             //app.UseHttpsRedirection();
