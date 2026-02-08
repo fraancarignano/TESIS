@@ -93,7 +93,7 @@ namespace TESIS_OG
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseCors("AllowAngular");
             app.UseAuthentication();
             app.UseAuthorization();
