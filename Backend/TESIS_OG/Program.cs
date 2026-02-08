@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -38,10 +37,10 @@ namespace TESIS_OG
             // ================= CORS =================
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowAngular", policy =>
+                options.AddPolicy("AllowAll", policy =>
                 {
                     policy
-                        .AllowAnyOrigin() // Railway / producción
+                        .AllowAnyOrigin()
                         .AllowAnyHeader()
                         .AllowAnyMethod();
                 });
@@ -89,14 +88,22 @@ namespace TESIS_OG
             // ================= MIDDLEWARE =================
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseHttpsRedirection(); // HTTPS solo en dev
             }
 
-            //app.UseHttpsRedirection();
-            app.UseCors("AllowAngular");
+            // Swagger siempre activo para probar en Railway
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "TESIS_OG API V1");
+            });
+
+            app.UseCors("AllowAll");
             app.UseAuthentication();
             app.UseAuthorization();
+
+            // ================= ENDPOINT RAÍZ =================
+            app.MapGet("/", () => "Backend TESIS_OG funcionando correctamente!");
 
             app.MapControllers();
             app.Run();
