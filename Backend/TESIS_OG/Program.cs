@@ -31,6 +31,8 @@ namespace TESIS_OG
             builder.Services.AddRazorPages();
             builder.Services.AddScoped<IProyectosService, ProyectoService>();
 
+            var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+            app.Urls.Add($"http://*:{port}");
       // ========== CORS - SOLO UNA VEZ AQUÍ ==========
       builder.Services.AddCors(options =>
             {
