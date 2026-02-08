@@ -30,10 +30,10 @@ builder.Services.AddScoped<IInsumoService, InsumoService>();
 // ================= CORS =================
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngular", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
         policy
-            .AllowAnyOrigin() // 🔥 para producción (Railway)
+            .AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -67,7 +67,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// ================= BUILD APP =================
+// ================= BUILD =================
 var app = builder.Build();
 
 // ================= PORT (RAILWAY) =================
@@ -82,9 +82,4 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAngular");
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-app.Run();
+app.
