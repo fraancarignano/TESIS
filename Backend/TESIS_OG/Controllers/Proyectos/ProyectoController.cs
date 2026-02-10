@@ -1,172 +1,199 @@
 using Microsoft.AspNetCore.Mvc;
 using TESIS_OG.DTOs.Proyectos;
-using TESIS_OG.Services.ProyectoService;
+using TESIS_OG.DTOs.Configuracion;
 using TESIS_OG.Services.ProyectosService;
 
 namespace TESIS_OG.Controllers
 {
-  [ApiController]
-  [Route("api/[controller]")]
-  public class ProyectoController : ControllerBase
-  {
-    private readonly IProyectosService _proyectoService;
-
-    public ProyectoController(IProyectosService proyectoService)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ProyectoController : ControllerBase
     {
-      _proyectoService = proyectoService;
+        private readonly IProyectosService _proyectoService;
+
+        public ProyectoController(IProyectosService proyectoService)
+        {
+            _proyectoService = proyectoService;
+        }
+
+        // ========================================
+        // CRUD
+        // ========================================
+
+        [HttpPost]
+        public async Task<IActionResult> CrearProyecto([FromBody] ProyectoCrearDTO proyectoDto)
+        {
+            var result = await _proyectoService.CrearProyectoAsync(proyectoDto);
+            if (result == null)
+                return BadRequest("No se pudo crear el proyecto");
+
+            return CreatedAtAction(nameof(ObtenerProyectoPorId), new { id = result.IdProyecto }, result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerProyectos()
+        {
+            return Ok(await _proyectoService.ObtenerTodosLosProyectosAsync());
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> ObtenerProyectoPorId(int id)
+        {
+            var proyecto = await _proyectoService.ObtenerProyectoPorIdAsync(id);
+            if (proyecto == null)
+                return NotFound();
+
+            return Ok(proyecto);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> ActualizarProyecto(int id, [FromBody] ProyectoEditarDTO proyectoDto)
+        {
+            await _proyectoService.ActualizarProyectoAsync(id, proyectoDto);
+            return Ok(new { message = "Proyecto actualizado correctamente" });
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> EliminarProyecto(int id)
+        {
+            var eliminado = await _proyectoService.EliminarProyectoAsync(id);
+            if (!eliminado)
+                return NotFound();
+
+            return Ok(new { message = "Proyecto archivado" });
+        }
+
+        // ========================================
+        // FILTROS
+        // ========================================
+
+        [HttpGet("estado/{estado}")]
+        public async Task<IActionResult> ObtenerPorEstado(string estado)
+        {
+            return Ok(await _proyectoService.ObtenerProyectosPorEstadoAsync(estado));
+        }
+
+        [HttpGet("cliente/{idCliente}")]
+        public async Task<IActionResult> ObtenerPorCliente(int idCliente)
+        {
+            return Ok(await _proyectoService.ObtenerProyectosPorClienteAsync(idCliente));
+        }
+
+        // ========================================
+        // MATERIALES
+        // ========================================
+
+        [HttpPost("calcular-materiales")]
+        public async Task<IActionResult> CalcularMateriales([FromBody] CalculoMaterialesRequestDTO request)
+        {
+            return Ok(await _proyectoService.CalcularMaterialesAsync(request));
+        }
+
+        [HttpPost("validar-stock")]
+        public async Task<IActionResult> ValidarStock([FromBody] ValidarStockRequestWrapper request)
+        {
+            var result = await _proyectoService.ValidarStockAsync(
+                request.Prendas,
+                request.MaterialesManuales
+            );
+
+            return Ok(result);
+        }
+
+        [HttpPost("{id}/recalcular-materiales")]
+        public async Task<IActionResult> RecalcularMateriales(int id)
+        {
+            var ok = await _proyectoService.RecalcularMaterialesProyectoAsync(id);
+            if (!ok)
+                return BadRequest();
+
+            return Ok(new { message = "Materiales recalculados" });
+        }
+
+        // ========================================
+        // PRENDAS Y TALLES
+        // ========================================
+
+        [HttpGet("{id}/prendas")]
+        public async Task<IActionResult> ObtenerPrendas(int id)
+        {
+            return Ok(await _proyectoService.ObtenerPrendasProyectoAsync(id));
+        }
+
+        [HttpPost("validar-talles")]
+        public async Task<IActionResult> ValidarTalles([FromBody] ValidarTallesRequestDTO request)
+        {
+            return Ok(await _proyectoService.ValidarDistribucionTallesAsync(request));
+        }
+
+        // ========================================
+        // FORMULARIO
+        // ========================================
+
+        [HttpGet("formulario")]
+        public async Task<IActionResult> ObtenerDatosFormulario()
+        {
+            return Ok(await _proyectoService.ObtenerDatosFormularioAsync());
+        }
+
+        // ========================================
+        // AVANCE / SCRAP / OBSERVACIONES
+        // ========================================
+
+        [HttpPut("{id}/avance")]
+        public async Task<IActionResult> ActualizarAvance(int id, [FromBody] ActualizarAvanceDTO dto)
+        {
+            var ok = await _proyectoService.ActualizarAvanceAsync(id, dto);
+            if (!ok)
+                return BadRequest();
+
+            return Ok();
+        }
+
+        [HttpPost("{id}/scrap")]
+        public async Task<IActionResult> RegistrarScrap(int id, [FromBody] RegistrarScrapDTO dto)
+        {
+            var ok = await _proyectoService.RegistrarScrapAsync(id, dto);
+            if (!ok)
+                return BadRequest();
+
+            return Ok();
+        }
+
+        [HttpPost("{id}/observaciones")]
+        public async Task<IActionResult> AgregarObservacion(int id, [FromBody] AgregarObservacionDTO dto)
+        {
+            var ok = await _proyectoService.AgregarObservacionAsync(id, dto);
+            if (!ok)
+                return BadRequest();
+
+            return Ok();
+        }
+
+        // ========================================
+        // ESTADO
+        // ========================================
+
+        [HttpPatch("{id}/estado")]
+        public async Task<IActionResult> CambiarEstado(int id, [FromBody] CambiarEstadoDTO dto)
+        {
+            var ok = await _proyectoService.CambiarEstadoAsync(id, dto.Estado);
+            if (!ok)
+                return BadRequest();
+
+            return Ok();
+        }
     }
 
-    /// <summary>
-    /// Crear un nuevo proyecto
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> CrearProyecto([FromBody] ProyectoCrearDTO proyectoDto)
+    // Wrapper para validar stock
+    public class ValidarStockRequestWrapper
     {
-      var result = await _proyectoService.CrearProyectoAsync(proyectoDto);
-      if (result == null)
-        return BadRequest(new { message = "No se pudo crear el proyecto" });
-
-      return CreatedAtAction(nameof(ObtenerProyectoPorId), new { id = result.IdProyecto }, result);
+        public List<ProyectoPrendaCrearDTO> Prendas { get; set; } = new();
+        public List<MaterialManualDTO>? MaterialesManuales { get; set; }
     }
 
-    /// <summary>
-    /// Obtener todos los proyectos
-    /// </summary>
-    [HttpGet]
-    public async Task<IActionResult> ObtenerProyectos()
+    public class CambiarEstadoDTO
     {
-      var proyectos = await _proyectoService.ObtenerTodosLosProyectosAsync();
-      return Ok(proyectos);
+        public string Estado { get; set; } = null!;
     }
-
-    /// <summary>
-    /// Obtener un proyecto por ID con todos sus detalles
-    /// </summary>
-    [HttpGet("{id}")]
-    public async Task<IActionResult> ObtenerProyectoPorId(int id)
-    {
-      var proyecto = await _proyectoService.ObtenerProyectoPorIdAsync(id);
-      if (proyecto == null)
-        return NotFound(new { message = $"Proyecto con ID {id} no encontrado" });
-
-      return Ok(proyecto);
-    }
-
-    /// <summary>
-    /// Actualizar un proyecto existente
-    /// </summary>
-    [HttpPut("{id}")]
-    public async Task<IActionResult> ActualizarProyecto(int id, [FromBody] ProyectoEditarDTO proyectoDto)
-    {
-      var result = await _proyectoService.ActualizarProyectoAsync(id, proyectoDto);
-      if (result == null)
-        return BadRequest(new { message = "No se pudo actualizar el proyecto" });
-
-      return Ok(result);
-    }
-
-    /// <summary>
-    /// Eliminar (archivar) un proyecto
-    /// </summary>
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> EliminarProyecto(int id)
-    {
-      var result = await _proyectoService.EliminarProyectoAsync(id);
-      if (!result)
-        return NotFound(new { message = $"Proyecto con ID {id} no encontrado" });
-
-      return Ok(new { message = "Proyecto archivado exitosamente" });
-    }
-
-    /// <summary>
-    /// Buscar proyectos con filtros
-    /// </summary>
-    [HttpPost("buscar")]
-    public async Task<IActionResult> BuscarProyectos([FromBody] ProyectoSearchDTO filtros)
-    {
-      var proyectos = await _proyectoService.BuscarProyectosAsync(filtros);
-      return Ok(proyectos);
-    }
-
-    /// <summary>
-    /// Agregar materiales a un proyecto existente
-    /// </summary>
-    [HttpPost("{id}/materiales")]
-    public async Task<IActionResult> AgregarMateriales(int id, [FromBody] List<MaterialAsignadoDTO> materiales)
-    {
-      var result = await _proyectoService.AgregarMaterialesAsync(id, materiales);
-      if (!result)
-        return BadRequest(new { message = "No se pudieron agregar los materiales" });
-
-      return Ok(new { message = "Materiales agregados exitosamente" });
-    }
-
-    /// <summary>
-    /// Actualizar avance de un área específica
-    /// </summary>
-    [HttpPut("{id}/avance")]
-    public async Task<IActionResult> ActualizarAvance(int id, [FromBody] ActualizarAvanceDTO avanceDto)
-    {
-      var result = await _proyectoService.ActualizarAvanceAsync(id, avanceDto);
-      if (!result)
-        return BadRequest(new { message = "No se pudo actualizar el avance" });
-
-      return Ok(new { message = "Avance actualizado exitosamente" });
-    }
-
-    /// <summary>
-    /// Registrar scrap en un proyecto
-    /// </summary>
-    [HttpPost("{id}/scrap")]
-    public async Task<IActionResult> RegistrarScrap(int id, [FromBody] RegistrarScrapDTO scrapDto)
-    {
-      var result = await _proyectoService.RegistrarScrapAsync(id, scrapDto);
-      if (!result)
-        return BadRequest(new { message = "No se pudo registrar el scrap" });
-
-      return Ok(new { message = "Scrap registrado exitosamente" });
-    }
-
-    /// <summary>
-    /// Agregar observación a un proyecto
-    /// </summary>
-    [HttpPost("{id}/observaciones")]
-    public async Task<IActionResult> AgregarObservacion(int id, [FromBody] AgregarObservacionDTO observacionDto)
-    {
-      var result = await _proyectoService.AgregarObservacionAsync(id, observacionDto);
-      if (!result)
-        return BadRequest(new { message = "No se pudo agregar la observación" });
-
-      return Ok(new { message = "Observación agregada exitosamente" });
-    }
-
-    /// <summary>
-    /// Obtener proyectos por estado
-    /// </summary>
-    [HttpGet("estado/{estado}")]
-    public async Task<IActionResult> ObtenerProyectosPorEstado(string estado)
-    {
-      var proyectos = await _proyectoService.ObtenerProyectosPorEstadoAsync(estado);
-      return Ok(proyectos);
-    }
-
-    /// <summary>
-    /// Cambiar estado de un proyecto (para drag & drop en Kanban)
-    /// </summary>
-    [HttpPatch("{id}/estado")]
-    public async Task<IActionResult> CambiarEstado(int id, [FromBody] CambiarEstadoDTO estadoDto)
-    {
-      var result = await _proyectoService.CambiarEstadoAsync(id, estadoDto.Estado);
-      if (!result)
-        return BadRequest(new { message = "No se pudo cambiar el estado" });
-
-      return Ok(new { message = "Estado actualizado exitosamente" });
-    }
-  }
-
-  // DTO auxiliar para cambiar estado
-  public class CambiarEstadoDTO
-  {
-    public string Estado { get; set; } = null!;
-  }
 }

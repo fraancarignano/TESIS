@@ -664,7 +664,7 @@ public partial class TamarindoDbContext : DbContext
             entity.Property(e => e.TipoEstacion)
                 .HasMaxLength(50)
                 .IsUnicode(false);
-            entity.Property(e => e.TipoPrenda)
+            entity.Property(e => e.TipoPrendaLegacy)
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("tipo_Prenda");

@@ -1003,7 +1003,52 @@
         }
       }
     },
-    "/api/Proyecto/buscar": {
+    "/api/Proyecto/estado/{estado}": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Proyecto/cliente/{idCliente}": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
+        "parameters": [
+          {
+            "name": "idCliente",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Proyecto/calcular-materiales": {
       "post": {
         "tags": [
           "Proyecto"
@@ -1012,17 +1057,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProyectoSearchDTO"
+                "$ref": "#/components/schemas/CalculoMaterialesRequestDTO"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProyectoSearchDTO"
+                "$ref": "#/components/schemas/CalculoMaterialesRequestDTO"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/ProyectoSearchDTO"
+                "$ref": "#/components/schemas/CalculoMaterialesRequestDTO"
               }
             }
           }
@@ -1034,7 +1079,38 @@
         }
       }
     },
-    "/api/Proyecto/{id}/materiales": {
+    "/api/Proyecto/validar-stock": {
+      "post": {
+        "tags": [
+          "Proyecto"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidarStockRequestWrapper"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidarStockRequestWrapper"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidarStockRequestWrapper"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Proyecto/{id}/recalcular-materiales": {
       "post": {
         "tags": [
           "Proyecto"
@@ -1050,34 +1126,72 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Proyecto/{id}/prendas": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Proyecto/validar-talles": {
+      "post": {
+        "tags": [
+          "Proyecto"
+        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/MaterialAsignadoDTO"
-                }
+                "$ref": "#/components/schemas/ValidarTallesRequestDTO"
               }
             },
             "text/json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/MaterialAsignadoDTO"
-                }
+                "$ref": "#/components/schemas/ValidarTallesRequestDTO"
               }
             },
             "application/*+json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/MaterialAsignadoDTO"
-                }
+                "$ref": "#/components/schemas/ValidarTallesRequestDTO"
               }
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Proyecto/formulario": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1204,28 +1318,6 @@
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Proyecto/estado/{estado}": {
-      "get": {
-        "tags": [
-          "Proyecto"
-        ],
-        "parameters": [
-          {
-            "name": "estado",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1393,6 +1485,28 @@
           },
           "descripcion": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CalculoMaterialesRequestDTO": {
+        "required": [
+          "prendas"
+        ],
+        "type": "object",
+        "properties": {
+          "prendas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrendaParaCalculoDTO"
+            }
+          },
+          "materialesManuales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialManualParaCalculoDTO"
+            },
             "nullable": true
           }
         },
@@ -1824,25 +1938,48 @@
         },
         "additionalProperties": false
       },
-      "MaterialAsignadoDTO": {
+      "MaterialManualDTO": {
+        "required": [
+          "cantidad",
+          "idInsumo",
+          "unidadMedida"
+        ],
         "type": "object",
         "properties": {
           "idInsumo": {
             "type": "integer",
             "format": "int32"
           },
-          "idUnidad": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "cantidadAsignada": {
+          "cantidad": {
+            "maximum": 1.7976931348623157E+308,
+            "minimum": 0.01,
             "type": "number",
             "format": "double"
           },
-          "desperdicioEstimado": {
-            "type": "number",
-            "format": "double",
+          "unidadMedida": {
+            "maxLength": 10,
+            "minLength": 0,
+            "type": "string"
+          },
+          "observaciones": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MaterialManualParaCalculoDTO": {
+        "type": "object",
+        "properties": {
+          "idInsumo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -1961,7 +2098,51 @@
         },
         "additionalProperties": false
       },
+      "PrendaParaCalculoDTO": {
+        "type": "object",
+        "properties": {
+          "idTipoPrenda": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idTipoInsumoMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidadTotal": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PrendaTalleCrearDTO": {
+        "required": [
+          "cantidad",
+          "idTalle"
+        ],
+        "type": "object",
+        "properties": {
+          "idTalle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidad": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "ProyectoCrearDTO": {
+        "required": [
+          "fechaInicio",
+          "idCliente",
+          "nombreProyecto",
+          "prendas"
+        ],
         "type": "object",
         "properties": {
           "idCliente": {
@@ -1969,18 +2150,19 @@
             "format": "int32"
           },
           "nombreProyecto": {
-            "type": "string",
-            "nullable": true
-          },
-          "tipoPrenda": {
-            "type": "string",
-            "nullable": true
+            "maxLength": 80,
+            "minLength": 0,
+            "type": "string"
           },
           "descripcion": {
+            "maxLength": 200,
+            "minLength": 0,
             "type": "string",
             "nullable": true
           },
           "prioridad": {
+            "maxLength": 10,
+            "minLength": 0,
             "type": "string",
             "nullable": true
           },
@@ -1997,24 +2179,22 @@
             "format": "date",
             "nullable": true
           },
-          "cantidadTotal": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "idUsuarioEncargado": {
             "type": "integer",
             "format": "int32",
             "nullable": true
           },
-          "tipoEstacion": {
-            "type": "string",
-            "nullable": true
-          },
-          "materiales": {
+          "prendas": {
+            "minItems": 1,
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/MaterialAsignadoDTO"
+              "$ref": "#/components/schemas/ProyectoPrendaCrearDTO"
+            }
+          },
+          "materialesManuales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialManualDTO"
             },
             "nullable": true
           }
@@ -2105,39 +2285,52 @@
         },
         "additionalProperties": false
       },
-      "ProyectoSearchDTO": {
+      "ProyectoPrendaCrearDTO": {
+        "required": [
+          "cantidadTotal",
+          "idTipoInsumoMaterial",
+          "idTipoPrenda",
+          "talles"
+        ],
         "type": "object",
         "properties": {
-          "nombreProyecto": {
+          "idTipoPrenda": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idTipoInsumoMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidadTotal": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "tieneBordado": {
+            "type": "boolean"
+          },
+          "tieneEstampado": {
+            "type": "boolean"
+          },
+          "descripcionDiseño": {
+            "maxLength": 500,
+            "minLength": 0,
             "type": "string",
             "nullable": true
           },
-          "idCliente": {
+          "orden": {
             "type": "integer",
             "format": "int32",
             "nullable": true
           },
-          "estado": {
-            "type": "string",
-            "nullable": true
-          },
-          "prioridad": {
-            "type": "string",
-            "nullable": true
-          },
-          "fechaDesde": {
-            "type": "string",
-            "format": "date",
-            "nullable": true
-          },
-          "fechaHasta": {
-            "type": "string",
-            "format": "date",
-            "nullable": true
-          },
-          "tipoPrenda": {
-            "type": "string",
-            "nullable": true
+          "talles": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrendaTalleCrearDTO"
+            }
           }
         },
         "additionalProperties": false
@@ -2210,6 +2403,20 @@
         },
         "additionalProperties": false
       },
+      "TalleValidacionDTO": {
+        "type": "object",
+        "properties": {
+          "idTalle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidad": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "UsuarioCreateDto": {
         "required": [
           "apellidoUsuario",
@@ -2243,6 +2450,47 @@
           "nombreRol": {
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidarStockRequestWrapper": {
+        "type": "object",
+        "properties": {
+          "prendas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProyectoPrendaCrearDTO"
+            },
+            "nullable": true
+          },
+          "materialesManuales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialManualDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidarTallesRequestDTO": {
+        "required": [
+          "cantidadTotal",
+          "talles"
+        ],
+        "type": "object",
+        "properties": {
+          "cantidadTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "talles": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TalleValidacionDTO"
+            }
           }
         },
         "additionalProperties": false

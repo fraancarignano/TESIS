@@ -11,7 +11,7 @@ public partial class Proyecto
 
     public string NombreProyecto { get; set; } = null!;
 
-    public string? TipoPrenda { get; set; }
+    public string? TipoPrendaLegacy { get; set; }
 
     public string? Descripcion { get; set; }
 
@@ -51,6 +51,8 @@ public partial class Proyecto
 
     public decimal? ScrapPorcentaje { get; set; }
 
+    public bool? EsMultiPrenda { get; set; }
+
     public virtual ICollection<AvanceAreaProyecto> AvanceAreaProyectos { get; set; } = new List<AvanceAreaProyecto>();
 
     public virtual ICollection<DetalleMaterialProyecto> DetalleMaterialProyectos { get; set; } = new List<DetalleMaterialProyecto>();
@@ -61,7 +63,11 @@ public partial class Proyecto
 
     public virtual Usuario? IdUsuarioEncargadoNavigation { get; set; }
 
+    public virtual ICollection<MaterialCalculado> MaterialCalculados { get; set; } = new List<MaterialCalculado>();
+
     public virtual ICollection<ObservacionProyecto> ObservacionProyectos { get; set; } = new List<ObservacionProyecto>();
+
+    public virtual ICollection<ProyectoPrendum> ProyectoPrenda { get; set; } = new List<ProyectoPrendum>();
 
     public virtual ICollection<Scrap> Scraps { get; set; } = new List<Scrap>();
 }

@@ -11,5 +11,9 @@ public partial class TipoInsumo
 
     public string? Descripcion { get; set; }
 
+    public virtual ICollection<ConfiguracionMaterial> ConfiguracionMaterials { get; set; } = new List<ConfiguracionMaterial>();
+
     public virtual ICollection<Insumo> Insumos { get; set; } = new List<Insumo>();
+
+    public virtual ICollection<ProyectoPrendum> ProyectoPrenda { get; set; } = new List<ProyectoPrendum>();
 }

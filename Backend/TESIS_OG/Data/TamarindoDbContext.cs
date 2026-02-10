@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using TESIS_OG.Models;
@@ -7,20 +7,20 @@ namespace TESIS_OG.Data;
 
 public partial class TamarindoDbContext : DbContext
 {
-    public TamarindoDbContext()
-    {
-    }
-
     public TamarindoDbContext(DbContextOptions<TamarindoDbContext> options)
         : base(options)
     {
     }
+
     public virtual DbSet<AreaProduccion> AreaProduccions { get; set; }
+
     public virtual DbSet<AvanceAreaProyecto> AvanceAreaProyectos { get; set; }
 
     public virtual DbSet<Ciudad> Ciudads { get; set; }
 
     public virtual DbSet<Cliente> Clientes { get; set; }
+
+    public virtual DbSet<ConfiguracionMaterial> ConfiguracionMaterials { get; set; }
 
     public virtual DbSet<DetalleMaterialProyecto> DetalleMaterialProyectos { get; set; }
 
@@ -40,6 +40,8 @@ public partial class TamarindoDbContext : DbContext
 
     public virtual DbSet<InventarioMovimiento> InventarioMovimientos { get; set; }
 
+    public virtual DbSet<MaterialCalculado> MaterialCalculados { get; set; }
+
     public virtual DbSet<ObservacionProyecto> ObservacionProyectos { get; set; }
 
     public virtual DbSet<OrdenCompra> OrdenCompras { get; set; }
@@ -48,11 +50,15 @@ public partial class TamarindoDbContext : DbContext
 
     public virtual DbSet<Permiso> Permisos { get; set; }
 
+    public virtual DbSet<PrendaTalle> PrendaTalles { get; set; }
+
     public virtual DbSet<Proveedor> Proveedors { get; set; }
 
     public virtual DbSet<Provincium> Provincia { get; set; }
 
     public virtual DbSet<Proyecto> Proyectos { get; set; }
+
+    public virtual DbSet<ProyectoPrendum> ProyectoPrenda { get; set; }
 
     public virtual DbSet<Rol> Rols { get; set; }
 
@@ -60,65 +66,75 @@ public partial class TamarindoDbContext : DbContext
 
     public virtual DbSet<Scrap> Scraps { get; set; }
 
+    public virtual DbSet<Talle> Talles { get; set; }
+
     public virtual DbSet<Taller> Tallers { get; set; }
 
     public virtual DbSet<TipoInsumo> TipoInsumos { get; set; }
+
+    public virtual DbSet<TipoPrendum> TipoPrenda { get; set; }
 
     public virtual DbSet<UnidadMedidum> UnidadMedida { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
-//  protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-//      => optionsBuilder.UseSqlServer("Server=DESKTOP-VVVV704\\SERVIDOR3;Database=TamarindoDB_Dev;Integrated Security=True;TrustServerCertificate=True;");
+    public virtual DbSet<VwMaterialesProyecto> VwMaterialesProyectos { get; set; }
 
-  protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public virtual DbSet<VwPrendasProyecto> VwPrendasProyectos { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-
-    modelBuilder.Entity<AreaProduccion>(entity =>
-    {
-      // Esto es lo que resuelve el error del mensaje original
-      entity.HasKey(e => e.IdArea).HasName("PK__AreaProd__2FC141AAE659E0BB");
-
-      entity.ToTable("AreaProduccion");
-
-      entity.Property(e => e.IdArea).HasColumnName("IdArea");
-
-      entity.Property(e => e.NombreArea)
-          .HasMaxLength(100)
-          .IsUnicode(false)
-          .HasColumnName("NombreArea");
-
-      entity.Property(e => e.Descripcion)
-          .HasMaxLength(255)
-          .IsUnicode(false)
-          .HasColumnName("Descripcion");
-
-      entity.Property(e => e.Estado)
-          .HasMaxLength(20)
-          .IsUnicode(false)
-          .HasColumnName("Estado");
-
-      entity.Property(e => e.Orden).HasColumnName("Orden");
-    });
-
-    modelBuilder.Entity<AvanceAreaProyecto>(entity =>
-    {
-      entity.HasKey(e => e.IdAvanceArea).HasName("PK__AvanceAr__9DF91CFC2A177CDD");
-      entity.ToTable("AvanceAreaProyecto");
-
-      entity.Property(e => e.IdAvanceArea).HasColumnName("IdAvanceArea");
-      entity.Property(e => e.IdProyecto).HasColumnName("IdProyecto");
-      entity.Property(e => e.IdArea).HasColumnName("IdArea");
-      entity.Property(e => e.PorcentajeAvance).HasColumnName("PorcentajeAvance").HasColumnType("decimal(5, 2)");
-      entity.Property(e => e.FechaActualizacion).HasColumnName("FechaActualizacion");
-      entity.Property(e => e.IdUsuarioRegistro).HasColumnName("IdUsuarioRegistro");
-      entity.Property(e => e.Observaciones).HasColumnName("Observaciones").IsUnicode(false);
-    });
-
-    modelBuilder.Entity<Ciudad>(entity =>
+        modelBuilder.Entity<AreaProduccion>(entity =>
         {
-            entity.HasKey(e => e.IdCiudad).HasName("PK__Ciudad__0640366C18C83610");
+            entity.HasKey(e => e.IdArea).HasName("PK__AreaProd__2FC141AABA79283D");
+
+            entity.ToTable("AreaProduccion");
+
+            entity.HasIndex(e => e.NombreArea, "UQ__AreaProd__D5E8EEB507C7BDAF").IsUnique();
+
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.Estado)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Activo");
+            entity.Property(e => e.NombreArea)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<AvanceAreaProyecto>(entity =>
+        {
+            entity.HasKey(e => e.IdAvanceArea).HasName("PK__AvanceAr__9DF91CFC6F0443E1");
+
+            entity.ToTable("AvanceAreaProyecto");
+
+            entity.Property(e => e.FechaActualizacion)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.IdAreaNavigation).WithMany(p => p.AvanceAreaProyectos)
+                .HasForeignKey(d => d.IdArea)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_AvanceArea_Area");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.AvanceAreaProyectos)
+                .HasForeignKey(d => d.IdProyecto)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_AvanceArea_Proyecto");
+
+            entity.HasOne(d => d.IdUsuarioRegistroNavigation).WithMany(p => p.AvanceAreaProyectos)
+                .HasForeignKey(d => d.IdUsuarioRegistro)
+                .HasConstraintName("FK_AvanceArea_Usuario");
+        });
+
+        modelBuilder.Entity<Ciudad>(entity =>
+        {
+            entity.HasKey(e => e.IdCiudad).HasName("PK__Ciudad__0640366C8580B7D2");
 
             entity.ToTable("Ciudad");
 
@@ -132,12 +148,12 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdProvinciaNavigation).WithMany(p => p.Ciudads)
                 .HasForeignKey(d => d.IdProvincia)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Ciudad__id_Provi__29572725");
+                .HasConstraintName("FK__Ciudad__id_Provi__08B54D69");
         });
 
         modelBuilder.Entity<Cliente>(entity =>
         {
-            entity.HasKey(e => e.IdCliente).HasName("PK__Cliente__378C7054F1AA058E");
+            entity.HasKey(e => e.IdCliente).HasName("PK__Cliente__378C7054D4AC596F");
 
             entity.ToTable("Cliente");
 
@@ -202,16 +218,48 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdEstadoClienteNavigation).WithMany(p => p.Clientes)
                 .HasForeignKey(d => d.IdEstadoCliente)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Cliente__id_Esta__33D4B598");
+                .HasConstraintName("FK__Cliente__id_Esta__09A971A2");
 
             entity.HasOne(d => d.IdProvinciaNavigation).WithMany(p => p.Clientes)
                 .HasForeignKey(d => d.IdProvincia)
                 .HasConstraintName("FK_Cliente_Provincia");
         });
 
+        modelBuilder.Entity<ConfiguracionMaterial>(entity =>
+        {
+            entity.HasKey(e => e.IdConfig).HasName("PK__Configur__A57107560161B030");
+
+            entity.ToTable("ConfiguracionMaterial");
+
+            entity.Property(e => e.IdConfig).HasColumnName("id_Config");
+            entity.Property(e => e.CantidadPorUnidad)
+                .HasColumnType("decimal(7, 3)")
+                .HasColumnName("cantidad_Por_Unidad");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("descripcion");
+            entity.Property(e => e.IdTipoInsumo).HasColumnName("id_TipoInsumo");
+            entity.Property(e => e.IdTipoPrenda).HasColumnName("id_TipoPrenda");
+            entity.Property(e => e.UnidadMedida)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("unidad_Medida");
+
+            entity.HasOne(d => d.IdTipoInsumoNavigation).WithMany(p => p.ConfiguracionMaterials)
+                .HasForeignKey(d => d.IdTipoInsumo)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Configura__id_Ti__7C1A6C5A");
+
+            entity.HasOne(d => d.IdTipoPrendaNavigation).WithMany(p => p.ConfiguracionMaterials)
+                .HasForeignKey(d => d.IdTipoPrenda)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Configura__id_Ti__7B264821");
+        });
+
         modelBuilder.Entity<DetalleMaterialProyecto>(entity =>
         {
-            entity.HasKey(e => e.IdDetalle).HasName("PK__DetalleM__8BEB6E74BB6AF949");
+            entity.HasKey(e => e.IdDetalle).HasName("PK__DetalleM__8BEB6E7453D88CD3");
 
             entity.ToTable("DetalleMaterialProyecto");
 
@@ -232,22 +280,22 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdInsumoNavigation).WithMany(p => p.DetalleMaterialProyectos)
                 .HasForeignKey(d => d.IdInsumo)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__DetalleMa__id_In__59FA5E80");
+                .HasConstraintName("FK__DetalleMa__id_In__0E6E26BF");
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.DetalleMaterialProyectos)
                 .HasForeignKey(d => d.IdProyecto)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__DetalleMa__id_Pr__59063A47");
+                .HasConstraintName("FK__DetalleMa__id_Pr__0F624AF8");
 
             entity.HasOne(d => d.IdUnidadNavigation).WithMany(p => p.DetalleMaterialProyectos)
                 .HasForeignKey(d => d.IdUnidad)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__DetalleMa__id_Un__5AEE82B9");
+                .HasConstraintName("FK__DetalleMa__id_Un__10566F31");
         });
 
         modelBuilder.Entity<DetalleOrdenCompra>(entity =>
         {
-            entity.HasKey(e => e.IdDetalle).HasName("PK__Detalle___8BEB6E74F5A5BE00");
+            entity.HasKey(e => e.IdDetalle).HasName("PK__Detalle___8BEB6E740F0F21FB");
 
             entity.ToTable("Detalle_OrdenCompra");
 
@@ -267,17 +315,17 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdInsumoNavigation).WithMany(p => p.DetalleOrdenCompras)
                 .HasForeignKey(d => d.IdInsumo)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Detalle_O__id_In__4E88ABD4");
+                .HasConstraintName("FK__Detalle_O__id_In__0A9D95DB");
 
             entity.HasOne(d => d.IdOrdenCompraNavigation).WithMany(p => p.DetalleOrdenCompras)
                 .HasForeignKey(d => d.IdOrdenCompra)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Detalle_O__id_Or__4D94879B");
+                .HasConstraintName("FK__Detalle_O__id_Or__0B91BA14");
         });
 
         modelBuilder.Entity<DetalleTallerProyecto>(entity =>
         {
-            entity.HasKey(e => e.IdDetalleTaller).HasName("PK__Detalle___21F588418C40007E");
+            entity.HasKey(e => e.IdDetalleTaller).HasName("PK__Detalle___21F58841EEE08549");
 
             entity.ToTable("Detalle_Taller_Proyecto");
 
@@ -297,17 +345,17 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.DetalleTallerProyectos)
                 .HasForeignKey(d => d.IdProyecto)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Detalle_T__id_Pr__619B8048");
+                .HasConstraintName("FK__Detalle_T__id_Pr__0C85DE4D");
 
             entity.HasOne(d => d.IdTallerNavigation).WithMany(p => p.DetalleTallerProyectos)
                 .HasForeignKey(d => d.IdTaller)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Detalle_T__id_Ta__60A75C0F");
+                .HasConstraintName("FK__Detalle_T__id_Ta__0D7A0286");
         });
 
         modelBuilder.Entity<Direccion>(entity =>
         {
-            entity.HasKey(e => e.IdDireccion).HasName("PK__Direccio__B8A2BC7D662BFEFD");
+            entity.HasKey(e => e.IdDireccion).HasName("PK__Direccio__B8A2BC7D526553A4");
 
             entity.ToTable("Direccion");
 
@@ -331,22 +379,22 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdCiudadNavigation).WithMany(p => p.Direccions)
                 .HasForeignKey(d => d.IdCiudad)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Direccion__id_Ci__2C3393D0");
+                .HasConstraintName("FK__Direccion__id_Ci__114A936A");
 
             entity.HasOne(d => d.IdPaisNavigation).WithMany(p => p.Direccions)
                 .HasForeignKey(d => d.IdPais)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Direccion__id_Pa__2E1BDC42");
+                .HasConstraintName("FK__Direccion__id_Pa__123EB7A3");
 
             entity.HasOne(d => d.IdProvinciaNavigation).WithMany(p => p.Direccions)
                 .HasForeignKey(d => d.IdProvincia)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Direccion__id_Pr__2D27B809");
+                .HasConstraintName("FK__Direccion__id_Pr__1332DBDC");
         });
 
         modelBuilder.Entity<EstadoCliente>(entity =>
         {
-            entity.HasKey(e => e.IdEstadoCliente).HasName("PK__EstadoCl__E7A651C901643474");
+            entity.HasKey(e => e.IdEstadoCliente).HasName("PK__EstadoCl__E7A651C96AFA4585");
 
             entity.ToTable("EstadoCliente");
 
@@ -359,7 +407,7 @@ public partial class TamarindoDbContext : DbContext
 
         modelBuilder.Entity<HistorialCliente>(entity =>
         {
-            entity.HasKey(e => e.IdHistorial).HasName("PK__Historia__51E84F64FA7249BC");
+            entity.HasKey(e => e.IdHistorial).HasName("PK__Historia__51E84F64EF3B76C0");
 
             entity.ToTable("Historial_Cliente");
 
@@ -382,12 +430,12 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdClienteNavigation).WithMany(p => p.HistorialClientes)
                 .HasForeignKey(d => d.IdCliente)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Historial__id_Cl__6C190EBB");
+                .HasConstraintName("FK__Historial__id_Cl__14270015");
         });
 
         modelBuilder.Entity<HistorialUsuario>(entity =>
         {
-            entity.HasKey(e => e.IdHistorial).HasName("PK__Historia__51E84F647125E7CC");
+            entity.HasKey(e => e.IdHistorial).HasName("PK__Historia__51E84F6483A59B84");
 
             entity.ToTable("Historial_Usuario");
 
@@ -406,16 +454,20 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.HistorialUsuarios)
                 .HasForeignKey(d => d.IdUsuario)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Historial__id_Us__6EF57B66");
+                .HasConstraintName("FK__Historial__id_Us__151B244E");
         });
 
         modelBuilder.Entity<Insumo>(entity =>
         {
-            entity.HasKey(e => e.IdInsumo).HasName("PK__Insumo__F8E4E9DD03E91CBC");
+            entity.HasKey(e => e.IdInsumo).HasName("PK__Insumo__F8E4E9DDFD439996");
 
             entity.ToTable("Insumo");
 
             entity.Property(e => e.IdInsumo).HasColumnName("id_Insumo");
+            entity.Property(e => e.Color)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("color");
             entity.Property(e => e.Estado)
                 .HasMaxLength(15)
                 .IsUnicode(false)
@@ -427,12 +479,19 @@ public partial class TamarindoDbContext : DbContext
                 .HasMaxLength(80)
                 .IsUnicode(false)
                 .HasColumnName("nombre_Insumo");
+            entity.Property(e => e.RatioKgUnidad)
+                .HasColumnType("decimal(5, 3)")
+                .HasColumnName("ratio_Kg_Unidad");
             entity.Property(e => e.StockActual)
                 .HasColumnType("decimal(9, 0)")
                 .HasColumnName("stock_Actual");
             entity.Property(e => e.StockMinimo)
                 .HasColumnType("decimal(9, 1)")
                 .HasColumnName("stock_Minimo");
+            entity.Property(e => e.TipoTela)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("tipo_Tela");
             entity.Property(e => e.UnidadMedida)
                 .HasMaxLength(10)
                 .IsUnicode(false)
@@ -440,17 +499,17 @@ public partial class TamarindoDbContext : DbContext
 
             entity.HasOne(d => d.IdProveedorNavigation).WithMany(p => p.Insumos)
                 .HasForeignKey(d => d.IdProveedor)
-                .HasConstraintName("FK__Insumo__id_Prove__47DBAE45");
+                .HasConstraintName("FK__Insumo__id_Prove__160F4887");
 
             entity.HasOne(d => d.IdTipoInsumoNavigation).WithMany(p => p.Insumos)
                 .HasForeignKey(d => d.IdTipoInsumo)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Insumo__id_TipoI__46E78A0C");
+                .HasConstraintName("FK__Insumo__id_TipoI__17036CC0");
         });
 
         modelBuilder.Entity<InventarioMovimiento>(entity =>
         {
-            entity.HasKey(e => e.IdMovimiento).HasName("PK__Inventar__BE8A588CBB3D84D0");
+            entity.HasKey(e => e.IdMovimiento).HasName("PK__Inventar__BE8A588CF648CF1C");
 
             entity.ToTable("Inventario_Movimiento");
 
@@ -478,20 +537,69 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdInsumoNavigation).WithMany(p => p.InventarioMovimientos)
                 .HasForeignKey(d => d.IdInsumo)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Inventari__id_In__5165187F");
+                .HasConstraintName("FK__Inventari__id_In__17F790F9");
 
             entity.HasOne(d => d.IdOrdenCompraNavigation).WithMany(p => p.InventarioMovimientos)
                 .HasForeignKey(d => d.IdOrdenCompra)
-                .HasConstraintName("FK__Inventari__id_Or__52593CB8");
+                .HasConstraintName("FK__Inventari__id_Or__18EBB532");
 
             entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.InventarioMovimientos)
                 .HasForeignKey(d => d.IdUsuario)
-                .HasConstraintName("FK__Inventari__id_Us__534D60F1");
+                .HasConstraintName("FK__Inventari__id_Us__19DFD96B");
+        });
+
+        modelBuilder.Entity<MaterialCalculado>(entity =>
+        {
+            entity.HasKey(e => e.IdMaterialCalculado).HasName("PK__Material__B16B41094B3CE804");
+
+            entity.ToTable("MaterialCalculado");
+
+            entity.HasIndex(e => e.IdProyecto, "IX_MaterialCalculado_Proyecto");
+
+            entity.Property(e => e.IdMaterialCalculado).HasColumnName("id_MaterialCalculado");
+            entity.Property(e => e.CantidadCalculada)
+                .HasColumnType("decimal(9, 2)")
+                .HasColumnName("cantidad_Calculada");
+            entity.Property(e => e.CantidadManual)
+                .HasColumnType("decimal(9, 2)")
+                .HasColumnName("cantidad_Manual");
+            entity.Property(e => e.IdInsumo).HasColumnName("id_Insumo");
+            entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            entity.Property(e => e.IdProyectoPrenda).HasColumnName("id_ProyectoPrenda");
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("observaciones");
+            entity.Property(e => e.TieneStock)
+                .HasDefaultValue(true)
+                .HasColumnName("tiene_Stock");
+            entity.Property(e => e.TipoCalculo)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("tipo_Calculo");
+            entity.Property(e => e.UnidadMedida)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("unidad_Medida");
+
+            entity.HasOne(d => d.IdInsumoNavigation).WithMany(p => p.MaterialCalculados)
+                .HasForeignKey(d => d.IdInsumo)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__MaterialC__id_In__0C50D423");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.MaterialCalculados)
+                .HasForeignKey(d => d.IdProyecto)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__MaterialC__id_Pr__0A688BB1");
+
+            entity.HasOne(d => d.IdProyectoPrendaNavigation).WithMany(p => p.MaterialCalculados)
+                .HasForeignKey(d => d.IdProyectoPrenda)
+                .HasConstraintName("FK__MaterialC__id_Pr__0B5CAFEA");
         });
 
         modelBuilder.Entity<ObservacionProyecto>(entity =>
         {
-            entity.HasKey(e => e.IdObservacion).HasName("PK__Observac__492EC2325D9FA4B5");
+            entity.HasKey(e => e.IdObservacion).HasName("PK__Observac__492EC232D5D72C2D");
 
             entity.ToTable("Observacion_Proyecto");
 
@@ -509,17 +617,17 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.ObservacionProyectos)
                 .HasForeignKey(d => d.IdProyecto)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Observaci__id_Pr__6477ECF3");
+                .HasConstraintName("FK__Observaci__id_Pr__1AD3FDA4");
 
             entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.ObservacionProyectos)
                 .HasForeignKey(d => d.IdUsuario)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Observaci__id_Us__656C112C");
+                .HasConstraintName("FK__Observaci__id_Us__1BC821DD");
         });
 
         modelBuilder.Entity<OrdenCompra>(entity =>
         {
-            entity.HasKey(e => e.IdOrdenCompra).HasName("PK__Orden_Co__D38A93C1D1489182");
+            entity.HasKey(e => e.IdOrdenCompra).HasName("PK__Orden_Co__D38A93C127B6CBDD");
 
             entity.ToTable("Orden_Compra");
 
@@ -542,12 +650,12 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdProveedorNavigation).WithMany(p => p.OrdenCompras)
                 .HasForeignKey(d => d.IdProveedor)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Orden_Com__id_Pr__4AB81AF0");
+                .HasConstraintName("FK__Orden_Com__id_Pr__1CBC4616");
         });
 
         modelBuilder.Entity<Pai>(entity =>
         {
-            entity.HasKey(e => e.IdPais).HasName("PK__Pais__2A3B9774B35B3A3C");
+            entity.HasKey(e => e.IdPais).HasName("PK__Pais__2A3B9774B054E953");
 
             entity.Property(e => e.IdPais).HasColumnName("id_Pais");
             entity.Property(e => e.NombrePais)
@@ -558,7 +666,7 @@ public partial class TamarindoDbContext : DbContext
 
         modelBuilder.Entity<Permiso>(entity =>
         {
-            entity.HasKey(e => e.IdPermiso).HasName("PK__Permiso__ED14A36FB46222B2");
+            entity.HasKey(e => e.IdPermiso).HasName("PK__Permiso__ED14A36F659BA23B");
 
             entity.ToTable("Permiso");
 
@@ -573,9 +681,33 @@ public partial class TamarindoDbContext : DbContext
                 .HasColumnName("nombre_Permiso");
         });
 
+        modelBuilder.Entity<PrendaTalle>(entity =>
+        {
+            entity.HasKey(e => e.IdPrendaTalle).HasName("PK__PrendaTa__37E004FDC6BE1BB0");
+
+            entity.ToTable("PrendaTalle");
+
+            entity.HasIndex(e => e.IdProyectoPrenda, "IX_PrendaTalle_ProyectoPrenda");
+
+            entity.Property(e => e.IdPrendaTalle).HasColumnName("id_PrendaTalle");
+            entity.Property(e => e.Cantidad).HasColumnName("cantidad");
+            entity.Property(e => e.IdProyectoPrenda).HasColumnName("id_ProyectoPrenda");
+            entity.Property(e => e.IdTalle).HasColumnName("id_Talle");
+
+            entity.HasOne(d => d.IdProyectoPrendaNavigation).WithMany(p => p.PrendaTalles)
+                .HasForeignKey(d => d.IdProyectoPrenda)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__PrendaTal__id_Pr__05A3D694");
+
+            entity.HasOne(d => d.IdTalleNavigation).WithMany(p => p.PrendaTalles)
+                .HasForeignKey(d => d.IdTalle)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__PrendaTal__id_Ta__0697FACD");
+        });
+
         modelBuilder.Entity<Proveedor>(entity =>
         {
-            entity.HasKey(e => e.IdProveedor).HasName("PK__Proveedo__53B6E1A54FBDD3A3");
+            entity.HasKey(e => e.IdProveedor).HasName("PK__Proveedo__53B6E1A5BE514769");
 
             entity.ToTable("Proveedor");
 
@@ -592,7 +724,7 @@ public partial class TamarindoDbContext : DbContext
 
         modelBuilder.Entity<Provincium>(entity =>
         {
-            entity.HasKey(e => e.IdProvincia).HasName("PK__Provinci__C83EC1944C8CEF0F");
+            entity.HasKey(e => e.IdProvincia).HasName("PK__Provinci__C83EC1948F3FA25D");
 
             entity.Property(e => e.IdProvincia).HasColumnName("id_Provincia");
             entity.Property(e => e.IdPais).HasColumnName("id_Pais");
@@ -604,103 +736,117 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdPaisNavigation).WithMany(p => p.Provincia)
                 .HasForeignKey(d => d.IdPais)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Provincia__id_Pa__267ABA7A");
+                .HasConstraintName("FK__Provincia__id_Pa__1DB06A4F");
         });
 
-    modelBuilder.Entity<Proyecto>(entity =>
-    {
-      entity.HasKey(e => e.IdProyecto).HasName("PK__Proyecto__2544884CB2E93B2C");
-
-      entity.ToTable("Proyectos");
-
-      entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
-
-      entity.Property(e => e.IdCliente).HasColumnName("id_Cliente");
-
-      entity.Property(e => e.NombreProyecto)
-          .HasMaxLength(80)
-          .IsUnicode(false)
-          .HasColumnName("nombre_Proyecto");
-
-      entity.Property(e => e.TipoPrenda)
-          .HasMaxLength(50)
-          .IsUnicode(false)
-          .HasColumnName("tipo_Prenda");
-
-      entity.Property(e => e.Descripcion)
-          .HasMaxLength(200)
-          .IsUnicode(false)
-          .HasColumnName("descripcion");
-
-      entity.Property(e => e.Prioridad)
-          .HasMaxLength(1)
-          .IsUnicode(false)
-          .IsFixedLength()
-          .HasColumnName("prioridad");
-
-      entity.Property(e => e.Estado)
-          .HasMaxLength(20)
-          .IsUnicode(false)
-          .HasColumnName("estado");
-
-      entity.Property(e => e.FechaInicio).HasColumnName("fecha_Inicio");
-      entity.Property(e => e.FechaFin).HasColumnName("fecha_Fin");
-      entity.Property(e => e.CantidadTotal).HasColumnName("CantidadTotal");
-      entity.Property(e => e.CantidadProducida).HasColumnName("CantidadProducida");
-      entity.Property(e => e.IdUsuarioEncargado).HasColumnName("IdUsuarioEncargado");
-
-      entity.Property(e => e.TipoEstacion)
-          .HasMaxLength(50)
-          .IsUnicode(false)
-          .HasColumnName("TipoEstacion");
-
-      entity.Property(e => e.CodigoProyecto)
-          .HasMaxLength(20)
-          .IsUnicode(false)
-          .HasColumnName("CodigoProyecto");
-
-      entity.Property(e => e.AreaActual)
-          .HasMaxLength(100)
-          .IsUnicode(false)
-          .HasColumnName("AreaActual");
-
-      entity.Property(e => e.AvanceGerenciaAdmin).HasColumnName("AvanceGerenciaAdmin");
-      entity.Property(e => e.AvanceDiseñoDesarrollo).HasColumnName("AvanceDiseñoDesarrollo");
-      entity.Property(e => e.AvanceControlCalidad).HasColumnName("AvanceControlCalidad");
-      entity.Property(e => e.AvanceEtiquetadoEmpaquetado).HasColumnName("AvanceEtiquetadoEmpaquetado");
-      entity.Property(e => e.AvanceDepositoLogistica).HasColumnName("AvanceDepositoLogistica");
-
-      entity.Property(e => e.CostoMaterialEstimado)
-          .HasColumnType("decimal(10, 2)")
-          .HasColumnName("CostoMaterialEstimado");
-
-      entity.Property(e => e.ScrapTotal)
-          .HasColumnType("decimal(10, 2)")
-          .HasColumnName("ScrapTotal");
-
-      entity.Property(e => e.ScrapPorcentaje)
-          .HasColumnType("decimal(5, 2)")
-          .HasColumnName("ScrapPorcentaje");
-
-      // ✅ Relación con Cliente
-      entity.HasOne(d => d.IdClienteNavigation)
-          .WithMany(p => p.Proyectos)
-          .HasForeignKey(d => d.IdCliente)
-          .OnDelete(DeleteBehavior.ClientSetNull)
-          .HasConstraintName("FK__Proyectos__id_Cl__6A30C649");
-
-      // ✅ Relación con Usuario Encargado
-      // ESTO ES CRÍTICO: Mapear con la colección Proyectos de Usuario
-      entity.HasOne(d => d.IdUsuarioEncargadoNavigation)
-          .WithMany(p => p.Proyectos)  // ← Usa la colección que está en Usuario.cs
-          .HasForeignKey(d => d.IdUsuarioEncargado)
-          .OnDelete(DeleteBehavior.Restrict)
-          .HasConstraintName("FK_Proyecto_UsuarioEncargado");
-    });
-
-    modelBuilder.Entity<Rol>(entity =>
+        modelBuilder.Entity<Proyecto>(entity =>
         {
-            entity.HasKey(e => e.IdRol).HasName("PK__Rol__76482FD262C3FB13");
+            entity.HasKey(e => e.IdProyecto).HasName("PK__Proyecto__2544884CC3151243");
+
+            entity.HasIndex(e => e.CodigoProyecto, "UQ_CodigoProyecto").IsUnique();
+
+            entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            entity.Property(e => e.AreaActual)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasDefaultValue("Gerencia y Administración");
+            entity.Property(e => e.AvanceControlCalidad).HasDefaultValue(0);
+            entity.Property(e => e.AvanceDepositoLogistica).HasDefaultValue(0);
+            entity.Property(e => e.AvanceDiseñoDesarrollo).HasDefaultValue(0);
+            entity.Property(e => e.AvanceEtiquetadoEmpaquetado).HasDefaultValue(0);
+            entity.Property(e => e.AvanceGerenciaAdmin).HasDefaultValue(0);
+            entity.Property(e => e.CantidadProducida).HasDefaultValue(0);
+            entity.Property(e => e.CodigoProyecto)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.CostoMaterialEstimado).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("descripcion");
+            entity.Property(e => e.EsMultiPrenda)
+                .HasDefaultValue(false)
+                .HasColumnName("es_MultiPrenda");
+            entity.Property(e => e.Estado)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("estado");
+            entity.Property(e => e.FechaFin).HasColumnName("fecha_Fin");
+            entity.Property(e => e.FechaInicio).HasColumnName("fecha_Inicio");
+            entity.Property(e => e.IdCliente).HasColumnName("id_Cliente");
+            entity.Property(e => e.NombreProyecto)
+                .HasMaxLength(80)
+                .IsUnicode(false)
+                .HasColumnName("nombre_Proyecto");
+            entity.Property(e => e.Prioridad)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("prioridad");
+            entity.Property(e => e.ScrapPorcentaje)
+                .HasDefaultValue(0m)
+                .HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.ScrapTotal)
+                .HasDefaultValue(0m)
+                .HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.TipoEstacion)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.TipoPrendaLegacy)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("tipo_Prenda_Legacy");
+
+            entity.HasOne(d => d.IdClienteNavigation).WithMany(p => p.Proyectos)
+                .HasForeignKey(d => d.IdCliente)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Proyectos__id_Cl__1EA48E88");
+
+            entity.HasOne(d => d.IdUsuarioEncargadoNavigation).WithMany(p => p.Proyectos)
+                .HasForeignKey(d => d.IdUsuarioEncargado)
+                .HasConstraintName("FK_Proyecto_UsuarioEncargado");
+        });
+
+        modelBuilder.Entity<ProyectoPrendum>(entity =>
+        {
+            entity.HasKey(e => e.IdProyectoPrenda).HasName("PK__Proyecto__B4428B2F238DD834");
+
+            entity.HasIndex(e => e.IdProyecto, "IX_ProyectoPrenda_Proyecto");
+
+            entity.Property(e => e.IdProyectoPrenda).HasColumnName("id_ProyectoPrenda");
+            entity.Property(e => e.CantidadTotal).HasColumnName("cantidad_Total");
+            entity.Property(e => e.DescripcionDiseño)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("descripcion_Diseño");
+            entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            entity.Property(e => e.IdTipoInsumoMaterial).HasColumnName("id_TipoInsumo_Material");
+            entity.Property(e => e.IdTipoPrenda).HasColumnName("id_TipoPrenda");
+            entity.Property(e => e.Orden).HasColumnName("orden");
+            entity.Property(e => e.TieneBordado)
+                .HasDefaultValue(false)
+                .HasColumnName("tiene_Bordado");
+            entity.Property(e => e.TieneEstampado)
+                .HasDefaultValue(false)
+                .HasColumnName("tiene_Estampado");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.ProyectoPrenda)
+                .HasForeignKey(d => d.IdProyecto)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ProyectoP__id_Pr__00DF2177");
+
+            entity.HasOne(d => d.IdTipoInsumoMaterialNavigation).WithMany(p => p.ProyectoPrenda)
+                .HasForeignKey(d => d.IdTipoInsumoMaterial)
+                .HasConstraintName("FK__ProyectoP__id_Ti__02C769E9");
+
+            entity.HasOne(d => d.IdTipoPrendaNavigation).WithMany(p => p.ProyectoPrenda)
+                .HasForeignKey(d => d.IdTipoPrenda)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__ProyectoP__id_Ti__01D345B0");
+        });
+
+        modelBuilder.Entity<Rol>(entity =>
+        {
+            entity.HasKey(e => e.IdRol).HasName("PK__Rol__76482FD2A76C0E6A");
 
             entity.ToTable("Rol");
 
@@ -718,7 +864,7 @@ public partial class TamarindoDbContext : DbContext
 
         modelBuilder.Entity<RolPermiso>(entity =>
         {
-            entity.HasKey(e => new { e.IdRol, e.IdPermiso }).HasName("PK__RolPermi__989965E41540AF67");
+            entity.HasKey(e => new { e.IdRol, e.IdPermiso }).HasName("PK__RolPermi__989965E47620E5AB");
 
             entity.ToTable("RolPermiso");
 
@@ -729,24 +875,28 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdPermisoNavigation).WithMany(p => p.RolPermisos)
                 .HasForeignKey(d => d.IdPermiso)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__RolPermis__id_Pe__3B75D760");
+                .HasConstraintName("FK__RolPermis__id_Pe__1F98B2C1");
 
             entity.HasOne(d => d.IdRolNavigation).WithMany(p => p.RolPermisos)
                 .HasForeignKey(d => d.IdRol)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__RolPermis__id_Ro__3A81B327");
+                .HasConstraintName("FK__RolPermis__id_Ro__208CD6FA");
         });
 
         modelBuilder.Entity<Scrap>(entity =>
         {
-            entity.HasKey(e => e.IdScrap).HasName("PK__Scrap__FF2402A0D0105EF4");
+            entity.HasKey(e => e.IdScrap).HasName("PK__Scrap__FF2402A0499398BA");
 
             entity.ToTable("Scrap");
 
             entity.Property(e => e.IdScrap).HasColumnName("id_Scrap");
+            entity.Property(e => e.AreaOcurrencia)
+                .HasMaxLength(100)
+                .IsUnicode(false);
             entity.Property(e => e.CantidadScrap)
                 .HasColumnType("decimal(9, 0)")
                 .HasColumnName("cantidad_Scrap");
+            entity.Property(e => e.CostoScrap).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Destino)
                 .HasMaxLength(50)
                 .IsUnicode(false)
@@ -764,17 +914,40 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdInsumoNavigation).WithMany(p => p.Scraps)
                 .HasForeignKey(d => d.IdInsumo)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Scrap__id_Insumo__693CA210");
+                .HasConstraintName("FK__Scrap__id_Insumo__2180FB33");
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Scraps)
                 .HasForeignKey(d => d.IdProyecto)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Scrap__id_Proyec__68487DD7");
+                .HasConstraintName("FK__Scrap__id_Proyec__22751F6C");
+        });
+
+        modelBuilder.Entity<Talle>(entity =>
+        {
+            entity.HasKey(e => e.IdTalle).HasName("PK__Talle__B43E6D011A0B93FA");
+
+            entity.ToTable("Talle");
+
+            entity.Property(e => e.IdTalle).HasColumnName("id_Talle");
+            entity.Property(e => e.Categoria)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("categoria");
+            entity.Property(e => e.Estado)
+                .HasMaxLength(15)
+                .IsUnicode(false)
+                .HasDefaultValue("Activo")
+                .HasColumnName("estado");
+            entity.Property(e => e.NombreTalle)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("nombre_Talle");
+            entity.Property(e => e.Orden).HasColumnName("orden");
         });
 
         modelBuilder.Entity<Taller>(entity =>
         {
-            entity.HasKey(e => e.IdTaller).HasName("PK__Taller__1C7B56B3A6230829");
+            entity.HasKey(e => e.IdTaller).HasName("PK__Taller__1C7B56B3F0935104");
 
             entity.ToTable("Taller");
 
@@ -808,12 +981,12 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdCiudadNavigation).WithMany(p => p.Tallers)
                 .HasForeignKey(d => d.IdCiudad)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Taller__id_Ciuda__5DCAEF64");
+                .HasConstraintName("FK__Taller__id_Ciuda__236943A5");
         });
 
         modelBuilder.Entity<TipoInsumo>(entity =>
         {
-            entity.HasKey(e => e.IdTipoInsumo).HasName("PK__TipoInsu__C0898F9DEE469FCF");
+            entity.HasKey(e => e.IdTipoInsumo).HasName("PK__TipoInsu__C0898F9D13926F40");
 
             entity.ToTable("TipoInsumo");
 
@@ -828,9 +1001,32 @@ public partial class TamarindoDbContext : DbContext
                 .HasColumnName("nombre_Tipo");
         });
 
+        modelBuilder.Entity<TipoPrendum>(entity =>
+        {
+            entity.HasKey(e => e.IdTipoPrenda).HasName("PK__TipoPren__355BD324A9C13EEA");
+
+            entity.Property(e => e.IdTipoPrenda).HasColumnName("id_TipoPrenda");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("descripcion");
+            entity.Property(e => e.Estado)
+                .HasMaxLength(15)
+                .IsUnicode(false)
+                .HasDefaultValue("Activo")
+                .HasColumnName("estado");
+            entity.Property(e => e.LongitudCosturaMetros)
+                .HasColumnType("decimal(5, 2)")
+                .HasColumnName("longitud_Costura_Metros");
+            entity.Property(e => e.NombrePrenda)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("nombre_Prenda");
+        });
+
         modelBuilder.Entity<UnidadMedidum>(entity =>
         {
-            entity.HasKey(e => e.IdUnidad).HasName("PK__Unidad_M__06C7482528B4DB05");
+            entity.HasKey(e => e.IdUnidad).HasName("PK__Unidad_M__06C748258040E0AB");
 
             entity.ToTable("Unidad_Medida");
 
@@ -847,7 +1043,7 @@ public partial class TamarindoDbContext : DbContext
 
         modelBuilder.Entity<Usuario>(entity =>
         {
-            entity.HasKey(e => e.IdUsuario).HasName("PK__Usuario__8E901EAA0E3B1D31");
+            entity.HasKey(e => e.IdUsuario).HasName("PK__Usuario__8E901EAA8DFE2877");
 
             entity.ToTable("Usuario");
 
@@ -879,7 +1075,88 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdRolNavigation).WithMany(p => p.Usuarios)
                 .HasForeignKey(d => d.IdRol)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Usuario__id_Rol__3E52440B");
+                .HasConstraintName("FK__Usuario__id_Rol__245D67DE");
+        });
+
+        modelBuilder.Entity<VwMaterialesProyecto>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("vw_MaterialesProyecto");
+
+            entity.Property(e => e.CantidadCalculada)
+                .HasColumnType("decimal(9, 2)")
+                .HasColumnName("cantidad_Calculada");
+            entity.Property(e => e.CantidadFinal)
+                .HasColumnType("decimal(9, 2)")
+                .HasColumnName("cantidad_Final");
+            entity.Property(e => e.CantidadManual)
+                .HasColumnType("decimal(9, 2)")
+                .HasColumnName("cantidad_Manual");
+            entity.Property(e => e.EstadoStock)
+                .HasMaxLength(12)
+                .IsUnicode(false)
+                .HasColumnName("estado_Stock");
+            entity.Property(e => e.IdInsumo).HasColumnName("id_Insumo");
+            entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            entity.Property(e => e.NombreInsumo)
+                .HasMaxLength(80)
+                .IsUnicode(false)
+                .HasColumnName("nombre_Insumo");
+            entity.Property(e => e.NombreProyecto)
+                .HasMaxLength(80)
+                .IsUnicode(false)
+                .HasColumnName("nombre_Proyecto");
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("observaciones");
+            entity.Property(e => e.StockActual)
+                .HasColumnType("decimal(9, 0)")
+                .HasColumnName("stock_Actual");
+            entity.Property(e => e.TieneStock).HasColumnName("tiene_Stock");
+            entity.Property(e => e.TipoCalculo)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("tipo_Calculo");
+            entity.Property(e => e.TipoInsumo)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasColumnName("tipo_Insumo");
+            entity.Property(e => e.UnidadMedida)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("unidad_Medida");
+        });
+
+        modelBuilder.Entity<VwPrendasProyecto>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("vw_PrendasProyecto");
+
+            entity.Property(e => e.CantidadTallesDistintos).HasColumnName("cantidad_Talles_Distintos");
+            entity.Property(e => e.CantidadTotal).HasColumnName("cantidad_Total");
+            entity.Property(e => e.DescripcionDiseño)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("descripcion_Diseño");
+            entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            entity.Property(e => e.IdProyectoPrenda).HasColumnName("id_ProyectoPrenda");
+            entity.Property(e => e.Material)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasColumnName("material");
+            entity.Property(e => e.NombrePrenda)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("nombre_Prenda");
+            entity.Property(e => e.NombreProyecto)
+                .HasMaxLength(80)
+                .IsUnicode(false)
+                .HasColumnName("nombre_Proyecto");
+            entity.Property(e => e.TieneBordado).HasColumnName("tiene_Bordado");
+            entity.Property(e => e.TieneEstampado).HasColumnName("tiene_Estampado");
         });
 
         OnModelCreatingPartial(modelBuilder);

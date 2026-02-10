@@ -7694,23 +7694,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\alans\\.nuget\\packages\\": {},
+    "C:\\Users\\Usuario\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\TESIS_OG.csproj",
+      "projectUniqueName": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\TESIS_OG.csproj",
       "projectName": "TESIS_OG",
-      "projectPath": "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\TESIS_OG.csproj",
-      "packagesPath": "C:\\Users\\alans\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\obj\\",
+      "projectPath": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\TESIS_OG.csproj",
+      "packagesPath": "C:\\Users\\Usuario\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\alans\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Usuario\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -7803,7 +7803,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
