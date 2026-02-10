@@ -78,7 +78,7 @@ export class ProyectoFormComponent implements OnInit {
   private cargarInsumos(): void {
     this.insumosService.getInsumos().subscribe({
       next: (data: Insumo[]) => {
-        this.listaInsumosDB = data.filter(i => i.estado === 'Pulenta' || i.estado === 'En uso');
+        this.listaInsumosDB = data.filter(i => i.estado === 'Disponible' || i.estado === 'En uso');
       },
       error: (err) => console.error('Error cargando insumos:', err)
     });
