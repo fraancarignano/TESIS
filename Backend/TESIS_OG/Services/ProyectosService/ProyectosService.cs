@@ -549,6 +549,10 @@ namespace TESIS_OG.Services.ProyectoService
         // CATÁLOGOS
         // ========================================
 
+        // ========================================
+        // MÉTODO CORREGIDO: ObtenerDatosFormularioAsync
+        // ========================================
+
         public async Task<FormularioProyectoInicializacionDTO> ObtenerDatosFormularioAsync()
         {
             var clientes = await _context.Clientes
@@ -556,7 +560,10 @@ namespace TESIS_OG.Services.ProyectoService
               .Select(c => new ClienteSimpleDTO
               {
                   IdCliente = c.IdCliente,
-                  NombreCompleto = c.RazonSocial ?? $"{c.Nombre} {c.Apellido}",
+                  NombreCompleto =
+                    !string.IsNullOrWhiteSpace(c.RazonSocial)
+                        ? c.RazonSocial
+                        : $"{c.Nombre ?? ""} {c.Apellido ?? ""}".Trim(),
                   TipoCliente = c.TipoCliente,
                   Email = c.Email
               })
@@ -585,32 +592,53 @@ namespace TESIS_OG.Services.ProyectoService
               .OrderBy(t => t.Orden)
               .ToListAsync();
 
-            var tiposInsumo = await _context.TipoInsumos
-              .Select(ti => new TipoInsumoSimpleDTO
-              {
-                  IdTipoInsumo = ti.IdTipoInsumo,
-                  NombreTipo = ti.NombreTipo,
-                  Categoria = ObtenerCategoriaInsumo(ti.NombreTipo)
-              })
-              .ToListAsync();
+            // ✅ CORRECCIÓN: Primero obtener datos anónimos, luego mapear a DTO
+            var tiposInsumoRaw = await _context.TipoInsumos
+                 .Select(ti => new
+                 {
+                     ti.IdTipoInsumo,
+                     ti.NombreTipo
+                 })
+                 .ToListAsync();
 
-            var insumos = await _context.Insumos
-              .Include(i => i.IdTipoInsumoNavigation)
-              .Where(i => i.Estado == "Disponible" || i.Estado == "A designar")
-              .Select(i => new InsumoParaFormularioDTO
-              {
-                  IdInsumo = i.IdInsumo,
-                  NombreInsumo = i.NombreInsumo,
-                  IdTipoInsumo = i.IdTipoInsumo,
-                  NombreTipoInsumo = i.IdTipoInsumoNavigation!.NombreTipo,
-                  Categoria = ObtenerCategoriaInsumo(i.IdTipoInsumoNavigation.NombreTipo),
-                  UnidadMedida = i.UnidadMedida,
-                  StockActual = i.StockActual,
-                  Color = i.Color,
-                  TipoTela = i.TipoTela,
-                  RatioKgUnidad = i.RatioKgUnidad
-              })
-              .ToListAsync();
+            var tiposInsumo = tiposInsumoRaw.Select(ti => new TipoInsumoSimpleDTO
+            {
+                IdTipoInsumo = ti.IdTipoInsumo,
+                NombreTipo = ti.NombreTipo,
+                Categoria = ObtenerCategoriaInsumo(ti.NombreTipo)
+            }).ToList();
+
+            var insumosRaw = await _context.Insumos
+             .Include(i => i.IdTipoInsumoNavigation)
+             .Where(i => i.Estado == "Disponible" || i.Estado == "A designar")
+             .Select(i => new
+             {
+                 i.IdInsumo,
+                 i.NombreInsumo,
+                 i.IdTipoInsumo,
+                 NombreTipo = i.IdTipoInsumoNavigation!.NombreTipo,
+                 i.UnidadMedida,
+                 i.StockActual,
+                 i.Color,
+                 i.TipoTela,
+                 i.RatioKgUnidad
+             })
+             .ToListAsync();
+
+            var insumos = insumosRaw.Select(i => new InsumoParaFormularioDTO
+            {
+                IdInsumo = i.IdInsumo,
+                NombreInsumo = i.NombreInsumo,
+                IdTipoInsumo = i.IdTipoInsumo,
+                NombreTipoInsumo = i.NombreTipo,
+                Categoria = ObtenerCategoriaInsumo(i.NombreTipo),
+                UnidadMedida = i.UnidadMedida,
+                StockActual = i.StockActual,
+                Color = i.Color,
+                TipoTela = i.TipoTela,
+                RatioKgUnidad = i.RatioKgUnidad
+            }).ToList();
+
 
             var usuarios = await _context.Usuarios
               .Where(u => u.Estado == "Activo")
@@ -628,7 +656,7 @@ namespace TESIS_OG.Services.ProyectoService
                 Clientes = clientes,
                 TiposPrenda = tiposPrenda,
                 Talles = talles,
-                TiposInsumo = tiposInsumo,
+                TiposInsumo = tiposInsumo, // ✅ AHORA ES LA LISTA CORRECTA
                 Insumos = insumos,
                 Usuarios = usuarios,
                 Prioridades = new List<string> { "alta", "media", "baja" }
@@ -886,14 +914,17 @@ namespace TESIS_OG.Services.ProyectoService
             };
         }
 
-        private string ObtenerCategoriaInsumo(string nombreTipo)
+        private string ObtenerCategoriaInsumo(string? nombreTipo)
         {
+            if (string.IsNullOrWhiteSpace(nombreTipo))
+                return "Otro";
+
             if (nombreTipo.Contains("Tela")) return "Tela";
             if (nombreTipo.Contains("Hilo")) return "Hilo";
             if (nombreTipo.Contains("Accesorio")) return "Accesorio";
             return "Otro";
         }
 
-        
+
     }
 }
