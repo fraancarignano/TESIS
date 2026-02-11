@@ -31,11 +31,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
   // Áreas
   readonly AREAS = AREAS_PRODUCCION;
   areaSeleccionada: AreaProduccion | null = null;
-  nuevoAvance: number = 0;
-  observacionAvance: string = '';
-  guardandoAvance = false;
+  observacionArea: string = '';
+  procesandoArea = false;
 
-  // Observaciones
+  // Observaciones generales
   nuevaObservacion: string = '';
   guardandoObservacion = false;
 
@@ -43,10 +42,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   ngOnInit(): void {
     // Seleccionar área actual por defecto
-    this.areaSeleccionada = getAreaActual(this.proyecto) || null;
-    if (this.areaSeleccionada) {
-      this.nuevoAvance = this.getAvanceArea(this.areaSeleccionada);
-    }
+    this.areaSeleccionada = getAreaActual(this.proyecto) || AREAS_PRODUCCION[0];
   }
 
   // ==================== GETTERS ====================
@@ -57,6 +53,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   get siguienteArea(): AreaProduccion | undefined {
     return this.areaActual ? getSiguienteArea(this.areaActual) : undefined;
+  }
+
+  get esUltimaArea(): boolean {
+    return this.areaSeleccionada?.id === AREAS_PRODUCCION[AREAS_PRODUCCION.length - 1].id;
   }
 
   getAvanceArea(area: AreaProduccion): number {
@@ -75,73 +75,146 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return areaPendiente(this.proyecto, area);
   }
 
-  get puedeAvanzarSiguienteArea(): boolean {
-    if (!this.areaSeleccionada || !this.siguienteArea) return false;
-    return this.estaCompleta(this.areaSeleccionada);
-  }
-
   // ==================== MÉTODOS DE ÁREAS ====================
 
   seleccionarArea(area: AreaProduccion): void {
     this.areaSeleccionada = area;
-    this.nuevoAvance = this.getAvanceArea(area);
-    this.observacionAvance = '';
+    this.observacionArea = '';
   }
 
-  ajustarAvance(cantidad: number): void {
-    const nuevoValor = this.nuevoAvance + cantidad;
-    
-    // Limitar entre 0 y 100
-    if (nuevoValor < 0) {
-      this.nuevoAvance = 0;
-    } else if (nuevoValor > 100) {
-      this.nuevoAvance = 100;
-    } else {
-      this.nuevoAvance = nuevoValor;
-    }
-  }
-
-  actualizarAvance(): void {
-    if (!this.areaSeleccionada || !this.proyecto.idProyecto) return;
-
-    if (this.nuevoAvance < 0 || this.nuevoAvance > 100) {
-      alert('El avance debe estar entre 0 y 100');
+  continuarSiguienteArea(): void {
+    if (!this.areaSeleccionada || !this.proyecto.idProyecto) {
+      console.warn('⚠️ No se puede continuar: área o proyecto no seleccionado');
       return;
     }
 
-    this.guardandoAvance = true;
+    const mensaje = this.esUltimaArea
+      ? '¿Estás seguro de finalizar este proyecto?'
+      : `¿Estás seguro de avanzar a ${this.siguienteArea?.nombre}?`;
 
-    const dto = {
-      area: this.areaSeleccionada.campo,
-      porcentaje: this.nuevoAvance,
-      observaciones: this.observacionAvance || undefined
+    if (!confirm(mensaje)) {
+      console.log('❌ Usuario canceló la operación');
+      return;
+    }
+
+    this.procesandoArea = true;
+
+    // Construir el DTO de actualización
+    // ⭐ IMPORTANTE: Enviamos IdArea (int) no Area (string)
+    const dto: any = {
+      IdArea: this.areaSeleccionada.idArea,  // ⭐ ID de la tabla AreaProduccion
+      Porcentaje: 100
     };
 
+    // Agregar observaciones si existen
+    if (this.observacionArea && this.observacionArea.trim()) {
+      dto.Observaciones = this.observacionArea.trim();
+    }
+
+    console.log('📤 Enviando actualización de área:', {
+      idProyecto: this.proyecto.idProyecto,
+      areaSeleccionada: {
+        id: this.areaSeleccionada.id,
+        idArea: this.areaSeleccionada.idArea,  // ⭐ Este es el que va al backend
+        nombre: this.areaSeleccionada.nombre,
+        campo: this.areaSeleccionada.campo
+      },
+      dto: dto,
+      endpoint: `api/Proyecto/${this.proyecto.idProyecto}/avance`
+    });
+
     this.proyectosService.actualizarAvance(this.proyecto.idProyecto, dto).subscribe({
-      next: () => {
-        // Actualizar el proyecto localmente
-        (this.proyecto as any)[this.areaSeleccionada!.campo] = this.nuevoAvance;
+      next: (response) => {
+        console.log('✅ Área actualizada correctamente:', response);
         
-        this.guardandoAvance = false;
-        this.observacionAvance = '';
+        // Actualizar el proyecto localmente
+        (this.proyecto as any)[this.areaSeleccionada!.campo] = 100;
+        
+        this.procesandoArea = false;
+        this.observacionArea = '';
         this.actualizado.emit();
         
-        // Si completó esta área, pasar a la siguiente
-        if (this.nuevoAvance === 100 && this.siguienteArea) {
-          this.seleccionarArea(this.siguienteArea);
+        // Mostrar mensaje de éxito
+        const mensajeExito = this.esUltimaArea 
+          ? '¡Área completada! Finalizando proyecto...' 
+          : `✅ ${this.areaSeleccionada!.nombre} completada`;
+        
+        console.log(mensajeExito);
+        
+        // Si es la última área, cambiar estado a Finalizado
+        if (this.esUltimaArea) {
+          setTimeout(() => this.finalizarProyecto(), 500);
+        } else if (this.siguienteArea) {
+          // Pasar a la siguiente área
+          setTimeout(() => this.seleccionarArea(this.siguienteArea!), 500);
         }
       },
       error: (err) => {
-        console.error('Error al actualizar avance:', err);
-        alert('Error al actualizar el avance');
-        this.guardandoAvance = false;
+        console.error('❌ Error al avanzar área:', err);
+        console.error('📋 Detalles completos del error:', {
+          status: err.status,
+          statusText: err.statusText,
+          error: err.error,
+          message: err.message,
+          url: err.url
+        });
+        
+        // Intentar extraer el mensaje de error del backend
+        let mensajeError = 'Error desconocido al avanzar de área';
+        
+        if (err.error) {
+          if (typeof err.error === 'string') {
+            mensajeError = err.error;
+          } else if (err.error.message) {
+            mensajeError = err.error.message;
+          } else if (err.error.title) {
+            mensajeError = err.error.title;
+          } else if (err.error.errors) {
+            // Errores de validación de ModelState
+            const validationErrors = Object.values(err.error.errors).flat();
+            mensajeError = validationErrors.join('\n');
+          }
+        } else if (err.message) {
+          mensajeError = err.message;
+        }
+        
+        // Agregar información adicional según el código de estado
+        if (err.status === 400) {
+          console.error('💡 Posibles causas del error 400:');
+          console.error('- El IdArea no existe en la tabla AreaProduccion');
+          console.error('- El porcentaje está fuera de rango (0-100)');
+          console.error('- Falta información requerida en el DTO');
+          console.error('\n🔍 DTO enviado:', dto);
+          console.error('🔍 IdArea enviado:', this.areaSeleccionada?.idArea);
+        } else if (err.status === 404) {
+          mensajeError = 'No se encontró el proyecto o el área especificada';
+        } else if (err.status === 500) {
+          mensajeError = 'Error interno del servidor. Por favor, contacta al administrador.';
+        }
+        
+        alert(`Error al actualizar área:\n\n${mensajeError}`);
+        this.procesandoArea = false;
       }
     });
   }
 
-  avanzarSiguienteArea(): void {
-    if (!this.siguienteArea) return;
-    this.seleccionarArea(this.siguienteArea);
+  finalizarProyecto(): void {
+    if (!this.proyecto.idProyecto) return;
+
+    const dto = { estado: 'Finalizado' };
+
+    this.proyectosService.cambiarEstado(this.proyecto.idProyecto, 'Finalizado').subscribe({
+      next: () => {
+        this.proyecto.estado = 'Finalizado';
+        this.actualizado.emit();
+        alert('¡Proyecto finalizado exitosamente!');
+        this.cerrarModal();
+      },
+      error: (err) => {
+        console.error('Error al finalizar proyecto:', err);
+        alert('Error al finalizar el proyecto');
+      }
+    });
   }
 
   // ==================== MÉTODOS DE OBSERVACIONES ====================

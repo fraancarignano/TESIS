@@ -1,223 +1,150 @@
-// ============================================
-// CONSTANTES DE ÁREAS DE PRODUCCIÓN
-// ============================================
+// ============================================================
+// constants/areas.constants.ts
+// VERSIÓN ACTUALIZADA CON IdArea
+// ============================================================
 
 export interface AreaProduccion {
-  id: number;
+  id: number;           // ID interno para el frontend (orden)
+  idArea: number;       // ID de la base de datos (AreaProduccion.IdArea) ⭐ NUEVO
   nombre: string;
   nombreCorto: string;
-  campo: keyof ProyectoAvances; // Campo en el modelo Proyecto
-  icono: string; // Clase de FontAwesome
-  color: string; // Color hex
   descripcion: string;
-  orden: number; // Orden en el flujo de producción
+  color: string;
+  icono: string;
+  campo: string;        // Campo en el modelo Proyecto (ej: 'avanceDiseno')
 }
 
-// Interface auxiliar para type-safety
-export interface ProyectoAvances {
-  avanceGerenciaAdmin: number;
-  avanceDiseñoDesarrollo: number;
-  avanceControlCalidad: number;
-  avanceEtiquetadoEmpaquetado: number;
-  avanceDepositoLogistica: number;
-}
-
-// ============================================
-// DEFINICIÓN DE LAS 5 ÁREAS
-// ============================================
+// ============================================================
+// IMPORTANTE: Asegúrate de que estos IdArea coincidan 
+// EXACTAMENTE con los IDs en tu tabla AreaProduccion
+// ============================================================
 
 export const AREAS_PRODUCCION: AreaProduccion[] = [
   {
     id: 1,
-    nombre: 'Gerencia y Administración',
-    nombreCorto: 'Gerencia',
-    campo: 'avanceGerenciaAdmin',
-    icono: 'fa-briefcase',
+    idArea: 1,  // ⭐ ID de la tabla AreaProduccion - VERIFICA ESTE VALOR
+    nombre: 'Diseño y Desarrollo',
+    nombreCorto: 'Diseño',
+    descripcion: 'Diseño de patrones, muestras y desarrollo técnico',
     color: '#9c27b0',
-    descripcion: 'Aprobación inicial y planificación del proyecto',
-    orden: 1
+    icono: 'fa-pencil-ruler',
+    campo: 'avanceDiseno'
   },
   {
     id: 2,
-    nombre: 'Diseño y Desarrollo',
-    nombreCorto: 'Diseño',
-    campo: 'avanceDiseñoDesarrollo',
-    icono: 'fa-pencil-ruler',
-    color: '#2196f3',
-    descripcion: 'Creación de diseños, patrones y prototipos',
-    orden: 2
+    idArea: 2,  // ⭐ ID de la tabla AreaProduccion - VERIFICA ESTE VALOR
+    nombre: 'Corte',
+    nombreCorto: 'Corte',
+    descripcion: 'Corte de telas y materiales según patrones',
+    color: '#f44336',
+    icono: 'fa-cut',
+    campo: 'avanceCorte'
   },
   {
     id: 3,
-    nombre: 'Control de Calidad',
-    nombreCorto: 'Calidad',
-    campo: 'avanceControlCalidad',
-    icono: 'fa-check-circle',
-    color: '#4caf50',
-    descripcion: 'Verificación y control de estándares',
-    orden: 3
+    idArea: 3,  // ⭐ ID de la tabla AreaProduccion - VERIFICA ESTE VALOR
+    nombre: 'Confección',
+    nombreCorto: 'Confección',
+    descripcion: 'Armado y costura de las prendas',
+    color: '#ff9800',
+    icono: 'fa-tshirt',
+    campo: 'avanceConfeccion'
   },
   {
     id: 4,
-    nombre: 'Etiquetado y Empaquetado',
-    nombreCorto: 'Etiquetado',
-    campo: 'avanceEtiquetadoEmpaquetado',
-    icono: 'fa-tags',
-    color: '#ff9800',
-    descripcion: 'Etiquetado, empaque y preparación para envío',
-    orden: 4
+    idArea: 4,  // ⭐ ID de la tabla AreaProduccion - VERIFICA ESTE VALOR
+    nombre: 'Control de Calidad',
+    nombreCorto: 'Calidad',
+    descripcion: 'Inspección y control de calidad de las prendas',
+    color: '#4caf50',
+    icono: 'fa-check-circle',
+    campo: 'avanceCalidadPrenda'
   },
   {
     id: 5,
-    nombre: 'Depósito y Logística',
-    nombreCorto: 'Logística',
-    campo: 'avanceDepositoLogistica',
-    icono: 'fa-warehouse',
-    color: '#795548',
-    descripcion: 'Almacenamiento y gestión de envíos',
-    orden: 5
+    idArea: 5,  // ⭐ ID de la tabla AreaProduccion - VERIFICA ESTE VALOR
+    nombre: 'Etiquetado y Empaquetado',
+    nombreCorto: 'Empaquetado',
+    descripcion: 'Etiquetado, empaquetado y preparación para despacho',
+    color: '#2196f3',
+    icono: 'fa-box',
+    campo: 'avanceEtiquetadoEmpaquetado'
   }
 ];
 
-// ============================================
-// FUNCIONES HELPER PARA ÁREAS
-// ============================================
+// ============================================================
+// FUNCIONES HELPER
+// ============================================================
 
-/**
- * Obtener área por ID
- */
-export function getAreaById(id: number): AreaProduccion | undefined {
-  return AREAS_PRODUCCION.find(area => area.id === id);
+export interface ResumenAreas {
+  completadas: number;
+  enProgreso: number;
+  pendientes: number;
 }
 
-/**
- * Obtener área por nombre del campo
- */
-export function getAreaByCampo(campo: string): AreaProduccion | undefined {
-  return AREAS_PRODUCCION.find(area => area.campo === campo);
-}
-
-/**
- * Obtener área actual del proyecto
- */
 export function getAreaActual(proyecto: any): AreaProduccion | undefined {
-  // Si tiene areaActual definida, buscar por nombre
-  if (proyecto.areaActual) {
-    return AREAS_PRODUCCION.find(area => 
-      area.nombre.toLowerCase().includes(proyecto.areaActual.toLowerCase())
-    );
-  }
-  
-  // Si no, buscar la primera área que no esté completa
-  for (const area of AREAS_PRODUCCION) {
+  return AREAS_PRODUCCION.find(area => {
     const avance = proyecto[area.campo] ?? 0;
-    if (avance < 100) {
-      return area;
-    }
-  }
-  
-  // Si todas están completas, retornar la última
-  return AREAS_PRODUCCION[AREAS_PRODUCCION.length - 1];
+    return avance > 0 && avance < 100;
+  }) || AREAS_PRODUCCION.find(area => {
+    const avance = proyecto[area.campo] ?? 0;
+    return avance === 0;
+  });
 }
 
-/**
- * Obtener siguiente área en el flujo
- */
 export function getSiguienteArea(areaActual: AreaProduccion): AreaProduccion | undefined {
-  const siguienteOrden = areaActual.orden + 1;
-  return AREAS_PRODUCCION.find(area => area.orden === siguienteOrden);
+  const indice = AREAS_PRODUCCION.findIndex(a => a.id === areaActual.id);
+  return indice >= 0 && indice < AREAS_PRODUCCION.length - 1 
+    ? AREAS_PRODUCCION[indice + 1] 
+    : undefined;
 }
 
-/**
- * Obtener área anterior en el flujo
- */
-export function getAreaAnterior(areaActual: AreaProduccion): AreaProduccion | undefined {
-  const ordenAnterior = areaActual.orden - 1;
-  return AREAS_PRODUCCION.find(area => area.orden === ordenAnterior);
+export function areaEstaCompleta(proyecto: any, area: AreaProduccion): boolean {
+  return (proyecto[area.campo] ?? 0) === 100;
 }
 
-/**
- * Calcular progreso general del proyecto
- */
+export function areaEnProgreso(proyecto: any, area: AreaProduccion): boolean {
+  const avance = proyecto[area.campo] ?? 0;
+  return avance > 0 && avance < 100;
+}
+
+export function areaPendiente(proyecto: any, area: AreaProduccion): boolean {
+  return (proyecto[area.campo] ?? 0) === 0;
+}
+
 export function calcularProgresoGeneralPorAreas(proyecto: any): number {
   const avances = AREAS_PRODUCCION.map(area => proyecto[area.campo] ?? 0);
   const suma = avances.reduce((acc, val) => acc + val, 0);
   return Math.round(suma / AREAS_PRODUCCION.length);
 }
 
-/**
- * Obtener color de progreso según porcentaje
- */
-export function getColorProgreso(porcentaje: number): string {
-  if (porcentaje === 0) return '#e0e0e0';
-  if (porcentaje < 30) return '#f44336'; // Rojo - Crítico
-  if (porcentaje < 60) return '#ff9800'; // Naranja - En progreso
-  if (porcentaje < 100) return '#2196f3'; // Azul - Avanzado
-  return '#4caf50'; // Verde - Completado
-}
-
-/**
- * Verificar si un área está completa
- */
-export function areaEstaCompleta(proyecto: any, area: AreaProduccion): boolean {
-  const avance = proyecto[area.campo] ?? 0;
-  return avance >= 100;
-}
-
-/**
- * Verificar si un área está en progreso
- */
-export function areaEnProgreso(proyecto: any, area: AreaProduccion): boolean {
-  const avance = proyecto[area.campo] ?? 0;
-  return avance > 0 && avance < 100;
-}
-
-/**
- * Verificar si un área está pendiente
- */
-export function areaPendiente(proyecto: any, area: AreaProduccion): boolean {
-  const avance = proyecto[area.campo] ?? 0;
-  return avance === 0;
-}
-
-/**
- * Obtener ícono de estado del área
- */
-export function getIconoEstadoArea(proyecto: any, area: AreaProduccion): string {
-  if (areaEstaCompleta(proyecto, area)) return 'fa-check-circle';
-  if (areaEnProgreso(proyecto, area)) return 'fa-play-circle';
-  return 'fa-circle';
-}
-
-/**
- * Obtener resumen de áreas del proyecto
- */
-export interface ResumenAreas {
-  completadas: number;
-  enProgreso: number;
-  pendientes: number;
-  areaActual?: AreaProduccion;
-}
-
 export function getResumenAreas(proyecto: any): ResumenAreas {
   let completadas = 0;
   let enProgreso = 0;
   let pendientes = 0;
-  let areaActual: AreaProduccion | undefined;
 
   AREAS_PRODUCCION.forEach(area => {
-    const avance = proyecto[area.campo] ?? 0;
-    
-    if (avance >= 100) {
+    if (areaEstaCompleta(proyecto, area)) {
       completadas++;
-    } else if (avance > 0) {
+    } else if (areaEnProgreso(proyecto, area)) {
       enProgreso++;
-      if (!areaActual) areaActual = area; // Primera área en progreso
     } else {
       pendientes++;
-      if (!areaActual && enProgreso === 0) areaActual = area; // Primera pendiente
     }
   });
 
-  return { completadas, enProgreso, pendientes, areaActual };
+  return { completadas, enProgreso, pendientes };
 }
+
+// ============================================================
+// INSTRUCCIONES PARA OBTENER LOS IdArea CORRECTOS:
+//
+// Ejecuta esta query en tu base de datos:
+// 
+// SELECT IdArea, NombreArea, Orden 
+// FROM AreaProduccion 
+// ORDER BY Orden;
+//
+// Y actualiza los valores de idArea en el array AREAS_PRODUCCION
+// según corresponda con los nombres.
+// ============================================================

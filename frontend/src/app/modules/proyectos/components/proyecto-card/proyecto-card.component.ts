@@ -6,7 +6,7 @@ import {
   getAreaActual, 
   calcularProgresoGeneralPorAreas,
   getResumenAreas,
-  getColorProgreso,
+  //getColorProgreso,
   areaEstaCompleta,
   areaEnProgreso
 } from '../../constants/areas.constants';
@@ -49,9 +49,9 @@ export class ProyectoCardComponent {
   /**
    * Obtener color de la barra de progreso
    */
-  get colorProgreso(): string {
-    return getColorProgreso(this.progresoGeneral);
-  }
+  // get colorProgreso(): string {
+  //   return getColorProgreso(this.progresoGeneral);
+  // }
 
   /**
    * Obtener avance de un área específica

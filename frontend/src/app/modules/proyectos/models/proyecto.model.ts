@@ -52,11 +52,11 @@ export interface Proyecto {
   areaActual?: string | null;
   
   // Avances (0-100)
-  avanceGerenciaAdmin?: number | null;
-  avanceDiseñoDesarrollo?: number | null;
-  avanceControlCalidad?: number | null;
+  avanceDiseno?: number | null;
+  avanceCorte?: number | null;
+  avanceConfeccion?: number | null;
+  avanceCalidadPrenda?: number | null;
   avanceEtiquetadoEmpaquetado?: number | null;
-  avanceDepositoLogistica?: number | null;
   
   // Costos y scrap
   costoMaterialEstimado?: number | null;
@@ -86,11 +86,11 @@ export type PrioridadProyecto =
   | 'baja';
 
 export type AreaProyecto = 
-  | 'gerenciaAdmin'
-  | 'diseñoDesarrollo'
-  | 'controlCalidad'
+  | 'avanceDiseno'
+  | 'avanceCorte'
+  | 'avanceConfeccion'
   | 'etiquetadoEmpaquetado'
-  | 'depositoLogistica';
+  | 'avanceCalidadPrenda';
 
 // ============================================
 // INTERFACES AUXILIARES
@@ -217,11 +217,11 @@ export interface ProyectoVista extends Proyecto {
  */
 export function calcularProgresoGeneral(proyecto: Proyecto): number {
   const avances = [
-    proyecto.avanceGerenciaAdmin ?? 0,
-    proyecto.avanceDiseñoDesarrollo ?? 0,
-    proyecto.avanceControlCalidad ?? 0,
-    proyecto.avanceEtiquetadoEmpaquetado ?? 0,
-    proyecto.avanceDepositoLogistica ?? 0
+    proyecto.avanceDiseno ?? 0,
+    proyecto.avanceCorte ?? 0,
+    proyecto.avanceConfeccion ?? 0,
+    proyecto.avanceCalidadPrenda ?? 0,
+    proyecto.avanceEtiquetadoEmpaquetado ?? 0
   ];
   
   const suma = avances.reduce((acc, val) => acc + val, 0);

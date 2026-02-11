@@ -146,150 +146,66 @@
             </div>
           </div>
 
-          <!-- PANEL DE ACTUALIZACIÓN -->
+          <!-- PANEL DE ÁREA SELECCIONADA -->
           <div class="area-detalle" *ngIf="areaSeleccionada">
-            <h3>
-              <i class="fas" [ngClass]="areaSeleccionada.icono" [style.color]="areaSeleccionada.color"></i>
-              {{ areaSeleccionada.nombre }}
-            </h3>
-            <p class="descripcion">{{ areaSeleccionada.descripcion }}</p>
+            <div class="area-header">
+              <div class="area-title">
+                <i class="fas" [ngClass]="areaSeleccionada.icono" [style.color]="areaSeleccionada.color"></i>
+                <h3>{{ areaSeleccionada.nombre }}</h3>
+              </div>
+              <div class="area-status" 
+                   [class.completa]="estaCompleta(areaSeleccionada)"
+                   [class.en-progreso]="enProgreso(areaSeleccionada)">
+                <i class="fas" [ngClass]="getIconoEstadoArea(areaSeleccionada)"></i>
+                <span *ngIf="estaCompleta(areaSeleccionada)">Completada</span>
+                <span *ngIf="enProgreso(areaSeleccionada)">En Progreso</span>
+                <span *ngIf="pendiente(areaSeleccionada)">Pendiente</span>
+              </div>
+            </div>
 
-            <div class="form-actualizar">
+            <p class="area-descripcion">{{ areaSeleccionada.descripcion }}</p>
+
+            <!-- FORMULARIO DEL ÁREA -->
+            <div class="form-area">
               
-              <!-- CONTROL DE AVANCE CON BOTONES -->
-              <div class="form-group">
-                <label>Avance Actual: {{ getAvanceArea(areaSeleccionada) }}%</label>
-                
-                <div class="avance-control">
-                  <!-- Botones de decremento rápido -->
-                  <button 
-                    class="btn-cantidad btn-decrement-large" 
-                    (click)="ajustarAvance(-10)"
-                    [disabled]="nuevoAvance <= 0"
-                    title="Restar 10%">
-                    <i class="fas fa-angle-double-left"></i>
-                    <span>10</span>
-                  </button>
-                  
-                  <button 
-                    class="btn-cantidad btn-decrement" 
-                    (click)="ajustarAvance(-5)"
-                    [disabled]="nuevoAvance <= 0"
-                    title="Restar 5%">
-                    <i class="fas fa-minus"></i>
-                    <span>5</span>
-                  </button>
-                  
-                  <button 
-                    class="btn-cantidad btn-decrement-small" 
-                    (click)="ajustarAvance(-1)"
-                    [disabled]="nuevoAvance <= 0"
-                    title="Restar 1%">
-                    <i class="fas fa-minus"></i>
-                  </button>
-
-                  <!-- Display central -->
-                  <div class="avance-display">
-                    <div class="avance-numero">{{ nuevoAvance }}</div>
-                    <div class="avance-label">%</div>
-                  </div>
-
-                  <!-- Botones de incremento rápido -->
-                  <button 
-                    class="btn-cantidad btn-increment-small" 
-                    (click)="ajustarAvance(1)"
-                    [disabled]="nuevoAvance >= 100"
-                    title="Sumar 1%">
-                    <i class="fas fa-plus"></i>
-                  </button>
-                  
-                  <button 
-                    class="btn-cantidad btn-increment" 
-                    (click)="ajustarAvance(5)"
-                    [disabled]="nuevoAvance >= 100"
-                    title="Sumar 5%">
-                    <span>5</span>
-                    <i class="fas fa-plus"></i>
-                  </button>
-                  
-                  <button 
-                    class="btn-cantidad btn-increment-large" 
-                    (click)="ajustarAvance(10)"
-                    [disabled]="nuevoAvance >= 100"
-                    title="Sumar 10%">
-                    <span>10</span>
-                    <i class="fas fa-angle-double-right"></i>
-                  </button>
-                </div>
-
-                <!-- Barra visual del progreso -->
-                <div class="progreso-visual">
-                  <div class="progreso-bar">
-                    <div 
-                      class="progreso-fill" 
-                      [style.width.%]="nuevoAvance"
-                      [style.background-color]="areaSeleccionada.color">
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Botones rápidos -->
-                <div class="botones-rapidos">
-                  <button 
-                    class="btn-rapido" 
-                    (click)="nuevoAvance = 0"
-                    [class.active]="nuevoAvance === 0">
-                    0%
-                  </button>
-                  <button 
-                    class="btn-rapido" 
-                    (click)="nuevoAvance = 25"
-                    [class.active]="nuevoAvance === 25">
-                    25%
-                  </button>
-                  <button 
-                    class="btn-rapido" 
-                    (click)="nuevoAvance = 50"
-                    [class.active]="nuevoAvance === 50">
-                    50%
-                  </button>
-                  <button 
-                    class="btn-rapido" 
-                    (click)="nuevoAvance = 75"
-                    [class.active]="nuevoAvance === 75">
-                    75%
-                  </button>
-                  <button 
-                    class="btn-rapido" 
-                    (click)="nuevoAvance = 100"
-                    [class.active]="nuevoAvance === 100">
-                    100%
-                  </button>
-                </div>
+              <!-- Aquí irán los campos específicos de cada área en el futuro -->
+              <div class="form-placeholder">
+                <i class="fas fa-clipboard-list"></i>
+                <p>Formulario específico del área</p>
+                <small>Los campos personalizados se agregarán aquí</small>
               </div>
 
+              <!-- OBSERVACIONES DEL ÁREA -->
               <div class="form-group">
-                <label>Observaciones (opcional)</label>
+                <label>
+                  <i class="fas fa-comment"></i>
+                  Observaciones (opcional)
+                </label>
                 <textarea 
-                  [(ngModel)]="observacionAvance" 
-                  rows="3"
-                  placeholder="Agrega detalles sobre este avance...">
+                  [(ngModel)]="observacionArea" 
+                  rows="4"
+                  placeholder="Agrega detalles o notas sobre el trabajo realizado en esta área..."
+                  [disabled]="estaCompleta(areaSeleccionada)">
                 </textarea>
               </div>
 
+              <!-- BOTÓN DE CONTINUAR / FINALIZAR -->
               <button 
-                class="btn-actualizar" 
-                (click)="actualizarAvance()"
-                [disabled]="guardandoAvance">
-                <i class="fas" [ngClass]="guardandoAvance ? 'fa-spinner fa-spin' : 'fa-save'"></i>
-                {{ guardandoAvance ? 'Guardando...' : 'Guardar Avance' }}
+                *ngIf="!estaCompleta(areaSeleccionada)"
+                class="btn-continuar" 
+                [class.btn-finalizar]="esUltimaArea"
+                (click)="continuarSiguienteArea()"
+                [disabled]="procesandoArea">
+                <i class="fas" [ngClass]="procesandoArea ? 'fa-spinner fa-spin' : (esUltimaArea ? 'fa-flag-checkered' : 'fa-arrow-right')"></i>
+                <span *ngIf="!procesandoArea">
+                  {{ esUltimaArea ? 'Finalizar Proyecto' : 'Continuar a ' + siguienteArea?.nombreCorto }}
+                </span>
+                <span *ngIf="procesandoArea">Procesando...</span>
               </button>
 
-              <div class="siguiente-area" *ngIf="siguienteArea && puedeAvanzarSiguienteArea">
-                <button class="btn-siguiente" (click)="avanzarSiguienteArea()">
-                  <i class="fas fa-arrow-right"></i>
-                  Continuar a {{ siguienteArea.nombreCorto }}
-                </button>
+              <div class="area-completada-msg" *ngIf="estaCompleta(areaSeleccionada)">
+                <i class="fas fa-check-circle"></i>
+                <span>Esta área ya ha sido completada</span>
               </div>
             </div>
           </div>
@@ -323,21 +239,24 @@
           <textarea 
             [(ngModel)]="nuevaObservacion" 
             rows="3"
-            placeholder="Escribe una observación...">
+            placeholder="Escribe una observación general sobre el proyecto...">
           </textarea>
           <button 
             class="btn-agregar-obs" 
             (click)="agregarObservacion()"
             [disabled]="!nuevaObservacion.trim() || guardandoObservacion">
-            <i class="fas fa-plus"></i>
-            Agregar Observación
+            <i class="fas" [ngClass]="guardandoObservacion ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
+            {{ guardandoObservacion ? 'Guardando...' : 'Agregar Observación' }}
           </button>
         </div>
 
         <div class="observaciones-lista">
           <div class="observacion-item" *ngFor="let obs of proyecto.observaciones">
             <div class="obs-header">
-              <span class="obs-usuario">{{ obs.nombreUsuario }}</span>
+              <span class="obs-usuario">
+                <i class="fas fa-user-circle"></i>
+                {{ obs.nombreUsuario }}
+              </span>
               <span class="obs-fecha">{{ formatearFecha(obs.fecha) }}</span>
             </div>
             <p class="obs-texto">{{ obs.descripcion }}</p>
