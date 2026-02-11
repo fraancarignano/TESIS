@@ -1947,9 +1947,9 @@
       "ActualizarAvanceDTO": {
         "type": "object",
         "properties": {
-          "area": {
-            "type": "string",
-            "nullable": true
+          "idArea": {
+            "type": "integer",
+            "format": "int32"
           },
           "porcentaje": {
             "type": "integer",

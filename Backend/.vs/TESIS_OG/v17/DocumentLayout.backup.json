@@ -7,6 +7,10 @@
       "RelativeMoniker": "D:0:0:{412E00FC-A6ED-4B13-8E3D-A76108CABCFA}|TESIS_OG\\TESIS_OG.csproj|solutionrelative:tesis_og\\services\\proyectosservice\\proyectosservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{412E00FC-A6ED-4B13-8E3D-A76108CABCFA}|TESIS_OG\\TESIS_OG.csproj|c:\\users\\usuario\\documents\\facu\\tesis\\proyecto\\tamarindo-escmb-frontend\\backend\\tesis_og\\dtos\\proyectos\\actualizaravancedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{412E00FC-A6ED-4B13-8E3D-A76108CABCFA}|TESIS_OG\\TESIS_OG.csproj|solutionrelative:tesis_og\\dtos\\proyectos\\actualizaravancedto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{412E00FC-A6ED-4B13-8E3D-A76108CABCFA}|TESIS_OG\\TESIS_OG.csproj|c:\\users\\usuario\\documents\\facu\\tesis\\proyecto\\tamarindo-escmb-frontend\\backend\\tesis_og\\controllers\\proyectos\\proyectocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{412E00FC-A6ED-4B13-8E3D-A76108CABCFA}|TESIS_OG\\TESIS_OG.csproj|solutionrelative:tesis_og\\controllers\\proyectos\\proyectocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -74,20 +78,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "TamarindoDbContext.cs",
-              "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Models\\TamarindoDbContext.cs",
-              "RelativeDocumentMoniker": "TESIS_OG\\Models\\TamarindoDbContext.cs",
-              "ToolTip": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Models\\TamarindoDbContext.cs",
-              "RelativeToolTip": "TESIS_OG\\Models\\TamarindoDbContext.cs",
-              "ViewState": "AgIAAIQCAAAAAAAAAAAawKMCAAAAAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "ActualizarAvanceDTO.cs",
+              "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\DTOs\\Proyectos\\ActualizarAvanceDTO.cs",
+              "RelativeDocumentMoniker": "TESIS_OG\\DTOs\\Proyectos\\ActualizarAvanceDTO.cs",
+              "ToolTip": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\DTOs\\Proyectos\\ActualizarAvanceDTO.cs",
+              "RelativeToolTip": "TESIS_OG\\DTOs\\Proyectos\\ActualizarAvanceDTO.cs",
+              "ViewState": "AgIAAAEAAAAAAAAAAAAcwAQAAAAjAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-10T01:22:58.05Z",
+              "WhenOpened": "2026-02-11T23:02:17.57Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "ProyectoCrearDTO.cs",
               "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\DTOs\\Proyectos\\ProyectoCrearDTO.cs",
               "RelativeDocumentMoniker": "TESIS_OG\\DTOs\\Proyectos\\ProyectoCrearDTO.cs",
@@ -99,20 +103,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "ProyectoController.cs",
               "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Controllers\\Proyectos\\ProyectoController.cs",
               "RelativeDocumentMoniker": "TESIS_OG\\Controllers\\Proyectos\\ProyectoController.cs",
               "ToolTip": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Controllers\\Proyectos\\ProyectoController.cs",
               "RelativeToolTip": "TESIS_OG\\Controllers\\Proyectos\\ProyectoController.cs",
-              "ViewState": "AgIAADsBAAAAAAAAAAAwwFgBAAATAAAAAAAAAA==",
+              "ViewState": "AgIAAN0BAAAAAAAAAAAYwOkBAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-02-10T01:12:23.989Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "ProyectoPrendum.cs",
               "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Models\\ProyectoPrendum.cs",
               "RelativeDocumentMoniker": "TESIS_OG\\Models\\ProyectoPrendum.cs",
@@ -130,14 +134,26 @@
               "RelativeDocumentMoniker": "TESIS_OG\\Services\\ProyectosService\\ProyectosService.cs",
               "ToolTip": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Services\\ProyectosService\\ProyectosService.cs",
               "RelativeToolTip": "TESIS_OG\\Services\\ProyectosService\\ProyectosService.cs",
-              "ViewState": "AgIAAGwCAAAAAAAAAAAqwJcCAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAAJkCAAAAAAAAAIAwwKgCAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-02-10T01:03:50.217Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 5,
+              "Title": "TamarindoDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Models\\TamarindoDbContext.cs",
+              "RelativeDocumentMoniker": "TESIS_OG\\Models\\TamarindoDbContext.cs",
+              "ToolTip": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Models\\TamarindoDbContext.cs",
+              "RelativeToolTip": "TESIS_OG\\Models\\TamarindoDbContext.cs",
+              "ViewState": "AgIAAIQCAAAAAAAAAAAawKMCAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-10T01:22:58.05Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
               "Title": "Proyecto.cs",
               "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Models\\Proyecto.cs",
               "RelativeDocumentMoniker": "TESIS_OG\\Models\\Proyecto.cs",
@@ -149,7 +165,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "Cliente.cs",
               "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Models\\Cliente.cs",
               "RelativeDocumentMoniker": "TESIS_OG\\Models\\Cliente.cs",
@@ -157,12 +173,11 @@
               "RelativeToolTip": "TESIS_OG\\Models\\Cliente.cs",
               "ViewState": "AgIAABQAAAAAAAAAAAAAwC8AAABCAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-10T18:47:02.054Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-02-10T18:47:02.054Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "OrdenCompraService.cs",
               "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Services\\OrdenCompraService\\OrdenCompraService.cs",
               "RelativeDocumentMoniker": "TESIS_OG\\Services\\OrdenCompraService\\OrdenCompraService.cs",
@@ -174,7 +189,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 11,
               "Title": "IOrdenCompraService.cs",
               "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Services\\OrdenCompraService\\IOrdenCompraService.cs",
               "RelativeDocumentMoniker": "TESIS_OG\\Services\\OrdenCompraService\\IOrdenCompraService.cs",
@@ -186,7 +201,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "TamarindoDbContext.cs",
               "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Data\\TamarindoDbContext.cs",
               "RelativeDocumentMoniker": "TESIS_OG\\Data\\TamarindoDbContext.cs",
@@ -198,7 +213,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "IProyectosService.cs",
               "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Services\\ProyectosService\\IProyectosService.cs",
               "RelativeDocumentMoniker": "TESIS_OG\\Services\\ProyectosService\\IProyectosService.cs",
@@ -206,8 +221,7 @@
               "RelativeToolTip": "TESIS_OG\\Services\\ProyectosService\\IProyectosService.cs",
               "ViewState": "AgIAAD0AAAAAAAAAAAAswFMAAAAwAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-10T01:06:52.459Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-02-10T01:06:52.459Z"
             }
           ]
         },

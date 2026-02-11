@@ -672,27 +672,15 @@ namespace TESIS_OG.Services.ProyectoService
             var proyecto = await _context.Proyectos.FindAsync(idProyecto);
             if (proyecto == null) return false;
 
-            switch (avanceDto.Area.ToLower())
+            var avanceArea = new AvanceAreaProyecto
             {
-                case "gerenciaadmin":
-                    proyecto.AvanceGerenciaAdmin = avanceDto.Porcentaje;
-                    break;
-                case "diseñodesarrollo":
-                    proyecto.AvanceDiseñoDesarrollo = avanceDto.Porcentaje;
-                    break;
-                case "controlcalidad":
-                    proyecto.AvanceControlCalidad = avanceDto.Porcentaje;
-                    break;
-                case "etiquetadoempaquetado":
-                    proyecto.AvanceEtiquetadoEmpaquetado = avanceDto.Porcentaje;
-                    break;
-                case "depositologistica":
-                    proyecto.AvanceDepositoLogistica = avanceDto.Porcentaje;
-                    break;
-                default:
-                    return false;
-            }
-
+                IdProyecto = idProyecto,
+                IdArea = avanceDto.IdArea,  // FK a AreaProduccion
+                PorcentajeAvance = avanceDto.Porcentaje,
+                FechaActualizacion = DateTime.Now,
+                //IdUsuarioRegistro = userId,
+                Observaciones = avanceDto.Observaciones
+            };
             await _context.SaveChangesAsync();
             return true;
         }
