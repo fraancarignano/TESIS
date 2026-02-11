@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ProyectosService } from '../../services/proyectos.service';
+import { ProyectosService } from '../../services/proyecto.service';
 import { Proyecto, EstadoProyecto, PrioridadProyecto } from '../../models/proyecto.model';
 import { AlertasService } from '../../../../core/services/alertas';
 import { ExportService } from '../../../../core/services/export.service';

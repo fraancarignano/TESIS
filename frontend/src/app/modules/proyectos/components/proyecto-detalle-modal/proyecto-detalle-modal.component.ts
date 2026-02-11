@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProyectoVista } from '../../models/proyecto.model';
-import { ProyectosService } from '../../services/proyectos.service';
+import { ProyectosService } from '../../services/proyecto.service';
 import { 
   AREAS_PRODUCCION, 
   AreaProduccion,

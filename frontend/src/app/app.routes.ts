@@ -24,7 +24,7 @@ export const routes: Routes = [
   },
   {
     path: 'proyectos/crear',
-    loadComponent: () => import('./modules/proyectos/components/nuevo-proyecto-modal/proyecto-form.component').then(m => m.ProyectoFormComponent),
+    loadComponent: () => import('./modules/proyectos/components/nuevo-proyecto-modal/proyecto-form.component').then(m => m.ProyectoFormNuevoComponent),
     canActivate: [authGuard] 
   },
   {

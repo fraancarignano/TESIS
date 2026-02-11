@@ -2,148 +2,405 @@ import { Component, Output, EventEmitter, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ProyectosService } from '../../services/proyectos.service';
-import { CrearProyectoDTO } from '../../models/proyecto.model';
-import { ClientesService } from '../../../clientes/services/clientes.service';
+import { FormsModule } from '@angular/forms';
+import { ProyectosServiceNuevo } from '../../services/proyectos-nuevo.service';
+import {
+  ProyectoCrearNuevo,
+  FormularioProyectoInicializacion,
+  TipoPrenda,
+  Talle,
+  TipoInsumo,
+  InsumoFormulario,
+  ClienteSimple,
+  UsuarioSimple,
+  PrendaFormulario,
+  TalleDistribuido,
+  MaterialManualFormulario,
+  generarIdTemporal,
+  validarSumaTalles,
+  obtenerSumaTalles,
+  filtrarInsumosPorCategoria,
+  filtrarTiposInsumoPorCategoria,
+  calcularTotalPrendas,
+  obtenerFechaHoy,
+  CalculoMaterialesResponse
+} from '../../models/nuevo-proyecto.model';
 import { Cliente } from '../../../clientes/models/cliente.model';
-import { InsumosService } from '../../../inventario/services/insumos.service';
-import { Insumo } from '../../../inventario/models/insumo.model';
-import { AuthService } from '../../../login/services/auth.service';
-import { Usuario } from '../../../login/models/auth.model';
 
 @Component({
-  selector: 'app-proyecto-form',
+  selector: 'app-proyecto-form-nuevo',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './proyecto-form.component.html',
   styleUrls: ['./proyecto-form.component.css']
 })
-export class ProyectoFormComponent implements OnInit {
-  @Input() esModal: boolean = false; // Nueva propiedad
+export class ProyectoFormNuevoComponent implements OnInit {
+  @Input() esModal: boolean = false;
   @Output() cerrar = new EventEmitter<void>();
-  
-  formulario!: FormGroup; 
+
+  // Formulario principal
+  formulario!: FormGroup;
   cargando = false;
   errorMensaje = '';
-  
-  prioridades = ['baja', 'media', 'alta'];
-  tiposEstacion = ['Verano', 'Invierno', 'Otoño', 'Primavera', 'Todo el año'];
-  tiposPrenda = ['Remera', 'Camisa', 'Pantalón', 'Vestido', 'Buzo', 'Campera', 'Short', 'Otro'];
-  
+  fechaMinima!: string;
+
+  // Datos del formulario (catálogos)
+  datosFormulario?: FormularioProyectoInicializacion;
   clientes: Cliente[] = [];
-  listaInsumosDB: Insumo[] = [];
-  usuarios: Usuario[] = [];
-  
-  insumosSeleccionados: { 
-    idInsumo: number; 
-    nombre: string; 
-    cantidad: number; 
-    unidad: string;
-    desperdicioEstimado?: number;
-  }[] = [];
-  
+  tiposPrenda: TipoPrenda[] = [];
+  talles: Talle[] = [];
+  tiposInsumo: TipoInsumo[] = [];
+  tiposInsumoTelas: TipoInsumo[] = [];
+  tiposInsumoHilos: TipoInsumo[] = [];
+  tiposInsumoAccesorios: TipoInsumo[] = [];
+  insumos: InsumoFormulario[] = [];
+  insumosTelas: InsumoFormulario[] = [];
+  insumosHilos: InsumoFormulario[] = [];
+  insumosAccesorios: InsumoFormulario[] = [];
+  usuarios: UsuarioSimple[] = [];
+  prioridades: string[] = ['baja', 'media', 'alta'];
+  insumosTelasFiltrados: InsumoFormulario[] = [];
+
+  // Prendas del proyecto
+  prendasProyecto: PrendaFormulario[] = [];
+  prendaEditando?: PrendaFormulario;
+  indexPrendaEditando: number = -1;
+
+  // Modal de talles
+  mostrarModalTalles = false;
+  tallesDistribuyendo: TalleDistribuido[] = [];
+  cantidadTotalTalles = 0;
+
+  // Materiales manuales (hilos, accesorios)
+  materialesManuales: MaterialManualFormulario[] = [];
+
+  // Preview de materiales calculados
+  materialesCalculados?: CalculoMaterialesResponse;
+  mostrarPreviewMateriales = false;
+
   constructor(
     private fb: FormBuilder,
-    private proyectosService: ProyectosService,
-    private clientesService: ClientesService,
-    private insumosService: InsumosService,
-    private authService: AuthService,
-    private router: Router // Agregar Router
+    private proyectosService: ProyectosServiceNuevo,
+    private router: Router
   ) {
     this.crearFormulario();
   }
-  
+
   ngOnInit(): void {
-    this.cargarClientes();
-    this.cargarInsumos();
-    this.cargarUsuarios();
+    this.cargarDatosFormulario();
     this.setearFechaInicioPorDefecto();
+    const mañana = new Date();
+      mañana.setDate(mañana.getDate() + 1);
+
+      this.fechaMinima = mañana.toISOString().split('T')[0];
   }
 
-  private setearFechaInicioPorDefecto(): void {
-    const hoy = new Date().toISOString().split('T')[0];
-    this.formulario.patchValue({ fechaInicio: hoy });
-  }
-
-  private cargarUsuarios(): void {
-    this.authService.obtenerUsuarios().subscribe({
-      next: (data) => {
-        this.usuarios = data.filter(u => u.estado === 'Activo');
-        console.log('Usuarios activos cargados:', this.usuarios);
-      },
-      error: (err) => console.error('Error cargando usuarios:', err)
-    });
-  }
-
-  private cargarInsumos(): void {
-    this.insumosService.getInsumos().subscribe({
-      next: (data: Insumo[]) => {
-        this.listaInsumosDB = data.filter(i => i.estado === 'Disponible' || i.estado === 'En uso');
-      },
-      error: (err) => console.error('Error cargando insumos:', err)
-    });
-  }
-
-  agregarInsumoALista(idInsumoStr: string, cantidadStr: string, desperdicioStr: string = '0'): void {
-    const idInsumo = Number(idInsumoStr);
-    const cantidad = Number(cantidadStr);
-    const desperdicio = Number(desperdicioStr) || 0;
-
-    if (!idInsumo || cantidad <= 0) {
-      this.errorMensaje = 'Selecciona un insumo válido y cantidad > 0';
-      setTimeout(() => this.errorMensaje = '', 3000);
-      return;
-    }
-
-    const insumo = this.listaInsumosDB.find(i => i.idInsumo === idInsumo);
-    if (!insumo) return;
-
-    const existe = this.insumosSeleccionados.find(item => item.idInsumo === insumo.idInsumo);
-    
-    if (existe) {
-      existe.cantidad += cantidad;
-      existe.desperdicioEstimado = (existe.desperdicioEstimado || 0) + desperdicio;
-    } else {
-      this.insumosSeleccionados.push({
-        idInsumo: insumo.idInsumo!,
-        nombre: insumo.nombreInsumo,
-        cantidad: cantidad,
-        unidad: insumo.unidadMedida,
-        desperdicioEstimado: desperdicio
-      });
-    }
-  }
-
-  quitarInsumo(index: number): void {
-    this.insumosSeleccionados.splice(index, 1);
-  }
-  
-  private cargarClientes(): void {
-    this.clientesService.obtenerClientes().subscribe({
-      next: (data) => {
-        this.clientes = data.filter(c => c.idEstadoCliente === 1 || c.idEstadoCliente === 4);
-      },
-      error: (err) => {
-        console.error('Error al cargar clientes:', err);
-        this.errorMensaje = 'No se pudieron cargar los clientes.';
-      }
-    });
-  }
+  // ========================================
+  // INICIALIZACIÓN
+  // ========================================
 
   private crearFormulario(): void {
     this.formulario = this.fb.group({
       idCliente: ['', Validators.required],
       nombreProyecto: ['', [Validators.required, Validators.minLength(3)]],
-      tipoPrenda: ['', Validators.required],
       descripcion: [''],
       prioridad: ['media', Validators.required],
       fechaInicio: ['', Validators.required],
       fechaFin: [''],
-      cantidadTotal: [null, [Validators.required, Validators.min(1)]],
-      idUsuarioEncargado: [''],
-      tipoEstacion: ['']
+      idUsuarioEncargado: ['']
     });
   }
+
+  private setearFechaInicioPorDefecto(): void {
+    this.formulario.patchValue({ fechaInicio: obtenerFechaHoy() });
+  }
+
+  obtenerSumaTalles(talles: TalleDistribuido[]): number {
+    return obtenerSumaTalles(talles);
+  }
+
+  private cargarDatosFormulario(): void {
+    this.cargando = true;
+    this.proyectosService.obtenerDatosFormulario().subscribe({
+      next: (datos) => {
+        this.datosFormulario = datos;
+        this.clientes = datos.clientes;
+        this.tiposPrenda = datos.tiposPrenda;
+        this.talles = datos.talles;
+        this.tiposInsumo = datos.tiposInsumo;
+        this.insumos = datos.insumos;
+        this.usuarios = datos.usuarios;
+        this.prioridades = datos.prioridades;
+
+        // Filtrar por categorías
+        this.tiposInsumoTelas = filtrarTiposInsumoPorCategoria(datos.tiposInsumo, 'Tela');
+        this.tiposInsumoHilos = filtrarTiposInsumoPorCategoria(datos.tiposInsumo, 'Hilo');
+        this.tiposInsumoAccesorios = filtrarTiposInsumoPorCategoria(datos.tiposInsumo, 'Accesorio');
+
+        this.insumosTelas = filtrarInsumosPorCategoria(datos.insumos, 'Tela');
+        this.insumosHilos = filtrarInsumosPorCategoria(datos.insumos, 'Hilo');
+        this.insumosAccesorios = filtrarInsumosPorCategoria(datos.insumos, 'Accesorio');
+
+        this.cargando = false;
+      },
+      error: (err) => {
+        console.error('Error cargando datos del formulario:', err);
+        this.errorMensaje = 'Error al cargar los datos del formulario';
+        this.cargando = false;
+      }
+    });
+  }
+
+  // ========================================
+  // FILTRO DE MATERIALES
+  // ========================================
+
+  onTipoMaterialChange(): void {
+    
+    if (!this.prendaEditando?.idTipoInsumoMaterial) {
+      this.insumosTelasFiltrados = [];
+      this.prendaEditando!.idInsumo = undefined;
+      this.prendaEditando!.colorTela = undefined;
+      return;
+    }
+
+    this.insumosTelasFiltrados = this.insumosTelas.filter(
+      insumo => insumo.idTipoInsumo === Number(this.prendaEditando!.idTipoInsumoMaterial)
+    );
+
+
+    this.prendaEditando!.idInsumo = undefined;
+    this.prendaEditando!.colorTela = undefined;
+  }
+
+  // ========================================
+  // GESTIÓN DE PRENDAS
+  // ========================================
+
+  agregarPrenda(): void {
+    const nuevaPrenda: PrendaFormulario = {
+      id: generarIdTemporal(),
+      cantidadTotal: 0,
+      tieneBordado: false,
+      tieneEstampado: false,
+      tallesDistribuidos: [],
+      mostrarModalTalles: false
+    };
+
+    this.prendaEditando = nuevaPrenda;
+    this.indexPrendaEditando = -1;
+    this.insumosTelasFiltrados = [];
+  }
+
+  editarPrenda(prenda: PrendaFormulario, index: number): void {
+    this.prendaEditando = { ...prenda };
+    this.indexPrendaEditando = index;
+    
+    if (this.prendaEditando.idTipoInsumoMaterial) {
+      this.insumosTelasFiltrados = this.insumosTelas.filter(
+        insumo => insumo.idTipoInsumo === this.prendaEditando!.idTipoInsumoMaterial
+      );
+    }
+  }
+
+  guardarPrenda(prenda: PrendaFormulario): void {
+    if (!prenda.idTipoPrenda || !prenda.idTipoInsumoMaterial || !prenda.idInsumo || prenda.cantidadTotal <= 0) {
+      this.errorMensaje = 'Completa todos los campos de la prenda';
+      return;
+    }
+
+    if (prenda.tallesDistribuidos.length === 0) {
+      this.errorMensaje = 'Debes distribuir las cantidades por talle';
+      return;
+    }
+
+    if (!validarSumaTalles(prenda.tallesDistribuidos, prenda.cantidadTotal)) {
+      this.errorMensaje = `La suma de talles (${obtenerSumaTalles(prenda.tallesDistribuidos)}) no coincide con la cantidad total (${prenda.cantidadTotal})`;
+      return;
+    }
+
+    const tipoPrenda = this.tiposPrenda.find(tp => tp.idTipoPrenda === prenda.idTipoPrenda);
+    const tipoInsumo = this.tiposInsumo.find(ti => ti.idTipoInsumo === prenda.idTipoInsumoMaterial);
+    const insumoTela = this.insumosTelas.find(ins => ins.idInsumo === prenda.idInsumo);
+
+    prenda.nombrePrenda = tipoPrenda?.nombrePrenda;
+    prenda.nombreMaterial = tipoInsumo?.nombreTipo;
+    prenda.colorTela = insumoTela?.color;
+
+    if (this.indexPrendaEditando === -1) {
+      this.prendasProyecto.push(prenda);
+    } else {
+      this.prendasProyecto[this.indexPrendaEditando] = prenda;
+    }
+
+    this.prendaEditando = undefined;
+    this.indexPrendaEditando = -1;
+    this.insumosTelasFiltrados = [];
+    this.errorMensaje = '';
+  }
+
+  cancelarEditarPrenda(): void {
+    this.prendaEditando = undefined;
+    this.indexPrendaEditando = -1;
+  }
+
+  eliminarPrenda(index: number): void {
+    this.prendasProyecto.splice(index, 1);
+  }
+
+  // ========================================
+  // DISTRIBUCIÓN DE TALLES
+  // ========================================
+
+  abrirModalTalles(): void {
+    if (!this.prendaEditando || this.prendaEditando.cantidadTotal <= 0) {
+      this.errorMensaje = 'Primero especifica la cantidad total';
+      return;
+    }
+
+    this.cantidadTotalTalles = this.prendaEditando.cantidadTotal;
+
+    if (this.prendaEditando.tallesDistribuidos.length > 0) {
+      this.tallesDistribuyendo = [...this.prendaEditando.tallesDistribuidos];
+    } else {
+      this.tallesDistribuyendo = this.talles.map(t => ({
+        idTalle: t.idTalle,
+        nombreTalle: t.nombreTalle,
+        cantidad: 0
+      }));
+    }
+
+    this.mostrarModalTalles = true;
+  }
+
+  guardarDistribucionTalles(): void {
+    const suma = obtenerSumaTalles(this.tallesDistribuyendo);
+
+    if (suma !== this.cantidadTotalTalles) {
+      this.errorMensaje = `La suma (${suma}) debe ser igual a ${this.cantidadTotalTalles}`;
+      return;
+    }
+
+    const tallesConCantidad = this.tallesDistribuyendo.filter(t => t.cantidad > 0);
+
+    if (tallesConCantidad.length === 0) {
+      this.errorMensaje = 'Debes asignar cantidades a al menos un talle';
+      return;
+    }
+
+    if (this.prendaEditando) {
+      this.prendaEditando.tallesDistribuidos = tallesConCantidad;
+    }
+
+    this.cerrarModalTalles();
+  }
+
+  cerrarModalTalles(): void {
+    this.mostrarModalTalles = false;
+    this.tallesDistribuyendo = [];
+    this.errorMensaje = '';
+  }
+
+  obtenerSumaTallesActual(): number {
+    return obtenerSumaTalles(this.tallesDistribuyendo);
+  }
+
+  // ========================================
+  // MATERIALES MANUALES
+  // ========================================
+
+  agregarMaterialManual(
+    idInsumoStr: string,
+    cantidadStr: string,
+    categoria: 'Hilo' | 'Accesorio'
+  ): void {
+    const idInsumo = Number(idInsumoStr);
+    const cantidad = Number(cantidadStr);
+
+    if (!idInsumo || cantidad <= 0) {
+      this.errorMensaje = 'Selecciona un insumo válido y cantidad > 0';
+      setTimeout(() => (this.errorMensaje = ''), 3000);
+      return;
+    }
+
+    const insumo = this.insumos.find(i => i.idInsumo === idInsumo);
+    if (!insumo) return;
+
+    const existe = this.materialesManuales.find(m => m.idInsumo === idInsumo);
+    if (existe) {
+      existe.cantidad += cantidad;
+    } else {
+      this.materialesManuales.push({
+        id: generarIdTemporal(),
+        idInsumo: insumo.idInsumo,
+        nombreInsumo: insumo.nombreInsumo,
+        categoria: insumo.categoria,
+        cantidad: cantidad,
+        unidadMedida: insumo.unidadMedida,
+        stockActual: insumo.stockActual
+      });
+    }
+  }
+
+  eliminarMaterialManual(index: number): void {
+    this.materialesManuales.splice(index, 1);
+  }
+
+  // ========================================
+  // PREVIEW DE MATERIALES
+  // ========================================
+
+  calcularMateriales(): void {
+    if (this.prendasProyecto.length === 0) {
+      this.errorMensaje = 'Agrega al menos una prenda para calcular materiales';
+      setTimeout(() => this.errorMensaje = '', 3000);
+      return;
+    }
+
+    this.cargando = true;
+    this.errorMensaje = '';
+
+    const request = {
+      prendas: this.prendasProyecto.map(p => ({
+        idTipoPrenda: p.idTipoPrenda!,
+        idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
+        cantidadTotal: p.cantidadTotal
+      })),
+      materialesManuales: this.materialesManuales.map(m => ({
+        idInsumo: m.idInsumo!,
+        cantidad: m.cantidad
+      }))
+    };
+
+    this.proyectosService.calcularMateriales(request).subscribe({
+      next: (response) => {
+        this.materialesCalculados = response;
+        this.cargando = false;
+      },
+      error: (err) => {
+        this.errorMensaje = 'Error al calcular materiales: ' + err.message;
+        this.cargando = false;
+      }
+    });
+  }
+
+  cerrarPreviewMateriales(): void {
+    this.mostrarPreviewMateriales = false;
+  }
+
+  getMaterialesConStock(): number {
+    if (!this.materialesCalculados) return 0;
+    return this.materialesCalculados.materialesCalculados.filter(m => m.tieneStockSuficiente).length;
+  }
+
+  getMaterialesSinStock(): number {
+    if (!this.materialesCalculados) return 0;
+    return this.materialesCalculados.materialesCalculados.filter(m => !m.tieneStockSuficiente).length;
+  }
+
+  // ========================================
+  // GUARDAR PROYECTO
+  // ========================================
 
   guardar(): void {
     if (this.formulario.invalid) {
@@ -152,43 +409,73 @@ export class ProyectoFormComponent implements OnInit {
       return;
     }
 
-    if (this.insumosSeleccionados.length === 0) {
-      this.errorMensaje = 'Agrega al menos un material';
+    if (this.prendasProyecto.length === 0) {
+      this.errorMensaje = 'Agrega al menos una prenda al proyecto';
       return;
+    }
+
+    for (let i = 0; i < this.prendasProyecto.length; i++) {
+      const prenda = this.prendasProyecto[i];
+
+      if (!validarSumaTalles(prenda.tallesDistribuidos, prenda.cantidadTotal)) {
+        this.errorMensaje = `Prenda ${i + 1}: La distribución de talles no coincide con la cantidad total`;
+        return;
+      }
     }
 
     this.cargando = true;
     this.errorMensaje = '';
 
     const formValue = this.formulario.value;
-    
-    const dto: CrearProyectoDTO = {
+
+    const dto: ProyectoCrearNuevo = {
       idCliente: Number(formValue.idCliente),
       nombreProyecto: formValue.nombreProyecto.trim(),
-      tipoPrenda: formValue.tipoPrenda || undefined,
       descripcion: formValue.descripcion?.trim() || undefined,
       prioridad: formValue.prioridad,
       estado: 'Pendiente',
-      fechaInicio: this.formatearFecha(formValue.fechaInicio),
-      fechaFin: formValue.fechaFin ? this.formatearFecha(formValue.fechaFin) : undefined,
-      cantidadTotal: Number(formValue.cantidadTotal),
-      idUsuarioEncargado: formValue.idUsuarioEncargado ? Number(formValue.idUsuarioEncargado) : undefined,
-      tipoEstacion: formValue.tipoEstacion || undefined,
-      materiales: this.insumosSeleccionados.map(i => ({
-        idInsumo: i.idInsumo,
-        idUnidad: 1,
-        cantidadAsignada: i.cantidad,
-        desperdicioEstimado: i.desperdicioEstimado || 0
-      }))
+      fechaInicio: formValue.fechaInicio,
+      fechaFin: formValue.fechaFin || undefined,
+      idUsuarioEncargado: formValue.idUsuarioEncargado
+        ? Number(formValue.idUsuarioEncargado)
+        : undefined,
+      prendas: this.prendasProyecto.map((p, index) => ({
+        idTipoPrenda: p.idTipoPrenda!,
+        idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
+        idInsumo: p.idInsumo!, // AGREGADO
+        cantidadTotal: p.cantidadTotal,
+        tieneBordado: p.tieneBordado,
+        tieneEstampado: p.tieneEstampado,
+        descripcionDiseño: p.descripcionDiseno?.trim() || undefined,
+        orden: index,
+        talles: p.tallesDistribuidos.map(t => ({
+          idTalle: t.idTalle,
+          cantidad: t.cantidad
+        }))
+      })),
+      materialesManuales:
+        this.materialesManuales.length > 0
+          ? this.materialesManuales.map(m => ({
+              idInsumo: m.idInsumo!,
+              cantidad: m.cantidad,
+              unidadMedida: m.unidadMedida!,
+              observaciones: undefined
+            }))
+          : undefined
     };
+
+    const validacion = this.proyectosService.validarFormularioLocal(dto);
+    if (!validacion.esValido) {
+      this.errorMensaje = validacion.errores.join('; ');
+      this.cargando = false;
+      return;
+    }
 
     this.proyectosService.crearProyecto(dto).subscribe({
       next: () => {
         if (this.esModal) {
-          // Si es modal, emitir evento de cierre
           this.cerrar.emit();
         } else {
-          // Si es pantalla completa, navegar a la lista
           this.router.navigate(['/proyectos']);
         }
       },
@@ -198,6 +485,10 @@ export class ProyectoFormComponent implements OnInit {
       }
     });
   }
+
+  // ========================================
+  // UTILIDADES
+  // ========================================
 
   private extraerMensajeError(err: any): string {
     if (err.error) {
@@ -211,17 +502,6 @@ export class ProyectoFormComponent implements OnInit {
     return err.message || 'Error al crear el proyecto';
   }
 
-  private formatearFecha(fecha: string): string {
-    if (!fecha) return '';
-    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return fecha;
-    
-    const date = new Date(fecha);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
   private marcarCamposComoTocados(): void {
     Object.values(this.formulario.controls).forEach(control => {
       control.markAsTouched();
@@ -230,11 +510,55 @@ export class ProyectoFormComponent implements OnInit {
 
   cancelar(): void {
     if (this.esModal) {
-      // Si es modal, emitir evento de cierre
       this.cerrar.emit();
     } else {
-      // Si es pantalla completa, navegar a la lista
       this.router.navigate(['/proyectos']);
     }
+  }
+
+  // ========================================
+  // HELPERS PARA EL TEMPLATE
+  // ========================================
+
+    
+
+    getColorInsumo(idInsumo: number): string {
+    const insumo = this.insumos.find(i => i.idInsumo === idInsumo);
+    return insumo?.color || '-';
+    }
+
+  get cantidadTotalProyecto(): number {
+    return calcularTotalPrendas(this.prendasProyecto);
+  }
+
+  get nombreCliente(): string {
+    const idCliente = this.formulario.get('idCliente')?.value;
+    if (!idCliente) return '';
+    const cliente = this.clientes.find(c => c.idCliente === Number(idCliente));
+    return cliente?.nombreCompleto || '';
+  }
+
+  getNombreTipoPrenda(idTipoPrenda?: number): string {
+    if (!idTipoPrenda) return '';
+    const tipo = this.tiposPrenda.find(tp => tp.idTipoPrenda === idTipoPrenda);
+    return tipo?.nombrePrenda || '';
+  }
+
+  getNombreTipoInsumo(idTipoInsumo?: number): string {
+    if (!idTipoInsumo) return '';
+    const tipo = this.tiposInsumo.find(ti => ti.idTipoInsumo === idTipoInsumo);
+    return tipo?.nombreTipo || '';
+  }
+
+  getTallesSeparados(talles: TalleDistribuido[]): string {
+    if (!talles || talles.length === 0) return 'Sin distribuir';
+    return talles.map(t => `${t.nombreTalle}(${t.cantidad})`).join(', ');
+  }
+
+  getDisenoTexto(prenda: PrendaFormulario): string {
+    const disenos = [];
+    if (prenda.tieneBordado) disenos.push('Bordado');
+    if (prenda.tieneEstampado) disenos.push('Estampado');
+    return disenos.length > 0 ? disenos.join(' + ') : 'Sin diseño';
   }
 }
