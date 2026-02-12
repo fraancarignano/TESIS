@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProyectoVista } from '../../models/proyecto.model';
 import { ProyectosService } from '../../services/proyecto.service';
-import { 
-  AREAS_PRODUCCION, 
+import { AlertasService } from '../../../../core/services/alertas';
+import {
+  AREAS_PRODUCCION,
   AreaProduccion,
   getAreaActual,
   getSiguienteArea,
@@ -38,7 +39,14 @@ export class ProyectoDetalleModalComponent implements OnInit {
   nuevaObservacion: string = '';
   guardandoObservacion = false;
 
-  constructor(private proyectosService: ProyectosService) {}
+  // Archivar/Liberar proyecto
+  procesandoArchivo = false;
+  procesandoLiberacion = false;
+
+  constructor(
+    private proyectosService: ProyectosService,
+    private alertas: AlertasService
+  ) { }
 
   ngOnInit(): void {
     // Seleccionar área actual por defecto
@@ -82,7 +90,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.observacionArea = '';
   }
 
-  continuarSiguienteArea(): void {
+  async continuarSiguienteArea(): Promise<void> {
     if (!this.areaSeleccionada || !this.proyecto.idProyecto) {
       console.warn('⚠️ No se puede continuar: área o proyecto no seleccionado');
       return;
@@ -92,7 +100,13 @@ export class ProyectoDetalleModalComponent implements OnInit {
       ? '¿Estás seguro de finalizar este proyecto?'
       : `¿Estás seguro de avanzar a ${this.siguienteArea?.nombre}?`;
 
-    if (!confirm(mensaje)) {
+    const confirmado = await this.alertas.confirmar(
+      'Confirmar avance',
+      mensaje,
+      'Sí, continuar'
+    );
+
+    if (!confirmado) {
       console.log('❌ Usuario canceló la operación');
       return;
     }
@@ -126,21 +140,21 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.proyectosService.actualizarAvance(this.proyecto.idProyecto, dto).subscribe({
       next: (response) => {
         console.log('✅ Área actualizada correctamente:', response);
-        
+
         // Actualizar el proyecto localmente
         (this.proyecto as any)[this.areaSeleccionada!.campo] = 100;
-        
+
         this.procesandoArea = false;
         this.observacionArea = '';
         this.actualizado.emit();
-        
+
         // Mostrar mensaje de éxito
-        const mensajeExito = this.esUltimaArea 
-          ? '¡Área completada! Finalizando proyecto...' 
+        const mensajeExito = this.esUltimaArea
+          ? '¡Área completada! Finalizando proyecto...'
           : `✅ ${this.areaSeleccionada!.nombre} completada`;
-        
+
         console.log(mensajeExito);
-        
+
         // Si es la última área, cambiar estado a Finalizado
         if (this.esUltimaArea) {
           setTimeout(() => this.finalizarProyecto(), 500);
@@ -158,10 +172,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
           message: err.message,
           url: err.url
         });
-        
+
         // Intentar extraer el mensaje de error del backend
         let mensajeError = 'Error desconocido al avanzar de área';
-        
+
         if (err.error) {
           if (typeof err.error === 'string') {
             mensajeError = err.error;
@@ -177,7 +191,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
         } else if (err.message) {
           mensajeError = err.message;
         }
-        
+
         // Agregar información adicional según el código de estado
         if (err.status === 400) {
           console.error('💡 Posibles causas del error 400:');
@@ -191,8 +205,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
         } else if (err.status === 500) {
           mensajeError = 'Error interno del servidor. Por favor, contacta al administrador.';
         }
-        
-        alert(`Error al actualizar área:\n\n${mensajeError}`);
+
+        this.alertas.error('Error al actualizar área', mensajeError);
         this.procesandoArea = false;
       }
     });
@@ -207,12 +221,72 @@ export class ProyectoDetalleModalComponent implements OnInit {
       next: () => {
         this.proyecto.estado = 'Finalizado';
         this.actualizado.emit();
-        alert('¡Proyecto finalizado exitosamente!');
+        this.alertas.success('Proyecto finalizado', '¡El proyecto se finalizó exitosamente!');
         this.cerrarModal();
       },
       error: (err) => {
         console.error('Error al finalizar proyecto:', err);
-        alert('Error al finalizar el proyecto');
+        this.alertas.error('Error', 'No se pudo finalizar el proyecto');
+      }
+    });
+  }
+
+  async archivarProyecto(): Promise<void> {
+    if (!this.proyecto.idProyecto) return;
+
+    const confirmado = await this.alertas.confirmar(
+      '¿Archivar proyecto?',
+      `El proyecto "${this.proyecto.nombreProyecto}" ya no aparecerá en el tablero Kanban, pero podrá consultarlo en la lista de proyectos.`,
+      'Sí, archivar'
+    );
+
+    if (!confirmado) return;
+
+    this.procesandoArchivo = true;
+
+    this.proyectosService.cambiarEstado(this.proyecto.idProyecto, 'Archivado').subscribe({
+      next: () => {
+        console.log('✅ Proyecto archivado exitosamente');
+        this.proyecto.estado = 'Archivado';
+        this.procesandoArchivo = false;
+        this.actualizado.emit();
+        this.alertas.success('Proyecto archivado', 'El proyecto se archivó correctamente');
+        this.cerrarModal();
+      },
+      error: (err) => {
+        console.error('❌ Error al archivar proyecto:', err);
+        this.alertas.error('Error', 'No se pudo archivar el proyecto');
+        this.procesandoArchivo = false;
+      }
+    });
+  }
+
+  async liberarProyecto(): Promise<void> {
+    if (!this.proyecto.idProyecto) return;
+
+    const confirmado = await this.alertas.confirmar(
+      '¿Liberar proyecto?',
+      `El proyecto "${this.proyecto.nombreProyecto}" volverá al estado "Pendiente" y aparecerá nuevamente en el tablero Kanban.`,
+      'Sí, liberar'
+    );
+
+    if (!confirmado) return;
+
+    this.procesandoLiberacion = true;
+
+    this.proyectosService.cambiarEstado(this.proyecto.idProyecto, 'Pendiente').subscribe({
+      next: () => {
+        console.log('✅ Proyecto liberado exitosamente');
+        this.proyecto.estado = 'Pendiente';
+        this.procesandoLiberacion = false;
+        this.actualizado.emit();
+        this.alertas.success('Proyecto liberado', 'El proyecto volvió al tablero Kanban');
+        this.cerrarModal();
+      },
+      error: (err) => {
+        console.error('❌ Error al liberar proyecto:', err);
+        this.alertas.error('Error', 'No se pudo liberar el proyecto');
+        this.procesandoLiberacion = false;
       }
     });
   }
@@ -237,7 +311,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al agregar observación:', err);
-        alert('Error al agregar la observación');
+        this.alertas.error('Error', 'No se pudo agregar la observación');
         this.guardandoObservacion = false;
       }
     });

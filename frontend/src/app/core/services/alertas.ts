@@ -18,7 +18,10 @@ export class AlertasService {
       text: mensaje,
       confirmButtonColor: '#ff5722',
       timer: 2500,
-      timerProgressBar: true
+      timerProgressBar: true,
+      customClass: {
+        container: 'swal-high-zindex'
+      }
     });
   }
 
@@ -30,7 +33,10 @@ export class AlertasService {
       icon: 'error',
       title: titulo,
       text: mensaje,
-      confirmButtonColor: '#ff5722'
+      confirmButtonColor: '#ff5722',
+      customClass: {
+        container: 'swal-high-zindex'
+      }
     });
   }
 
@@ -70,9 +76,12 @@ export class AlertasService {
       confirmButtonColor: '#ff5722',
       cancelButtonColor: '#666',
       confirmButtonText: textoBoton,
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        container: 'swal-high-zindex'
+      }
     });
-    
+
     return result.isConfirmed;
   }
 

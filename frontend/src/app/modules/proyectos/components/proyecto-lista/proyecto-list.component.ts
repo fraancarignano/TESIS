@@ -2,10 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProyectosService } from '../../services/proyecto.service';
-import { Proyecto, EstadoProyecto, PrioridadProyecto } from '../../models/proyecto.model';
+import { Proyecto, EstadoProyecto, PrioridadProyecto, ProyectoVista, proyectoToVista } from '../../models/proyecto.model';
 import { AlertasService } from '../../../../core/services/alertas';
 import { ExportService } from '../../../../core/services/export.service';
 import { ProyectoFiltrosComponent } from '../proyecto-filtros/proyecto-filtros.component';
+import { ProyectoDetalleModalComponent } from '../proyecto-detalle-modal/proyecto-detalle-modal.component';
 
 // Interfaz solo aquí
 export interface FiltrosProyecto {
@@ -19,7 +20,7 @@ export interface FiltrosProyecto {
 @Component({
   selector: 'app-proyecto-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProyectoFiltrosComponent],
+  imports: [CommonModule, FormsModule, ProyectoFiltrosComponent, ProyectoDetalleModalComponent],
   templateUrl: './proyecto-list.component.html',
   styleUrls: ['./proyecto-list.component.css']
 })
@@ -33,11 +34,15 @@ export class ProyectoListComponent implements OnInit {
   filtrosActuales: FiltrosProyecto | null = null;
   mostrarMenuExportar = false;
 
+  // Modal de detalles
+  mostrarModalDetalle = false;
+  proyectoSeleccionado: ProyectoVista | null = null;
+
   constructor(
     private alertas: AlertasService,
     private proyectosService: ProyectosService,
     private exportService: ExportService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.cargarProyectos();
@@ -46,7 +51,7 @@ export class ProyectoListComponent implements OnInit {
   cargarProyectos(): void {
     this.loading = true;
     this.error = false;
-    
+
     this.proyectosService.obtenerProyectos().subscribe({
       next: (data) => {
         this.proyectos = data;
@@ -67,7 +72,7 @@ export class ProyectoListComponent implements OnInit {
 
     if (this.terminoBusqueda) {
       const termino = this.terminoBusqueda.toLowerCase();
-      resultado = resultado.filter(p => 
+      resultado = resultado.filter(p =>
         (p.nombreProyecto?.toLowerCase().includes(termino)) ||
         (p.codigoProyecto?.toLowerCase().includes(termino)) ||
         (p.tipoPrenda?.toLowerCase().includes(termino)) ||
@@ -78,19 +83,19 @@ export class ProyectoListComponent implements OnInit {
 
     if (this.filtrosActuales) {
       if (this.filtrosActuales.estados && this.filtrosActuales.estados.length > 0) {
-        resultado = resultado.filter(p => 
+        resultado = resultado.filter(p =>
           this.filtrosActuales!.estados.includes(p.estado)
         );
       }
 
       if (this.filtrosActuales.prioridades && this.filtrosActuales.prioridades.length > 0) {
-        resultado = resultado.filter(p => 
+        resultado = resultado.filter(p =>
           p.prioridad && this.filtrosActuales!.prioridades.includes(p.prioridad)
         );
       }
 
       if (this.filtrosActuales.tiposPrenda && this.filtrosActuales.tiposPrenda.length > 0) {
-        resultado = resultado.filter(p => 
+        resultado = resultado.filter(p =>
           p.tipoPrenda && this.filtrosActuales!.tiposPrenda.includes(p.tipoPrenda)
         );
       }
@@ -133,7 +138,7 @@ export class ProyectoListComponent implements OnInit {
 
   exportarExcel(): void {
     const proyectosParaExportar = this.proyectosFiltrados;
-    
+
     if (proyectosParaExportar.length === 0) {
       this.alertas.warning('Sin datos', 'No hay proyectos para exportar');
       return;
@@ -142,7 +147,7 @@ export class ProyectoListComponent implements OnInit {
     try {
       this.exportService.exportarProyectosExcel(proyectosParaExportar);
       this.alertas.success(
-        'Exportación exitosa', 
+        'Exportación exitosa',
         `Se exportaron ${proyectosParaExportar.length} proyectos a Excel`
       );
       this.mostrarMenuExportar = false;
@@ -154,7 +159,7 @@ export class ProyectoListComponent implements OnInit {
 
   exportarCSV(): void {
     const proyectosParaExportar = this.proyectosFiltrados;
-    
+
     if (proyectosParaExportar.length === 0) {
       this.alertas.warning('Sin datos', 'No hay proyectos para exportar');
       return;
@@ -163,7 +168,7 @@ export class ProyectoListComponent implements OnInit {
     try {
       this.exportService.exportarProyectosCSV(proyectosParaExportar);
       this.alertas.success(
-        'Exportación exitosa', 
+        'Exportación exitosa',
         `Se exportaron ${proyectosParaExportar.length} proyectos a CSV`
       );
       this.mostrarMenuExportar = false;
@@ -174,7 +179,19 @@ export class ProyectoListComponent implements OnInit {
   }
 
   abrirDetalle(proyecto: Proyecto): void {
-    console.log('Ver detalle:', proyecto);
+    console.log('📋 Abriendo detalle del proyecto:', proyecto);
+    this.proyectoSeleccionado = proyectoToVista(proyecto);
+    this.mostrarModalDetalle = true;
+  }
+
+  cerrarModalDetalle(): void {
+    this.mostrarModalDetalle = false;
+    this.proyectoSeleccionado = null;
+  }
+
+  onProyectoActualizado(): void {
+    console.log('🔄 Proyecto actualizado, recargando lista...');
+    this.cargarProyectos();
   }
 
   editarProyecto(proyecto: Proyecto): void {

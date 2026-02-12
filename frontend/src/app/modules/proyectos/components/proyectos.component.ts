@@ -8,83 +8,84 @@ import { ProyectoCardComponent } from './proyecto-card/proyecto-card.component';
 import { ProyectoDetalleModalComponent } from './proyecto-detalle-modal/proyecto-detalle-modal.component';
 
 
-import { 
-  Proyecto, 
-  ProyectoVista, 
+import {
+  Proyecto,
+  ProyectoVista,
   EstadoProyecto,
   proyectoToVista,
-  calcularProgresoGeneral 
+  calcularProgresoGeneral
 } from '../models/proyecto.model';
 
 @Component({
   selector: 'app-proyectos',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule, ProyectoFormNuevoComponent , ProyectoCardComponent, ProyectoDetalleModalComponent ],
+  imports: [CommonModule, FormsModule, DragDropModule, ProyectoFormNuevoComponent, ProyectoCardComponent, ProyectoDetalleModalComponent],
   templateUrl: './proyectos.component.html',
   styleUrls: ['./proyectos.component.css']
 })
 export class ProyectosComponent implements OnInit {
-  
+
   // Estados de carga
   loading = false;
   error = false;
-  
+
   // Búsqueda
   terminoBusqueda: string = '';
-  
+
   // Estados para las columnas Kanban
   proyectosPendientes: ProyectoVista[] = [];
   proyectosEnProceso: ProyectoVista[] = [];
   proyectosFinalizados: ProyectoVista[] = [];
-  proyectosArchivados: ProyectoVista[] = [];
-  
+
   // Todos los proyectos (para filtrado)
   todosLosProyectos: Proyecto[] = [];
-  
+
   // Estadísticas
   get totalProyectosActivos(): number {
     return this.proyectosPendientes.length + this.proyectosEnProceso.length;
   }
-  
+
   get totalProyectosArchivados(): number {
-    return this.proyectosArchivados.length;
+    // Count archived projects from all projects
+    return this.todosLosProyectos.filter(p =>
+      p.estado === 'Archivado' || p.estado === 'Cancelado' || p.estado === 'Pausado'
+    ).length;
   }
-  
+
   get promedioScrap(): number {
     const todosProyectos = [
       ...this.proyectosPendientes,
       ...this.proyectosEnProceso,
-      ...this.proyectosFinalizados,
-      ...this.proyectosArchivados
+      ...this.proyectosFinalizados
     ];
-    
+
     if (todosProyectos.length === 0) return 0;
-    
+
     const proyectosConScrap = todosProyectos.filter(p => p.scrapPorcentaje);
     if (proyectosConScrap.length === 0) return 0;
-    
+
     const sumaScrap = proyectosConScrap.reduce((sum, p) => sum + (p.scrapPorcentaje || 0), 0);
     return Math.round((sumaScrap / proyectosConScrap.length) * 10) / 10;
   }
-  
+
   // Modal
   mostrarModalNuevoProyecto: boolean = false;
   proyectoSeleccionado: ProyectoVista | null = null;
   mostrarModalDetalle: boolean = false;
-  
-  constructor(private proyectosService: ProyectosService) {}
-  
+
+  constructor(private proyectosService: ProyectosService) { }
+
   ngOnInit(): void {
     this.cargarProyectos();
   }
-  
+
   /**
    * Cargar proyectos desde el backend
    */
   cargarProyectos(): void {
     this.loading = true;
     this.error = false;
-    
+
     this.proyectosService.obtenerProyectos().subscribe({
       next: (proyectos: Proyecto[]) => {
         this.todosLosProyectos = proyectos;
@@ -99,7 +100,7 @@ export class ProyectosComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Organizar proyectos en columnas Kanban según su estado
    */
@@ -108,12 +109,11 @@ export class ProyectosComponent implements OnInit {
     this.proyectosPendientes = [];
     this.proyectosEnProceso = [];
     this.proyectosFinalizados = [];
-    this.proyectosArchivados = [];
-    
-    // Convertir a ProyectoVista y distribuir
+
+    // Convertir a ProyectoVista y distribuir (filtrar archivados)
     proyectos.forEach(proyecto => {
       const proyectoVista = proyectoToVista(proyecto);
-      
+
       switch (proyecto.estado) {
         case 'Pendiente':
           this.proyectosPendientes.push(proyectoVista);
@@ -124,15 +124,13 @@ export class ProyectosComponent implements OnInit {
         case 'Finalizado':
           this.proyectosFinalizados.push(proyectoVista);
           break;
-        case 'Archivado':
-        case 'Cancelado':
-        case 'Pausado':
-          this.proyectosArchivados.push(proyectoVista);
+        // Archivado, Cancelado, Pausado no se muestran en el kanban
+        default:
           break;
       }
     });
   }
-  
+
   /**
    * Drag & Drop entre columnas
    */
@@ -143,24 +141,24 @@ export class ProyectosComponent implements OnInit {
     } else {
       // Movimiento entre columnas diferentes
       const proyecto = event.previousContainer.data[event.previousIndex];
-      
+
       transferArrayItem(
         event.previousContainer.data,
         event.container.data,
         event.previousIndex,
         event.currentIndex
       );
-      
+
       // Obtener el nuevo estado según la columna destino
       const nuevoEstado = this.obtenerEstadoPorContainer(event.container.id);
-      
+
       // Actualizar en el backend
       if (proyecto.idProyecto) {
         this.actualizarEstadoProyecto(proyecto.idProyecto, nuevoEstado);
       }
     }
   }
-  
+
   /**
    * Obtener estado según el ID del contenedor
    */
@@ -168,12 +166,11 @@ export class ProyectosComponent implements OnInit {
     const mapeo: Record<string, string> = {
       'pendientes': 'Pendiente',
       'en-proceso': 'En Proceso',
-      'finalizados': 'Finalizado',
-      'archivados': 'Archivado'
+      'finalizados': 'Finalizado'
     };
     return mapeo[containerId] || 'Pendiente';
   }
-  
+
   /**
    * Actualizar estado del proyecto en el backend
    */
@@ -191,14 +188,14 @@ export class ProyectosComponent implements OnInit {
       }
     });
   }
-  
+
   /**
    * Abrir modal para nuevo proyecto
    */
   abrirModalNuevoProyecto(): void {
     this.mostrarModalNuevoProyecto = true;
   }
-  
+
   /**
    * Cerrar modal de nuevo proyecto
    */
@@ -206,7 +203,7 @@ export class ProyectosComponent implements OnInit {
     this.mostrarModalNuevoProyecto = false;
     this.cargarProyectos(); // Recargar lista
   }
-  
+
   /**
    * Ver detalle de un proyecto
    */
@@ -214,7 +211,7 @@ export class ProyectosComponent implements OnInit {
     this.proyectoSeleccionado = proyecto;
     this.mostrarModalDetalle = true;
   }
-  
+
   /**
    * Cerrar modal de detalle
    */
@@ -222,7 +219,7 @@ export class ProyectosComponent implements OnInit {
     this.mostrarModalDetalle = false;
     this.proyectoSeleccionado = null;
   }
-  
+
   /**
    * Filtrar proyectos por búsqueda
    */
@@ -230,16 +227,16 @@ export class ProyectosComponent implements OnInit {
     if (!this.terminoBusqueda) {
       return proyectos;
     }
-    
+
     const termino = this.terminoBusqueda.toLowerCase();
-    return proyectos.filter(p => 
+    return proyectos.filter(p =>
       p.nombreProyecto?.toLowerCase().includes(termino) ||
       p.clienteNombre?.toLowerCase().includes(termino) ||
       p.codigoProyecto?.toLowerCase().includes(termino) ||
       p.tipoPrenda?.toLowerCase().includes(termino)
     );
   }
-  
+
   /**
    * Obtener proyectos filtrados para cada columna
    */
@@ -247,11 +244,10 @@ export class ProyectosComponent implements OnInit {
     return {
       pendientes: this.filtrarProyectos(this.proyectosPendientes),
       enProceso: this.filtrarProyectos(this.proyectosEnProceso),
-      finalizados: this.filtrarProyectos(this.proyectosFinalizados),
-      archivados: this.filtrarProyectos(this.proyectosArchivados)
+      finalizados: this.filtrarProyectos(this.proyectosFinalizados)
     };
   }
-  
+
   /**
    * Exportar proyectos
    */
@@ -259,15 +255,15 @@ export class ProyectosComponent implements OnInit {
     console.log('Exportar proyectos...');
     // TODO: Implementar exportación (PDF/Excel)
   }
-  
+
   /**
    * Eliminar (archivar) proyecto
    */
   eliminarProyecto(proyecto: ProyectoVista, event: Event): void {
     event.stopPropagation();
-    
+
     if (!proyecto.idProyecto) return;
-    
+
     if (confirm(`¿Está seguro de archivar el proyecto "${proyecto.nombreProyecto}"?`)) {
       this.proyectosService.eliminarProyecto(proyecto.idProyecto).subscribe({
         next: () => {
@@ -282,7 +278,7 @@ export class ProyectosComponent implements OnInit {
       });
     }
   }
-  
+
   /**
    * Helper para obtener clase de badge scrap
    */
@@ -292,7 +288,7 @@ export class ProyectosComponent implements OnInit {
     if (porcentaje >= 5) return 'scrap-medio';
     return 'scrap-bajo';
   }
-  
+
   /**
    * Formatear fecha para mostrar
    */
@@ -305,7 +301,7 @@ export class ProyectosComponent implements OnInit {
       year: 'numeric'
     });
   }
-  
+
   /**
    * Obtener progreso general del proyecto
    */

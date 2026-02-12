@@ -121,7 +121,7 @@
 }
 
 /* === ESTADÍSTICAS === */
-.estadisticas-wrapper {  
+.estadisticas-wrapper {
   background: white;
   padding: 24px;
   border-radius: 8px;
@@ -134,8 +134,9 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin-bottom: 32px;
-  padding-bottom: 32px;  
-  border-bottom: 2px solid #e0e0e0;  /* ← AGREGÁ */
+  padding-bottom: 32px;
+  border-bottom: 2px solid #e0e0e0;
+  /* ← AGREGÁ */
 }
 
 .stat-card {
@@ -176,16 +177,16 @@
 }
 
 .btn-nuevo {
-  height: auto;  
-  padding: 16px 24px;  
-  font-size: 14px;  
-  gap: 8px;  
+  height: auto;
+  padding: 16px 24px;
+  font-size: 14px;
+  gap: 8px;
 }
 
 /* === TABLERO KANBAN === */
 .kanban-board {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -212,9 +213,7 @@
   background: #e3f2fd;
 }
 
-.column-header.archivado {
-  background: #f3e5f5;
-}
+
 
 .column-header.finalizado {
   background: #e8f5e9;
@@ -395,8 +394,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content {
@@ -416,6 +420,7 @@
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -494,49 +499,54 @@
   }
 
   /* Loading state */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  gap: 16px;
-}
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    gap: 16px;
+  }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #f0f0f0;
-  border-top: 3px solid #ff5722;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f0f0f0;
+    border-top: 3px solid #ff5722;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
 
-.loading-state p {
-  color: #999;
-  font-size: 14px;
-}
+    100% {
+      transform: rotate(360deg);
+    }
+  }
 
-/* Error state */
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  gap: 16px;
-  text-align: center;
-}
+  .loading-state p {
+    color: #999;
+    font-size: 14px;
+  }
 
-.error-state h3 {
-  margin: 0;
-  color: #d32f2f;
-  font-size: 18px;
-  font-weight: 500;
-}
+  /* Error state */
+  .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .error-state h3 {
+    margin: 0;
+    color: #d32f2f;
+    font-size: 18px;
+    font-weight: 500;
+  }
 }
