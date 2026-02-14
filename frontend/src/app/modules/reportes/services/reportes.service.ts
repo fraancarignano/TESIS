@@ -51,20 +51,25 @@ export interface InsumoUsado {
   cantidadUsada: number;
 }
 
+export interface ProduccionPorPrenda {
+  nombrePrenda: string;
+  cantidadProducida: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ReportesService {
   public apiUrl = 'https://localhost:7163/api/Reportes';
-  
-  constructor(private http: HttpClient) {}
+
+  constructor(private http: HttpClient) { }
 
   /**
    * Obtener reporte de inventario crítico
    */
   obtenerReporteInventarioCritico(): Observable<ResumenInventarioCritico> {
     console.log('🔍 Llamando a:', `${this.apiUrl}/inventario-critico`);
-    
+
     return this.http.get<ResumenInventarioCritico>(`${this.apiUrl}/inventario-critico`)
       .pipe(
         tap(datos => console.log('✅ Datos recibidos:', datos)),
@@ -77,10 +82,27 @@ export class ReportesService {
    */
   obtenerDashboardInventario(): Observable<DashboardInventario> {
     console.log('🔍 Llamando a:', `${this.apiUrl}/dashboard-inventario`);
-    
+
     return this.http.get<DashboardInventario>(`${this.apiUrl}/dashboard-inventario`)
       .pipe(
         tap(datos => console.log('✅ Dashboard recibido:', datos)),
+        catchError(this.handleError)
+      );
+  }
+
+  /**
+   * Obtener reporte de producción por tipo de prenda
+   */
+  obtenerProduccionPorTipoPrenda(fechaInicio?: string, fechaFin?: string): Observable<ProduccionPorPrenda[]> {
+    let params = '';
+    if (fechaInicio && fechaFin) {
+      params = `?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+    }
+    console.log('🔍 Llamando a:', `${this.apiUrl}/produccion-por-prenda${params}`);
+
+    return this.http.get<ProduccionPorPrenda[]>(`${this.apiUrl}/produccion-por-prenda${params}`)
+      .pipe(
+        tap(datos => console.log('✅ Datos de producción recibidos:', datos)),
         catchError(this.handleError)
       );
   }

@@ -1894,6 +1894,62 @@
         }
       }
     },
+    "/api/Reportes/produccion-por-prenda": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "name": "fechaInicio",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "fechaFin",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProduccionPorPrendaDTO"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProduccionPorPrendaDTO"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProduccionPorPrendaDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Test/test-connection": {
       "get": {
         "tags": [
@@ -2854,6 +2910,20 @@
           }
         },
         "additionalProperties": { }
+      },
+      "ProduccionPorPrendaDTO": {
+        "type": "object",
+        "properties": {
+          "nombrePrenda": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidadProducida": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
       },
       "ProyectoActualizarDTO": {
         "type": "object",
