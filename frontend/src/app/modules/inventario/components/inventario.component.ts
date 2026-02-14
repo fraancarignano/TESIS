@@ -94,8 +94,20 @@ export class InventarioComponent implements OnInit {
   }
 
   abrirDetalle(insumo: Insumo): void {
-    this.insumoDetalle = insumo;
-    this.mostrarDetalle = true;
+    if (insumo.idInsumo) {
+      this.insumosService.getInsumoById(insumo.idInsumo).subscribe({
+        next: (insumoDetalle) => {
+          this.insumoDetalle = insumoDetalle;
+          this.mostrarDetalle = true;
+        },
+        error: (error) => {
+          console.error('Error al obtener detalle:', error);
+          // Fallback al objeto que ya tenemos si falla el fetch
+          this.insumoDetalle = insumo;
+          this.mostrarDetalle = true;
+        }
+      });
+    }
   }
 
   cerrarDetalle(): void {

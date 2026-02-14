@@ -528,6 +528,7 @@ C:\Users\fraan\OneDrive\Documentos\GitHub\TESIS\Backend\TESIS_OG\obj\Debug\net8.
 C:\Users\fraan\OneDrive\Documentos\GitHub\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\TESIS_OG.pdb
 C:\Users\fraan\OneDrive\Documentos\GitHub\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\TESIS_OG.genruntimeconfig.cache
 C:\Users\fraan\OneDrive\Documentos\GitHub\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\ref\TESIS_OG.dll
+C:\Users\Usuario\Documents\Facu\TESIS\Proyecto\Tamarindo-ESCMB-Frontend\Backend\TESIS_OG\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\bin\Debug\net8.0\TESIS_OG.staticwebassets.endpoints.json
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\bin\Debug\net8.0\TESIS_OG.exe
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\bin\Debug\net8.0\appsettings.Development.json
@@ -786,11 +787,10 @@ C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_O
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\TESIS_OG.csproj.Up2Date
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\TESIS_OG.dll
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\refint\TESIS_OG.dll
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\TESIS_OG.pdb
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\TESIS_OG.genruntimeconfig.cache
 C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\ref\TESIS_OG.dll
-C:\Users\Usuario\Documents\Facu\TESIS\Proyecto\Tamarindo-ESCMB-Frontend\Backend\TESIS_OG\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+C:\Users\alans\Downloads\UNC-2025\PROGRAMACION\REPOSITORIO\TESIS\Backend\TESIS_OG\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
