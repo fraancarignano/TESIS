@@ -591,10 +591,27 @@ public partial class TamarindoDbContext : DbContext
                 .HasMaxLength(15)
                 .IsUnicode(false)
                 .HasColumnName("cuit");
+            entity.Property(e => e.Direccion)
+                .HasMaxLength(150)
+                .IsUnicode(false)
+                .HasColumnName("direccion");
+            entity.Property(e => e.Email)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("email");
+            entity.Property(e => e.FechaAlta).HasColumnName("fecha_Alta");
             entity.Property(e => e.NombreProveedor)
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("nombre_Proveedor");
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("observaciones");
+            entity.Property(e => e.Telefono)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasColumnName("telefono");
         });
 
         modelBuilder.Entity<Provincium>(entity =>
@@ -872,3 +889,5 @@ public partial class TamarindoDbContext : DbContext
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
+
+
