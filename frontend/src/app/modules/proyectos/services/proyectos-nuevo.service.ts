@@ -75,6 +75,34 @@ export class ProyectosServiceNuevo{
   }
 
   /**
+ * Actualizar proyecto existente
+ */
+actualizarProyecto(id: number, proyecto: any): Observable<any> {
+  return this.http.put<any>(`${this.apiUrl}/${id}`, proyecto).pipe(
+    tap(() => this.obtenerProyectos().subscribe()),
+    catchError(this.handleError)
+  );
+}
+
+/**
+ * Validar qué se puede editar según estado
+ */
+validarEdicion(id: number): Observable<any> {
+  return this.http.get<any>(`${this.apiUrl}/${id}/validar-edicion`).pipe(
+    catchError(this.handleError)
+  );
+}
+
+/**
+ * Obtener historial de cambios
+ */
+obtenerHistorial(id: number, pagina: number = 1, tamanoPagina: number = 20): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/${id}/historial?pagina=${pagina}&tamanoPagina=${tamanoPagina}`).pipe(
+    catchError(this.handleError)
+  );
+}
+
+  /**
    * Obtener proyectos por estado
    */
   obtenerProyectosPorEstado(estado: string): Observable<ProyectoDetalle[]> {

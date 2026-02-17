@@ -36,6 +36,8 @@ import { Cliente } from '../../../clientes/models/cliente.model';
 })
 export class ProyectoFormNuevoComponent implements OnInit {
   @Input() esModal: boolean = false;
+  @Input() modoEdicion: boolean = false;
+  @Input() proyectoAEditar?: any;
   @Output() cerrar = new EventEmitter<void>();
 
   // Formulario principal
@@ -43,6 +45,11 @@ export class ProyectoFormNuevoComponent implements OnInit {
   cargando = false;
   errorMensaje = '';
   fechaMinima!: string;
+
+  // Estado y validación para edición
+  estadoProyecto: string = 'Pendiente';
+  permitirEdicionCompleta: boolean = true;
+  mensajeRestriccion: string = '';
 
   // Datos del formulario (catálogos)
   datosFormulario?: FormularioProyectoInicializacion;
@@ -87,13 +94,20 @@ export class ProyectoFormNuevoComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.cargarDatosFormulario();
+  this.cargarDatosFormulario();
+  
+  // ========== NUEVO: Detectar modo edición ==========
+  if (this.modoEdicion && this.proyectoAEditar) {
+    this.estadoProyecto = this.proyectoAEditar.estado;
+    // Esperamos a que se carguen los datos del formulario para precargar
+  } else {
     this.setearFechaInicioPorDefecto();
-    const mañana = new Date();
-      mañana.setDate(mañana.getDate() + 1);
-
-      this.fechaMinima = mañana.toISOString().split('T')[0];
   }
+  
+  const mañana = new Date();
+  mañana.setDate(mañana.getDate() + 1);
+  this.fechaMinima = mañana.toISOString().split('T')[0];
+}
 
   // ========================================
   // INICIALIZACIÓN
@@ -142,6 +156,12 @@ export class ProyectoFormNuevoComponent implements OnInit {
         this.insumosAccesorios = filtrarInsumosPorCategoria(datos.insumos, 'Accesorio');
 
         this.cargando = false;
+
+        // ========== NUEVO: Si es modo edición, precargar datos ==========
+          if (this.modoEdicion && this.proyectoAEditar) {
+          this.precargarDatos();
+          this.configurarEdicionSegunEstado();
+        }
       },
       error: (err) => {
         console.error('Error cargando datos del formulario:', err);
@@ -403,56 +423,60 @@ export class ProyectoFormNuevoComponent implements OnInit {
   // ========================================
 
   guardar(): void {
-    if (this.formulario.invalid) {
-      this.marcarCamposComoTocados();
-      this.errorMensaje = 'Completa los campos obligatorios (*)';
+  if (this.formulario.invalid) {
+    this.marcarCamposComoTocados();
+    this.errorMensaje = 'Completa los campos obligatorios (*)';
+    return;
+  }
+
+  if (this.prendasProyecto.length === 0) {
+    this.errorMensaje = 'Agrega al menos una prenda al proyecto';
+    return;
+  }
+
+  for (let i = 0; i < this.prendasProyecto.length; i++) {
+    const prenda = this.prendasProyecto[i];
+
+    if (!validarSumaTalles(prenda.tallesDistribuidos, prenda.cantidadTotal)) {
+      this.errorMensaje = `Prenda ${i + 1}: La distribución de talles no coincide con la cantidad total`;
       return;
     }
+  }
 
-    if (this.prendasProyecto.length === 0) {
-      this.errorMensaje = 'Agrega al menos una prenda al proyecto';
-      return;
-    }
+  this.cargando = true;
+  this.errorMensaje = '';
 
-    for (let i = 0; i < this.prendasProyecto.length; i++) {
-      const prenda = this.prendasProyecto[i];
+  const formValue = this.formulario.getRawValue(); // getRawValue incluye campos deshabilitados
 
-      if (!validarSumaTalles(prenda.tallesDistribuidos, prenda.cantidadTotal)) {
-        this.errorMensaje = `Prenda ${i + 1}: La distribución de talles no coincide con la cantidad total`;
-        return;
-      }
-    }
-
-    this.cargando = true;
-    this.errorMensaje = '';
-
-    const formValue = this.formulario.value;
-
-    const dto: ProyectoCrearNuevo = {
+  // ========== MODO EDICIÓN ==========
+  if (this.modoEdicion && this.proyectoAEditar) {
+    const dtoActualizacion = {
+      idProyecto: this.proyectoAEditar.idProyecto,
       idCliente: Number(formValue.idCliente),
       nombreProyecto: formValue.nombreProyecto.trim(),
       descripcion: formValue.descripcion?.trim() || undefined,
       prioridad: formValue.prioridad,
-      estado: 'Pendiente',
-      fechaInicio: formValue.fechaInicio,
+      estado: this.estadoProyecto,
       fechaFin: formValue.fechaFin || undefined,
       idUsuarioEncargado: formValue.idUsuarioEncargado
         ? Number(formValue.idUsuarioEncargado)
         : undefined,
-      prendas: this.prendasProyecto.map((p, index) => ({
-        idTipoPrenda: p.idTipoPrenda!,
-        idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
-        idInsumo: p.idInsumo!, // AGREGADO
-        cantidadTotal: p.cantidadTotal,
-        tieneBordado: p.tieneBordado,
-        tieneEstampado: p.tieneEstampado,
-        descripcionDiseño: p.descripcionDiseno?.trim() || undefined,
-        orden: index,
-        talles: p.tallesDistribuidos.map(t => ({
-          idTalle: t.idTalle,
-          cantidad: t.cantidad
-        }))
-      })),
+      prendas: this.permitirEdicionCompleta
+        ? this.prendasProyecto.map((p, index) => ({
+            idTipoPrenda: p.idTipoPrenda!,
+            idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
+            idInsumo: p.idInsumo!,
+            cantidadTotal: p.cantidadTotal,
+            tieneBordado: p.tieneBordado,
+            tieneEstampado: p.tieneEstampado,
+            descripcionDiseño: p.descripcionDiseno?.trim() || undefined,
+            orden: index,
+            talles: p.tallesDistribuidos.map(t => ({
+              idTalle: t.idTalle,
+              cantidad: t.cantidad
+            }))
+          }))
+        : [],
       materialesManuales:
         this.materialesManuales.length > 0
           ? this.materialesManuales.map(m => ({
@@ -464,27 +488,77 @@ export class ProyectoFormNuevoComponent implements OnInit {
           : undefined
     };
 
-    const validacion = this.proyectosService.validarFormularioLocal(dto);
-    if (!validacion.esValido) {
-      this.errorMensaje = validacion.errores.join('; ');
-      this.cargando = false;
-      return;
-    }
-
-    this.proyectosService.crearProyecto(dto).subscribe({
+    this.proyectosService.actualizarProyecto(this.proyectoAEditar.idProyecto, dtoActualizacion).subscribe({
       next: () => {
-        if (this.esModal) {
-          this.cerrar.emit();
-        } else {
-          this.router.navigate(['/proyectos']);
-        }
+        this.cerrar.emit();
       },
       error: (err) => {
         this.errorMensaje = this.extraerMensajeError(err);
         this.cargando = false;
       }
     });
+    
+    return; // Salir después de actualizar
   }
+
+  // ========== MODO CREACIÓN (código original) ==========
+  const dto: ProyectoCrearNuevo = {
+    idCliente: Number(formValue.idCliente),
+    nombreProyecto: formValue.nombreProyecto.trim(),
+    descripcion: formValue.descripcion?.trim() || undefined,
+    prioridad: formValue.prioridad,
+    estado: 'Pendiente',
+    fechaInicio: formValue.fechaInicio,
+    fechaFin: formValue.fechaFin || undefined,
+    idUsuarioEncargado: formValue.idUsuarioEncargado
+      ? Number(formValue.idUsuarioEncargado)
+      : undefined,
+    prendas: this.prendasProyecto.map((p, index) => ({
+      idTipoPrenda: p.idTipoPrenda!,
+      idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
+      idInsumo: p.idInsumo!,
+      cantidadTotal: p.cantidadTotal,
+      tieneBordado: p.tieneBordado,
+      tieneEstampado: p.tieneEstampado,
+      descripcionDiseño: p.descripcionDiseno?.trim() || undefined,
+      orden: index,
+      talles: p.tallesDistribuidos.map(t => ({
+        idTalle: t.idTalle,
+        cantidad: t.cantidad
+      }))
+    })),
+    materialesManuales:
+      this.materialesManuales.length > 0
+        ? this.materialesManuales.map(m => ({
+            idInsumo: m.idInsumo!,
+            cantidad: m.cantidad,
+            unidadMedida: m.unidadMedida!,
+            observaciones: undefined
+          }))
+        : undefined
+  };
+
+  const validacion = this.proyectosService.validarFormularioLocal(dto);
+  if (!validacion.esValido) {
+    this.errorMensaje = validacion.errores.join('; ');
+    this.cargando = false;
+    return;
+  }
+
+  this.proyectosService.crearProyecto(dto).subscribe({
+    next: () => {
+      if (this.esModal) {
+        this.cerrar.emit();
+      } else {
+        this.router.navigate(['/proyectos']);
+      }
+    },
+    error: (err) => {
+      this.errorMensaje = this.extraerMensajeError(err);
+      this.cargando = false;
+    }
+  });
+}
 
   // ========================================
   // UTILIDADES
@@ -560,5 +634,84 @@ export class ProyectoFormNuevoComponent implements OnInit {
     if (prenda.tieneBordado) disenos.push('Bordado');
     if (prenda.tieneEstampado) disenos.push('Estampado');
     return disenos.length > 0 ? disenos.join(' + ') : 'Sin diseño';
+  }
+
+  /**
+   * Configurar qué campos se pueden editar según el estado
+   */
+  private configurarEdicionSegunEstado(): void {
+    if (this.estadoProyecto === 'Finalizado' || this.estadoProyecto === 'Archivado') {
+      this.errorMensaje = 'No se puede editar un proyecto ' + this.estadoProyecto;
+      this.cerrar.emit();
+      return;
+    }
+    
+    if (this.estadoProyecto === 'En Proceso' || this.estadoProyecto === 'Pausado') {
+      this.permitirEdicionCompleta = false;
+      this.mensajeRestriccion = '⚠️ El proyecto está en producción. Solo puedes editar: nombre, descripción, prioridad, fecha fin, encargado y materiales manuales.';
+      
+      // Deshabilitar campos que no se pueden editar
+      this.formulario.get('idCliente')?.disable();
+      this.formulario.get('fechaInicio')?.disable();
+    } else if (this.estadoProyecto === 'Pendiente') {
+      this.permitirEdicionCompleta = true;
+      this.mensajeRestriccion = 'ℹ️ Puedes editar todos los campos mientras el proyecto no haya iniciado.';
+    }
+  }
+
+  /**
+   * Precargar datos del proyecto a editar
+   */
+  private precargarDatos(): void {
+    if (!this.proyectoAEditar) return;
+    
+    // Precargar datos básicos del formulario
+    this.formulario.patchValue({
+      idCliente: this.proyectoAEditar.idCliente,
+      nombreProyecto: this.proyectoAEditar.nombreProyecto,
+      descripcion: this.proyectoAEditar.descripcion,
+      prioridad: this.proyectoAEditar.prioridad,
+      fechaInicio: this.proyectoAEditar.fechaInicio,
+      fechaFin: this.proyectoAEditar.fechaFin,
+      idUsuarioEncargado: this.proyectoAEditar.idUsuarioEncargado
+    });
+    
+    // Precargar prendas solo si permite edición completa
+    if (this.permitirEdicionCompleta && this.proyectoAEditar.prendas) {
+      this.prendasProyecto = this.proyectoAEditar.prendas.map((p: any) => ({
+        id: generarIdTemporal(),
+        idTipoPrenda: p.idTipoPrenda,
+        nombrePrenda: p.nombrePrenda,
+        idTipoInsumoMaterial: p.idTipoInsumoMaterial,
+        nombreMaterial: p.nombreMaterial,
+        idInsumo: p.idInsumo,
+        cantidadTotal: p.cantidadTotal,
+        tieneBordado: p.tieneBordado,
+        tieneEstampado: p.tieneEstampado,
+        descripcionDiseno: p.descripcionDiseño,
+        tallesDistribuidos: p.talles?.map((t: any) => ({
+          idTalle: t.idTalle,
+          nombreTalle: t.nombreTalle,
+          cantidad: t.cantidad
+        })) || []
+      }));
+    }
+    
+    // Precargar materiales manuales
+    if (this.proyectoAEditar.materiales) {
+      const materialesManualesProyecto = this.proyectoAEditar.materiales.filter(
+        (m: any) => m.tipoCalculo === 'Manual'
+      );
+      
+      this.materialesManuales = materialesManualesProyecto.map((m: any) => ({
+        id: generarIdTemporal(),
+        idInsumo: m.idInsumo,
+        nombreInsumo: m.nombreInsumo,
+        categoria: m.tipoInsumo,
+        cantidad: m.cantidadFinal,
+        unidadMedida: m.unidadMedida,
+        stockActual: m.stockActual
+      }));
+    }
   }
 }

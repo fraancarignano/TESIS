@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using TESIS_OG.DTOs.Proyectos;
 using TESIS_OG.DTOs.Configuracion;
 using TESIS_OG.Services.ProyectosService;
+using TESIS_OG.Services.ProyectoAuditoriaService;
+using TESIS_OG.Services.ProyectoValidacionService;
 
 namespace TESIS_OG.Controllers
 {
@@ -11,11 +13,19 @@ namespace TESIS_OG.Controllers
     {
         private readonly IProyectosService _proyectoService;
         private readonly ILogger<ProyectoController> _logger;
+        private readonly IProyectoAuditoriaService _auditoriaService;
+        private readonly IProyectoValidacionService _validacionService;
 
-        public ProyectoController(IProyectosService proyectoService, ILogger<ProyectoController> logger)
+        public ProyectoController(
+            IProyectosService proyectoService,
+            ILogger<ProyectoController> logger,
+            IProyectoAuditoriaService auditoriaService,
+            IProyectoValidacionService validacionService)
         {
             _proyectoService = proyectoService;
             _logger = logger;
+            _auditoriaService = auditoriaService;
+            _validacionService = validacionService;
         }
 
         // ========================================
@@ -463,6 +473,67 @@ namespace TESIS_OG.Controllers
             {
                 _logger.LogError(ex, "Error al cambiar estado del proyecto {IdProyecto}", id);
                 return StatusCode(500, new { message = "Error al cambiar estado" });
+            }
+        }
+
+        // ========================================
+        // VALIDACIÓN DE EDICIÓN Y HISTORIAL
+        // ========================================
+
+        /// <summary>
+        /// Valida qué campos se pueden editar según el estado del proyecto
+        /// </summary>
+        [HttpGet("{id}/validar-edicion")]
+        [ProducesResponseType(typeof(ProyectoValidacionEdicionDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ValidarEdicion(int id)
+        {
+            try
+            {
+                var validacion = await _validacionService.ValidarEdicion(id);
+
+                if (validacion.EstadoActual == "No encontrado")
+                    return NotFound(new { message = $"Proyecto con ID {id} no encontrado" });
+
+                return Ok(validacion);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al validar edición del proyecto {IdProyecto}", id);
+                return StatusCode(500, new { message = "Error al validar edición" });
+            }
+        }
+
+        /// <summary>
+        /// Obtiene el historial de cambios de un proyecto
+        /// </summary>
+        [HttpGet("{id}/historial")]
+        [ProducesResponseType(typeof(List<ProyectoHistorialCambioDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ObtenerHistorial(int id, [FromQuery] int pagina = 1, [FromQuery] int tamanoPagina = 20)
+        {
+            try
+            {
+                var proyecto = await _proyectoService.ObtenerProyectoPorIdAsync(id);
+
+                if (proyecto == null)
+                    return NotFound(new { message = $"Proyecto con ID {id} no encontrado" });
+
+                var request = new ProyectoHistorialRequestDTO
+                {
+                    IdProyecto = id,
+                    Pagina = pagina,
+                    TamanoPagina = tamanoPagina
+                };
+
+                var historial = await _auditoriaService.ObtenerHistorial(request);
+
+                return Ok(historial);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener historial del proyecto {IdProyecto}", id);
+                return StatusCode(500, new { message = "Error al obtener historial" });
             }
         }
     }

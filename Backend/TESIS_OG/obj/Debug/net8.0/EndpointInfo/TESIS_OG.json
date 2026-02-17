@@ -1853,6 +1853,153 @@
         }
       }
     },
+    "/api/Proyecto/{id}/validar-edicion": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoValidacionEdicionDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoValidacionEdicionDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoValidacionEdicionDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Proyecto/{id}/historial": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoHistorialCambioDTO"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoHistorialCambioDTO"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoHistorialCambioDTO"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Reportes/inventario-critico": {
       "get": {
         "tags": [
@@ -3123,6 +3270,73 @@
         },
         "additionalProperties": false
       },
+      "ProyectoHistorialCambioDTO": {
+        "type": "object",
+        "properties": {
+          "idAuditoria": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idProyecto": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "codigoProyecto": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombreProyecto": {
+            "type": "string",
+            "nullable": true
+          },
+          "idUsuario": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "usuarioModificador": {
+            "type": "string",
+            "nullable": true
+          },
+          "fechaHoraCambio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tipoOperacion": {
+            "type": "string",
+            "nullable": true
+          },
+          "estadoAnterior": {
+            "type": "string",
+            "nullable": true
+          },
+          "estadoNuevo": {
+            "type": "string",
+            "nullable": true
+          },
+          "campoModificado": {
+            "type": "string",
+            "nullable": true
+          },
+          "valorAnterior": {
+            "type": "string",
+            "nullable": true
+          },
+          "valorNuevo": {
+            "type": "string",
+            "nullable": true
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          },
+          "direccionIP": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ProyectoPrendaCrearDTO": {
         "required": [
           "cantidadTotal",
@@ -3216,6 +3430,44 @@
             "items": {
               "$ref": "#/components/schemas/PrendaTalleDTO"
             },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProyectoValidacionEdicionDTO": {
+        "type": "object",
+        "properties": {
+          "idProyecto": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "estadoActual": {
+            "type": "string",
+            "nullable": true
+          },
+          "esEditable": {
+            "type": "boolean"
+          },
+          "permiteEdicionCompleta": {
+            "type": "boolean"
+          },
+          "camposEditables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "camposBloqueados": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "mensaje": {
+            "type": "string",
             "nullable": true
           }
         },
