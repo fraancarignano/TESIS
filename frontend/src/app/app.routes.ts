@@ -5,7 +5,7 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/login', // ✅ Redirigir a clientes por defecto
+    redirectTo: '/login', // ? Redirigir a clientes por defecto
     pathMatch: 'full'
   },
   {
@@ -15,12 +15,12 @@ export const routes: Routes = [
   {
     path: 'clientes',
     loadComponent: () => import('./modules/clientes/components/clientes.component').then(m => m.ClientesComponent),
-    canActivate: [authGuard] // ✅ Protege la ruta
+    canActivate: [authGuard] // ? Protege la ruta
   },
   {
     path: 'proyectos',
     loadComponent: () => import('./modules/proyectos/components/proyectos.component').then(m => m.ProyectosComponent),
-    canActivate: [authGuard] // ✅ Protege la ruta
+    canActivate: [authGuard] // ? Protege la ruta
   },
   {
     path: 'proyectos/crear',
@@ -50,6 +50,16 @@ export const routes: Routes = [
   {
     path: 'ordenes',
     loadComponent: () => import('./modules/orden-compra/components/orden-compra.component').then(m => m.OrdenCompraComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'usuarios',
+    redirectTo: '/usuarios/proveedores',
+    pathMatch: 'full'
+  },
+  {
+    path: 'usuarios/proveedores',
+    loadComponent: () => import('./modules/proveedores/components/proveedores.component').then(m => m.ProveedoresComponent),
     canActivate: [authGuard]
   },
   {

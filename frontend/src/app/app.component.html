@@ -60,9 +60,21 @@
         </div>
       </div>
                   
-      <a routerLink="/usuarios" routerLinkActive="active" class="nav-item">
-        <span class="text">Usuarios</span>
-      </a>
+       <!-- Usuarios con submenu -->
+      <div class="nav-item-container">
+        <div class="nav-item parent"
+             [class.active]="usuariosAbierto"
+             (click)="toggleUsuarios()">
+          <span class="text">Usuarios</span>
+        </div>
+
+        <div class="submenu" [class.open]="usuariosAbierto">
+          <a routerLink="/usuarios/proveedores" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Proveedores</span>
+          </a>
+        </div>
+      </div>
+      
 
       <a routerLink="/ordenes" routerLinkActive="active" class="nav-item">
         <span class="text">Órdenes de Compra</span>

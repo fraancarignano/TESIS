@@ -10,7 +10,7 @@
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  padding: 20px;
+  padding: 0.65rem;
   animation: fadeIn 0.2s ease;
 }
 
@@ -22,13 +22,14 @@
 .modal-container-large {
   background: white;
   width: 98%;
-  max-width: 1400px;
-  max-height: 95vh;
+  max-width: 1180px;
+  max-height: 92vh;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease;
+  font-size: 0.9rem;
 }
 
 @keyframes slideUp {
@@ -44,7 +45,7 @@
 
 .modal-header {
   background: linear-gradient(135deg, #ff5722, #f4511e);
-  padding: 16px 24px;
+  padding: 0.58rem 0.8rem;
   color: white;
   display: flex;
   justify-content: space-between;
@@ -54,22 +55,22 @@
 
 .modal-header h2 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.05rem;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.45rem;
 }
 
 .btn-close {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
-  width: 36px;
-  height: 36px;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1.8rem;
+  font-size: 1.15rem;
   line-height: 1;
   transition: all 0.2s;
 }
@@ -80,9 +81,9 @@
 }
 
 .modal-body-scroll {
-  padding: 24px;
+  padding: 0.78rem;
   overflow-y: auto;
-  max-height: calc(95vh - 80px);
+  max-height: calc(92vh - 66px);
 }
 
 /* Scroll personalizado */
@@ -109,7 +110,7 @@
 /* ============================================ */
 
 .fullscreen-container {
-  padding: 40px;
+  padding: 1.4rem;
   max-width: 1400px;
   margin: 0 auto;
   background: #fafafa;
@@ -117,21 +118,21 @@
 }
 
 .fullscreen-header {
-  margin-bottom: 32px;
+  margin-bottom: 1rem;
   background: white;
-  padding: 24px 32px;
+  padding: 1rem 1.1rem;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .fullscreen-header h1 {
   margin: 0;
-  font-size: 32px;
+  font-size: 1.7rem;
   font-weight: 600;
   color: #1a1a1a;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.5rem;
 }
 
 .fullscreen-header h1 i {
@@ -140,7 +141,7 @@
 
 .fullscreen-body {
   background: white;
-  padding: 32px;
+  padding: 1rem;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
@@ -152,7 +153,7 @@
 form {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 1rem;
 }
 
 /* ============================================ */
@@ -162,7 +163,7 @@ form {
 .seccion {
   border: 2px solid #e0e0e0;
   border-radius: 12px;
-  padding: 24px;
+  padding: 0.72rem;
   background: #fafafa;
   transition: all 0.3s ease;
 }
@@ -176,8 +177,8 @@ form {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.6rem;
   border-bottom: 2px solid #e0e0e0;
 }
 
@@ -194,8 +195,8 @@ form {
 .seccion-descripcion {
   color: #666;
   font-size: 0.9rem;
-  margin-bottom: 16px;
-  padding: 12px;
+  margin-bottom: 0.65rem;
+  padding: 0.55rem;
   background: white;
   border-left: 4px solid #ff5722;
   border-radius: 4px;
@@ -208,13 +209,13 @@ form {
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 0.52rem;
 }
 
 .grid-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
+  gap: 0.52rem;
 }
 
 /* ============================================ */
@@ -224,7 +225,7 @@ form {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.25rem;
 }
 
 label {
@@ -239,10 +240,10 @@ label {
 input,
 select,
 textarea {
-  padding: 10px 14px;
+  padding: 0.44rem 0.55rem;
   border: 2px solid #ddd;
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 0.84rem;
   transition: all 0.2s;
   background: white;
 }
@@ -379,7 +380,7 @@ small {
 .prendas-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.55rem;
   margin-top: 16px;
 }
 
@@ -387,7 +388,7 @@ small {
   background: white;
   border: 2px solid #e0e0e0;
   border-radius: 10px;
-  padding: 16px;
+  padding: 0.65rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -401,15 +402,15 @@ small {
 
 .prenda-info {
   display: flex;
-  gap: 16px;
+  gap: 0.55rem;
   flex: 1;
 }
 
 .prenda-numero {
   background: #ff5722;
   color: white;
-  width: 32px;
-  height: 32px;
+  width: 1.45rem;
+  height: 1.45rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -463,13 +464,13 @@ small {
 
 .prenda-acciones {
   display: flex;
-  gap: 8px;
+  gap: 0.35rem;
   flex-shrink: 0;
 }
 
 .btn-icon-sm {
-  width: 32px;
-  height: 32px;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 6px;
   border: none;
   cursor: pointer;
@@ -545,15 +546,15 @@ small {
   justify-content: center;
   align-items: center;
   z-index: 10000;
-  padding: 20px;
+  padding: 0.65rem;
   animation: fadeIn 0.2s ease;
 }
 
 .modal-prenda {
   background: white;
   width: 95%;
-  max-width: 700px;
-  max-height: 85vh;
+  max-width: 620px;
+  max-height: 82vh;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -563,7 +564,7 @@ small {
 
 .modal-prenda-header {
   background: linear-gradient(135deg, #1976d2, #1565c0);
-  padding: 16px 24px;
+  padding: 0.58rem 0.8rem;
   color: white;
   display: flex;
   justify-content: space-between;
@@ -573,7 +574,7 @@ small {
 
 .modal-prenda-header h3 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -581,11 +582,11 @@ small {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
-  width: 32px;
-  height: 32px;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 1.5rem;
+  font-size: 1.15rem;
   line-height: 1;
   transition: all 0.2s;
 }
@@ -595,9 +596,9 @@ small {
 }
 
 .modal-prenda-body {
-  padding: 24px;
+  padding: 0.78rem;
   overflow-y: auto;
-  max-height: calc(85vh - 140px);
+  max-height: calc(82vh - 110px);
 }
 
 .modal-prenda-body .field {
@@ -626,7 +627,7 @@ small {
 }
 
 .modal-prenda-footer {
-  padding: 16px 24px;
+  padding: 0.58rem 0.8rem;
   border-top: 2px solid #f0f0f0;
   display: flex;
   justify-content: flex-end;
@@ -681,8 +682,8 @@ small {
 .modal-talles {
   background: white;
   width: 95%;
-  max-width: 800px;
-  max-height: 85vh;
+  max-width: 700px;
+  max-height: 82vh;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -692,7 +693,7 @@ small {
 
 .modal-talles-header {
   background: linear-gradient(135deg, #7b1fa2, #6a1b9a);
-  padding: 16px 24px;
+  padding: 0.58rem 0.8rem;
   color: white;
   display: flex;
   justify-content: space-between;
@@ -702,12 +703,12 @@ small {
 
 .modal-talles-header h3 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
 .modal-talles-info {
-  padding: 20px 24px;
+  padding: 0.65rem 0.8rem;
   background: #f5f5f5;
   display: flex;
   justify-content: space-around;
@@ -747,9 +748,9 @@ small {
 }
 
 .modal-talles-body {
-  padding: 24px;
+  padding: 0.78rem;
   overflow-y: auto;
-  max-height: calc(85vh - 240px);
+  max-height: calc(82vh - 180px);
 }
 
 .talles-grid {
@@ -778,7 +779,7 @@ small {
 }
 
 .modal-talles-footer {
-  padding: 16px 24px;
+  padding: 0.58rem 0.8rem;
   border-top: 2px solid #f0f0f0;
   display: flex;
   justify-content: flex-end;
@@ -916,8 +917,8 @@ small {
 .modal-preview {
   background: white;
   width: 95%;
-  max-width: 900px;
-  max-height: 85vh;
+  max-width: 760px;
+  max-height: 82vh;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -927,7 +928,7 @@ small {
 
 .modal-preview-header {
   background: linear-gradient(135deg, #00897b, #00796b);
-  padding: 16px 24px;
+  padding: 0.58rem 0.8rem;
   color: white;
   display: flex;
   justify-content: space-between;
@@ -937,14 +938,14 @@ small {
 
 .modal-preview-header h3 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
 .modal-preview-body {
-  padding: 24px;
+  padding: 0.78rem;
   overflow-y: auto;
-  max-height: calc(85vh - 140px);
+  max-height: calc(82vh - 110px);
 }
 
 .alertas-preview {
@@ -1051,7 +1052,7 @@ small {
 }
 
 .modal-preview-footer {
-  padding: 16px 24px;
+  padding: 0.58rem 0.8rem;
   border-top: 2px solid #f0f0f0;
   display: flex;
   justify-content: flex-end;
@@ -1088,25 +1089,25 @@ small {
 .form-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 16px;
-  padding-top: 24px;
+  gap: 0.7rem;
+  padding-top: 0.9rem;
   border-top: 3px solid #f0f0f0;
-  margin-top: 32px;
+  margin-top: 1rem;
 }
 
 .btn-secondary-large,
 .btn-primary-large {
-  padding: 14px 32px;
+  padding: 0.52rem 0.95rem;
   border-radius: 10px;
-  font-size: 1rem;
+  font-size: 0.86rem;
   font-weight: 600;
   cursor: pointer;
   border: none;
   transition: all 0.2s;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  min-width: 160px;
+  gap: 0.45rem;
+  min-width: 7.5rem;
   justify-content: center;
 }
 

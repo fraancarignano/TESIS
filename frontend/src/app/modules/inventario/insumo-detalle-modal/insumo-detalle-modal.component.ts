@@ -195,14 +195,15 @@ import { Insumo } from '../models/insumo.model';
 
     .modal-container {
       background: white;
-      border-radius: 12px;
+      border-radius: 10px;
       width: 90%;
-      max-width: 800px;
-      max-height: 90vh;
+      max-width: 620px;
+      max-height: 82vh;
       display: flex;
       flex-direction: column;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       animation: slideUp 0.3s ease;
+      font-size: 0.85rem;
     }
 
     @keyframes slideUp {
@@ -218,8 +219,8 @@ import { Insumo } from '../models/insumo.model';
 
     .modal-header {
       background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
-      padding: 24px;
-      border-radius: 12px 12px 0 0;
+      padding: 12px 14px;
+      border-radius: 10px 10px 0 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -229,13 +230,13 @@ import { Insumo } from '../models/insumo.model';
     .header-content {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 8px;
     }
 
     .icon-wrapper {
       background: rgba(255, 255, 255, 0.2);
-      padding: 12px;
-      border-radius: 10px;
+      padding: 6px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -243,13 +244,13 @@ import { Insumo } from '../models/insumo.model';
 
     .modal-header h2 {
       margin: 0;
-      font-size: 22px;
+      font-size: 16px;
       font-weight: 700;
     }
 
     .modal-header p {
       margin: 4px 0 0 0;
-      font-size: 14px;
+      font-size: 11px;
       opacity: 0.9;
     }
 
@@ -257,11 +258,11 @@ import { Insumo } from '../models/insumo.model';
       background: rgba(255, 255, 255, 0.2);
       border: none;
       color: white;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 20px;
+      font-size: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -274,13 +275,13 @@ import { Insumo } from '../models/insumo.model';
     }
 
     .modal-body {
-      padding: 24px;
+      padding: 12px 14px;
       overflow-y: auto;
       flex: 1;
     }
 
     .seccion {
-      margin-bottom: 28px;
+      margin-bottom: 12px;
     }
 
     .seccion:last-child {
@@ -290,12 +291,12 @@ import { Insumo } from '../models/insumo.model';
     .seccion-titulo {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
+      gap: 6px;
+      margin-bottom: 8px;
       color: #ff5722;
       font-weight: 600;
-      font-size: 15px;
-      padding-bottom: 10px;
+      font-size: 12px;
+      padding-bottom: 4px;
       border-bottom: 2px solid #f5f5f5;
     }
 
@@ -305,30 +306,30 @@ import { Insumo } from '../models/insumo.model';
 
     .campos-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
     }
 
     .campo label {
       display: block;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       color: #666;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 6px;
+      margin-bottom: 3px;
     }
 
     .campo .valor {
-      font-size: 15px;
+      font-size: 12px;
       color: #333;
-      padding: 10px 12px;
+      padding: 6px 8px;
       background: #f8f8f8;
-      border-radius: 6px;
+      border-radius: 4px;
       border: 1px solid #e8e8e8;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 4px;
     }
 
     .valor-alerta {
@@ -339,7 +340,7 @@ import { Insumo } from '../models/insumo.model';
     }
 
     .icono-alerta {
-      font-size: 18px;
+      font-size: 13px;
       animation: pulse 2s infinite;
     }
 
@@ -350,9 +351,9 @@ import { Insumo } from '../models/insumo.model';
 
     .badge {
       display: inline-block;
-      padding: 5px 12px;
-      border-radius: 12px;
-      font-size: 13px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 11px;
       font-weight: 600;
     }
 
@@ -379,47 +380,47 @@ import { Insumo } from '../models/insumo.model';
     .alerta-stock-bajo {
       background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
       border-left: 4px solid #ff9800;
-      border-radius: 8px;
-      padding: 16px;
+      border-radius: 6px;
+      padding: 8px;
       display: flex;
-      gap: 16px;
-      margin-top: 20px;
+      gap: 8px;
+      margin-top: 10px;
     }
 
     .alerta-icono {
-      font-size: 32px;
+      font-size: 20px;
       flex-shrink: 0;
     }
 
     .alerta-contenido h4 {
       margin: 0 0 8px 0;
       color: #e65100;
-      font-size: 16px;
+      font-size: 13px;
     }
 
     .alerta-contenido p {
       margin: 0;
       color: #f57c00;
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .modal-footer {
-      padding: 16px 24px;
+      padding: 8px 14px 10px;
       border-top: 1px solid #f0f0f0;
       display: flex;
       justify-content: flex-end;
-      gap: 12px;
+      gap: 6px;
     }
 
     .btn-secundario {
       background: #f5f5f5;
       color: #333;
       border: none;
-      padding: 10px 24px;
-      border-radius: 6px;
+      padding: 7px 12px;
+      border-radius: 4px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 600;
       transition: all 0.2s ease;
     }
@@ -436,20 +437,20 @@ import { Insumo } from '../models/insumo.model';
       }
 
       .modal-header {
-        padding: 20px;
+        padding: 10px 12px;
       }
 
       .modal-header h2 {
-        font-size: 18px;
+        font-size: 14px;
       }
 
       .campos-grid {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 8px;
       }
 
       .modal-body {
-        padding: 20px;
+        padding: 10px 12px;
       }
 
       .alerta-stock-bajo {
@@ -461,17 +462,17 @@ import { Insumo } from '../models/insumo.model';
     .tabla-container {
       overflow-x: auto;
       border: 1px solid #e8e8e8;
-      border-radius: 6px;
+      border-radius: 5px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 14px;
+      font-size: 12px;
     }
 
     th, td {
-      padding: 10px;
+      padding: 7px 8px;
       text-align: left;
       border-bottom: 1px solid #f0f0f0;
     }

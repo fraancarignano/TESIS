@@ -1,5 +1,5 @@
 /* === CONTAINER PRINCIPAL === */
-.clientes-container {
+.proveedores-container {
   padding: 1.4rem;
   max-width: 100%;
   margin: 0;
@@ -66,7 +66,7 @@
 
 .header h1 {
   margin: 0 0 16px 0;
-  font-size: 32px;
+  font-size: 1.2rem;
   font-weight: 400;
   color: #1a1a1a;
   letter-spacing: -0.5px;
@@ -114,16 +114,16 @@
 .filtros-activos {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.4rem 0.55rem;
+  gap: 12px;
+  padding: 12px 16px;
   background: white;
   border-radius: 6px;
-  margin-bottom: 0.65rem;
+  margin-bottom: 16px;
   border: 1px solid #e0e0e0;
 }
 
 .filtro-label {
-  font-size: 0.72rem;
+  font-size: 13px;
   color: #666;
   font-weight: 500;
 }
@@ -131,13 +131,13 @@
 .btn-limpiar-filtros {
   display: flex;
   align-items: center;
-  gap: 0.24rem;
-  padding: 0.24rem 0.45rem;
+  gap: 6px;
+  padding: 6px 12px;
   background: #fff3e0;
   color: #ef6c00;
   border: 1px solid #ffb74d;
   border-radius: 4px;
-  font-size: 0.7rem;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -149,8 +149,8 @@
 }
 
 .btn-limpiar-filtros svg {
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 14px;
+  height: 14px;
 }
 
 .filtros-badge {
@@ -205,9 +205,9 @@
 
 .export-menu {
   position: absolute;
-  top: calc(100% + 0.3rem);
+  top: calc(100% + 8px);
   right: 0;
-  min-width: 12rem;
+  min-width: 220px;
   background: white;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -230,16 +230,16 @@
 
 .export-option {
   width: 100%;
-  padding: 0.5rem 0.6rem;
+  padding: 12px 16px;
   border: none;
   background: white;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
-  font-size: 0.82rem;
+  font-size: 14px;
   color: #333;
   border-bottom: 1px solid #f0f0f0;
 }
@@ -259,13 +259,13 @@
 .export-option svg {
   color: #666;
   flex-shrink: 0;
-  width: 0.95rem;
-  height: 0.95rem;
+  width: 20px;
+  height: 20px;
 }
 
 .export-option span {
   white-space: nowrap;
-  font-size: 0.8rem;
+  font-size: 14px;
   color: #333;
 }
 
@@ -328,16 +328,16 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-.tabla-clientes {
+.tabla-proveedores {
   width: 100%;
   border-collapse: collapse;
 }
 
-.tabla-clientes thead {
+.tabla-proveedores thead {
   background: #ff5722;
 }
 
-.tabla-clientes th {
+.tabla-proveedores th {
   padding: 0.6rem 0.75rem;
   text-align: left;
   font-size: 0.62rem;
@@ -347,26 +347,31 @@
   letter-spacing: 0.8px;
 }
 
+.tabla-proveedores th.th-acciones {
+  text-align: right;
+  padding-right: 0.75rem;
+}
+
 .th-acciones {
   text-align: right;
   padding-right: 0.75rem;
 }
 
-.tabla-clientes tbody tr {
+.tabla-proveedores tbody tr {
   border-bottom: 1px solid #f5f5f5;
   transition: background-color 0.15s ease;
 }
 
-.tabla-clientes tbody tr:last-child {
+.tabla-proveedores tbody tr:last-child {
   border-bottom: none;
 }
 
-.tabla-clientes tbody tr:hover {
+.tabla-proveedores tbody tr:hover {
   background: #fafafa;
   cursor: pointer;
 }
 
-.tabla-clientes td {
+.tabla-proveedores td {
   padding: 0.68rem 0.75rem;
   font-size: 0.82rem;
   color: #333;
@@ -420,7 +425,7 @@
 .icon-inline {
   display: inline-block;
   vertical-align: middle;
-  margin-right: 0.24rem;
+  margin-right: 6px;
   color: #999;
 }
 
@@ -457,7 +462,7 @@
 .ubicacion-info {
   display: flex;
   align-items: center;
-  gap: 0.24rem;
+  gap: 6px;
 }
 
 .ubicacion-text {
@@ -658,16 +663,16 @@
 
 /* === RESPONSIVE === */
 @media (max-width: 1200px) {
-  .clientes-container {
+  .proveedores-container {
     padding: 1rem;
   }
 
-  .tabla-clientes {
+  .tabla-proveedores {
     font-size: 13px;
   }
 
-  .tabla-clientes th,
-  .tabla-clientes td {
+  .tabla-proveedores th,
+  .tabla-proveedores td {
     padding: 0.58rem 0.65rem;
   }
 
@@ -681,7 +686,7 @@
 }
 
 @media (max-width: 768px) {
-  .clientes-container {
+  .proveedores-container {
     padding: 0.75rem;
   }
 
@@ -740,12 +745,12 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .tabla-clientes {
+  .tabla-proveedores {
     min-width: 1200px;
   }
 
-  .tabla-clientes th,
-  .tabla-clientes td {
+  .tabla-proveedores th,
+  .tabla-proveedores td {
     padding: 0.5rem;
   }
 

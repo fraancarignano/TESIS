@@ -211,14 +211,15 @@ import { Cliente } from '../models/cliente.model';
 
     .modal-container {
       background: white;
-      border-radius: 12px;
+      border-radius: 10px;
       width: 90%;
-      max-width: 800px;
-      max-height: 90vh;
+      max-width: 620px;
+      max-height: 82vh;
       display: flex;
       flex-direction: column;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       animation: slideUp 0.3s ease;
+      font-size: 0.85rem;
     }
 
     @keyframes slideUp {
@@ -234,8 +235,8 @@ import { Cliente } from '../models/cliente.model';
 
     .modal-header {
       background: linear-gradient(135deg, #ff5722 0%, #f4511e 100%);
-      padding: 24px;
-      border-radius: 12px 12px 0 0;
+      padding: 12px 14px;
+      border-radius: 10px 10px 0 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -245,13 +246,13 @@ import { Cliente } from '../models/cliente.model';
     .header-content {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 8px;
     }
 
     .icon-wrapper {
       background: rgba(255, 255, 255, 0.2);
-      padding: 12px;
-      border-radius: 10px;
+      padding: 6px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -259,13 +260,13 @@ import { Cliente } from '../models/cliente.model';
 
     .modal-header h2 {
       margin: 0;
-      font-size: 22px;
+      font-size: 16px;
       font-weight: 700;
     }
 
     .modal-header p {
       margin: 4px 0 0 0;
-      font-size: 14px;
+      font-size: 11px;
       opacity: 0.9;
     }
 
@@ -273,11 +274,11 @@ import { Cliente } from '../models/cliente.model';
       background: rgba(255, 255, 255, 0.2);
       border: none;
       color: white;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 20px;
+      font-size: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -290,13 +291,13 @@ import { Cliente } from '../models/cliente.model';
     }
 
     .modal-body {
-      padding: 24px;
+      padding: 12px 14px;
       overflow-y: auto;
       flex: 1;
     }
 
     .seccion {
-      margin-bottom: 28px;
+      margin-bottom: 12px;
     }
 
     .seccion:last-child {
@@ -306,12 +307,12 @@ import { Cliente } from '../models/cliente.model';
     .seccion-titulo {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
+      gap: 6px;
+      margin-bottom: 8px;
       color: #ff5722;
       font-weight: 600;
-      font-size: 15px;
-      padding-bottom: 10px;
+      font-size: 12px;
+      padding-bottom: 4px;
       border-bottom: 2px solid #f5f5f5;
     }
 
@@ -321,34 +322,34 @@ import { Cliente } from '../models/cliente.model';
 
     .campos-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
     }
 
     .campo label {
       display: block;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       color: #666;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 6px;
+      margin-bottom: 3px;
     }
 
     .campo .valor {
-      font-size: 15px;
+      font-size: 12px;
       color: #333;
-      padding: 10px 12px;
+      padding: 6px 8px;
       background: #f8f8f8;
-      border-radius: 6px;
+      border-radius: 4px;
       border: 1px solid #e8e8e8;
     }
 
     .badge {
       display: inline-block;
-      padding: 5px 12px;
-      border-radius: 12px;
-      font-size: 13px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      font-size: 11px;
       font-weight: 600;
     }
 
@@ -380,31 +381,31 @@ import { Cliente } from '../models/cliente.model';
     }
 
     .observaciones-texto {
-      padding: 14px;
+      padding: 8px;
       background: #f8f8f8;
-      border-radius: 8px;
+      border-radius: 5px;
       border-left: 3px solid #ff5722;
       color: #555;
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 12px;
+      line-height: 1.45;
     }
 
     .modal-footer {
-      padding: 16px 24px;
+      padding: 8px 14px 10px;
       border-top: 1px solid #f0f0f0;
       display: flex;
       justify-content: flex-end;
-      gap: 12px;
+      gap: 6px;
     }
 
     .btn-secundario {
       background: #f5f5f5;
       color: #333;
       border: none;
-      padding: 10px 24px;
-      border-radius: 6px;
+      padding: 7px 12px;
+      border-radius: 4px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 600;
       transition: all 0.2s ease;
     }
@@ -421,20 +422,20 @@ import { Cliente } from '../models/cliente.model';
       }
 
       .modal-header {
-        padding: 20px;
+        padding: 10px 12px;
       }
 
       .modal-header h2 {
-        font-size: 18px;
+        font-size: 14px;
       }
 
       .campos-grid {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 8px;
       }
 
       .modal-body {
-        padding: 20px;
+        padding: 10px 12px;
       }
     }
   `]

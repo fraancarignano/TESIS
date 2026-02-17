@@ -2,19 +2,20 @@
   padding: 0;
   background-color: #f5f5f5;
   min-height: 100vh;
+  font-size: 0.9rem;
 }
 
 .header {
   background-color: white;
-  padding: 20px 24px;
+  padding: 12px 16px;
   border-radius: 0;
   margin-bottom: 0;
 }
 
 .breadcrumb {
   color: #ff5722;
-  font-size: 13px;
-  margin-bottom: 16px;
+  font-size: 11px;
+  margin-bottom: 10px;
   font-weight: 500;
 }
 
@@ -31,20 +32,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
 }
 
 .search-box {
   flex: 1;
-  max-width: 400px;
+  max-width: 320px;
 }
 
 .search-box input {
   width: 100%;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 5px;
+  font-size: 12px;
   transition: all 0.2s ease;
 }
 
@@ -62,14 +63,14 @@
   background-color: #ff5722;
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   transition: all 0.2s ease;
   white-space: nowrap;
 }
@@ -89,7 +90,7 @@
   border-radius: 0;
   padding: 0;
   overflow-x: auto;
-  margin: 20px 24px;
+  margin: 12px 16px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -106,10 +107,10 @@ thead {
 
 th {
   text-align: left;
-  padding: 14px 16px;
+  padding: 10px 12px;
   font-weight: 600;
   color: #333;
-  font-size: 13px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -132,19 +133,25 @@ tbody tr.fila-clickeable:hover {
 }
 
 td {
-  padding: 14px 16px;
-  font-size: 14px;
+  padding: 10px 12px;
+  font-size: 12px;
   color: #555;
+}
+
+.sin-resultados {
+  text-align: center;
+  padding: 20px !important;
+  color: #999;
 }
 
 .nombre-con-alerta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
 }
 
 .alerta-stock {
-  font-size: 16px;
+  font-size: 13px;
   animation: pulse 2s infinite;
 }
 
@@ -164,9 +171,9 @@ td {
 
 .badge-estado {
   display: inline-block;
-  padding: 6px 14px;
-  border-radius: 12px;
-  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -204,7 +211,7 @@ td {
 
 .acciones {
   display: flex;
-  gap: 8px;
+  gap: 5px;
   justify-content: flex-end;
 }
 
@@ -212,10 +219,10 @@ td {
   background-color: #f44336;
   color: white;
   border: none;
-  padding: 7px 16px;
+  padding: 6px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
   transition: all 0.2s ease;
 }
@@ -230,10 +237,10 @@ td {
   background-color: #c6ff00;
   color: #333;
   border: none;
-  padding: 7px 16px;
+  padding: 6px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   transition: all 0.2s ease;
 }
@@ -247,7 +254,7 @@ td {
 /* Responsive */
 @media (max-width: 768px) {
   .header {
-    padding: 16px;
+    padding: 10px 12px;
   }
 
   .actions-bar {
@@ -260,7 +267,7 @@ td {
   }
 
   .tabla-inventario {
-    margin: 16px;
+    margin: 10px 12px;
   }
 
   .acciones {

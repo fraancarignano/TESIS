@@ -1,24 +1,27 @@
-/* Importar Instrument Sans de Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
 
-/* Reset y estilos globales */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* AGREGAR ESTO - es la clave */
+html {
+  font-size: 13px; /* Todos los rem se calculan desde acá */
+}
+
+
 body {
   font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f5f5f5;
-  font-size: 14px;
+  font-size: 1rem; /* = 13px */
   color: #333;
   line-height: 1.5;
 }
 
-/* Inputs y botones heredan la fuente */
 input,
 button,
 select,
@@ -26,17 +29,55 @@ textarea {
   font-family: inherit;
 }
 
-/* Títulos */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
-/* SweetAlert2 z-index para aparecer sobre modales */
 .swal-high-zindex {
   z-index: 100000 !important;
+}
+
+/* Modo compacto para desktop */
+@media (min-width: 1200px) {
+  html {
+    font-size: 12.5px; /* Equivale aproximadamente al zoom 75% que usabas */
+  }
+
+  body {
+    line-height: 1.4;
+  }
+
+  .sidebar {
+    width: 220px;
+  }
+
+  .nav-item {
+    padding: 10px 18px;
+  }
+
+  .btn {
+    padding: 8px 14px;
+  }
+
+  table th,
+  table td {
+    padding: 10px 12px !important;
+  }
+
+  .modal-header {
+    padding: 16px 20px !important;
+  }
+
+  .modal-body {
+    padding: 14px 18px !important;
+  }
+
+  .modal-footer {
+    padding: 10px 18px !important;
+  }
+
+  .form-row {
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+  }
 }

@@ -2,32 +2,32 @@
 
 /* === CONTENEDOR PRINCIPAL === */
 .filtros-container {
-    margin-bottom: 24px;
+    margin-bottom: 0.7rem;
 }
 
 /* === BARRA DE FILTROS === */
 .filtros-barra {
     background: white;
-    padding: 16px 20px;
-    border-radius: 10px;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 0.6rem;
     flex-wrap: wrap;
 }
 
 .btn-filtros-toggle {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
+    gap: 0.25rem;
+    padding: 0.35rem 0.55rem;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     background: white;
     color: #666;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 0.76rem;
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
@@ -42,11 +42,11 @@
 .badge-contador {
     background: #ff5722;
     color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 12px;
+    padding: 0.08rem 0.35rem;
+    border-radius: 10px;
+    font-size: 0.62rem;
     font-weight: 700;
-    min-width: 20px;
+    min-width: 1rem;
     text-align: center;
 }
 
@@ -54,34 +54,34 @@
 .filtros-basicos {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 0.4rem;
     flex: 1;
     flex-wrap: wrap;
 }
 
 .filtros-label {
     font-weight: 600;
-    font-size: 14px;
+    font-size: 0.76rem;
     color: #666;
 }
 
 /* === CHIPS === */
 .chips-container {
     display: flex;
-    gap: 8px;
+    gap: 0.3rem;
     flex-wrap: wrap;
 }
 
 .chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 20px;
+    gap: 0.2rem;
+    padding: 0.22rem 0.45rem;
+    border-radius: 10px;
     border: 2px solid #e0e0e0;
     background: white;
     color: #666;
-    font-size: 13px;
+    font-size: 0.72rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -107,7 +107,7 @@
 
 /* === PANEL DE FILTROS AVANZADOS === */
 .filtros-avanzados {
-    margin-top: 12px;
+    margin-top: 0.4rem;
     animation: slideDown 0.3s ease;
 }
 
@@ -125,47 +125,47 @@
 
 .filtros-panel {
     background: white;
-    padding: 24px;
-    border-radius: 10px;
+    padding: 0.8rem;
+    border-radius: 0.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .filtro-seccion {
-    margin-bottom: 24px;
+    margin-bottom: 0.7rem;
 }
 
 .filtro-titulo {
     display: block;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 0.76rem;
     color: #333;
-    margin-bottom: 12px;
+    margin-bottom: 0.35rem;
 }
 
 .filtro-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
+    gap: 0.5rem;
 }
 
 .filtro-campo {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0.2rem;
 }
 
 .filtro-campo label {
-    font-size: 13px;
+    font-size: 0.7rem;
     font-weight: 500;
     color: #666;
 }
 
 .select-filtro,
 .input-filtro {
-    padding: 10px 12px;
+    padding: 0.4rem 0.5rem;
     border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 14px;
+    border-radius: 6px;
+    font-size: 0.78rem;
     color: #333;
     background: white;
     transition: all 0.2s ease;
@@ -181,23 +181,23 @@
 .filtros-acciones {
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
-    margin-top: 24px;
-    padding-top: 20px;
+    gap: 0.4rem;
+    margin-top: 0.7rem;
+    padding-top: 0.6rem;
     border-top: 1px solid #f0f0f0;
 }
 
 .btn {
-    padding: 10px 24px;
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 0.35rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.76rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     border: none;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.25rem;
 }
 
 .btn-primary {

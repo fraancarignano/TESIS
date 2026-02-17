@@ -18,6 +18,7 @@ export class AppComponent {
   mostrarSidebar = false;
   reportesAbierto = false; 
   proyectoAbierto = false; 
+  usuariosAbierto = false;
 
   constructor(
     private authService: AuthService,
@@ -70,6 +71,7 @@ export class AppComponent {
 
         this.reportesAbierto = false;
         this.proyectoAbierto = false;
+        this.usuariosAbierto = false;
         this.authService.cerrarSesion();
       }
     }
@@ -79,6 +81,10 @@ export class AppComponent {
     }
       toggleProyectos() { 
       this.proyectoAbierto = !this.proyectoAbierto;
+    }
+
+      toggleUsuarios() {
+      this.usuariosAbierto = !this.usuariosAbierto;
     }
 
     
