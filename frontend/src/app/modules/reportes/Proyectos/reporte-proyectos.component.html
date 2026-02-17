@@ -1,0 +1,27 @@
+<div class="reporte-container">
+    <div class="reporte-header">
+        <h2>Producción por tipo de Prenda</h2>
+        <div class="periodo-selector">
+            <span>Último año</span>
+            <!-- Aquí se podría agregar un selector de fechas real -->
+        </div>
+    </div>
+
+    <div class="loading-spinner" *ngIf="loading">
+        <div class="spinner"></div>
+        <p>Cargando datos del reporte...</p>
+    </div>
+
+    <div class="error-mensaje" *ngIf="error">
+        <p>⚠️ {{ mensajeError }}</p>
+        <button (click)="cargarDatos()">Reintentar</button>
+    </div>
+
+    <div class="grafico-container" *ngIf="!loading && !error">
+        <canvas #chartProduccion></canvas>
+    </div>
+
+    <div class="no-data" *ngIf="!loading && !error && datosReporte.length === 0">
+        <p>No hay datos de producción para mostrar en este período.</p>
+    </div>
+</div>

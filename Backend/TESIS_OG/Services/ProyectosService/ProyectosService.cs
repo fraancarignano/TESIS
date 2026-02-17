@@ -804,6 +804,21 @@ namespace TESIS_OG.Services.ProyectoService
                         };
 
                         _context.MaterialCalculados.Add(materialCalculado);
+
+                        // ACTUALIZAR STOCK Y ESTADO
+                        insumo.StockActual -= cantidadCalculada;
+                        
+                        if (insumo.StockActual <= 0)
+                        {
+                            insumo.StockActual = 0;
+                            insumo.Estado = "Agotado";
+                        }
+                        else
+                        {
+                            insumo.Estado = "En uso";
+                        }
+                        
+                        insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
                     }
                 }
             }
@@ -834,6 +849,21 @@ namespace TESIS_OG.Services.ProyectoService
                     };
 
                     _context.MaterialCalculados.Add(materialCalculado);
+
+                    // ACTUALIZAR STOCK Y ESTADO
+                    insumo.StockActual -= material.Cantidad;
+                    
+                    if (insumo.StockActual <= 0)
+                    {
+                         insumo.StockActual = 0;
+                         insumo.Estado = "Agotado";
+                    }
+                    else
+                    {
+                         insumo.Estado = "En uso";
+                    }
+
+                    insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
                 }
             }
 

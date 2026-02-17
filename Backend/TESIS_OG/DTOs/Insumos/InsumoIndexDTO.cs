@@ -14,6 +14,8 @@ namespace TESIS_OG.DTOs.Insumos
     public string? NombreProveedor { get; set; }
     public string? CuitProveedor { get; set; }
     public string? Estado { get; set; }
+        
+    public List<ProyectoAsignadoDTO>? ProyectosAsignados { get; set; }
 
     // Propiedad calculada para saber si el stock está bajo
     public bool StockBajo => StockMinimo.HasValue && StockActual < StockMinimo.Value;

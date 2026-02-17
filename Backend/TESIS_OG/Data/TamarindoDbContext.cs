@@ -77,6 +77,7 @@ public partial class TamarindoDbContext : DbContext
     public virtual DbSet<UnidadMedidum> UnidadMedida { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
+    public virtual DbSet<ProyectoAuditoria> ProyectoAuditorias { get; set; }
 
     public virtual DbSet<VwMaterialesProyecto> VwMaterialesProyectos { get; set; }
 

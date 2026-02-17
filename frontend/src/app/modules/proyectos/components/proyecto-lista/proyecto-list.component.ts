@@ -7,6 +7,7 @@ import { AlertasService } from '../../../../core/services/alertas';
 import { ExportService } from '../../../../core/services/export.service';
 import { ProyectoFiltrosComponent } from '../proyecto-filtros/proyecto-filtros.component';
 import { ProyectoDetalleModalComponent } from '../proyecto-detalle-modal/proyecto-detalle-modal.component';
+import { ProyectoFormNuevoComponent } from '../nuevo-proyecto-modal/proyecto-form.component';
 
 // Interfaz solo aquí
 export interface FiltrosProyecto {
@@ -20,7 +21,7 @@ export interface FiltrosProyecto {
 @Component({
   selector: 'app-proyecto-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProyectoFiltrosComponent, ProyectoDetalleModalComponent],
+  imports: [CommonModule, FormsModule, ProyectoFiltrosComponent, ProyectoDetalleModalComponent, ProyectoFormNuevoComponent],
   templateUrl: './proyecto-list.component.html',
   styleUrls: ['./proyecto-list.component.css']
 })
@@ -29,14 +30,18 @@ export class ProyectoListComponent implements OnInit {
   terminoBusqueda = '';
   loading = false;
   error = false;
-
+  
   // Filtros aplicados
   filtrosActuales: FiltrosProyecto | null = null;
   mostrarMenuExportar = false;
 
   // Modal de detalles
   mostrarModalDetalle = false;
-  proyectoSeleccionado: ProyectoVista | null = null;
+  proyectoSeleccionado: any = null;  // ← ESTA DEJALA
+  
+  // Modal de edición
+  mostrarModalEdicion = false;  // ← ESTA AGREGALA NUEVA
+  
 
   constructor(
     private alertas: AlertasService,
@@ -195,8 +200,31 @@ export class ProyectoListComponent implements OnInit {
   }
 
   editarProyecto(proyecto: Proyecto): void {
-    console.log('Editar proyecto:', proyecto);
+  console.log('Editar proyecto:', proyecto);
+  
+  // Validar que el proyecto no esté finalizado o archivado
+  const estadosNoEditables = ['Finalizado', 'Archivado', 'Cancelado'];
+  
+  if (estadosNoEditables.includes(proyecto.estado)) {
+    this.alertas.warning(
+      'No se puede editar',
+      `El proyecto está en estado ${proyecto.estado} y no puede ser editado`
+    );
+    return;
   }
+  
+  // Abrir modal de edición
+  this.proyectoSeleccionado = proyecto;
+  this.mostrarModalEdicion = true;
+}
+
+cerrarModalEdicion(): void {
+  this.mostrarModalEdicion = false;
+  this.proyectoSeleccionado = null;
+  this.cargarProyectos(); // Recargar la lista
+}
+
+
 
   async eliminarProyecto(proyecto: Proyecto): Promise<void> {
     if (!proyecto.idProyecto) {
