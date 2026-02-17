@@ -86,7 +86,7 @@ namespace TESIS_OG.Controllers
         {
           // Stock crítico por tipo
           stockPorTipo = await _context.Insumos
-                .Where(i => i.Estado == "Pulenta" || i.Estado == "En uso")
+                .Where(i => i.Estado == "Disponible" || i.Estado == "En uso")
                 .GroupBy(i => i.IdTipoInsumoNavigation.NombreTipo)
                 .Select(g => new
                 {
