@@ -726,6 +726,8 @@ public partial class TamarindoDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("email");
             entity.Property(e => e.FechaAlta).HasColumnName("fecha_Alta");
+            entity.Property(e => e.IdCiudad).HasColumnName("id_Ciudad");
+            entity.Property(e => e.IdProvincia).HasColumnName("id_Provincia");
             entity.Property(e => e.NombreProveedor)
                 .HasMaxLength(100)
                 .IsUnicode(false)
@@ -738,6 +740,14 @@ public partial class TamarindoDbContext : DbContext
                 .HasMaxLength(30)
                 .IsUnicode(false)
                 .HasColumnName("telefono");
+
+            entity.HasOne(d => d.IdCiudadNavigation).WithMany(p => p.Proveedors)
+                .HasForeignKey(d => d.IdCiudad)
+                .HasConstraintName("FK_Proveedor_Ciudad");
+
+            entity.HasOne(d => d.IdProvinciaNavigation).WithMany(p => p.Proveedors)
+                .HasForeignKey(d => d.IdProvincia)
+                .HasConstraintName("FK_Proveedor_Provincia");
         });
 
         modelBuilder.Entity<Provincium>(entity =>

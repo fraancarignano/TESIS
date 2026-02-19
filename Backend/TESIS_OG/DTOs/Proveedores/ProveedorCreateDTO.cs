@@ -22,6 +22,10 @@ namespace TESIS_OG.DTOs.Proveedores
         [StringLength(150, ErrorMessage = "La direccion no puede superar los 150 caracteres")]
         public string? Direccion { get; set; }
 
+        public int? IdCiudad { get; set; }
+
+        public int? IdProvincia { get; set; }
+
         [StringLength(200, ErrorMessage = "Las observaciones no pueden superar los 200 caracteres")]
         public string? Observaciones { get; set; }
     }

@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DbContextApp = TESIS_OG.Data.TamarindoDbContext;
 using TESIS_OG.DTOs.Proveedores;
-using TESIS_OG.Models;
 
 namespace TESIS_OG.Controllers
 {
@@ -32,13 +31,18 @@ namespace TESIS_OG.Controllers
             if (existeCuit)
                 return BadRequest(new { message = "Ya existe un proveedor con ese CUIT" });
 
-            var proveedor = new Proveedor
+            if (!await UbicacionValidaAsync(proveedorDto.IdProvincia, proveedorDto.IdCiudad))
+                return BadRequest(new { message = "La provincia/ciudad indicada no es valida o no corresponde entre si" });
+
+            var proveedor = new Models.Proveedor
             {
                 NombreProveedor = nombre,
                 Cuit = cuit,
                 Telefono = LimpiarTexto(proveedorDto.Telefono),
                 Email = LimpiarTexto(proveedorDto.Email),
                 Direccion = LimpiarTexto(proveedorDto.Direccion),
+                IdProvincia = proveedorDto.IdProvincia,
+                IdCiudad = proveedorDto.IdCiudad,
                 Observaciones = LimpiarTexto(proveedorDto.Observaciones),
                 FechaAlta = DateOnly.FromDateTime(DateTime.Today)
             };
@@ -46,7 +50,8 @@ namespace TESIS_OG.Controllers
             _context.Proveedors.Add(proveedor);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(ObtenerProveedorPorId), new { id = proveedor.IdProveedor }, MapearProveedor(proveedor));
+            var creado = await ObtenerProveedorIndexPorIdAsync(proveedor.IdProveedor);
+            return CreatedAtAction(nameof(ObtenerProveedorPorId), new { id = proveedor.IdProveedor }, creado);
         }
 
         /// <summary>
@@ -56,6 +61,8 @@ namespace TESIS_OG.Controllers
         public async Task<IActionResult> ObtenerProveedores()
         {
             var proveedores = await _context.Proveedors
+                .Include(p => p.IdProvinciaNavigation)
+                .Include(p => p.IdCiudadNavigation)
                 .Select(p => new ProveedorIndexDTO
                 {
                     IdProveedor = p.IdProveedor,
@@ -64,6 +71,10 @@ namespace TESIS_OG.Controllers
                     Telefono = p.Telefono,
                     Email = p.Email,
                     Direccion = p.Direccion,
+                    IdProvincia = p.IdProvincia,
+                    IdCiudad = p.IdCiudad,
+                    NombreProvincia = p.IdProvinciaNavigation != null ? p.IdProvinciaNavigation.NombreProvincia : null,
+                    NombreCiudad = p.IdCiudadNavigation != null ? p.IdCiudadNavigation.NombreCiudad : null,
                     Observaciones = p.Observaciones,
                     FechaAlta = p.FechaAlta
                 })
@@ -78,20 +89,7 @@ namespace TESIS_OG.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerProveedorPorId(int id)
         {
-            var proveedor = await _context.Proveedors
-                .Where(p => p.IdProveedor == id)
-                .Select(p => new ProveedorIndexDTO
-                {
-                    IdProveedor = p.IdProveedor,
-                    NombreProveedor = p.NombreProveedor,
-                    Cuit = p.Cuit,
-                    Telefono = p.Telefono,
-                    Email = p.Email,
-                    Direccion = p.Direccion,
-                    Observaciones = p.Observaciones,
-                    FechaAlta = p.FechaAlta
-                })
-                .FirstOrDefaultAsync();
+            var proveedor = await ObtenerProveedorIndexPorIdAsync(id);
 
             if (proveedor == null)
                 return NotFound(new { message = $"Proveedor con ID {id} no encontrado" });
@@ -120,16 +118,22 @@ namespace TESIS_OG.Controllers
             if (existeCuitEnOtro)
                 return BadRequest(new { message = "Ya existe otro proveedor con ese CUIT" });
 
+            if (!await UbicacionValidaAsync(proveedorDto.IdProvincia, proveedorDto.IdCiudad))
+                return BadRequest(new { message = "La provincia/ciudad indicada no es valida o no corresponde entre si" });
+
             proveedor.NombreProveedor = nombre;
             proveedor.Cuit = cuit;
             proveedor.Telefono = LimpiarTexto(proveedorDto.Telefono);
             proveedor.Email = LimpiarTexto(proveedorDto.Email);
             proveedor.Direccion = LimpiarTexto(proveedorDto.Direccion);
+            proveedor.IdProvincia = proveedorDto.IdProvincia;
+            proveedor.IdCiudad = proveedorDto.IdCiudad;
             proveedor.Observaciones = LimpiarTexto(proveedorDto.Observaciones);
 
             await _context.SaveChangesAsync();
 
-            return Ok(MapearProveedor(proveedor));
+            var actualizado = await ObtenerProveedorIndexPorIdAsync(id);
+            return Ok(actualizado);
         }
 
         /// <summary>
@@ -159,19 +163,54 @@ namespace TESIS_OG.Controllers
             return Ok(new { message = "Proveedor eliminado exitosamente" });
         }
 
-        private static ProveedorIndexDTO MapearProveedor(Proveedor proveedor)
+        private async Task<ProveedorIndexDTO?> ObtenerProveedorIndexPorIdAsync(int id)
         {
-            return new ProveedorIndexDTO
+            return await _context.Proveedors
+                .Include(p => p.IdProvinciaNavigation)
+                .Include(p => p.IdCiudadNavigation)
+                .Where(p => p.IdProveedor == id)
+                .Select(p => new ProveedorIndexDTO
+                {
+                    IdProveedor = p.IdProveedor,
+                    NombreProveedor = p.NombreProveedor,
+                    Cuit = p.Cuit,
+                    Telefono = p.Telefono,
+                    Email = p.Email,
+                    Direccion = p.Direccion,
+                    IdProvincia = p.IdProvincia,
+                    IdCiudad = p.IdCiudad,
+                    NombreProvincia = p.IdProvinciaNavigation != null ? p.IdProvinciaNavigation.NombreProvincia : null,
+                    NombreCiudad = p.IdCiudadNavigation != null ? p.IdCiudadNavigation.NombreCiudad : null,
+                    Observaciones = p.Observaciones,
+                    FechaAlta = p.FechaAlta
+                })
+                .FirstOrDefaultAsync();
+        }
+
+        private async Task<bool> UbicacionValidaAsync(int? idProvincia, int? idCiudad)
+        {
+            if (idProvincia.HasValue)
             {
-                IdProveedor = proveedor.IdProveedor,
-                NombreProveedor = proveedor.NombreProveedor,
-                Cuit = proveedor.Cuit,
-                Telefono = proveedor.Telefono,
-                Email = proveedor.Email,
-                Direccion = proveedor.Direccion,
-                Observaciones = proveedor.Observaciones,
-                FechaAlta = proveedor.FechaAlta
-            };
+                var provinciaExiste = await _context.Provincia.AnyAsync(p => p.IdProvincia == idProvincia.Value);
+                if (!provinciaExiste)
+                    return false;
+            }
+
+            if (idCiudad.HasValue)
+            {
+                var ciudad = await _context.Ciudads
+                    .Where(c => c.IdCiudad == idCiudad.Value)
+                    .Select(c => new { c.IdProvincia })
+                    .FirstOrDefaultAsync();
+
+                if (ciudad == null)
+                    return false;
+
+                if (idProvincia.HasValue && ciudad.IdProvincia != idProvincia.Value)
+                    return false;
+            }
+
+            return true;
         }
 
         private static string? LimpiarTexto(string? valor)

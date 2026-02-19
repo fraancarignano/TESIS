@@ -17,5 +17,7 @@ public partial class Provincium
 
     public virtual ICollection<Direccion> Direccions { get; set; } = new List<Direccion>();
 
+    public virtual ICollection<Proveedor> Proveedors { get; set; } = new List<Proveedor>();
+
     public virtual Pai IdPaisNavigation { get; set; } = null!;
 }

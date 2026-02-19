@@ -17,9 +17,17 @@ public partial class Proveedor
 
     public string? Direccion { get; set; }
 
+    public int? IdCiudad { get; set; }
+
+    public int? IdProvincia { get; set; }
+
     public string? Observaciones { get; set; }
 
     public DateOnly FechaAlta { get; set; }
+
+    public virtual Ciudad? IdCiudadNavigation { get; set; }
+
+    public virtual Provincium? IdProvinciaNavigation { get; set; }
 
     public virtual ICollection<Insumo> Insumos { get; set; } = new List<Insumo>();
 

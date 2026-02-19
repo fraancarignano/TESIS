@@ -3198,6 +3198,16 @@
             "type": "string",
             "nullable": true
           },
+          "idCiudad": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "idProvincia": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "observaciones": {
             "maxLength": 200,
             "minLength": 0,
@@ -3241,6 +3251,16 @@
             "maxLength": 150,
             "minLength": 0,
             "type": "string",
+            "nullable": true
+          },
+          "idCiudad": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "idProvincia": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           },
           "observaciones": {
