@@ -336,8 +336,8 @@ namespace TESIS_OG.Services.ProyectoService
                 response.MaterialesCalculados.Add(new MaterialCalculadoPreviewDTO
                 {
                     IdInsumo = insumo.IdInsumo,
-                    NombreInsumo = insumo.NombreInsumo,
-                    TipoInsumo = insumo.IdTipoInsumoNavigation?.NombreTipo ?? "",
+                    NombreInsumo = mc.IdInsumoNavigation?.NombreInsumo ?? "",
+                    TipoInsumo = mc.IdInsumoNavigation?.IdTipoInsumoNavigation?.NombreTipo ?? "",
                     TipoCalculo = "Auto",
                     CantidadNecesaria = cantidadNecesaria,
                     UnidadMedida = config.UnidadMedida,
@@ -895,9 +895,7 @@ namespace TESIS_OG.Services.ProyectoService
                   TieneStock = mc.TieneStock ?? false,
                   Observaciones = mc.Observaciones,
                   IdProyectoPrenda = mc.IdProyectoPrenda,
-                  NombrePrenda = mc.IdProyectoPrendaNavigation != null
-                  ? mc.IdProyectoPrendaNavigation.IdTipoPrendaNavigation!.NombrePrenda
-                  : null
+                  NombrePrenda = mc.IdProyectoPrendaNavigation?.IdTipoPrendaNavigation?.NombrePrenda
               })
               .ToListAsync();
 
