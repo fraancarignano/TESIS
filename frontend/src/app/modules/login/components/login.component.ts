@@ -39,7 +39,7 @@ export class LoginComponent {
     // Crear objeto tipado con las credenciales
     const credentials: LoginCredentials = {
       nombreUsuario: this.nombreUsuario.trim(),
-      contraseña: this.password // ⚠️ El backend espera "contraseña", no "password"
+      contrasena: this.password // ⚠️ El backend espera "contrasena", no "password"
     };
 
     this.authService.login(credentials).subscribe({
@@ -58,7 +58,7 @@ export class LoginComponent {
         this.cargando = false;
         
         // Manejo de errores más detallado
-        const mensaje = error.error?.message || 'Usuario o contraseña incorrectos';
+        const mensaje = error.error?.message || 'Usuario o contrasena incorrectos';
         this.alertas.error('Error de autenticación', mensaje);
         
         console.error('Error en login:', error);
