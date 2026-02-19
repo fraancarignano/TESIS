@@ -37,7 +37,7 @@ public partial class Proyecto
 
     public int? AvanceGerenciaAdmin { get; set; }
 
-    public int? AvanceDiseñoDesarrollo { get; set; }
+    public int? AvanceDisenoDesarrollo { get; set; }
 
     public int? AvanceControlCalidad { get; set; }
 
