@@ -6,7 +6,7 @@ import {
   getAreaActual, 
   calcularProgresoGeneralPorAreas,
   getResumenAreas,
-  getColorProgreso,
+  //getColorProgreso,
   areaEstaCompleta,
   areaEnProgreso
 } from '../../constants/areas.constants';
@@ -19,8 +19,8 @@ import {
   styleUrls: ['./proyecto-card.component.css']
 })
 export class ProyectoCardComponent {
-  @Input() proyecto!: ProyectoVista;  // ← Cambiar a ProyectoVista
-  @Output() verDetalle = new EventEmitter<ProyectoVista>();  // ← Cambiar a ProyectoVista
+  @Input() proyecto!: ProyectoVista;  
+  @Output() verDetalle = new EventEmitter<ProyectoVista>(); 
 
   // Constantes accesibles desde el template
   readonly AREAS = AREAS_PRODUCCION;
@@ -28,6 +28,9 @@ export class ProyectoCardComponent {
   /**
    * Obtener progreso general del proyecto
    */
+
+  
+
   get progresoGeneral(): number {
     return calcularProgresoGeneralPorAreas(this.proyecto);
   }
@@ -49,9 +52,9 @@ export class ProyectoCardComponent {
   /**
    * Obtener color de la barra de progreso
    */
-  get colorProgreso(): string {
-    return getColorProgreso(this.progresoGeneral);
-  }
+  // get colorProgreso(): string {
+  //   return getColorProgreso(this.progresoGeneral);
+  // }
 
   /**
    * Obtener avance de un área específica

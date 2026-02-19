@@ -15,6 +15,8 @@ public partial class Ciudad
 
     public virtual ICollection<Direccion> Direccions { get; set; } = new List<Direccion>();
 
+    public virtual ICollection<Proveedor> Proveedors { get; set; } = new List<Proveedor>();
+
     public virtual Provincium IdProvinciaNavigation { get; set; } = null!;
 
     public virtual ICollection<Taller> Tallers { get; set; } = new List<Taller>();

@@ -1,9 +1,9 @@
 <div class="inventario-container">
   <div class="header">
     <div class="breadcrumb">
-      <span>Inventario</span>
-      <span class="separator">></span>
-      <span class="active">Principal</span>
+      <span class="breadcrumb-item">Inventario</span>
+      <span class="breadcrumb-separator">></span>
+      <span class="breadcrumb-item active">Principal</span>
     </div>
 
     <div class="actions-bar">
@@ -66,7 +66,7 @@
           </td>
         </tr>
         <tr *ngIf="insumosFiltrados.length === 0">
-          <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+          <td colspan="7" class="sin-resultados">
             No se encontraron insumos
           </td>
         </tr>

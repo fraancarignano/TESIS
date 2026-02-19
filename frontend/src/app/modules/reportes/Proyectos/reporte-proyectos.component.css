@@ -1,0 +1,106 @@
+.reporte-container {
+    padding: 14px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.88rem;
+}
+
+.reporte-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e6e6e6;
+}
+
+.reporte-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1rem;
+}
+
+.periodo-selector {
+    color: #666;
+    font-size: 0.76rem;
+    font-style: italic;
+}
+
+.loading-spinner,
+.error-mensaje,
+.no-data {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 220px;
+    color: #666;
+    font-size: 0.82rem;
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.grafico-container {
+    flex: 1;
+    position: relative;
+    min-height: 300px;
+    max-height: 460px;
+    width: 100%;
+}
+
+.error-mensaje button {
+    margin-top: 8px;
+    padding: 7px 10px;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.78rem;
+}
+
+.error-mensaje button:hover {
+    background-color: #e2e6ea;
+}
+
+@media (max-width: 768px) {
+    .reporte-container {
+        padding: 10px;
+    }
+
+    .reporte-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .reporte-header h2 {
+        font-size: 0.92rem;
+    }
+
+    .grafico-container {
+        min-height: 240px;
+        max-height: 340px;
+    }
+}

@@ -1,235 +1,985 @@
-<!-- Modo Modal -->
+<!-- ============================================ -->
+<!-- MODO MODAL -->
+<!-- ============================================ -->
 <div class="modal-overlay" *ngIf="esModal" (click)="cancelar()">
-  <div class="modal-container compact" (click)="$event.stopPropagation()">
-    
-    <!-- HEADER COMPACTO -->
+  <div class="modal-container-large" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2><i class="fas fa-folder-plus"></i> Nuevo Proyecto</h2>
       <button class="btn-close" (click)="cancelar()">×</button>
     </div>
 
-    <!-- BODY SIN SCROLL -->
-    <div class="modal-body-compact">
-      <form [formGroup]="formulario" (ngSubmit)="guardar()">
-        
-        <!-- ROW 1: Cliente + Nombre + Tipo -->
-        <div class="grid-3">
-          <div class="field">
-            <label>Cliente *</label>
-            <select formControlName="idCliente">
-              <option value="">Seleccionar...</option>
-              <option *ngFor="let c of clientes" [value]="c.idCliente">{{c.nombreCompleto}}</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Nombre Proyecto *</label>
-            <input type="text" formControlName="nombreProyecto" placeholder="Ej: Remeras 2026">
-          </div>
-          <div class="field">
-            <label>Tipo Prenda *</label>
-            <select formControlName="tipoPrenda">
-              <option value="">Tipo...</option>
-              <option *ngFor="let t of tiposPrenda" [value]="t">{{t}}</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- ROW 2: Cantidad + Prioridad + Estación + Usuario -->
-        <div class="grid-4">
-          <div class="field">
-            <label>Cantidad *</label>
-            <input type="number" formControlName="cantidadTotal" placeholder="0" min="1">
-          </div>
-          <div class="field">
-            <label>Prioridad</label>
-            <select formControlName="prioridad">
-              <option *ngFor="let p of prioridades" [value]="p">{{p | titlecase}}</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Estación</label>
-            <select formControlName="tipoEstacion">
-              <option value="">Seleccionar...</option>
-              <option *ngFor="let e of tiposEstacion" [value]="e">{{e}}</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Encargado</label>
-            <select formControlName="idUsuarioEncargado">
-              <option value="">Sin asignar</option>
-              <option *ngFor="let u of usuarios" [value]="u.idUsuario">
-                {{u.nombreUsuario}} {{u.apellidoUsuario}}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <!-- ROW 3: Fechas + Materiales -->
-        <div class="grid-2">
-          <div class="field">
-            <label>Inicio *</label>
-            <input type="date" formControlName="fechaInicio">
-          </div>
-          <div class="field">
-            <label>Fin Estimado</label>
-            <input type="date" formControlName="fechaFin">
-          </div>
-        </div>
-
-        <!-- MATERIALES COMPACTO -->
-        <div class="materiales-compact">
-          <label><i class="fas fa-box"></i> Materiales</label>
-          <div class="mat-row">
-            <select #insumo class="flex-2">
-              <option value="">Insumo...</option>
-              <option *ngFor="let i of listaInsumosDB" [value]="i.idInsumo">{{i.nombreInsumo}}</option>
-            </select>
-            <input type="number" #cant placeholder="Cant" class="flex-1" min="1">
-            <input type="number" #desp placeholder="Desp%" class="flex-1" min="0">
-            <button type="button" class="btn-add-mini" 
-              (click)="agregarInsumoALista(insumo.value, cant.value, desp.value); insumo.value=''; cant.value=''; desp.value=''">+</button>
-          </div>
-          
-          <div class="mat-chips" *ngIf="insumosSeleccionados.length > 0">
-            <span class="chip" *ngFor="let m of insumosSeleccionados; let i=index">
-              {{m.nombre}} ({{m.cantidad}})
-              <i class="fas fa-times" (click)="quitarInsumo(i)"></i>
-            </span>
-          </div>
-        </div>
-
-        <!-- DESCRIPCIÓN (OPCIONAL) -->
-        <div class="field">
-          <label>Descripción</label>
-          <textarea formControlName="descripcion" rows="2" placeholder="Notas..."></textarea>
-        </div>
-
-        <!-- ERROR -->
-        <div class="alert-mini" *ngIf="errorMensaje">{{errorMensaje}}</div>
-
-        <!-- FOOTER -->
-        <div class="footer-compact">
-          <button type="button" class="btn-sec" (click)="cancelar()" [disabled]="cargando">Cancelar</button>
-          <button type="submit" class="btn-pri" [disabled]="cargando || formulario.invalid">
-            {{cargando ? 'Guardando...' : 'Crear Proyecto'}}
-          </button>
-        </div>
-      </form>
+    <div class="modal-body-scroll">
+      <ng-container *ngTemplateOutlet="formularioContent"></ng-container>
     </div>
   </div>
 </div>
 
-<!-- Modo Pantalla Completa -->
+<!-- ============================================ -->
+<!-- MODO PANTALLA COMPLETA -->
+<!-- ============================================ -->
 <div class="fullscreen-container" *ngIf="!esModal">
   <div class="fullscreen-header">
     <h1><i class="fas fa-folder-plus"></i> Nuevo Proyecto</h1>
   </div>
 
   <div class="fullscreen-body">
-    <form [formGroup]="formulario" (ngSubmit)="guardar()">
-      
-      <!-- ROW 1: Cliente + Nombre + Tipo -->
+    <ng-container *ngTemplateOutlet="formularioContent"></ng-container>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- TEMPLATE DEL FORMULARIO (COMPARTIDO) -->
+<!-- ============================================ -->
+<ng-template #formularioContent>
+  <form [formGroup]="formulario" (ngSubmit)="guardar()">
+    
+    <!-- ============================================ -->
+    <!-- SECCIÓN 1: DATOS GENERALES -->
+    <!-- ============================================ -->
+    <div class="seccion">
+      <div class="seccion-header">
+        <h3>Datos Generales del Proyecto</h3>
+      </div>
+
       <div class="grid-3">
+        <!-- Cliente -->
         <div class="field">
           <label>Cliente *</label>
           <select formControlName="idCliente">
-            <option value="">Seleccionar...</option>
-            <option *ngFor="let c of clientes" [value]="c.idCliente">{{c.nombreCompleto}}</option>
+            <option value="">Seleccionar cliente</option>
+            <option *ngFor="let c of clientes" [value]="c.idCliente">
+              {{ c.nombreCompleto }}
+            </option>
           </select>
+          <span class="cliente-selected" *ngIf="nombreCliente">
+            ✓ {{ nombreCliente }}
+          </span>
         </div>
-        <div class="field">
-          <label>Nombre Proyecto *</label>
-          <input type="text" formControlName="nombreProyecto" placeholder="Ej: Remeras 2026">
-        </div>
-        <div class="field">
-          <label>Tipo Prenda *</label>
-          <select formControlName="tipoPrenda">
-            <option value="">Tipo...</option>
-            <option *ngFor="let t of tiposPrenda" [value]="t">{{t}}</option>
-          </select>
-        </div>
-      </div>
 
-      <!-- ROW 2: Cantidad + Prioridad + Estación + Usuario -->
-      <div class="grid-4">
+        <!-- Nombre Proyecto -->
         <div class="field">
-          <label>Cantidad *</label>
-          <input type="number" formControlName="cantidadTotal" placeholder="0" min="1">
+          <label>Nombre del Proyecto *</label>
+          <input 
+            type="text" 
+            formControlName="nombreProyecto" 
+            placeholder="Ej: Remeras Verano 2025"
+          >
         </div>
+
+        <!-- Prioridad -->
         <div class="field">
           <label>Prioridad</label>
           <select formControlName="prioridad">
-            <option *ngFor="let p of prioridades" [value]="p">{{p | titlecase}}</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Estación</label>
-          <select formControlName="tipoEstacion">
-            <option value="">Seleccionar...</option>
-            <option *ngFor="let e of tiposEstacion" [value]="e">{{e}}</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Encargado</label>
-          <select formControlName="idUsuarioEncargado">
-            <option value="">Sin asignar</option>
-            <option *ngFor="let u of usuarios" [value]="u.idUsuario">
-              {{u.nombreUsuario}} {{u.apellidoUsuario}}
+            <option *ngFor="let p of prioridades" [value]="p">
+              {{ p | titlecase }}
             </option>
           </select>
         </div>
       </div>
 
-      <!-- ROW 3: Fechas -->
       <div class="grid-2">
+        <!-- Fecha Inicio -->
         <div class="field">
-          <label>Inicio *</label>
+          <label>Fecha de Inicio *</label>
           <input type="date" formControlName="fechaInicio">
         </div>
+
+        <!-- Fecha Límite -->
         <div class="field">
-          <label>Fin Estimado</label>
-          <input type="date" formControlName="fechaFin">
+          <label>Fecha Límite</label>
+          <input type="date"
+            formControlName="fechaFin"
+            [min]="fechaMinima">
         </div>
       </div>
 
-      <!-- MATERIALES -->
-      <div class="materiales-section">
-        <label><i class="fas fa-box"></i> Materiales</label>
-        <div class="mat-row">
-          <select #insumo class="flex-2">
-            <option value="">Insumo...</option>
-            <option *ngFor="let i of listaInsumosDB" [value]="i.idInsumo">{{i.nombreInsumo}}</option>
-          </select>
-          <input type="number" #cant placeholder="Cant" class="flex-1" min="1">
-          <input type="number" #desp placeholder="Desp%" class="flex-1" min="0">
-          <button type="button" class="btn-add-mini" 
-            (click)="agregarInsumoALista(insumo.value, cant.value, desp.value); insumo.value=''; cant.value=''; desp.value=''">+</button>
-        </div>
-        
-        <div class="mat-chips" *ngIf="insumosSeleccionados.length > 0">
-          <span class="chip" *ngFor="let m of insumosSeleccionados; let i=index">
-            {{m.nombre}} ({{m.cantidad}})
-            <i class="fas fa-times" (click)="quitarInsumo(i)"></i>
-          </span>
-        </div>
-      </div>
-
-      <!-- DESCRIPCIÓN -->
+      <!-- Descripción -->
       <div class="field">
-        <label>Descripción</label>
-        <textarea formControlName="descripcion" rows="3" placeholder="Notas..."></textarea>
+        <label>Descripción del Proyecto</label>
+        <textarea 
+          formControlName="descripcion" 
+          rows="2" 
+          placeholder="Descripción general del proyecto..."
+        ></textarea>
       </div>
+    </div>
 
-      <!-- ERROR -->
-      <div class="alert-mini" *ngIf="errorMensaje">{{errorMensaje}}</div>
-
-      <!-- FOOTER -->
-      <div class="footer-actions">
-        <button type="button" class="btn-sec" (click)="cancelar()" [disabled]="cargando">Cancelar</button>
-        <button type="submit" class="btn-pri" [disabled]="cargando || formulario.invalid">
-          {{cargando ? 'Guardando...' : 'Crear Proyecto'}}
+    <!-- ============================================ -->
+    <!-- SECCIÓN 2: PRENDAS DEL PROYECTO -->
+    <!-- ============================================ -->
+    <div class="seccion">
+      <div class="seccion-header">
+        <h3>Prendas del Proyecto</h3>
+        <button 
+          type="button" 
+          class="btn-primary" 
+          (click)="agregarPrenda()"
+        >
+          <i class="fas fa-plus"></i> Agregar Prenda
         </button>
       </div>
-    </form>
-  </div>
-</div>
+
+      <!-- LISTA DE PRENDAS AGREGADAS -->
+      <div class="prendas-list" *ngIf="prendasProyecto.length > 0">
+        <div class="prenda-card" *ngFor="let prenda of prendasProyecto; let i = index">
+          <div class="prenda-header">
+            <div class="prenda-titulo">
+              <strong>{{ getNombreTipoPrenda(prenda.idTipoPrenda) }}</strong>
+              <span class="prenda-cantidad">{{ prenda.cantidadTotal }} unidades</span>
+            </div>
+            <div class="prenda-acciones">
+              <button 
+                type="button" 
+                class="btn-edit-mini" 
+                (click)="editarPrenda(prenda, i)"
+                title="Editar"
+              >
+                <i class="fas fa-edit"></i>
+              </button>
+              <button 
+                type="button" 
+                class="btn-delete-mini" 
+                (click)="eliminarPrenda(i)"
+                title="Eliminar"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="prenda-detalles">
+            <div class="detalle-item">
+              <i class="fas fa-tshirt"></i>
+              <span>Material: {{ getNombreTipoInsumo(prenda.idTipoInsumoMaterial) }}</span>
+              <span *ngIf="prenda.colorTela" class="color-badge">{{ prenda.colorTela }}</span>
+            </div>
+            <div class="detalle-item">
+              <i class="fas fa-ruler"></i>
+              <span>{{ getTallesSeparados(prenda.tallesDistribuidos) }}</span>
+            </div>
+            <div class="detalle-item" *ngIf="prenda.tieneBordado || prenda.tieneEstampado">
+              <i class="fas fa-palette"></i>
+              <span>{{ getDisenoTexto(prenda) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensaje si no hay prendas -->
+      <div class="sin-prendas" *ngIf="prendasProyecto.length === 0 && !prendaEditando">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <p>No hay prendas agregadas. Haz clic en "Agregar Prenda" para comenzar.</p>
+      </div>
+
+      <!-- Resumen de cantidades -->
+      <div class="resumen-prendas" *ngIf="prendasProyecto.length > 0">
+        <strong>Total de prendas en el proyecto:</strong>
+        <span class="cantidad-total">{{ cantidadTotalProyecto }} unidades</span>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODAL: EDITAR/AGREGAR PRENDA -->
+    <!-- ============================================ -->
+    <div class="modal-overlay-inner" *ngIf="prendaEditando" (click)="cancelarEditarPrenda()">
+      <div class="modal-prenda" (click)="$event.stopPropagation()">
+        <div class="modal-prenda-header">
+          <h3>
+            {{ indexPrendaEditando === -1 ? ' Agregar Prenda' : ' Editar Prenda' }}
+          </h3>
+          <button type="button" class="btn-close-sm" (click)="cancelarEditarPrenda()">×</button>
+        </div>
+
+        <div class="modal-prenda-body">
+          <!-- Tipo de Prenda -->
+          <div class="field">
+            <label>Tipo de Prenda *</label>
+            <select [(ngModel)]="prendaEditando.idTipoPrenda" [ngModelOptions]="{standalone: true}">
+              <option [value]="undefined">Seleccionar...</option>
+              <option *ngFor="let tipo of tiposPrenda" [value]="tipo.idTipoPrenda">
+                {{ tipo.nombrePrenda }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Tipo de Material (Tipo de Tela) -->
+          <div class="field">
+            <label>Tipo de Material *</label>
+            <select 
+              [(ngModel)]="prendaEditando.idTipoInsumoMaterial" 
+              [ngModelOptions]="{standalone: true}"
+              (change)="onTipoMaterialChange()"
+            >
+              <option [value]="undefined">Seleccionar tipo de tela...</option>
+              <option *ngFor="let tipoInsumo of tiposInsumoTelas" [value]="tipoInsumo.idTipoInsumo">
+                {{ tipoInsumo.nombreTipo }}
+              </option>
+            </select>
+            <small>Ej: Algodón, Lycra, Polyester, etc.</small>
+          </div>
+
+          <!-- Color/Variante de Tela -->
+          <div class="field" *ngIf="prendaEditando.idTipoInsumoMaterial && insumosTelasFiltrados.length > 0">
+            <label>Color de la Tela *</label>
+            <select [(ngModel)]="prendaEditando.idInsumo" [ngModelOptions]="{standalone: true}">
+              <option [value]="undefined">Seleccionar color...</option>
+              <option *ngFor="let insumo of insumosTelasFiltrados" [value]="insumo.idInsumo">
+                {{ insumo.color || insumo.nombreInsumo }} 
+                - Stock: {{ insumo.stockActual }} {{ insumo.unidadMedida }}
+              </option>
+            </select>
+            <small>Selecciona el color específico de {{ getNombreTipoInsumo(prendaEditando.idTipoInsumoMaterial) }}</small>
+          </div>
+
+          <!-- Mensaje si no hay colores disponibles -->
+          <div class="field" *ngIf="prendaEditando.idTipoInsumoMaterial && insumosTelasFiltrados.length === 0">
+            <div class="alert-warning">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <span>No hay insumos disponibles de {{ getNombreTipoInsumo(prendaEditando.idTipoInsumoMaterial) }} en stock.</span>
+            </div>
+          </div>
+
+          <!-- Cantidad Total -->
+          <div class="field">
+            <label>Cantidad Total a Fabricar *</label>
+            <input 
+              type="number" 
+              [(ngModel)]="prendaEditando.cantidadTotal" 
+              [ngModelOptions]="{standalone: true}"
+              placeholder="0" 
+              min="1"
+            >
+          </div>
+
+          <!-- Botón Distribuir Talles -->
+          <div class="field">
+            <button 
+              type="button" 
+              class="btn-secondary-full" 
+              (click)="abrirModalTalles()"
+              [disabled]="!prendaEditando.cantidadTotal || prendaEditando.cantidadTotal <= 0"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <line x1="15" y1="3" x2="15" y2="21"></line>
+              </svg>
+              Distribuir por Talles
+              <span class="badge-mini" *ngIf="prendaEditando.tallesDistribuidos.length > 0">
+                {{ obtenerSumaTallesActual() }} distribuidos
+              </span>
+            </button>
+            <small *ngIf="prendaEditando.tallesDistribuidos.length > 0" class="text-success">
+              ✓ Talles distribuidos: {{ getTallesSeparados(prendaEditando.tallesDistribuidos) }}
+            </small>
+          </div>
+
+          <!-- Diseño -->
+          <div class="field">
+            <label>Diseño</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  [(ngModel)]="prendaEditando.tieneBordado" 
+                  [ngModelOptions]="{standalone: true}"
+                >
+                <span>Bordado</span>
+              </label>
+              <label class="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  [(ngModel)]="prendaEditando.tieneEstampado" 
+                  [ngModelOptions]="{standalone: true}"
+                >
+                <span>Estampado</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Descripción del Diseño -->
+          <div class="field" *ngIf="prendaEditando.tieneBordado || prendaEditando.tieneEstampado">
+            <label>Descripción del Diseño</label>
+            <textarea 
+              [(ngModel)]="prendaEditando.descripcionDiseno"
+              [ngModelOptions]="{standalone: true}"
+              rows="2" 
+              placeholder="Describe el diseño, colores, posición, etc..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-prenda-footer">
+          <button type="button" class="btn-secondary" (click)="cancelarEditarPrenda()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-primary" (click)="guardarPrenda(prendaEditando)">
+            {{ indexPrendaEditando === -1 ? 'Agregar' : 'Guardar Cambios' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODAL: DISTRIBUCIÓN DE TALLES -->
+    <!-- ============================================ -->
+    <div class="modal-overlay-inner" *ngIf="mostrarModalTalles" (click)="cerrarModalTalles()">
+      <div class="modal-talles" (click)="$event.stopPropagation()">
+        <div class="modal-talles-header">
+          <h3>Distribuir por Talles</h3>
+          <button type="button" class="btn-close-sm" (click)="cerrarModalTalles()">×</button>
+        </div>
+
+        <div class="modal-talles-info">
+          <div class="info-item">
+            <strong>Cantidad Total:</strong>
+            <span class="cantidad-badge">{{ cantidadTotalTalles }}</span>
+          </div>
+          <div class="info-item">
+            <strong>Distribuido:</strong>
+            <span class="cantidad-badge" [class.completo]="obtenerSumaTallesActual() === cantidadTotalTalles">
+              {{ obtenerSumaTallesActual() }}
+            </span>
+          </div>
+          <div class="info-item">
+            <strong>Faltante:</strong>
+            <span class="cantidad-badge faltante">
+              {{ cantidadTotalTalles - obtenerSumaTallesActual() }}
+            </span>
+          </div>
+        </div>
+
+        <div class="modal-talles-body">
+          <div class="talles-grid">
+            <div 
+              class="talle-input" 
+              *ngFor="let talle of tallesDistribuyendo"
+            >
+              <label>{{ talle.nombreTalle }}</label>
+              <input 
+                type="number" 
+                [(ngModel)]="talle.cantidad" 
+                [ngModelOptions]="{standalone: true}"
+                min="0" 
+                [max]="cantidadTotalTalles"
+                placeholder="0"
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-talles-footer">
+          <button type="button" class="btn-secondary" (click)="cerrarModalTalles()">
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            class="btn-primary" 
+            (click)="guardarDistribucionTalles()"
+            [disabled]="obtenerSumaTallesActual() !== cantidadTotalTalles"
+          >
+            Confirmar Distribución
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SECCIÓN 3: MATERIALES ADICIONALES -->
+    <!-- ============================================ -->
+    <div class="seccion">
+      <div class="seccion-header">
+        <h3>Materiales Adicionales (Hilos y Accesorios)</h3>
+      </div>
+
+      <p class="seccion-descripcion">
+        Los materiales de tela se calculan automáticamente según las prendas. 
+        Aquí puedes agregar hilos y accesorios manualmente.
+      </p>
+
+      <!-- Agregar Hilos -->
+      <div class="materiales-input-group">
+        <h4>Hilos</h4>
+        <div class="input-row">
+          <select #selectHilo class="flex-2">
+            <option value="">Seleccionar hilo...</option>
+            <option *ngFor="let hilo of insumosHilos" [value]="hilo.idInsumo">
+              {{ hilo.nombreInsumo }} 
+              <span *ngIf="hilo.color">({{ hilo.color }})</span>
+              - Stock: {{ hilo.stockActual }} {{ hilo.unidadMedida }}
+            </option>
+          </select>
+          <input 
+            type="number" 
+            #cantHilo 
+            placeholder="Cantidad" 
+            class="flex-1" 
+            min="1"
+          >
+          <button 
+            type="button" 
+            class="btn-add-mini" 
+            (click)="agregarMaterialManual(selectHilo.value, cantHilo.value, 'Hilo'); selectHilo.value=''; cantHilo.value=''"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Agregar Accesorios -->
+      <div class="materiales-input-group">
+        <h4>Accesorios</h4>
+        <div class="input-row">
+          <select #selectAccesorio class="flex-2">
+            <option value="">Seleccionar accesorio...</option>
+            <option *ngFor="let accesorio of insumosAccesorios" [value]="accesorio.idInsumo">
+              {{ accesorio.nombreInsumo }} - Stock: {{ accesorio.stockActual }} {{ accesorio.unidadMedida }}
+            </option>
+          </select>
+          <input 
+            type="number" 
+            #cantAccesorio 
+            placeholder="Cantidad" 
+            class="flex-1" 
+            min="1"
+          >
+          <button 
+            type="button" 
+            class="btn-add-mini" 
+            (click)="agregarMaterialManual(selectAccesorio.value, cantAccesorio.value, 'Accesorio'); selectAccesorio.value=''; cantAccesorio.value=''"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Lista de Materiales Agregados -->
+      <div class="materiales-list" *ngIf="materialesManuales.length > 0">
+        <h4>Materiales Agregados:</h4>
+        <div class="material-chip" *ngFor="let material of materialesManuales; let i = index">
+          <span class="material-icon">
+            {{ material.categoria === 'Hilo' ? '🧵' : '📎' }}
+          </span>
+          <span class="material-nombre">{{ material.nombreInsumo }}</span>
+          <span class="material-cantidad">{{ material.cantidad }} {{ material.unidadMedida }}</span>
+          <span class="material-stock" [class.stock-bajo]="material.stockActual! < material.cantidad">
+            Stock: {{ material.stockActual }}
+          </span>
+          <button 
+            type="button" 
+            class="btn-remove-mini" 
+            (click)="eliminarMaterialManual(i)"
+            title="Eliminar"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PREVIEW DE MATERIALES -->
+    <!-- ============================================ -->
+    <div class="preview-materiales-section">
+      <div class="preview-header">
+        <h3><i class="fas fa-calculator"></i> Preview de Materiales</h3>
+        <button 
+          type="button" 
+          class="btn-calcular" 
+          (click)="calcularMateriales()"
+          [disabled]="prendasProyecto.length === 0 || cargando">
+          <i class="fas fa-sync-alt" [class.spinning]="cargando"></i>
+          {{ cargando ? 'Calculando...' : 'Calcular Materiales' }}
+        </button>
+      </div>
+
+      <!-- Mensaje inicial -->
+      <div class="preview-empty" *ngIf="!materialesCalculados && prendasProyecto.length === 0">
+        <i class="fas fa-info-circle"></i>
+        <p>Primero agrega prendas al proyecto para calcular los materiales necesarios</p>
+      </div>
+
+      <div class="preview-empty" *ngIf="!materialesCalculados && prendasProyecto.length > 0">
+        <i class="fas fa-calculator"></i>
+        <p>Haz clic en "Calcular Materiales" para ver un preview de todos los materiales necesarios y verificar el stock disponible antes de crear el proyecto.</p>
+      </div>
+
+      <!-- Resultado del cálculo -->
+      <div class="preview-content" *ngIf="materialesCalculados">
+        
+        <!-- Alertas -->
+        <div class="alertas-stock" *ngIf="materialesCalculados.alertas.length > 0">
+          <div 
+            class="alerta" 
+            *ngFor="let alerta of materialesCalculados.alertas"
+            [ngClass]="{
+              'alerta-warning': alerta.tipo === 'StockInsuficiente' || alerta.tipo === 'Advertencia',
+              'alerta-error': alerta.tipo === 'SinStock'
+            }">
+            <i class="fas" [ngClass]="{
+              'fa-exclamation-triangle': alerta.tipo === 'StockInsuficiente' || alerta.tipo === 'Advertencia',
+              'fa-times-circle': alerta.tipo === 'SinStock'
+            }"></i>
+            <span>{{ alerta.mensaje }}</span>
+          </div>
+        </div>
+
+        <!-- Estado general -->
+        <div class="estado-general" [ngClass]="{
+          'estado-ok': materialesCalculados.puedeCrearse,
+          'estado-advertencia': !materialesCalculados.puedeCrearse
+        }">
+          <i class="fas" [ngClass]="{
+            'fa-check-circle': materialesCalculados.puedeCrearse,
+            'fa-exclamation-circle': !materialesCalculados.puedeCrearse
+          }"></i>
+          <span *ngIf="materialesCalculados.puedeCrearse">
+            Todos los materiales tienen stock suficiente
+          </span>
+          <span *ngIf="!materialesCalculados.puedeCrearse">
+            Hay materiales sin stock suficiente (puedes crear el proyecto con advertencias)
+          </span>
+        </div>
+
+        <!-- Tabla de materiales -->
+        <div class="tabla-materiales">
+          <table>
+            <thead>
+              <tr>
+                <th>MATERIAL</th>
+                <th>COLOR</th>
+                <th>A UTILIZAR</th>
+                <th>EN STOCK</th>
+                <th>ESTADO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let material of materialesCalculados.materialesCalculados"
+                  [ngClass]="{'fila-sin-stock': !material.tieneStockSuficiente}">
+                
+                <!-- Material -->
+                <td>
+                  <div class="material-nombre">
+                    <strong>{{ material.nombreInsumo }} </strong>                    
+                  </div>
+                </td>
+
+                 <!-- Color -->
+                <td>
+                  <span class="color-info">{{ getColorInsumo(material.idInsumo) || '-' }}</span>
+                </td>
+                
+                <!-- A Utilizar -->
+                <td>
+                  <strong>{{ material.cantidadNecesaria | number:'1.2-2' }}</strong> {{ material.unidadMedida }}
+                </td>
+                
+                <!-- En Stock -->
+                <td>
+                  {{ material.stockActual | number:'1.2-2' }}{{ material.unidadMedida }}
+                </td>
+                
+                <!-- Estado -->
+                <td>
+                  <span class="badge-estado" [ngClass]="{
+                    'estado-disponible': material.tieneStockSuficiente,
+                    'estado-faltante': !material.tieneStockSuficiente
+                  }">
+                    {{ material.tieneStockSuficiente ? 'Disponible' : 'Falta: ' + (material.faltante | number:'1.2-2') }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Resumen -->
+        <div class="resumen-materiales">
+          <div class="resumen-item">
+            <i class="fas fa-boxes"></i>
+            <div>
+              <strong>{{ materialesCalculados.materialesCalculados.length }}</strong>
+              <span>Materiales totales</span>
+            </div>
+          </div>
+          <div class="resumen-item">
+            <i class="fas fa-check-circle text-success"></i>
+            <div>
+              <strong>{{ getMaterialesConStock() }}</strong>
+              <span>Con stock suficiente</span>
+            </div>
+          </div>
+          <div class="resumen-item">
+            <i class="fas fa-exclamation-triangle text-warning"></i>
+            <div>
+              <strong>{{ getMaterialesSinStock() }}</strong>
+              <span>Sin stock suficiente</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ERROR GENERAL -->
+    <!-- ============================================ -->
+    <div class="alert-error" *ngIf="errorMensaje">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      {{ errorMensaje }}
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FOOTER: BOTONES DE ACCIÓN -->
+    <!-- ============================================ -->
+    <div class="form-footer">
+      <button 
+        type="button" 
+        class="btn-secondary-large" 
+        (click)="cancelar()" 
+        [disabled]="cargando"
+      >
+        Cancelar
+      </button>
+      <button 
+        type="submit" 
+        class="btn-primary-large" 
+        [disabled]="cargando || formulario.invalid || prendasProyecto.length === 0"
+      >
+        <span *ngIf="!cargando">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          Crear Proyecto
+        </span>
+        <span *ngIf="cargando">
+          <svg class="spinner-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+          </svg>
+          Guardando...
+        </span>
+      </button>
+    </div>
+
+  </form>
+</ng-template>
+
+<!-- ========================================
+     ESTILOS CSS PARA EL PREVIEW INLINE
+     ======================================== -->
+<style>
+.preview-materiales-section {
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.preview-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-calcular {
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.2s;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.3);
+}
+
+.btn-calcular:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33,150,243,0.4);
+}
+
+.btn-calcular:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-calcular .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.preview-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.preview-empty i {
+  font-size: 3rem;
+  color: #bbb;
+  margin-bottom: 12px;
+}
+
+.preview-empty p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Alertas */
+.alertas-stock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alerta {
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.alerta-warning {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+}
+
+.alerta-error {
+  background: #f8d7da;
+  border: 1px solid #f44336;
+  color: #721c24;
+}
+
+/* Estado general */
+.estado-general {
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.estado-ok {
+  background: #d4edda;
+  border: 1px solid #4caf50;
+  color: #155724;
+}
+
+.estado-advertencia {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+}
+
+.estado-general i {
+  font-size: 1.5rem;
+}
+
+/* Tabla de materiales */
+.tabla-materiales {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.tabla-materiales table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-materiales th {
+  background: #f5f5f5;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #555;
+  border-bottom: 2px solid #ddd;
+}
+
+.tabla-materiales td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.tabla-materiales tbody tr:hover {
+  background: #fafafa;
+}
+
+.fila-sin-stock {
+  background: #fff3cd !important;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Badges */
+.badge-categoria {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.badge-calculo {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-auto {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-manual {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.estado-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.stock-ok {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.stock-insuficiente {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+/* Resumen */
+.resumen-materiales {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.resumen-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.resumen-item i {
+  font-size: 1.8rem;
+  color: #666;
+}
+
+.resumen-item strong {
+  display: block;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.resumen-item span {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.text-success {
+  color: #4caf50 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .preview-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .btn-calcular {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .resumen-materiales {
+    grid-template-columns: 1fr;
+  }
+
+  .tabla-materiales {
+    overflow-x: auto;
+  }
+}
+</style>

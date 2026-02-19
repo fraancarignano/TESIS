@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
+import { environment } from '../../../../environments/environment';
 import { 
   LoginCredentials, 
   LoginResponse, 
@@ -15,7 +16,7 @@ import {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'https://localhost:7163/api/Login';
+  private apiUrl = `${environment.apiUrl}/Login`;
   private tokenExpirationTimer: any;
 
   constructor(

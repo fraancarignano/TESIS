@@ -23,6 +23,12 @@ public partial class Insumo
 
     public string? Estado { get; set; }
 
+    public string? Color { get; set; }
+
+    public string? TipoTela { get; set; }
+
+    public decimal? RatioKgUnidad { get; set; }
+
     public virtual ICollection<DetalleMaterialProyecto> DetalleMaterialProyectos { get; set; } = new List<DetalleMaterialProyecto>();
 
     public virtual ICollection<DetalleOrdenCompra> DetalleOrdenCompras { get; set; } = new List<DetalleOrdenCompra>();
@@ -32,6 +38,8 @@ public partial class Insumo
     public virtual TipoInsumo IdTipoInsumoNavigation { get; set; } = null!;
 
     public virtual ICollection<InventarioMovimiento> InventarioMovimientos { get; set; } = new List<InventarioMovimiento>();
+
+    public virtual ICollection<MaterialCalculado> MaterialCalculados { get; set; } = new List<MaterialCalculado>();
 
     public virtual ICollection<Scrap> Scraps { get; set; } = new List<Scrap>();
 }

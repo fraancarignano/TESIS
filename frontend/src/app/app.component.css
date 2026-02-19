@@ -6,7 +6,7 @@
 }
 
 .sidebar {
-  width: 250px;
+  width: 14.5rem;
   background: #1a1a2e;
   color: white;
   display: flex;
@@ -26,26 +26,29 @@
 }
 
 .logo {
-  padding: 20px;
-  font-size: 24px;
+  padding: 1rem;
+  font-size: 1.28rem;
   font-weight: bold;
   text-align: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.04rem;
 }
 
 .nav-menu {
   flex: 1;
-  padding: 20px 0;
+  padding: 0.75rem 0;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 15px 25px;
+  padding: 0.72rem 1rem;
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   transition: all 0.3s ease;
   cursor: pointer;
+  font-size: 0.92rem;
+  line-height: 1.25;
 }
 
 .nav-item:hover {
@@ -60,16 +63,16 @@
 }
 
 .user-profile {
-  padding: 20px;
+  padding: 0.9rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
-  gap: 12px;
+  gap: 0.6rem;
   align-items: center;
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 2.1rem;
+  height: 2.1rem;
   border-radius: 50%;
   overflow: hidden;
   position: relative;
@@ -90,7 +93,7 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 0.72rem;
 }
 
 .user-info {
@@ -100,8 +103,8 @@
 
 .user-name {
   font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 8px;
+  font-size: 0.8rem;
+  margin-bottom: 0.45rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -110,13 +113,13 @@
 .logout-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.3rem;
   background: rgba(255, 59, 48, 0.1);
   color: #ff3b30;
   border: 1px solid rgba(255, 59, 48, 0.3);
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 0.3rem 0.5rem;
+  border-radius: 0.35rem;
+  font-size: 0.72rem;
   cursor: pointer;
   transition: all 0.3s ease;
   width: 100%;
@@ -134,8 +137,8 @@
 }
 
 .logout-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 0.85rem;
+  height: 0.85rem;
 }
 
 /* Estilos para el menú desplegable */
@@ -165,8 +168,8 @@
 }
 
 .nav-item.sub {
-  padding-left: 2.5rem;
-  font-size: 0.9rem;
+  padding-left: 1.9rem;
+  font-size: 0.84rem;
   opacity: 0.9;
 }
 

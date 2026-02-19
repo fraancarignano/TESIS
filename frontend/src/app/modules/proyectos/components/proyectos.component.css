@@ -1,10 +1,11 @@
 /* === CONTAINER PRINCIPAL === */
 .proyectos-container {
-  padding: 40px;
+  padding: 1.75rem;
   max-width: 100%;
   margin: 0;
   background: #fafafa;
   min-height: 100vh;
+  font-size: 0.94rem;
 }
 
 /* === HEADER === */
@@ -12,19 +13,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  gap: 24px;
+  margin-bottom: 1rem;
+  gap: 0.85rem;
+  background: transparent;
+  padding: 0;
 }
 
 
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.3rem;
   background: white;
-  padding: 12px 20px;
+  padding: 0.5rem 0.8rem;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 0.8rem;
 }
 
 .breadcrumb-item {
@@ -43,31 +46,35 @@
 
 .header-actions {
   display: flex;
-  gap: 12px;
+  gap: 0.45rem;
   align-items: center;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 /* === BÚSQUEDA === */
 .busqueda {
   position: relative;
-  width: 400px;
+  width: min(24rem, 100%);
 }
 
 .search-icon {
   position: absolute;
-  left: 16px;
+  left: 0.65rem;
   top: 50%;
   transform: translateY(-50%);
   color: #999;
   pointer-events: none;
+  width: 1rem;
+  height: 1rem;
 }
 
 .input-busqueda {
   width: 100%;
-  padding: 12px 16px 12px 48px;
+  padding: 0.62rem 0.75rem 0.62rem 2.2rem;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 0.85rem;
   transition: all 0.2s ease;
   background: white;
   color: #333;
@@ -85,16 +92,16 @@
 
 /* === BOTONES === */
 .btn {
-  padding: 12px 24px;
+  padding: 0.62rem 0.95rem;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 0.84rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.35rem;
   white-space: nowrap;
 }
 
@@ -121,26 +128,27 @@
 }
 
 /* === ESTADÍSTICAS === */
-.estadisticas-wrapper {  
+.estadisticas-wrapper {
   background: white;
-  padding: 24px;
+  padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  margin-bottom: 32px;
+  margin-bottom: 1rem;
 }
 
 .estadisticas {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
-  padding-bottom: 32px;  
-  border-bottom: 2px solid #e0e0e0;  /* ← AGREGÁ */
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+  /* ← AGREGÁ */
 }
 
 .stat-card {
   background: white;
-  padding: 24px;
+  padding: 0.9rem;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   transition: all 0.2s ease;
@@ -163,31 +171,32 @@
 }
 
 .stat-numero {
-  font-size: 36px;
+  font-size: 1.85rem;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 0.35rem;
   line-height: 1;
 }
 
 .stat-label {
-  font-size: 13px;
+  font-size: 0.76rem;
   font-weight: 400;
   opacity: 0.9;
 }
 
 .btn-nuevo {
-  height: auto;  
-  padding: 16px 24px;  
-  font-size: 14px;  
-  gap: 8px;  
+  height: auto;
+  padding: 16px 24px;
+  font-size: 14px;
+  gap: 8px;
 }
 
 /* === TABLERO KANBAN === */
 .kanban-board {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
   align-items: start;
+  width: 100%;
 }
 
 .kanban-column {
@@ -195,13 +204,14 @@
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  min-height: 500px;
+  min-height: 22rem;
+  min-width: 0;
 }
 
 .column-header {
-  padding: 16px 20px;
+  padding: 0.55rem 0.7rem;
   border-radius: 8px 8px 0 0;
-  margin-bottom: 12px;
+  margin-bottom: 0.35rem;
 }
 
 .column-header.pendiente {
@@ -212,16 +222,14 @@
   background: #e3f2fd;
 }
 
-.column-header.archivado {
-  background: #f3e5f5;
-}
+
 
 .column-header.finalizado {
   background: #e8f5e9;
 }
 
 .column-badge {
-  font-size: 12px;
+  font-size: 0.66rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -230,21 +238,21 @@
 
 .column-content {
   flex: 1;
-  padding: 4px;
+  padding: 0.15rem;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  min-height: 400px;
+  gap: 0.45rem;
+  min-height: 18rem;
 }
 
 .column-empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 2rem 0.85rem;
   text-align: center;
   color: #999;
-  font-size: 14px;
+  font-size: 0.82rem;
   background: white;
   border-radius: 8px;
   border: 2px dashed #e0e0e0;
@@ -395,8 +403,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content {
@@ -416,6 +429,7 @@
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -443,15 +457,15 @@
 }
 
 /* === RESPONSIVE === */
-@media (max-width: 1400px) {
+@media (max-width: 1200px) {
   .kanban-board {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 1024px) {
   .proyectos-container {
-    padding: 24px;
+    padding: 1rem;
   }
 
   .estadisticas {
@@ -463,13 +477,14 @@
   }
 
   .kanban-board {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
   }
 }
 
 @media (max-width: 768px) {
   .proyectos-container {
-    padding: 16px;
+    padding: 0.8rem;
   }
 
   .header {
@@ -490,53 +505,58 @@
   }
 
   .btn-nuevo {
-    padding: 16px;
+    padding: 0.8rem;
   }
 
   /* Loading state */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  gap: 16px;
-}
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    gap: 16px;
+  }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #f0f0f0;
-  border-top: 3px solid #ff5722;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f0f0f0;
+    border-top: 3px solid #ff5722;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
 
-.loading-state p {
-  color: #999;
-  font-size: 14px;
-}
+    100% {
+      transform: rotate(360deg);
+    }
+  }
 
-/* Error state */
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  gap: 16px;
-  text-align: center;
-}
+  .loading-state p {
+    color: #999;
+    font-size: 14px;
+  }
 
-.error-state h3 {
-  margin: 0;
-  color: #d32f2f;
-  font-size: 18px;
-  font-weight: 500;
-}
+  /* Error state */
+  .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .error-state h3 {
+    margin: 0;
+    color: #d32f2f;
+    font-size: 18px;
+    font-weight: 500;
+  }
 }

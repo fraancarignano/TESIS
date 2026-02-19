@@ -86,7 +86,7 @@ namespace TESIS_OG.Controllers
         {
           // Stock crítico por tipo
           stockPorTipo = await _context.Insumos
-                .Where(i => i.Estado == "Pulenta" || i.Estado == "En uso")
+                .Where(i => i.Estado == "Disponible" || i.Estado == "En uso")
                 .GroupBy(i => i.IdTipoInsumoNavigation.NombreTipo)
                 .Select(g => new
                 {
@@ -140,6 +140,51 @@ namespace TESIS_OG.Controllers
           error = ex.Message
         });
       }
+    }
+    /// <summary>
+    /// Obtener producción por tipo de prenda
+    /// </summary>
+    [HttpGet("produccion-por-prenda")]
+    public async Task<ActionResult<List<DTOs.Reportes.ProduccionPorPrendaDTO>>> GetProduccionPorTipoPrenda(DateOnly? fechaInicio, DateOnly? fechaFin)
+    {
+        try
+        {
+            // Si no se especifican fechas, tomar el último año por defecto
+            var fin = fechaFin ?? DateOnly.FromDateTime(DateTime.Now);
+            var inicio = fechaInicio ?? DateOnly.FromDateTime(DateTime.Now.AddYears(-1));
+
+            // Consultar prendas de proyectos calculados (MaterialCalculado tiene IdProyectoPrenda para prendas calculadas)
+            // O mejor, consultar ProyectoPrenda directamente
+            // Necesitamos saber cuántas prendas se hicieron.
+            // La entidad DetalleTallerProyecto registraba entregas, pero ProyectoPrenda tiene la cantidad total del proyecto.
+            // Si el proyecto está "Terminado" o "En Proceso", se puede contar lo planificado.
+            // El usuario dijo "cantidad tomada de proyectos".
+            
+            var produccion = await _context.ProyectoPrenda
+                .Include(pp => pp.IdProyectoNavigation)
+                .Include(pp => pp.IdTipoPrendaNavigation)
+                .Where(pp => pp.IdProyectoNavigation.FechaInicio >= inicio && 
+                             pp.IdProyectoNavigation.FechaInicio <= fin &&
+                             pp.IdProyectoNavigation.Estado != "Cancelado") // Include all active/planned projects
+                .GroupBy(pp => pp.IdTipoPrendaNavigation.NombrePrenda)
+                .Select(g => new DTOs.Reportes.ProduccionPorPrendaDTO
+                {
+                    NombrePrenda = g.Key,
+                    CantidadProducida = g.Sum(pp => pp.CantidadTotal)
+                })
+                .OrderByDescending(x => x.CantidadProducida)
+                .ToListAsync();
+
+            return Ok(produccion);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new
+            {
+                message = "Error al obtener reporte de producción",
+                error = ex.Message
+            });
+        }
     }
   }
 }

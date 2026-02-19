@@ -1,0 +1,157 @@
+<div class="proveedores-container">
+  <div class="header">
+    <div class="breadcrumb">
+      <span class="breadcrumb-item">Usuarios</span>
+      <span class="breadcrumb-separator">></span>
+      <span class="breadcrumb-item active">Proveedores</span>
+    </div>
+
+    <div class="header-actions">
+      <div class="busqueda">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input
+          type="text"
+          class="input-busqueda"
+          placeholder="Buscar por razon social, cuit, email, telefono, provincia o ciudad..."
+          [(ngModel)]="terminoBusqueda"
+        >
+      </div>
+
+      <button class="btn btn-primary" (click)="abrirFormularioNuevo()">
+        Nuevo Proveedor
+      </button>
+
+      <div class="export-dropdown">
+        <button class="btn btn-secondary" (click)="toggleMenuExportar()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Exportar
+        </button>
+
+        <div class="export-menu" *ngIf="mostrarMenuExportar">
+          <button class="export-option" (click)="exportarPDF()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span>Exportar a PDF</span>
+          </button>
+
+          <button class="export-option" (click)="exportarExcel()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <rect x="8" y="12" width="8" height="6"></rect>
+            </svg>
+            <span>Exportar a Excel</span>
+          </button>
+
+          <button class="export-option" (click)="exportarCSV()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span>Exportar a CSV</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Cargando proveedores...</p>
+  </div>
+
+  <div *ngIf="error && !loading" class="error-state">
+    <h3>Error al cargar los proveedores</h3>
+    <button class="btn btn-secondary" (click)="cargarProveedores()">Reintentar</button>
+  </div>
+
+  <div *ngIf="!loading && !error" class="tabla-wrapper">
+    <table class="tabla-proveedores">
+      <thead>
+        <tr>
+          <th>Razon Social</th>
+          <th>CUIT</th>
+          <th>Provincia</th>
+          <th>Ciudad</th>
+          <th>Telefono</th>
+          <th>Email</th>
+          <th>Fecha Alta</th>
+          <th class="th-acciones">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let proveedor of proveedoresFiltrados" class="fila-proveedor" (click)="abrirDetalle(proveedor)">
+          <td>{{ proveedor.nombreProveedor }}</td>
+          <td>{{ proveedor.cuit || '-' }}</td>
+          <td>{{ proveedor.nombreProvincia || '-' }}</td>
+          <td>{{ proveedor.nombreCiudad || '-' }}</td>
+          <td>{{ proveedor.telefono || '-' }}</td>
+          <td>{{ proveedor.email || '-' }}</td>
+          <td>{{ formatearFecha(proveedor.fechaAlta) }}</td>
+
+
+          <td class="td-acciones">
+            <div class="acciones">
+              <button 
+                class="btn-icon btn-edit" 
+                (click)="abrirFormularioEditar(proveedor, $event)"
+                title="Editar proveedor"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button 
+                class="btn-icon btn-delete" 
+                (click)="eliminarProveedor(proveedor, $event)"
+                title="Eliminar proveedor"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="proveedoresFiltrados.length === 0" class="sin-resultados">
+      <h3>No se encontraron proveedores</h3>
+      <p *ngIf="terminoBusqueda">Intenta con otro termino de busqueda</p>
+      <p *ngIf="!terminoBusqueda">Aun no hay proveedores registrados</p>
+      <button class="btn btn-primary" (click)="abrirFormularioNuevo()">Agregar primer proveedor</button>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && !error && proveedores.length > 0" class="footer-info">
+    <p>Mostrando <strong>{{ proveedoresFiltrados.length }}</strong> de <strong>{{ proveedores.length }}</strong> proveedores</p>
+  </div>
+</div>
+
+<app-proveedor-form
+  *ngIf="mostrarFormulario"
+  [proveedor]="proveedorSeleccionado"
+  (cerrar)="cerrarFormulario()"
+></app-proveedor-form>
+
+<app-proveedor-detalle-modal
+  *ngIf="mostrarDetalle && proveedorDetalle"
+  [proveedor]="proveedorDetalle"
+  (cerrar)="cerrarDetalle()"
+></app-proveedor-detalle-modal>

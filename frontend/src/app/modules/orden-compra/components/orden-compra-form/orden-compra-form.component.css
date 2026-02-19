@@ -9,43 +9,44 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 20px;
+  padding: 14px;
 }
 
 .modal-content {
   background: white;
-  border-radius: 12px;
+  border-radius: 10px;
   width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
+  max-width: min(700px, 92vw);
+  max-height: 82vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 26px rgba(0, 0, 0, 0.16);
+  font-size: 0.86rem;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px;
+  padding: 12px 14px;
   border-bottom: 1px solid #e0e0e0;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 0.98rem;
   color: #1a1a1a;
 }
 
 .btn-close {
   background: none;
   border: none;
-  font-size: 32px;
+  font-size: 24px;
   color: #666;
   cursor: pointer;
   padding: 0;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,28 +60,28 @@
 }
 
 .modal-body {
-  padding: 24px;
+  padding: 12px 14px;
   overflow-y: auto;
   flex: 1;
 }
 
 .form-section {
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
 
 .form-section h3 {
-  font-size: 18px;
+  font-size: 0.86rem;
   color: #333;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #ff6b35;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #ff6b35;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .form-group {
@@ -89,16 +90,16 @@
 }
 
 .form-group-small {
-  max-width: 120px;
+  max-width: 100px;
 }
 
 .form-group-button {
   justify-content: flex-end;
-  padding-top: 24px;
+  padding-top: 20px;
 }
 
 .form-group label {
-  font-size: 14px;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #333;
   margin-bottom: 8px;
@@ -106,10 +107,10 @@
 
 .form-group input,
 .form-group select {
-  padding: 10px 12px;
-  border: 2px solid #e0e0e0;
+  padding: 8px 10px;
+  border: 1px solid #d9d9d9;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 0.78rem;
   transition: all 0.2s;
 }
 
@@ -129,9 +130,9 @@
   background: #ff6b35;
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 8px 12px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 0.74rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -150,7 +151,7 @@
 .tabla-container {
   overflow-x: auto;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .tabla-insumos {
@@ -163,17 +164,17 @@
 }
 
 .tabla-insumos th {
-  padding: 12px;
+  padding: 8px 10px;
   text-align: left;
-  font-size: 14px;
+  font-size: 0.62rem;
   font-weight: 600;
   color: #333;
   border-bottom: 2px solid #e0e0e0;
 }
 
 .tabla-insumos td {
-  padding: 12px;
-  font-size: 14px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
   color: #666;
   border-bottom: 1px solid #f0f0f0;
 }
@@ -183,8 +184,8 @@
 }
 
 .tabla-insumos tfoot td {
-  padding: 16px 12px;
-  font-size: 16px;
+  padding: 10px;
+  font-size: 0.86rem;
   border-top: 2px solid #e0e0e0;
 }
 
@@ -196,9 +197,9 @@
   background: #f44336;
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 0.7rem;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -214,13 +215,14 @@
 
 .empty-state {
   text-align: center;
-  padding: 40px;
+  padding: 20px 12px;
   color: #999;
   font-style: italic;
+  font-size: 0.72rem;
 }
 
 .modal-footer {
-  padding: 20px 24px;
+  padding: 10px 14px;
   border-top: 1px solid #e0e0e0;
   display: flex;
   justify-content: flex-end;
@@ -229,10 +231,10 @@
 
 .btn-secondary,
 .btn-primary {
-  padding: 12px 24px;
+  padding: 8px 12px;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -266,6 +268,11 @@
 }
 
 @media (max-width: 768px) {
+  .modal-content {
+    max-width: 96vw;
+    max-height: 90vh;
+  }
+
   .form-row {
     grid-template-columns: 1fr;
   }

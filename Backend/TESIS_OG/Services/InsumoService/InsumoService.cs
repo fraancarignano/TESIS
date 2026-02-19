@@ -84,6 +84,11 @@ namespace TESIS_OG.Services.InsumoService
       var insumo = await _context.Insumos
           .Include(i => i.IdTipoInsumoNavigation)
           .Include(i => i.IdProveedorNavigation)
+          .Include(i => i.MaterialCalculados)
+            .ThenInclude(mc => mc.IdProyectoNavigation)
+          .Include(i => i.MaterialCalculados)
+            .ThenInclude(mc => mc.IdProyectoPrendaNavigation)
+                .ThenInclude(pp => pp!.IdTipoPrendaNavigation)
           .Where(i => i.IdInsumo == id)
           .Select(i => new InsumoIndexDTO
           {
@@ -98,7 +103,21 @@ namespace TESIS_OG.Services.InsumoService
             IdProveedor = i.IdProveedor,
             NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
             CuitProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.Cuit : null,
-            Estado = i.Estado
+            Estado = i.Estado,
+            ProyectosAsignados = i.MaterialCalculados
+                .Where(mc => mc.IdProyectoNavigation.Estado != "Archivado" && mc.IdProyectoNavigation.Estado != "Cancelado")
+                .Select(mc => new ProyectoAsignadoDTO
+                {
+                    IdProyecto = mc.IdProyecto,
+                    NombreProyecto = mc.IdProyectoNavigation.NombreProyecto,
+                    CodigoProyecto = mc.IdProyectoNavigation.CodigoProyecto ?? "",
+                    Cantidad = mc.CantidadManual ?? mc.CantidadCalculada,
+                    UnidadMedida = mc.UnidadMedida,
+                    TipoCalculo = mc.TipoCalculo,
+                    NombrePrenda = mc.IdProyectoPrendaNavigation != null 
+                        ? mc.IdProyectoPrendaNavigation.IdTipoPrendaNavigation!.NombrePrenda 
+                        : "General"
+                }).ToList()
           })
           .FirstOrDefaultAsync();
 

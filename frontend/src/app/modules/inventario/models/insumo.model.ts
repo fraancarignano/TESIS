@@ -10,16 +10,27 @@ export interface Proveedor {
   cuit?: string;
 }
 
+export interface ProyectoAsignado {
+  idProyecto: number;
+  nombreProyecto: string;
+  codigoProyecto: string;
+  cantidad: number;
+  unidadMedida: string;
+  tipoCalculo: string;
+  nombrePrenda?: string;
+}
+
 export interface Insumo {
   idInsumo?: number;
   nombreInsumo: string;
   idTipoInsumo: number;
-  tipoInsumo?: TipoInsumo; // Para mostrar el nombre
+  tipoInsumo?: TipoInsumo;
   unidadMedida: string;
   stockActual: number;
   stockMinimo?: number;
-  fechaActualizacion: string; // ISO date string
+  fechaActualizacion: string;
   idProveedor?: number;
-  proveedor?: Proveedor; // Para mostrar el nombre
+  proveedor?: Proveedor;
   estado?: string;
+  proyectosAsignados?: ProyectoAsignado[];
 }

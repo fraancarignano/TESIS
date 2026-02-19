@@ -789,6 +789,35 @@
       }
     },
     "/api/Proveedor": {
+      "post": {
+        "tags": [
+          "Proveedor"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorCreateDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorCreateDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorCreateDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
       "get": {
         "tags": [
           "Proveedor"
@@ -802,6 +831,67 @@
     },
     "/api/Proveedor/{id}": {
       "get": {
+        "tags": [
+          "Proveedor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Proveedor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorEditDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorEditDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProveedorEditDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
         "tags": [
           "Proveedor"
         ],
@@ -903,8 +993,45 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       },
@@ -914,7 +1041,33 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -937,7 +1090,44 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       },
@@ -960,24 +1150,61 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProyectoEditarDTO"
+                "$ref": "#/components/schemas/ProyectoActualizarDTO"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProyectoEditarDTO"
+                "$ref": "#/components/schemas/ProyectoActualizarDTO"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/ProyectoEditarDTO"
+                "$ref": "#/components/schemas/ProyectoActualizarDTO"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       },
@@ -999,11 +1226,128 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/Proyecto/buscar": {
+    "/api/Proyecto/estado/{estado}": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Proyecto/cliente/{idCliente}": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
+        "parameters": [
+          {
+            "name": "idCliente",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoDetalleDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Proyecto/calcular-materiales": {
       "post": {
         "tags": [
           "Proyecto"
@@ -1012,29 +1356,134 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProyectoSearchDTO"
+                "$ref": "#/components/schemas/CalculoMaterialesRequestDTO"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProyectoSearchDTO"
+                "$ref": "#/components/schemas/CalculoMaterialesRequestDTO"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/ProyectoSearchDTO"
+                "$ref": "#/components/schemas/CalculoMaterialesRequestDTO"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalculoMaterialesResponseDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalculoMaterialesResponseDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalculoMaterialesResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/Proyecto/{id}/materiales": {
+    "/api/Proyecto/validar-stock": {
+      "post": {
+        "tags": [
+          "Proyecto"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidarStockRequestWrapper"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidarStockRequestWrapper"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidarStockRequestWrapper"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidacionStockDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidacionStockDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidacionStockDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Proyecto/{id}/recalcular-materiales": {
       "post": {
         "tags": [
           "Proyecto"
@@ -1050,34 +1499,175 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/MaterialAsignadoDTO"
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
-            },
-            "text/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/MaterialAsignadoDTO"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/MaterialAsignadoDTO"
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
           }
+        }
+      }
+    },
+    "/api/Proyecto/{id}/prendas": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoPrendaDTO"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoPrendaDTO"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoPrendaDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Proyecto/validar-talles": {
+      "post": {
+        "tags": [
+          "Proyecto"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidarTallesRequestDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidarTallesRequestDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidarTallesRequestDTO"
+              }
+            }
+          }
         },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidarTallesResponseDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidarTallesResponseDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidarTallesResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Proyecto/formulario/inicializacion": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1123,6 +1713,26 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -1165,6 +1775,26 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -1207,28 +1837,26 @@
         "responses": {
           "200": {
             "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Proyecto/estado/{estado}": {
-      "get": {
-        "tags": [
-          "Proyecto"
-        ],
-        "parameters": [
-          {
-            "name": "estado",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
           }
         }
       }
@@ -1271,6 +1899,193 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Proyecto/{id}/validar-edicion": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoValidacionEdicionDTO"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoValidacionEdicionDTO"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProyectoValidacionEdicionDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Proyecto/{id}/historial": {
+      "get": {
+        "tags": [
+          "Proyecto"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanoPagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoHistorialCambioDTO"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoHistorialCambioDTO"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProyectoHistorialCambioDTO"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -1312,6 +2127,62 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Reportes/produccion-por-prenda": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "name": "fechaInicio",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "fechaFin",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProduccionPorPrendaDTO"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProduccionPorPrendaDTO"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProduccionPorPrendaDTO"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1369,9 +2240,9 @@
       "ActualizarAvanceDTO": {
         "type": "object",
         "properties": {
-          "area": {
-            "type": "string",
-            "nullable": true
+          "idArea": {
+            "type": "integer",
+            "format": "int32"
           },
           "porcentaje": {
             "type": "integer",
@@ -1394,6 +2265,107 @@
           "descripcion": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AlertaCalculoDTO": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "nullable": true
+          },
+          "mensaje": {
+            "type": "string",
+            "nullable": true
+          },
+          "idInsumo": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombreInsumo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AlertaStockDTO": {
+        "type": "object",
+        "properties": {
+          "idInsumo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreInsumo": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidadRequerida": {
+            "type": "number",
+            "format": "double"
+          },
+          "stockActual": {
+            "type": "number",
+            "format": "double"
+          },
+          "faltante": {
+            "type": "number",
+            "format": "double"
+          },
+          "unidadMedida": {
+            "type": "string",
+            "nullable": true
+          },
+          "severidad": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CalculoMaterialesRequestDTO": {
+        "required": [
+          "prendas"
+        ],
+        "type": "object",
+        "properties": {
+          "prendas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrendaParaCalculoDTO"
+            }
+          },
+          "materialesManuales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialManualParaCalculoDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CalculoMaterialesResponseDTO": {
+        "type": "object",
+        "properties": {
+          "materialesCalculados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialCalculadoPreviewDTO"
+            },
+            "nullable": true
+          },
+          "alertas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertaCalculoDTO"
+            },
+            "nullable": true
+          },
+          "puedeCrearse": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -1824,25 +2796,153 @@
         },
         "additionalProperties": false
       },
-      "MaterialAsignadoDTO": {
+      "MaterialCalculadoPreviewDTO": {
         "type": "object",
         "properties": {
           "idInsumo": {
             "type": "integer",
             "format": "int32"
           },
-          "idUnidad": {
-            "type": "integer",
-            "format": "int32"
+          "nombreInsumo": {
+            "type": "string",
+            "nullable": true
           },
-          "cantidadAsignada": {
+          "tipoInsumo": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipoCalculo": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidadNecesaria": {
             "type": "number",
             "format": "double"
           },
-          "desperdicioEstimado": {
+          "unidadMedida": {
+            "type": "string",
+            "nullable": true
+          },
+          "stockActual": {
+            "type": "number",
+            "format": "double"
+          },
+          "tieneStockSuficiente": {
+            "type": "boolean"
+          },
+          "faltante": {
             "type": "number",
             "format": "double",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MaterialCalculadoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "idMaterialCalculado": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idInsumo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreInsumo": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipoInsumo": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipoCalculo": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidadCalculada": {
+            "type": "number",
+            "format": "double"
+          },
+          "cantidadManual": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "cantidadFinal": {
+            "type": "number",
+            "format": "double"
+          },
+          "unidadMedida": {
+            "type": "string",
+            "nullable": true
+          },
+          "stockActual": {
+            "type": "number",
+            "format": "double"
+          },
+          "tieneStock": {
+            "type": "boolean"
+          },
+          "observaciones": {
+            "type": "string",
+            "nullable": true
+          },
+          "idProyectoPrenda": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "nombrePrenda": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MaterialManualDTO": {
+        "required": [
+          "cantidad",
+          "idInsumo",
+          "unidadMedida"
+        ],
+        "type": "object",
+        "properties": {
+          "idInsumo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidad": {
+            "maximum": 1.7976931348623157E+308,
+            "minimum": 0.01,
+            "type": "number",
+            "format": "double"
+          },
+          "unidadMedida": {
+            "maxLength": 10,
+            "minLength": 0,
+            "type": "string"
+          },
+          "observaciones": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MaterialManualParaCalculoDTO": {
+        "type": "object",
+        "properties": {
+          "idInsumo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidad": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -1961,10 +3061,221 @@
         },
         "additionalProperties": false
       },
-      "ProyectoCrearDTO": {
+      "PrendaParaCalculoDTO": {
         "type": "object",
         "properties": {
-          "idCliente": {
+          "idTipoPrenda": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idTipoInsumoMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidadTotal": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PrendaTalleCrearDTO": {
+        "required": [
+          "cantidad",
+          "idTalle"
+        ],
+        "type": "object",
+        "properties": {
+          "idTalle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidad": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PrendaTalleDTO": {
+        "type": "object",
+        "properties": {
+          "idPrendaTalle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idTalle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreTalle": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidad": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "ProduccionPorPrendaDTO": {
+        "type": "object",
+        "properties": {
+          "nombrePrenda": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidadProducida": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProveedorCreateDTO": {
+        "required": [
+          "cuit",
+          "nombreProveedor"
+        ],
+        "type": "object",
+        "properties": {
+          "nombreProveedor": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "cuit": {
+            "maxLength": 15,
+            "minLength": 0,
+            "type": "string"
+          },
+          "telefono": {
+            "maxLength": 30,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "direccion": {
+            "maxLength": 150,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "idCiudad": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "idProvincia": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "observaciones": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProveedorEditDTO": {
+        "required": [
+          "cuit",
+          "nombreProveedor"
+        ],
+        "type": "object",
+        "properties": {
+          "nombreProveedor": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "cuit": {
+            "maxLength": 15,
+            "minLength": 0,
+            "type": "string"
+          },
+          "telefono": {
+            "maxLength": 30,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "direccion": {
+            "maxLength": 150,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "idCiudad": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "idProvincia": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "observaciones": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProyectoActualizarDTO": {
+        "type": "object",
+        "properties": {
+          "idProyecto": {
             "type": "integer",
             "format": "int32"
           },
@@ -1972,7 +3283,123 @@
             "type": "string",
             "nullable": true
           },
-          "tipoPrenda": {
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          },
+          "prioridad": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          },
+          "fechaFin": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "idUsuarioEncargado": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "materialesManualesActualizados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialManualDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProyectoCrearDTO": {
+        "required": [
+          "fechaInicio",
+          "idCliente",
+          "nombreProyecto",
+          "prendas"
+        ],
+        "type": "object",
+        "properties": {
+          "idCliente": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreProyecto": {
+            "maxLength": 80,
+            "minLength": 0,
+            "type": "string"
+          },
+          "descripcion": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "prioridad": {
+            "maxLength": 10,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          },
+          "fechaInicio": {
+            "type": "string",
+            "format": "date"
+          },
+          "fechaFin": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "idUsuarioEncargado": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "prendas": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProyectoPrendaCrearDTO"
+            }
+          },
+          "materialesManuales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialManualDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProyectoDetalleDTO": {
+        "type": "object",
+        "properties": {
+          "idProyecto": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "codigoProyecto": {
+            "type": "string",
+            "nullable": true
+          },
+          "idCliente": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombreCliente": {
+            "type": "string",
+            "nullable": true
+          },
+          "nombreProyecto": {
             "type": "string",
             "nullable": true
           },
@@ -2002,63 +3429,6 @@
             "format": "int32",
             "nullable": true
           },
-          "idUsuarioEncargado": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "tipoEstacion": {
-            "type": "string",
-            "nullable": true
-          },
-          "materiales": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MaterialAsignadoDTO"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "ProyectoEditarDTO": {
-        "type": "object",
-        "properties": {
-          "nombreProyecto": {
-            "type": "string",
-            "nullable": true
-          },
-          "tipoPrenda": {
-            "type": "string",
-            "nullable": true
-          },
-          "descripcion": {
-            "type": "string",
-            "nullable": true
-          },
-          "prioridad": {
-            "type": "string",
-            "nullable": true
-          },
-          "estado": {
-            "type": "string",
-            "nullable": true
-          },
-          "fechaInicio": {
-            "type": "string",
-            "format": "date",
-            "nullable": true
-          },
-          "fechaFin": {
-            "type": "string",
-            "format": "date",
-            "nullable": true
-          },
-          "cantidadTotal": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "cantidadProducida": {
             "type": "integer",
             "format": "int32",
@@ -2069,73 +3439,234 @@
             "format": "int32",
             "nullable": true
           },
-          "tipoEstacion": {
+          "nombreUsuarioEncargado": {
             "type": "string",
             "nullable": true
           },
-          "areaActual": {
-            "type": "string",
+          "esMultiPrenda": {
+            "type": "boolean"
+          },
+          "prendas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProyectoPrendaDTO"
+            },
             "nullable": true
           },
-          "avanceGerenciaAdmin": {
-            "type": "integer",
-            "format": "int32",
+          "materiales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialCalculadoResponseDTO"
+            },
             "nullable": true
           },
-          "avanceDiseñoDesarrollo": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "avanceControlCalidad": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "avanceEtiquetadoEmpaquetado": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "avanceDepositoLogistica": {
-            "type": "integer",
-            "format": "int32",
+          "alertasStock": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "nullable": true
           }
         },
         "additionalProperties": false
       },
-      "ProyectoSearchDTO": {
+      "ProyectoHistorialCambioDTO": {
         "type": "object",
         "properties": {
+          "idAuditoria": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idProyecto": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "codigoProyecto": {
+            "type": "string",
+            "nullable": true
+          },
           "nombreProyecto": {
             "type": "string",
             "nullable": true
           },
-          "idCliente": {
+          "idUsuario": {
             "type": "integer",
             "format": "int32",
             "nullable": true
           },
-          "estado": {
+          "usuarioModificador": {
             "type": "string",
             "nullable": true
           },
-          "prioridad": {
+          "fechaHoraCambio": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tipoOperacion": {
             "type": "string",
             "nullable": true
           },
-          "fechaDesde": {
+          "estadoAnterior": {
             "type": "string",
-            "format": "date",
             "nullable": true
           },
-          "fechaHasta": {
+          "estadoNuevo": {
             "type": "string",
-            "format": "date",
             "nullable": true
           },
-          "tipoPrenda": {
+          "campoModificado": {
+            "type": "string",
+            "nullable": true
+          },
+          "valorAnterior": {
+            "type": "string",
+            "nullable": true
+          },
+          "valorNuevo": {
+            "type": "string",
+            "nullable": true
+          },
+          "descripcion": {
+            "type": "string",
+            "nullable": true
+          },
+          "direccionIP": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProyectoPrendaCrearDTO": {
+        "required": [
+          "cantidadTotal",
+          "idTipoInsumoMaterial",
+          "idTipoPrenda",
+          "talles"
+        ],
+        "type": "object",
+        "properties": {
+          "idTipoPrenda": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idTipoInsumoMaterial": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidadTotal": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "tieneBordado": {
+            "type": "boolean"
+          },
+          "tieneEstampado": {
+            "type": "boolean"
+          },
+          "descripcionDiseño": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string",
+            "nullable": true
+          },
+          "orden": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "talles": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrendaTalleCrearDTO"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProyectoPrendaDTO": {
+        "type": "object",
+        "properties": {
+          "idProyectoPrenda": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idTipoPrenda": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombrePrenda": {
+            "type": "string",
+            "nullable": true
+          },
+          "idTipoInsumoMaterial": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "nombreMaterial": {
+            "type": "string",
+            "nullable": true
+          },
+          "cantidadTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tieneBordado": {
+            "type": "boolean"
+          },
+          "tieneEstampado": {
+            "type": "boolean"
+          },
+          "descripcionDiseño": {
+            "type": "string",
+            "nullable": true
+          },
+          "talles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PrendaTalleDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProyectoValidacionEdicionDTO": {
+        "type": "object",
+        "properties": {
+          "idProyecto": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "estadoActual": {
+            "type": "string",
+            "nullable": true
+          },
+          "esEditable": {
+            "type": "boolean"
+          },
+          "permiteEdicionCompleta": {
+            "type": "boolean"
+          },
+          "camposEditables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "camposBloqueados": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "mensaje": {
             "type": "string",
             "nullable": true
           }
@@ -2210,6 +3741,20 @@
         },
         "additionalProperties": false
       },
+      "TalleValidacionDTO": {
+        "type": "object",
+        "properties": {
+          "idTalle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cantidad": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "UsuarioCreateDto": {
         "required": [
           "apellidoUsuario",
@@ -2243,6 +3788,88 @@
           "nombreRol": {
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidacionStockDTO": {
+        "type": "object",
+        "properties": {
+          "tieneStockSuficiente": {
+            "type": "boolean"
+          },
+          "alertas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertaStockDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidarStockRequestWrapper": {
+        "type": "object",
+        "properties": {
+          "prendas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProyectoPrendaCrearDTO"
+            },
+            "nullable": true
+          },
+          "materialesManuales": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialManualDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidarTallesRequestDTO": {
+        "required": [
+          "cantidadTotal",
+          "talles"
+        ],
+        "type": "object",
+        "properties": {
+          "cantidadTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "talles": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TalleValidacionDTO"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidarTallesResponseDTO": {
+        "type": "object",
+        "properties": {
+          "esValido": {
+            "type": "boolean"
+          },
+          "cantidadTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sumaTalles": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "diferencia": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mensaje": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

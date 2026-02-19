@@ -3,14 +3,15 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { OrdenCompra, NuevaOrdenCompra, Proveedor, Insumo } from '../models/orden-compra.model';
 import { OrdenCompraReceiveDTO } from '../models/orden-compra-receive.model';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrdenCompraService {
-  private apiUrl = 'https://localhost:7163/api/OrdenCompra';
-  private proveedorUrl = 'https://localhost:7163/api/Proveedor';
-  private insumoUrl = 'https://localhost:7163/api/Insumo';
+  private apiUrl = `${environment.apiUrl}/OrdenCompra`;
+  private proveedorUrl = `${environment.apiUrl}/Proveedor`;
+  private insumoUrl = `${environment.apiUrl}/Insumo`;
 
   constructor(private http: HttpClient) {}
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 
 
@@ -13,7 +14,7 @@ export interface Provincia {
   providedIn: 'root'
 })
 export class ProvinciaService {
-  private apiUrl = 'https://localhost:7163/api/Provincia';
+  private apiUrl = `${environment.apiUrl}/Provincia`;
 
   constructor(private http: HttpClient) {}
 

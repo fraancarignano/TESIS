@@ -1,0 +1,130 @@
+<div class="modal-overlay" (click)="cancelar()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-content">
+        <div class="icon-badge">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+        </div>
+        <div class="header-text">
+          <h2>{{ titulo }}</h2>
+          <p class="subtitle">{{ esEdicion ? 'Actualiza los datos del proveedor' : 'Ingresa los datos del nuevo proveedor' }}</p>
+        </div>
+      </div>
+      <button class="btn-close" (click)="cancelar()" aria-label="Cerrar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="formulario" (ngSubmit)="guardar()">
+        <div class="form-section">
+          <h3 class="section-title">Datos fiscales</h3>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="nombreProveedor">Razon social <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <input type="text" id="nombreProveedor" formControlName="nombreProveedor" placeholder="Empresa S.A." [class.error]="tieneError('nombreProveedor')">
+              </div>
+              <span class="error-message" *ngIf="tieneError('nombreProveedor')">{{ obtenerMensajeError('nombreProveedor') }}</span>
+            </div>
+
+            <div class="form-field">
+              <label for="cuit">CUIT <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <input type="text" id="cuit" formControlName="cuit" (input)="formatearCuit()" placeholder="30-12345678-9" maxlength="13" [class.error]="tieneError('cuit')">
+              </div>
+              <span class="error-message" *ngIf="tieneError('cuit')">{{ obtenerMensajeError('cuit') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Contacto</h3>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="telefono">Telefono</label>
+              <div class="input-wrapper">
+                <input type="tel" id="telefono" formControlName="telefono" placeholder="+54 351 123-4567">
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="email">Email</label>
+              <div class="input-wrapper">
+                <input type="email" id="email" formControlName="email" placeholder="contacto@empresa.com" [class.error]="tieneError('email')">
+              </div>
+              <span class="error-message" *ngIf="tieneError('email')">{{ obtenerMensajeError('email') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Ubicacion</h3>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="idProvincia">Provincia</label>
+              <div class="input-wrapper">
+                <select id="idProvincia" formControlName="idProvincia">
+                  <option [ngValue]="null">Seleccione provincia</option>
+                  <option *ngFor="let provincia of provincias" [ngValue]="provincia.idProvincia">
+                    {{ provincia.nombre }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="idCiudad">Ciudad</label>
+              <div class="input-wrapper">
+                <select id="idCiudad" formControlName="idCiudad" [disabled]="!formulario.get('idProvincia')?.value">
+                  <option [ngValue]="null">Seleccione ciudad</option>
+                  <option *ngFor="let ciudad of ciudades" [ngValue]="ciudad.idCiudad">
+                    {{ ciudad.nombre }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+
+          <div class="form-row">
+            <div class="form-field full-width">
+              <label for="direccion">Direccion</label>
+              <div class="input-wrapper">
+                <input type="text" id="direccion" formControlName="direccion" placeholder="Calle 123, Ciudad">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Informacion adicional</h3>
+          <div class="form-row">
+            <div class="form-field full-width">
+              <label for="observaciones">Observaciones</label>
+              <div class="input-wrapper">
+                <textarea id="observaciones" formControlName="observaciones" rows="4" placeholder="Notas sobre este proveedor..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cancelar()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="formulario.invalid">
+            {{ esEdicion ? 'Actualizar proveedor' : 'Registrar proveedor' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

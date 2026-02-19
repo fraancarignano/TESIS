@@ -59,6 +59,8 @@ obj/
 
 # Visual Studio cache
 .vs/
+bin/
+obj/
 *.user
 *.userosscache
 *.suo

@@ -1,18 +1,19 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, map } from 'rxjs/operators';
 import { Insumo, TipoInsumo, Proveedor } from '../models/insumo.model';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InsumosService {
-  private apiUrl = 'https://localhost:7163/api/Insumo';
-  private tipoInsumoUrl = 'https://localhost:7163/api/TipoInsumo';
-  private proveedorUrl = 'https://localhost:7163/api/Proveedor';
+  private apiUrl = `${environment.apiUrl}/Insumo`;
+  private tipoInsumoUrl = `${environment.apiUrl}/TipoInsumo`;
+  private proveedorUrl = `${environment.apiUrl}/Proveedor`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Obtener todos los insumos
@@ -29,12 +30,21 @@ export class InsumosService {
   /**
    * Obtener insumo por ID
    */
-  getInsumoPorId(id: number): Observable<Insumo> {
+  getInsumoById(id: number): Observable<Insumo> {
     return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
       tap(data => console.log('Insumo obtenido:', data)),
+      map(data => {
+        const insumo = this.mapToFrontend(data);
+        // Mapear proyectos asignados si existen
+        if (data.proyectosAsignados) {
+          insumo.proyectosAsignados = data.proyectosAsignados;
+        }
+        return insumo;
+      }),
       catchError(this.handleError)
     );
   }
+
 
   /**
    * Obtener tipos de insumo
@@ -155,12 +165,12 @@ export class InsumosService {
    */
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Ocurrió un error desconocido';
-    
+
     if (error.error instanceof ErrorEvent) {
       errorMessage = `Error: ${error.error.message}`;
     } else {
       errorMessage = `Código: ${error.status}\nMensaje: ${error.message}`;
-      
+
       switch (error.status) {
         case 404:
           errorMessage = 'Recurso no encontrado';
@@ -169,11 +179,11 @@ export class InsumosService {
           errorMessage = 'Error interno del servidor';
           break;
         case 0:
-          errorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo en https://localhost:7163';
+          errorMessage = `No se pudo conectar con el servidor. Verifica que el backend esté corriendo en ${environment.apiBaseUrl}`;
           break;
       }
     }
-    
+
     console.error('Error en InsumosService:', errorMessage, error);
     return throwError(() => new Error(errorMessage));
   }

@@ -5,7 +5,7 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/login', // ✅ Redirigir a clientes por defecto
+    redirectTo: '/login', // ? Redirigir a clientes por defecto
     pathMatch: 'full'
   },
   {
@@ -15,41 +15,56 @@ export const routes: Routes = [
   {
     path: 'clientes',
     loadComponent: () => import('./modules/clientes/components/clientes.component').then(m => m.ClientesComponent),
-    canActivate: [authGuard] // ✅ Protege la ruta
+    canActivate: [authGuard] // ? Protege la ruta
   },
   {
     path: 'proyectos',
     loadComponent: () => import('./modules/proyectos/components/proyectos.component').then(m => m.ProyectosComponent),
-    canActivate: [authGuard] // ✅ Protege la ruta
+    canActivate: [authGuard] // ? Protege la ruta
   },
   {
     path: 'proyectos/crear',
-    loadComponent: () => import('./modules/proyectos/components/nuevo-proyecto-modal/proyecto-form.component').then(m => m.ProyectoFormComponent),
-    canActivate: [authGuard] 
+    loadComponent: () => import('./modules/proyectos/components/nuevo-proyecto-modal/proyecto-form.component').then(m => m.ProyectoFormNuevoComponent),
+    canActivate: [authGuard]
   },
   {
     path: 'proyectos/lista',
     loadComponent: () => import('./modules/proyectos/components/proyecto-lista/proyecto-list.component').then(m => m.ProyectoListComponent),
-    canActivate: [authGuard] 
+    canActivate: [authGuard]
   },
   {
-  path: 'inventario',
-  loadComponent: () => import('./modules/inventario/components/inventario.component').then(m => m.InventarioComponent),
-  canActivate: [authGuard]
+    path: 'inventario',
+    loadComponent: () => import('./modules/inventario/components/inventario.component').then(m => m.InventarioComponent),
+    canActivate: [authGuard]
   },
   {
-  path: 'reportes/inventario',
-  loadComponent: () => import('./modules/reportes/Inventario/reporte-inventario-critico.component'),
-  canActivate: [authGuard]
-},
-{
+    path: 'reportes/inventario',
+    loadComponent: () => import('./modules/reportes/Inventario/reporte-inventario-critico.component'),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'reportes/proyectos',
+    loadComponent: () => import('./modules/reportes/Proyectos/reporte-proyectos.component').then(m => m.ReporteProyectosComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'ordenes',
     loadComponent: () => import('./modules/orden-compra/components/orden-compra.component').then(m => m.OrdenCompraComponent),
     canActivate: [authGuard]
   },
   {
+    path: 'usuarios',
+    redirectTo: '/usuarios/proveedores',
+    pathMatch: 'full'
+  },
+  {
+    path: 'usuarios/proveedores',
+    loadComponent: () => import('./modules/proveedores/components/proveedores.component').then(m => m.ProveedoresComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: '**',
-    redirectTo: '/proyectos' 
+    redirectTo: '/proyectos'
   }
 
 ];

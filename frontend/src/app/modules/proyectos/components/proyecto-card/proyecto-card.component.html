@@ -4,7 +4,7 @@
     <div class="codigo-prioridad">
       <span class="proyecto-codigo">{{ proyecto.codigoProyecto || 'Sin código' }}</span>
       <span class="badge-prioridad" [ngClass]="clasePrioridad">
-        {{ proyecto.prioridad }}
+        {{ proyecto.prioridad | titlecase }}
       </span>
     </div>
     <div class="cliente-nombre">{{ proyecto.clienteNombre }}</div>
@@ -24,37 +24,36 @@
     <div class="barra-progreso">
       <div class="barra-fill" 
            [style.width.%]="progresoGeneral"
-           [style.background-color]="colorProgreso">
+           [class.completa]="progresoGeneral === 100"
+           [class.en-progreso]="progresoGeneral > 0 && progresoGeneral < 100">
       </div>
     </div>
   </div>
 
-  <!-- ÁREA ACTUAL -->
-  <div class="area-actual" *ngIf="areaActual">
-    <div class="area-badge" [style.background-color]="areaActual.color + '20'" 
-                            [style.color]="areaActual.color">
-      <i class="fas" [ngClass]="areaActual.icono"></i>
-      <span>{{ areaActual.nombreCorto }}</span>
-    </div>
-  </div>
-
-  <!-- MINI ÁREAS (visible en hover) -->
-  <div class="mini-areas">
-    <div class="mini-area" 
+  <!-- ESTADOS DE ÁREAS -->
+  <div class="areas-estados">
+    <div class="area-estado" 
          *ngFor="let area of AREAS"
          [class.completa]="estaCompleta(area)"
-         [class.en-progreso]="enProgreso(area)"
-         [title]="area.nombre + ': ' + getAvanceArea(area.campo) + '%'">
-      <div class="mini-area-icon" [style.background-color]="area.color">
+         [class.pendiente]="!estaCompleta(area) && !enProgreso(area)"
+         [class.en-progreso]="enProgreso(area)">
+      <div class="area-icon" [style.background-color]="area.color">
         <i class="fas" [ngClass]="area.icono"></i>
       </div>
-      <div class="mini-area-barra">
-        <div class="mini-barra-fill" 
-             [style.width.%]="getAvanceArea(area.campo)"
-             [style.background-color]="area.color">
-        </div>
+      <div class="area-info">
+        <span class="area-nombre">{{ area.nombreCorto }}</span>
+        <span class="area-badge" 
+              [ngClass]="{
+                'badge-completado': estaCompleta(area),
+                'badge-en-progreso': enProgreso(area),
+                'badge-pendiente': !estaCompleta(area) && !enProgreso(area)
+              }">
+          {{ estaCompleta(area) ? 'Completado' : (enProgreso(area) ? 'En Progreso' : 'Pendiente') }}
+        </span>
       </div>
-      <span class="mini-area-porcentaje">{{ getAvanceArea(area.campo) }}%</span>
+      <div class="area-porcentaje" *ngIf="enProgreso(area)">
+        {{ getAvanceArea(area.campo) }}%
+      </div>
     </div>
   </div>
 
@@ -66,7 +65,11 @@
     </div>
     <div class="info-item" *ngIf="proyecto.fechaFin">
       <i class="fas fa-calendar"></i>
-      <span>{{ proyecto.fechaFin | date:'dd/MM' }}</span>
+      <span>{{ proyecto.fechaFin | date:'dd/MM/yyyy' }}</span>
+    </div>
+    <div class="info-item">
+      <i class="fas fa-tasks"></i>
+      <span>{{ resumenAreas.completadas }}/{{ AREAS.length }} áreas</span>
     </div>
   </div>
 

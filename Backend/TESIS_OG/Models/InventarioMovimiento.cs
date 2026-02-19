@@ -28,6 +28,4 @@ public partial class InventarioMovimiento
     public virtual OrdenCompra? IdOrdenCompraNavigation { get; set; }
 
     public virtual Usuario? IdUsuarioNavigation { get; set; }
-
-    
 }
