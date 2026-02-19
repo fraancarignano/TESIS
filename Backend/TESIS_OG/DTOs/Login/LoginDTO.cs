@@ -3,6 +3,6 @@
     public class LoginDTO
     {
         public string NombreUsuario { get; set; } = null!;
-        public string Contraseña { get; set; } = null!;
+        public string Contrasena { get; set; } = null!;
     }
 }
