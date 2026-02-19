@@ -40,7 +40,7 @@ namespace TESIS_OG.DTOs.Proyectos
         [StringLength(80, ErrorMessage = "El nombre no puede exceder 80 caracteres")]
         public string NombreProyecto { get; set; } = null!;
 
-        [StringLength(200, ErrorMessage = "La descripciÛn no puede exceder 200 caracteres")]
+        [StringLength(200, ErrorMessage = "La descripci√≥n no puede exceder 200 caracteres")]
         public string? Descripcion { get; set; }
 
         [StringLength(10, ErrorMessage = "La prioridad debe ser: alta, media o baja")]
@@ -51,7 +51,7 @@ namespace TESIS_OG.DTOs.Proyectos
         [Required(ErrorMessage = "La fecha de inicio es obligatoria")]
         public DateOnly FechaInicio { get; set; }
 
-        public DateOnly? FechaFin { get; set; } // Fecha lÌmite
+        public DateOnly? FechaFin { get; set; } // Fecha l√≠mite
 
         public int? IdUsuarioEncargado { get; set; }
 
@@ -75,7 +75,7 @@ namespace TESIS_OG.DTOs.Proyectos
         public int IdTipoPrenda { get; set; }
 
         [Required(ErrorMessage = "Debe seleccionar el material")]
-        public int IdTipoInsumoMaterial { get; set; } // Tipo de tela (AlgodÛn, Lycra, etc)
+        public int IdTipoInsumoMaterial { get; set; } // Tipo de tela (Algod√≥n, Lycra, etc)
 
         [Required(ErrorMessage = "Debe especificar la cantidad total")]
         [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
@@ -85,19 +85,19 @@ namespace TESIS_OG.DTOs.Proyectos
 
         public bool TieneEstampado { get; set; } = false;
 
-        [StringLength(500, ErrorMessage = "La descripciÛn del diseÒo no puede exceder 500 caracteres")]
-        public string? DescripcionDiseÒo { get; set; }
+        [StringLength(500, ErrorMessage = "La descripci√≥n del diseno no puede exceder 500 caracteres")]
+        public string? DescripcionDiseno { get; set; }
 
         public int? Orden { get; set; }
 
-        // ========== DISTRIBUCI”N POR TALLES ==========
-        [Required(ErrorMessage = "Debe especificar la distribuciÛn por talles")]
+        // ========== DISTRIBUCI√ìN POR TALLES ==========
+        [Required(ErrorMessage = "Debe especificar la distribuci√≥n por talles")]
         [MinLength(1, ErrorMessage = "Debe seleccionar al menos un talle")]
         public List<PrendaTalleCrearDTO> Talles { get; set; } = new();
     }
 
     // ===================================================
-    // DTO PARA DISTRIBUCI”N POR TALLES
+    // DTO PARA DISTRIBUCI√ìN POR TALLES
     // ===================================================
 
     public class PrendaTalleCrearDTO
@@ -177,9 +177,9 @@ namespace TESIS_OG.DTOs.Proyectos
         public int CantidadTotal { get; set; }
         public bool TieneBordado { get; set; }
         public bool TieneEstampado { get; set; }
-        public string? DescripcionDiseÒo { get; set; }
+        public string? DescripcionDiseno { get; set; }
 
-        // DistribuciÛn por talles
+        // Distribuci√≥n por talles
         public List<PrendaTalleDTO> Talles { get; set; } = new();
     }
 
@@ -216,11 +216,11 @@ namespace TESIS_OG.DTOs.Proyectos
 
         // Info adicional
         public int? IdProyectoPrenda { get; set; }
-        public string? NombrePrenda { get; set; } // Si es material especÌfico de una prenda
+        public string? NombrePrenda { get; set; } // Si es material espec√≠fico de una prenda
     }
 
     // ===================================================
-    // DTOs PARA CAT¡LOGOS (SELECT DROPDOWNS)
+    // DTOs PARA CAT√ÅLOGOS (SELECT DROPDOWNS)
     // ===================================================
 
     public class TipoPrendaDTO
@@ -237,7 +237,7 @@ namespace TESIS_OG.DTOs.Proyectos
         public int IdTalle { get; set; }
         public string NombreTalle { get; set; } = null!;
         public int Orden { get; set; }
-        public string? Categoria { get; set; } // Adulto, NiÒo, BebÈ
+        public string? Categoria { get; set; } // Adulto, Nino, Beb√©
         public string? Estado { get; set; }
     }
 
@@ -286,7 +286,7 @@ namespace TESIS_OG.DTOs.Proyectos
     }
 
     // ===================================================
-    // DTO PARA VALIDACI”N DE STOCK ANTES DE CREAR
+    // DTO PARA VALIDACI√ìN DE STOCK ANTES DE CREAR
     // ===================================================
 
     public class ValidacionStockDTO
