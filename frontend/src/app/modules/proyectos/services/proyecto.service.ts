@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 import { 
   Proyecto, 
   ProyectoVista,
@@ -21,7 +22,7 @@ import {
   providedIn: 'root'
 })
 export class ProyectosService {
-  private apiUrl = 'https://localhost:7163/api/Proyecto';
+  private apiUrl = `${environment.apiUrl}/Proyecto`;
   
   private proyectosSubject = new BehaviorSubject<Proyecto[]>([]);
   public proyectos$ = this.proyectosSubject.asObservable();

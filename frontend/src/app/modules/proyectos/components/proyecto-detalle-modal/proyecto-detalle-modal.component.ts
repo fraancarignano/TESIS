@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ProyectoVista } from '../../models/proyecto.model';
 import { ProyectosService } from '../../services/proyecto.service';
 import { AlertasService } from '../../../../core/services/alertas';
+import { environment } from '../../../../../environments/environment';
 import {
   AREAS_PRODUCCION,
   AreaProduccion,
@@ -134,7 +135,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
         campo: this.areaSeleccionada.campo
       },
       dto: dto,
-      endpoint: `api/Proyecto/${this.proyecto.idProyecto}/avance`
+      endpoint: `${environment.apiUrl}/Proyecto/${this.proyecto.idProyecto}/avance`
     });
 
     this.proyectosService.actualizarAvance(this.proyecto.idProyecto, dto).subscribe({

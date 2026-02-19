@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 
 // Interfaz para el resumen del reporte
 export interface ResumenInventarioCritico {
@@ -60,7 +61,7 @@ export interface ProduccionPorPrenda {
   providedIn: 'root'
 })
 export class ReportesService {
-  public apiUrl = 'https://localhost:7163/api/Reportes';
+  public apiUrl = `${environment.apiUrl}/Reportes`;
 
   constructor(private http: HttpClient) { }
 

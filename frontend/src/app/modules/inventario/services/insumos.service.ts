@@ -3,14 +3,15 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap, map } from 'rxjs/operators';
 import { Insumo, TipoInsumo, Proveedor } from '../models/insumo.model';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InsumosService {
-  private apiUrl = 'https://localhost:7163/api/Insumo';
-  private tipoInsumoUrl = 'https://localhost:7163/api/TipoInsumo';
-  private proveedorUrl = 'https://localhost:7163/api/Proveedor';
+  private apiUrl = `${environment.apiUrl}/Insumo`;
+  private tipoInsumoUrl = `${environment.apiUrl}/TipoInsumo`;
+  private proveedorUrl = `${environment.apiUrl}/Proveedor`;
 
   constructor(private http: HttpClient) { }
 
@@ -178,7 +179,7 @@ export class InsumosService {
           errorMessage = 'Error interno del servidor';
           break;
         case 0:
-          errorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo en https://localhost:7163';
+          errorMessage = `No se pudo conectar con el servidor. Verifica que el backend esté corriendo en ${environment.apiBaseUrl}`;
           break;
       }
     }

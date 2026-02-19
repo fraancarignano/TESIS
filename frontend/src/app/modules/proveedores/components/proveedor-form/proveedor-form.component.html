@@ -64,6 +64,37 @@
               <span class="error-message" *ngIf="tieneError('email')">{{ obtenerMensajeError('email') }}</span>
             </div>
           </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Ubicacion</h3>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label for="idProvincia">Provincia</label>
+              <div class="input-wrapper">
+                <select id="idProvincia" formControlName="idProvincia">
+                  <option [ngValue]="null">Seleccione provincia</option>
+                  <option *ngFor="let provincia of provincias" [ngValue]="provincia.idProvincia">
+                    {{ provincia.nombre }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="idCiudad">Ciudad</label>
+              <div class="input-wrapper">
+                <select id="idCiudad" formControlName="idCiudad" [disabled]="!formulario.get('idProvincia')?.value">
+                  <option [ngValue]="null">Seleccione ciudad</option>
+                  <option *ngFor="let ciudad of ciudades" [ngValue]="ciudad.idCiudad">
+                    {{ ciudad.nombre }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
 
           <div class="form-row">
             <div class="form-field full-width">

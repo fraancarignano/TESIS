@@ -2,13 +2,16 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
-import { Proveedor, NuevoProveedor, ActualizarProveedor } from '../models/proveedor.model';
+import { Proveedor, NuevoProveedor, ActualizarProveedor, Provincia, Ciudad } from '../models/proveedor.model';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProveedoresService {
-  private apiUrl = 'https://localhost:7163/api/Proveedor';
+  private apiUrl = `${environment.apiUrl}/Proveedor`;
+  private provinciaUrl = `${environment.apiUrl}/Provincia`;
+  private ciudadUrl = `${environment.apiUrl}/Ciudad`;
 
   constructor(private http: HttpClient) {}
 
@@ -48,6 +51,20 @@ export class ProveedoresService {
     );
   }
 
+  obtenerProvincias(): Observable<Provincia[]> {
+    return this.http.get<Provincia[]>(this.provinciaUrl).pipe(
+      tap(data => console.log('Provincias obtenidas:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  obtenerCiudadesPorProvincia(idProvincia: number): Observable<Ciudad[]> {
+    return this.http.get<Ciudad[]>(`${this.ciudadUrl}/provincia/${idProvincia}`).pipe(
+      tap(data => console.log('Ciudades obtenidas:', data)),
+      catchError(this.handleError)
+    );
+  }
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Ocurrio un error desconocido';
 
@@ -64,7 +81,7 @@ export class ProveedoresService {
           errorMessage = 'Error interno del servidor';
           break;
         case 0:
-          errorMessage = 'No se pudo conectar con el servidor. Verifica que el backend este corriendo en https://localhost:7163';
+          errorMessage = `No se pudo conectar con el servidor. Verifica que el backend este corriendo en ${environment.apiBaseUrl}`;
           break;
       }
     }

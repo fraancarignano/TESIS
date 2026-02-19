@@ -60,6 +60,14 @@ import { Proveedor } from './models/proveedor.model';
                 <div class="valor">{{ proveedor?.direccion || '-' }}</div>
               </div>
               <div class="campo">
+                <label>Provincia</label>
+                <div class="valor">{{ proveedor?.nombreProvincia || '-' }}</div>
+              </div>
+              <div class="campo">
+                <label>Ciudad</label>
+                <div class="valor">{{ proveedor?.nombreCiudad || '-' }}</div>
+              </div>
+              <div class="campo">
                 <label>Fecha alta</label>
                 <div class="valor">{{ formatearFecha(proveedor?.fechaAlta) }}</div>
               </div>

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, Subject } from 'rxjs';
 import { map, catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface Ciudad {
   id: string;
@@ -16,7 +17,7 @@ export interface Ciudad {
   providedIn: 'root'
 })
 export class GeoService {
-  private apiGeoUrl = 'https://apis.datos.gob.ar/georef/api';
+  private apiGeoUrl = environment.geoApiUrl;
   private busquedaSubject = new Subject<string>();
 
   constructor(private http: HttpClient) {}

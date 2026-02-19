@@ -6,6 +6,7 @@ import { Proveedor } from '../models/proveedor.model';
 import { ProveedorFormComponent } from './proveedor-form/proveedor-form.component';
 import { ProveedorDetalleModalComponent } from '../proveedor-detalle-modal.component';
 import { AlertasService } from '../../../core/services/alertas';
+import { ExportService } from '../../../core/services/export.service';
 
 @Component({
   selector: 'app-proveedores',
@@ -28,10 +29,12 @@ export class ProveedoresComponent implements OnInit {
   terminoBusqueda = '';
   loading = false;
   error = false;
+  mostrarMenuExportar = false;
 
   constructor(
     private alertas: AlertasService,
-    private proveedoresService: ProveedoresService
+    private proveedoresService: ProveedoresService,
+    private exportService: ExportService
   ) {}
 
   ngOnInit(): void {
@@ -67,13 +70,82 @@ export class ProveedoresComponent implements OnInit {
       p.nombreProveedor?.toLowerCase().includes(termino) ||
       p.cuit?.toLowerCase().includes(termino) ||
       p.email?.toLowerCase().includes(termino) ||
-      p.telefono?.toLowerCase().includes(termino)
+      p.telefono?.toLowerCase().includes(termino) ||
+      p.nombreProvincia?.toLowerCase().includes(termino) ||
+      p.nombreCiudad?.toLowerCase().includes(termino)
     );
   }
 
   abrirFormularioNuevo(): void {
     this.proveedorSeleccionado = null;
     this.mostrarFormulario = true;
+  }
+
+  toggleMenuExportar(): void {
+    this.mostrarMenuExportar = !this.mostrarMenuExportar;
+  }
+
+  exportarPDF(): void {
+    const proveedoresParaExportar = this.proveedoresFiltrados;
+
+    if (proveedoresParaExportar.length === 0) {
+      this.alertas.warning('Sin datos', 'No hay proveedores para exportar');
+      return;
+    }
+
+    try {
+      this.exportService.exportarProveedoresPDF(proveedoresParaExportar);
+      this.alertas.success(
+        'Exportacion exitosa',
+        `Se exportaron ${proveedoresParaExportar.length} proveedores a PDF`
+      );
+      this.mostrarMenuExportar = false;
+    } catch (error) {
+      console.error('Error al exportar PDF:', error);
+      this.alertas.error('Error', 'No se pudo generar el PDF');
+    }
+  }
+
+  exportarExcel(): void {
+    const proveedoresParaExportar = this.proveedoresFiltrados;
+
+    if (proveedoresParaExportar.length === 0) {
+      this.alertas.warning('Sin datos', 'No hay proveedores para exportar');
+      return;
+    }
+
+    try {
+      this.exportService.exportarProveedoresExcel(proveedoresParaExportar);
+      this.alertas.success(
+        'Exportacion exitosa',
+        `Se exportaron ${proveedoresParaExportar.length} proveedores a Excel`
+      );
+      this.mostrarMenuExportar = false;
+    } catch (error) {
+      console.error('Error al exportar Excel:', error);
+      this.alertas.error('Error', 'No se pudo generar el archivo Excel');
+    }
+  }
+
+  exportarCSV(): void {
+    const proveedoresParaExportar = this.proveedoresFiltrados;
+
+    if (proveedoresParaExportar.length === 0) {
+      this.alertas.warning('Sin datos', 'No hay proveedores para exportar');
+      return;
+    }
+
+    try {
+      this.exportService.exportarProveedoresCSV(proveedoresParaExportar);
+      this.alertas.success(
+        'Exportacion exitosa',
+        `Se exportaron ${proveedoresParaExportar.length} proveedores a CSV`
+      );
+      this.mostrarMenuExportar = false;
+    } catch (error) {
+      console.error('Error al exportar CSV:', error);
+      this.alertas.error('Error', 'No se pudo generar el archivo CSV');
+    }
   }
 
   abrirFormularioEditar(proveedor: Proveedor, event: Event): void {

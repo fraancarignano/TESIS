@@ -3,14 +3,15 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Cliente, NuevoCliente, ActualizarCliente, Provincia, Ciudad, EstadoCliente } from '../models/cliente.model';
+import { environment } from '../../../../environments/environment';
 @Injectable({
   providedIn: 'root'
 })
 export class ClientesService {
-  private apiUrl = 'https://localhost:7163/api/Cliente';
-  private provinciaUrl = 'https://localhost:7163/api/Provincia'; // Ajusta según tu API
-  private ciudadUrl = 'https://localhost:7163/api/Ciudad'; // Ajusta según tu API
-  private estadoClienteUrl = 'https://localhost:7163/api/EstadoCliente'; // Ajusta según tu API
+  private apiUrl = `${environment.apiUrl}/Cliente`;
+  private provinciaUrl = `${environment.apiUrl}/Provincia`;
+  private ciudadUrl = `${environment.apiUrl}/Ciudad`;
+  private estadoClienteUrl = `${environment.apiUrl}/EstadoCliente`;
 
   constructor(private http: HttpClient) {}
 
@@ -114,7 +115,7 @@ export class ClientesService {
           errorMessage = 'Error interno del servidor';
           break;
         case 0:
-          errorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo en https://localhost:7163';
+          errorMessage = `No se pudo conectar con el servidor. Verifica que el backend esté corriendo en ${environment.apiBaseUrl}`;
           break;
       }
     }

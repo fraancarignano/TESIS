@@ -213,12 +213,18 @@
 .input-wrapper select {
   cursor: pointer;
   appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
   padding: 8px 32px 8px 10px !important;
   padding-right: 32px !important;
   background-color: #fafafa !important;
+}
+
+.input-wrapper select::-ms-expand {
+  display: none;
 }
 
 .input-wrapper select:focus {
@@ -361,4 +367,25 @@
   .modal-container {
     max-width: min(760px, 92vw);
   }
+}
+
+/* Refuerzo final para evitar doble flecha nativa + custom en algunos navegadores */
+.input-wrapper select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  padding: 8px 32px 8px 10px !important;
+  padding-right: 32px !important;
+  background-color: #fafafa !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+}
+
+.input-wrapper select:focus {
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+}
+
+.input-wrapper select::-ms-expand {
+  display: none !important;
 }

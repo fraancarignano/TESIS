@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { Cliente } from '../../modules/clientes/models/cliente.model';
 import { Proyecto } from '../../modules/proyectos/models/proyecto.model';
+import { Proveedor } from '../../modules/proveedores/models/proveedor.model';
 
 @Injectable({
   providedIn: 'root'
@@ -184,6 +185,176 @@ export class ExportService {
 
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const nombreArchivo = `clientes_${this.getFechaParaArchivo()}.csv`;
+    saveAs(blob, nombreArchivo);
+  }
+
+  // ==================== EXPORTACION DE PROVEEDORES ====================
+
+  /**
+   * Exportar proveedores a PDF
+   */
+  exportarProveedoresPDF(proveedores: Proveedor[], titulo: string = 'Listado de Proveedores'): void {
+    const doc = new jsPDF('landscape');
+
+    doc.setFontSize(18);
+    doc.setTextColor(255, 87, 34);
+    doc.text(titulo, 14, 15);
+
+    doc.setFontSize(9);
+    doc.setTextColor(100);
+    const fecha = new Date().toLocaleDateString('es-AR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    doc.text(`Generado: ${fecha}`, 14, 22);
+    doc.text(`Total de proveedores: ${proveedores.length}`, 14, 27);
+
+    const headers = [[
+      '#',
+      'Razon Social',
+      'CUIT',
+      'Telefono',
+      'Email',
+      'Direccion',
+      'Ubicacion',
+      'Fecha Alta'
+    ]];
+
+    const data = proveedores.map((proveedor, index) => [
+      (index + 1).toString(),
+      proveedor.nombreProveedor || '-',
+      proveedor.cuit || '-',
+      proveedor.telefono || '-',
+      proveedor.email || '-',
+      proveedor.direccion || '-',
+      this.obtenerUbicacionProveedor(proveedor),
+      this.formatearFecha(proveedor.fechaAlta)
+    ]);
+
+    autoTable(doc, {
+      head: headers,
+      body: data,
+      startY: 32,
+      theme: 'grid',
+      styles: {
+        fontSize: 7,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [255, 87, 34],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245]
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 10 },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 28 },
+        3: { cellWidth: 25 },
+        4: { cellWidth: 45 },
+        5: { cellWidth: 45 },
+        6: { cellWidth: 40 },
+        7: { halign: 'center', cellWidth: 22 }
+      }
+    });
+
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Pagina ${i} de ${pageCount}`,
+        doc.internal.pageSize.getWidth() / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: 'center' }
+      );
+    }
+
+    const nombreArchivo = `proveedores_${this.getFechaParaArchivo()}.pdf`;
+    doc.save(nombreArchivo);
+  }
+
+  /**
+   * Exportar proveedores a Excel
+   */
+  exportarProveedoresExcel(proveedores: Proveedor[], nombreHoja: string = 'Proveedores'): void {
+    const datosExcel = proveedores.map((proveedor, index) => ({
+      '#': index + 1,
+      'Razon Social': proveedor.nombreProveedor || '-',
+      'CUIT': proveedor.cuit || '-',
+      'Telefono': proveedor.telefono || '-',
+      'Email': proveedor.email || '-',
+      'Direccion': proveedor.direccion || '-',
+      'Ciudad': proveedor.nombreCiudad || '-',
+      'Provincia': proveedor.nombreProvincia || '-',
+      'Fecha Alta': this.formatearFecha(proveedor.fechaAlta),
+      'Observaciones': proveedor.observaciones || '-'
+    }));
+
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(datosExcel);
+    const workbook: XLSX.WorkBook = {
+      Sheets: { [nombreHoja]: worksheet },
+      SheetNames: [nombreHoja]
+    };
+
+    const columnWidths = [
+      { wch: 5 }, { wch: 35 }, { wch: 18 }, { wch: 20 }, { wch: 30 },
+      { wch: 35 }, { wch: 20 }, { wch: 20 }, { wch: 14 }, { wch: 45 }
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    const excelBuffer: any = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array'
+    });
+
+    const data: Blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    const nombreArchivo = `proveedores_${this.getFechaParaArchivo()}.xlsx`;
+    saveAs(data, nombreArchivo);
+  }
+
+  /**
+   * Exportar proveedores a CSV
+   */
+  exportarProveedoresCSV(proveedores: Proveedor[]): void {
+    const headers = [
+      'Razon Social',
+      'CUIT',
+      'Telefono',
+      'Email',
+      'Direccion',
+      'Ciudad',
+      'Provincia',
+      'Fecha Alta'
+    ];
+
+    const rows = proveedores.map(proveedor => [
+      proveedor.nombreProveedor || '-',
+      proveedor.cuit || '-',
+      proveedor.telefono || '-',
+      proveedor.email || '-',
+      proveedor.direccion || '-',
+      proveedor.nombreCiudad || '-',
+      proveedor.nombreProvincia || '-',
+      this.formatearFecha(proveedor.fechaAlta)
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const nombreArchivo = `proveedores_${this.getFechaParaArchivo()}.csv`;
     saveAs(blob, nombreArchivo);
   }
 
@@ -448,6 +619,19 @@ export class ExportService {
       4: 'En revisión'
     };
     return estados[estadoId || 1] || 'Desconocido';
+  }
+
+  private obtenerUbicacionProveedor(proveedor: Proveedor): string {
+    const ciudad = proveedor.nombreCiudad;
+    const provincia = proveedor.nombreProvincia;
+
+    if (!ciudad && !provincia) return '-';
+
+    const partes: string[] = [];
+    if (ciudad) partes.push(ciudad);
+    if (provincia) partes.push(provincia);
+
+    return partes.join(', ');
   }
 
   // ==================== MÉTODOS AUXILIARES - PROYECTOS ====================

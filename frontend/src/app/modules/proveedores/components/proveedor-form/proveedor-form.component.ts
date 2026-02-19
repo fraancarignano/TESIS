@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Proveedor } from '../../models/proveedor.model';
+import { Proveedor, Provincia, Ciudad } from '../../models/proveedor.model';
 import { ProveedoresService } from '../../services/proveedores.service';
 import { AlertasService } from '../../../../core/services/alertas';
 
@@ -18,6 +18,8 @@ export class ProveedorFormComponent implements OnInit {
 
   formulario: FormGroup;
   esEdicion = false;
+  provincias: Provincia[] = [];
+  ciudades: Ciudad[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -30,11 +32,16 @@ export class ProveedorFormComponent implements OnInit {
       telefono: [''],
       email: ['', [Validators.email]],
       direccion: [''],
+      idProvincia: [null],
+      idCiudad: [null],
       observaciones: ['']
     });
   }
 
   ngOnInit(): void {
+    this.cargarProvincias();
+    this.configurarCascadaProvinciaCiudad();
+
     if (this.proveedor) {
       this.esEdicion = true;
       this.formulario.patchValue({
@@ -43,8 +50,22 @@ export class ProveedorFormComponent implements OnInit {
         telefono: this.proveedor.telefono || '',
         email: this.proveedor.email || '',
         direccion: this.proveedor.direccion || '',
+        idProvincia: this.proveedor.idProvincia || null,
+        idCiudad: this.proveedor.idCiudad || null,
         observaciones: this.proveedor.observaciones || ''
       });
+
+      if (this.proveedor.idProvincia) {
+        this.proveedoresService.obtenerCiudadesPorProvincia(this.proveedor.idProvincia).subscribe({
+          next: (data) => {
+            this.ciudades = data;
+          },
+          error: (err) => {
+            console.error('Error al cargar ciudades:', err);
+            this.ciudades = [];
+          }
+        });
+      }
     }
   }
 
@@ -55,7 +76,12 @@ export class ProveedorFormComponent implements OnInit {
       return;
     }
 
-    const datos = this.formulario.value;
+    const formValue = this.formulario.value;
+    const datos = {
+      ...formValue,
+      idProvincia: formValue.idProvincia ? Number(formValue.idProvincia) : null,
+      idCiudad: formValue.idCiudad ? Number(formValue.idCiudad) : null
+    };
 
     if (this.esEdicion && this.proveedor?.idProveedor) {
       this.proveedoresService.actualizarProveedor({
@@ -155,6 +181,38 @@ export class ProveedorFormComponent implements OnInit {
     if (control.value !== formateado) {
       control.setValue(formateado, { emitEvent: false });
     }
+  }
+
+  private cargarProvincias(): void {
+    this.proveedoresService.obtenerProvincias().subscribe({
+      next: (data) => {
+        this.provincias = data;
+      },
+      error: (err) => {
+        console.error('Error al cargar provincias:', err);
+        this.provincias = [];
+      }
+    });
+  }
+
+  private configurarCascadaProvinciaCiudad(): void {
+    this.formulario.get('idProvincia')?.valueChanges.subscribe(idProvincia => {
+      if (idProvincia) {
+        this.proveedoresService.obtenerCiudadesPorProvincia(idProvincia).subscribe({
+          next: (data) => {
+            this.ciudades = data;
+          },
+          error: (err) => {
+            console.error('Error al cargar ciudades por provincia:', err);
+            this.ciudades = [];
+          }
+        });
+        return;
+      }
+
+      this.ciudades = [];
+      this.formulario.patchValue({ idCiudad: null }, { emitEvent: false });
+    });
   }
 
   private marcarCamposComoTocados(): void {

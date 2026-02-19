@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 
 export interface Ciudad {
@@ -13,7 +14,7 @@ export interface Ciudad {
   providedIn: 'root'
 })
 export class CiudadService {
-  private apiUrl = 'https://localhost:7163/api/Ciudad';
+  private apiUrl = `${environment.apiUrl}/Ciudad`;
 
   constructor(private http: HttpClient) {}
 
