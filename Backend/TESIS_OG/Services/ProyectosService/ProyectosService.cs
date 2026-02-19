@@ -336,8 +336,8 @@ namespace TESIS_OG.Services.ProyectoService
                 response.MaterialesCalculados.Add(new MaterialCalculadoPreviewDTO
                 {
                     IdInsumo = insumo.IdInsumo,
-                    NombreInsumo = mc.IdInsumoNavigation?.NombreInsumo ?? "",
-                    TipoInsumo = mc.IdInsumoNavigation?.IdTipoInsumoNavigation?.NombreTipo ?? "",
+                    NombreInsumo = insumo.NombreInsumo ?? "",
+                    TipoInsumo = insumo.IdTipoInsumoNavigation?.NombreTipo ?? "",
                     TipoCalculo = "Auto",
                     CantidadNecesaria = cantidadNecesaria,
                     UnidadMedida = config.UnidadMedida,
@@ -345,6 +345,7 @@ namespace TESIS_OG.Services.ProyectoService
                     TieneStockSuficiente = tieneStock,
                     Faltante = tieneStock ? null : cantidadNecesaria - insumo.StockActual
                 });
+
 
                 if (!tieneStock)
                 {
@@ -871,76 +872,85 @@ namespace TESIS_OG.Services.ProyectoService
         }
 
         private async Task<ProyectoDetalleDTO> MapearProyectoADTOAsync(Proyecto proyecto)
+{
+    var prendas = await ObtenerPrendasProyectoAsync(proyecto.IdProyecto);
+
+    var materiales = await _context.MaterialCalculados
+        .Include(mc => mc.IdInsumoNavigation)
+            .ThenInclude(i => i != null ? i.IdTipoInsumoNavigation : null)
+        .Include(mc => mc.IdProyectoPrendaNavigation)
+            .ThenInclude(pp => pp != null ? pp.IdTipoPrendaNavigation : null)
+        .Where(mc => mc.IdProyecto == proyecto.IdProyecto)
+        .Select(mc => new MaterialCalculadoResponseDTO
         {
-            var prendas = await ObtenerPrendasProyectoAsync(proyecto.IdProyecto);
+            IdMaterialCalculado = mc.IdMaterialCalculado,
+            IdInsumo = mc.IdInsumo,
 
-            var materiales = await _context.MaterialCalculados
-              .Include(mc => mc.IdInsumoNavigation)
-                .ThenInclude(i => i!.IdTipoInsumoNavigation)
-              .Include(mc => mc.IdProyectoPrendaNavigation)
-                .ThenInclude(pp => pp!.IdTipoPrendaNavigation)
-              .Where(mc => mc.IdProyecto == proyecto.IdProyecto)
-              .Select(mc => new MaterialCalculadoResponseDTO
-              {
-                  IdMaterialCalculado = mc.IdMaterialCalculado,
-                  IdInsumo = mc.IdInsumo,
-                  NombreInsumo = mc.IdInsumoNavigation!.NombreInsumo,
-                  TipoInsumo = mc.IdInsumoNavigation.IdTipoInsumoNavigation!.NombreTipo,
-                  TipoCalculo = mc.TipoCalculo,
-                  CantidadCalculada = mc.CantidadCalculada,
-                  CantidadManual = mc.CantidadManual,
-                  CantidadFinal = mc.CantidadManual ?? mc.CantidadCalculada,
-                  UnidadMedida = mc.UnidadMedida,
-                  StockActual = mc.IdInsumoNavigation.StockActual,
-                  TieneStock = mc.TieneStock ?? false,
-                  Observaciones = mc.Observaciones,
-                  IdProyectoPrenda = mc.IdProyectoPrenda,
-                  NombrePrenda = mc.IdProyectoPrendaNavigation?.IdTipoPrendaNavigation?.NombrePrenda
-              })
-              .ToListAsync();
+            NombreInsumo = mc.IdInsumoNavigation != null
+                ? mc.IdInsumoNavigation.NombreInsumo ?? ""
+                : "",
 
-            var alertasStock = materiales
-              .Where(m => !m.TieneStock)
-              .Select(m => $"Stock insuficiente de {m.NombreInsumo}")
-              .ToList();
+            TipoInsumo = mc.IdInsumoNavigation != null &&
+                         mc.IdInsumoNavigation.IdTipoInsumoNavigation != null
+                ? mc.IdInsumoNavigation.IdTipoInsumoNavigation.NombreTipo ?? ""
+                : "",
 
-            return new ProyectoDetalleDTO
-            {
-                IdProyecto = proyecto.IdProyecto,
-                CodigoProyecto = proyecto.CodigoProyecto ?? "",
-                IdCliente = proyecto.IdCliente,
-                NombreCliente = proyecto.IdClienteNavigation?.RazonSocial
-                ?? $"{proyecto.IdClienteNavigation?.Nombre} {proyecto.IdClienteNavigation?.Apellido}",
-                NombreProyecto = proyecto.NombreProyecto,
-                Descripcion = proyecto.Descripcion,
-                Prioridad = proyecto.Prioridad,
-                Estado = proyecto.Estado,
-                FechaInicio = proyecto.FechaInicio,
-                FechaFin = proyecto.FechaFin,
-                CantidadTotal = proyecto.CantidadTotal,
-                CantidadProducida = proyecto.CantidadProducida,
-                IdUsuarioEncargado = proyecto.IdUsuarioEncargado,
-                NombreUsuarioEncargado = proyecto.IdUsuarioEncargadoNavigation != null
-                ? $"{proyecto.IdUsuarioEncargadoNavigation.NombreUsuario} {proyecto.IdUsuarioEncargadoNavigation.ApellidoUsuario}"
-                : null,
-                EsMultiPrenda = proyecto.EsMultiPrenda ?? false,
-                Prendas = prendas,
-                Materiales = materiales,
-                AlertasStock = alertasStock
-            };
-        }
+            TipoCalculo = mc.TipoCalculo,
+            CantidadCalculada = mc.CantidadCalculada,
+            CantidadManual = mc.CantidadManual,
+            CantidadFinal = mc.CantidadManual ?? mc.CantidadCalculada,
+            UnidadMedida = mc.UnidadMedida,
 
-        private string ObtenerCategoriaInsumo(string? nombreTipo)
-        {
-            if (string.IsNullOrWhiteSpace(nombreTipo))
-                return "Otro";
+            StockActual = mc.IdInsumoNavigation != null
+                ? mc.IdInsumoNavigation.StockActual
+                : 0,
 
-            if (nombreTipo.Contains("Tela")) return "Tela";
-            if (nombreTipo.Contains("Hilo")) return "Hilo";
-            if (nombreTipo.Contains("Accesorio")) return "Accesorio";
-            return "Otro";
-        }
+            TieneStock = mc.TieneStock ?? false,
+            Observaciones = mc.Observaciones,
+            IdProyectoPrenda = mc.IdProyectoPrenda,
 
+            NombrePrenda = mc.IdProyectoPrendaNavigation != null &&
+                           mc.IdProyectoPrendaNavigation.IdTipoPrendaNavigation != null
+                ? mc.IdProyectoPrendaNavigation.IdTipoPrendaNavigation.NombrePrenda
+                : null
+        })
+        .ToListAsync();
 
-    }
+    var alertasStock = materiales
+        .Where(m => !m.TieneStock)
+        .Select(m => $"Stock insuficiente de {m.NombreInsumo}")
+        .ToList();
+
+    return new ProyectoDetalleDTO
+    {
+        IdProyecto = proyecto.IdProyecto,
+        CodigoProyecto = proyecto.CodigoProyecto ?? "",
+        IdCliente = proyecto.IdCliente,
+
+        NombreCliente =
+            !string.IsNullOrWhiteSpace(proyecto.IdClienteNavigation?.RazonSocial)
+                ? proyecto.IdClienteNavigation.RazonSocial
+                : $"{proyecto.IdClienteNavigation?.Nombre ?? ""} {proyecto.IdClienteNavigation?.Apellido ?? ""}".Trim(),
+
+        NombreProyecto = proyecto.NombreProyecto,
+        Descripcion = proyecto.Descripcion,
+        Prioridad = proyecto.Prioridad,
+        Estado = proyecto.Estado,
+        FechaInicio = proyecto.FechaInicio,
+        FechaFin = proyecto.FechaFin,
+        CantidadTotal = proyecto.CantidadTotal,
+        CantidadProducida = proyecto.CantidadProducida,
+        IdUsuarioEncargado = proyecto.IdUsuarioEncargado,
+
+        NombreUsuarioEncargado = proyecto.IdUsuarioEncargadoNavigation != null
+            ? $"{proyecto.IdUsuarioEncargadoNavigation.NombreUsuario ?? ""} {proyecto.IdUsuarioEncargadoNavigation.ApellidoUsuario ?? ""}".Trim()
+            : null,
+
+        EsMultiPrenda = proyecto.EsMultiPrenda ?? false,
+        Prendas = prendas,
+        Materiales = materiales,
+        AlertasStock = alertasStock
+    };
+}
+
 }
