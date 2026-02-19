@@ -61,7 +61,7 @@ namespace TESIS_OG.Services.ProyectoService
                     EsMultiPrenda = proyectoDto.Prendas.Count > 1,
                     AreaActual = "Gerencia y Administración",
                     AvanceGerenciaAdmin = 0,
-                    AvanceDiseñoDesarrollo = 0,
+                    AvanceDisenoDesarrollo = 0,
                     AvanceControlCalidad = 0,
                     AvanceEtiquetadoEmpaquetado = 0,
                     AvanceDepositoLogistica = 0,
@@ -83,7 +83,7 @@ namespace TESIS_OG.Services.ProyectoService
                         CantidadTotal = prendaDto.CantidadTotal,
                         TieneBordado = prendaDto.TieneBordado,
                         TieneEstampado = prendaDto.TieneEstampado,
-                        DescripcionDiseño = prendaDto.DescripcionDiseño,
+                        DescripcionDiseno = prendaDto.DescripcionDiseno,
                         Orden = prendaDto.Orden ?? proyectoDto.Prendas.IndexOf(prendaDto)
                     };
 
@@ -516,7 +516,7 @@ namespace TESIS_OG.Services.ProyectoService
                 CantidadTotal = p.CantidadTotal,
                 TieneBordado = p.TieneBordado ?? false,
                 TieneEstampado = p.TieneEstampado ?? false,
-                DescripcionDiseño = p.DescripcionDiseño,
+                DescripcionDiseno = p.DescripcionDiseno,
                 Talles = p.PrendaTalles.Select(pt => new PrendaTalleDTO
                 {
                     IdPrendaTalle = pt.IdPrendaTalle,
