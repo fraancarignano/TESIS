@@ -21,7 +21,7 @@ public partial class VwPrendasProyecto
 
     public bool? TieneEstampado { get; set; }
 
-    public string? DescripcionDiseño { get; set; }
+    public string? DescripcionDiseno { get; set; }
 
     public int? CantidadTallesDistintos { get; set; }
 }
