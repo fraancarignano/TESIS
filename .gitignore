@@ -145,3 +145,11 @@ obj/
 **/bin/
 **/obj/
 
+# Visual Studio / .NET
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.pdb
