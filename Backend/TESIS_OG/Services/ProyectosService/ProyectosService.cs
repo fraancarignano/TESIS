@@ -226,7 +226,6 @@ namespace TESIS_OG.Services.ProyectoService
             var proyecto = await _context.Proyectos.FindAsync(id);
             if (proyecto == null) return null;
 
-            // Actualizar solo campos editables
             if (!string.IsNullOrEmpty(proyectoDto.NombreProyecto))
                 proyecto.NombreProyecto = proyectoDto.NombreProyecto;
 
@@ -245,17 +244,14 @@ namespace TESIS_OG.Services.ProyectoService
             if (proyectoDto.IdUsuarioEncargado != null)
                 proyecto.IdUsuarioEncargado = proyectoDto.IdUsuarioEncargado;
 
-            // Actualizar materiales manuales si vienen
             if (proyectoDto.MaterialesManualesActualizados != null)
             {
-                // Eliminar materiales manuales anteriores
                 var materialesManualesAnteriores = await _context.MaterialCalculados
                   .Where(m => m.IdProyecto == id && m.TipoCalculo == "Manual")
                   .ToListAsync();
 
                 _context.MaterialCalculados.RemoveRange(materialesManualesAnteriores);
 
-                // Agregar los nuevos
                 await AsignarMaterialesManualesAsync(id, proyectoDto.MaterialesManualesActualizados);
             }
 
@@ -273,7 +269,6 @@ namespace TESIS_OG.Services.ProyectoService
             var proyecto = await _context.Proyectos.FindAsync(id);
             if (proyecto == null) return false;
 
-            // Archivar en lugar de eliminar
             proyecto.Estado = "Archivado";
             await _context.SaveChangesAsync();
 
@@ -293,10 +288,8 @@ namespace TESIS_OG.Services.ProyectoService
                 PuedeCrearse = true
             };
 
-            // Calcular materiales por cada prenda
             foreach (var prenda in request.Prendas)
             {
-                // Buscar configuración de material para esta prenda
                 var config = await _context.ConfiguracionMaterials
                   .FirstOrDefaultAsync(c =>
                     c.IdTipoPrenda == prenda.IdTipoPrenda &&
@@ -312,10 +305,8 @@ namespace TESIS_OG.Services.ProyectoService
                     continue;
                 }
 
-                // Calcular cantidad necesaria
                 var cantidadNecesaria = prenda.CantidadTotal * config.CantidadPorUnidad;
 
-                // Buscar insumo del tipo de material
                 var insumo = await _context.Insumos
                   .Include(i => i.IdTipoInsumoNavigation)
                   .FirstOrDefaultAsync(i => i.IdTipoInsumo == prenda.IdTipoInsumoMaterial);
@@ -346,7 +337,6 @@ namespace TESIS_OG.Services.ProyectoService
                     Faltante = tieneStock ? null : cantidadNecesaria - insumo.StockActual
                 });
 
-
                 if (!tieneStock)
                 {
                     response.Alertas.Add(new AlertaCalculoDTO
@@ -359,7 +349,6 @@ namespace TESIS_OG.Services.ProyectoService
                 }
             }
 
-            // Agregar materiales manuales
             if (request.MaterialesManuales != null)
             {
                 foreach (var material in request.MaterialesManuales)
@@ -412,7 +401,6 @@ namespace TESIS_OG.Services.ProyectoService
                 Alertas = new List<AlertaStockDTO>()
             };
 
-            // Validar stock de telas (automático)
             foreach (var prenda in prendas)
             {
                 var config = await _context.ConfiguracionMaterials
@@ -443,7 +431,6 @@ namespace TESIS_OG.Services.ProyectoService
                 }
             }
 
-            // Validar stock de materiales manuales
             if (materialesManuales != null)
             {
                 foreach (var material in materialesManuales)
@@ -474,7 +461,6 @@ namespace TESIS_OG.Services.ProyectoService
         {
             try
             {
-                // Eliminar materiales automáticos anteriores
                 var materialesAuto = await _context.MaterialCalculados
                   .Where(m => m.IdProyecto == idProyecto && m.TipoCalculo == "Auto")
                   .ToListAsync();
@@ -482,7 +468,6 @@ namespace TESIS_OG.Services.ProyectoService
                 _context.MaterialCalculados.RemoveRange(materialesAuto);
                 await _context.SaveChangesAsync();
 
-                // Recalcular
                 await CalcularYAsignarMaterialesAutomaticosAsync(idProyecto);
 
                 return true;
@@ -541,23 +526,19 @@ namespace TESIS_OG.Services.ProyectoService
                 SumaTalles = sumaTalles,
                 Diferencia = diferencia,
                 Mensaje = esValido
-                ? "La distribución de talles es correcta"
-                : $"La suma de talles ({sumaTalles}) no coincide con la cantidad total ({request.CantidadTotal}). Diferencia: {diferencia}"
+                    ? "La distribución de talles es correcta"
+                    : $"La suma de talles ({sumaTalles}) no coincide con la cantidad total ({request.CantidadTotal}). Diferencia: {diferencia}"
             };
         }
 
         // ========================================
-        // CATÁLOGOS
-        // ========================================
-
-        // ========================================
-        // MÉTODO CORREGIDO: ObtenerDatosFormularioAsync
+        // CATÁLOGOS / FORMULARIO
         // ========================================
 
         public async Task<FormularioProyectoInicializacionDTO> ObtenerDatosFormularioAsync()
         {
             var clientes = await _context.Clientes
-              .Where(c => c.IdEstadoCliente == 1) // Solo activos
+              .Where(c => c.IdEstadoCliente == 1)
               .Select(c => new ClienteSimpleDTO
               {
                   IdCliente = c.IdCliente,
@@ -593,14 +574,13 @@ namespace TESIS_OG.Services.ProyectoService
               .OrderBy(t => t.Orden)
               .ToListAsync();
 
-            // ✅ CORRECCIÓN: Primero obtener datos anónimos, luego mapear a DTO
             var tiposInsumoRaw = await _context.TipoInsumos
-                 .Select(ti => new
-                 {
-                     ti.IdTipoInsumo,
-                     ti.NombreTipo
-                 })
-                 .ToListAsync();
+                .Select(ti => new
+                {
+                    ti.IdTipoInsumo,
+                    ti.NombreTipo
+                })
+                .ToListAsync();
 
             var tiposInsumo = tiposInsumoRaw.Select(ti => new TipoInsumoSimpleDTO
             {
@@ -640,7 +620,6 @@ namespace TESIS_OG.Services.ProyectoService
                 RatioKgUnidad = i.RatioKgUnidad
             }).ToList();
 
-
             var usuarios = await _context.Usuarios
               .Where(u => u.Estado == "Activo")
               .Select(u => new UsuarioSimpleDTO
@@ -657,7 +636,7 @@ namespace TESIS_OG.Services.ProyectoService
                 Clientes = clientes,
                 TiposPrenda = tiposPrenda,
                 Talles = talles,
-                TiposInsumo = tiposInsumo, // ✅ AHORA ES LA LISTA CORRECTA
+                TiposInsumo = tiposInsumo,
                 Insumos = insumos,
                 Usuarios = usuarios,
                 Prioridades = new List<string> { "alta", "media", "baja" }
@@ -676,13 +655,16 @@ namespace TESIS_OG.Services.ProyectoService
             var avanceArea = new AvanceAreaProyecto
             {
                 IdProyecto = idProyecto,
-                IdArea = avanceDto.IdArea,  // FK a AreaProduccion
+                IdArea = avanceDto.IdArea,
                 PorcentajeAvance = avanceDto.Porcentaje,
                 FechaActualizacion = DateTime.Now,
-                //IdUsuarioRegistro = userId,
                 Observaciones = avanceDto.Observaciones
             };
+
+            // FIX: se agrega el registro al contexto antes de guardar
+            _context.AvanceAreaProyectos.Add(avanceArea);
             await _context.SaveChangesAsync();
+
             return true;
         }
 
@@ -776,7 +758,6 @@ namespace TESIS_OG.Services.ProyectoService
 
             foreach (var prenda in prendas)
             {
-                // Buscar configuración de material
                 var config = await _context.ConfiguracionMaterials
                   .FirstOrDefaultAsync(c =>
                     c.IdTipoPrenda == prenda.IdTipoPrenda &&
@@ -784,7 +765,6 @@ namespace TESIS_OG.Services.ProyectoService
 
                 if (config != null)
                 {
-                    // Buscar insumo específico del tipo
                     var insumo = await _context.Insumos
                       .FirstOrDefaultAsync(i => i.IdTipoInsumo == prenda.IdTipoInsumoMaterial);
 
@@ -806,9 +786,8 @@ namespace TESIS_OG.Services.ProyectoService
 
                         _context.MaterialCalculados.Add(materialCalculado);
 
-                        // ACTUALIZAR STOCK Y ESTADO
                         insumo.StockActual -= cantidadCalculada;
-                        
+
                         if (insumo.StockActual <= 0)
                         {
                             insumo.StockActual = 0;
@@ -818,7 +797,7 @@ namespace TESIS_OG.Services.ProyectoService
                         {
                             insumo.Estado = "En uso";
                         }
-                        
+
                         insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
                     }
                 }
@@ -839,7 +818,7 @@ namespace TESIS_OG.Services.ProyectoService
                     var materialCalculado = new MaterialCalculado
                     {
                         IdProyecto = idProyecto,
-                        IdProyectoPrenda = null, // Material general del proyecto
+                        IdProyectoPrenda = null,
                         IdInsumo = material.IdInsumo,
                         TipoCalculo = "Manual",
                         CantidadCalculada = material.Cantidad,
@@ -851,17 +830,16 @@ namespace TESIS_OG.Services.ProyectoService
 
                     _context.MaterialCalculados.Add(materialCalculado);
 
-                    // ACTUALIZAR STOCK Y ESTADO
                     insumo.StockActual -= material.Cantidad;
-                    
+
                     if (insumo.StockActual <= 0)
                     {
-                         insumo.StockActual = 0;
-                         insumo.Estado = "Agotado";
+                        insumo.StockActual = 0;
+                        insumo.Estado = "Agotado";
                     }
                     else
                     {
-                         insumo.Estado = "En uso";
+                        insumo.Estado = "En uso";
                     }
 
                     insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
@@ -871,86 +849,103 @@ namespace TESIS_OG.Services.ProyectoService
             await _context.SaveChangesAsync();
         }
 
-        private async Task<ProyectoDetalleDTO> MapearProyectoADTOAsync(Proyecto proyecto)
-{
-    var prendas = await ObtenerPrendasProyectoAsync(proyecto.IdProyecto);
-
-    var materiales = await _context.MaterialCalculados
-        .Include(mc => mc.IdInsumoNavigation)
-            .ThenInclude(i => i != null ? i.IdTipoInsumoNavigation : null)
-        .Include(mc => mc.IdProyectoPrendaNavigation)
-            .ThenInclude(pp => pp != null ? pp.IdTipoPrendaNavigation : null)
-        .Where(mc => mc.IdProyecto == proyecto.IdProyecto)
-        .Select(mc => new MaterialCalculadoResponseDTO
+        private string ObtenerCategoriaInsumo(string? nombreTipo)
         {
-            IdMaterialCalculado = mc.IdMaterialCalculado,
-            IdInsumo = mc.IdInsumo,
+            if (string.IsNullOrWhiteSpace(nombreTipo)) return "Otros";
 
-            NombreInsumo = mc.IdInsumoNavigation != null
-                ? mc.IdInsumoNavigation.NombreInsumo ?? ""
-                : "",
+            var nombre = nombreTipo.ToLower();
 
-            TipoInsumo = mc.IdInsumoNavigation != null &&
-                         mc.IdInsumoNavigation.IdTipoInsumoNavigation != null
-                ? mc.IdInsumoNavigation.IdTipoInsumoNavigation.NombreTipo ?? ""
-                : "",
+            if (nombre.Contains("tela") || nombre.Contains("algodón") || nombre.Contains("poliéster"))
+                return "Telas";
+            if (nombre.Contains("hilo"))
+                return "Hilos";
+            if (nombre.Contains("botón") || nombre.Contains("cierre") || nombre.Contains("accesorio"))
+                return "Accesorios";
 
-            TipoCalculo = mc.TipoCalculo,
-            CantidadCalculada = mc.CantidadCalculada,
-            CantidadManual = mc.CantidadManual,
-            CantidadFinal = mc.CantidadManual ?? mc.CantidadCalculada,
-            UnidadMedida = mc.UnidadMedida,
+            return "Otros";
+        }
 
-            StockActual = mc.IdInsumoNavigation != null
-                ? mc.IdInsumoNavigation.StockActual
-                : 0,
+        private async Task<ProyectoDetalleDTO> MapearProyectoADTOAsync(Proyecto proyecto)
+        {
+            var prendas = await ObtenerPrendasProyectoAsync(proyecto.IdProyecto);
 
-            TieneStock = mc.TieneStock ?? false,
-            Observaciones = mc.Observaciones,
-            IdProyectoPrenda = mc.IdProyectoPrenda,
+            var materiales = await _context.MaterialCalculados
+                .Include(mc => mc.IdInsumoNavigation)
+                    .ThenInclude(i => i != null ? i.IdTipoInsumoNavigation : null)
+                .Include(mc => mc.IdProyectoPrendaNavigation)
+                    .ThenInclude(pp => pp != null ? pp.IdTipoPrendaNavigation : null)
+                .Where(mc => mc.IdProyecto == proyecto.IdProyecto)
+                .Select(mc => new MaterialCalculadoResponseDTO
+                {
+                    IdMaterialCalculado = mc.IdMaterialCalculado,
+                    IdInsumo = mc.IdInsumo,
 
-            NombrePrenda = mc.IdProyectoPrendaNavigation != null &&
-                           mc.IdProyectoPrendaNavigation.IdTipoPrendaNavigation != null
-                ? mc.IdProyectoPrendaNavigation.IdTipoPrendaNavigation.NombrePrenda
-                : null
-        })
-        .ToListAsync();
+                    NombreInsumo = mc.IdInsumoNavigation != null
+                        ? mc.IdInsumoNavigation.NombreInsumo ?? ""
+                        : "",
 
-    var alertasStock = materiales
-        .Where(m => !m.TieneStock)
-        .Select(m => $"Stock insuficiente de {m.NombreInsumo}")
-        .ToList();
+                    TipoInsumo = mc.IdInsumoNavigation != null &&
+                                 mc.IdInsumoNavigation.IdTipoInsumoNavigation != null
+                        ? mc.IdInsumoNavigation.IdTipoInsumoNavigation.NombreTipo ?? ""
+                        : "",
 
-    return new ProyectoDetalleDTO
-    {
-        IdProyecto = proyecto.IdProyecto,
-        CodigoProyecto = proyecto.CodigoProyecto ?? "",
-        IdCliente = proyecto.IdCliente,
+                    TipoCalculo = mc.TipoCalculo,
+                    CantidadCalculada = mc.CantidadCalculada,
+                    CantidadManual = mc.CantidadManual,
+                    CantidadFinal = mc.CantidadManual ?? mc.CantidadCalculada,
+                    UnidadMedida = mc.UnidadMedida,
 
-        NombreCliente =
-            !string.IsNullOrWhiteSpace(proyecto.IdClienteNavigation?.RazonSocial)
-                ? proyecto.IdClienteNavigation.RazonSocial
-                : $"{proyecto.IdClienteNavigation?.Nombre ?? ""} {proyecto.IdClienteNavigation?.Apellido ?? ""}".Trim(),
+                    StockActual = mc.IdInsumoNavigation != null
+                        ? mc.IdInsumoNavigation.StockActual
+                        : 0,
 
-        NombreProyecto = proyecto.NombreProyecto,
-        Descripcion = proyecto.Descripcion,
-        Prioridad = proyecto.Prioridad,
-        Estado = proyecto.Estado,
-        FechaInicio = proyecto.FechaInicio,
-        FechaFin = proyecto.FechaFin,
-        CantidadTotal = proyecto.CantidadTotal,
-        CantidadProducida = proyecto.CantidadProducida,
-        IdUsuarioEncargado = proyecto.IdUsuarioEncargado,
+                    TieneStock = mc.TieneStock ?? false,
+                    Observaciones = mc.Observaciones,
+                    IdProyectoPrenda = mc.IdProyectoPrenda,
 
-        NombreUsuarioEncargado = proyecto.IdUsuarioEncargadoNavigation != null
-            ? $"{proyecto.IdUsuarioEncargadoNavigation.NombreUsuario ?? ""} {proyecto.IdUsuarioEncargadoNavigation.ApellidoUsuario ?? ""}".Trim()
-            : null,
+                    NombrePrenda = mc.IdProyectoPrendaNavigation != null &&
+                                   mc.IdProyectoPrendaNavigation.IdTipoPrendaNavigation != null
+                        ? mc.IdProyectoPrendaNavigation.IdTipoPrendaNavigation.NombrePrenda
+                        : null
+                })
+                .ToListAsync();
 
-        EsMultiPrenda = proyecto.EsMultiPrenda ?? false,
-        Prendas = prendas,
-        Materiales = materiales,
-        AlertasStock = alertasStock
-    };
-    }
+            var alertasStock = materiales
+                .Where(m => !m.TieneStock)
+                .Select(m => $"Stock insuficiente de {m.NombreInsumo}")
+                .ToList();
 
-}
+            return new ProyectoDetalleDTO
+            {
+                IdProyecto = proyecto.IdProyecto,
+                CodigoProyecto = proyecto.CodigoProyecto ?? "",
+                IdCliente = proyecto.IdCliente,
+
+                NombreCliente =
+                    !string.IsNullOrWhiteSpace(proyecto.IdClienteNavigation?.RazonSocial)
+                        ? proyecto.IdClienteNavigation.RazonSocial
+                        : $"{proyecto.IdClienteNavigation?.Nombre ?? ""} {proyecto.IdClienteNavigation?.Apellido ?? ""}".Trim(),
+
+                NombreProyecto = proyecto.NombreProyecto,
+                Descripcion = proyecto.Descripcion,
+                Prioridad = proyecto.Prioridad,
+                Estado = proyecto.Estado,
+                FechaInicio = proyecto.FechaInicio,
+                FechaFin = proyecto.FechaFin,
+                CantidadTotal = proyecto.CantidadTotal,
+                CantidadProducida = proyecto.CantidadProducida,
+                IdUsuarioEncargado = proyecto.IdUsuarioEncargado,
+
+                NombreUsuarioEncargado = proyecto.IdUsuarioEncargadoNavigation != null
+                    ? $"{proyecto.IdUsuarioEncargadoNavigation.NombreUsuario ?? ""} {proyecto.IdUsuarioEncargadoNavigation.ApellidoUsuario ?? ""}".Trim()
+                    : null,
+
+                EsMultiPrenda = proyecto.EsMultiPrenda ?? false,
+                Prendas = prendas,
+                Materiales = materiales,
+                AlertasStock = alertasStock
+            };
+        }
+
+    } // fin clase ProyectoService
+} // fin namespace
