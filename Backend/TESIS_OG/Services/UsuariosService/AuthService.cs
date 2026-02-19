@@ -29,8 +29,8 @@ namespace TESIS_OG.Services.UsuariosService
             if (usuario == null)
                 return null;
 
-            // Verificar contraseña
-            if (!BCrypt.Net.BCrypt.Verify(loginDto.Contraseña, usuario.Contraseña))
+            // Verificar contrasena
+            if (!BCrypt.Net.BCrypt.Verify(loginDto.Contrasena, usuario.Contrasena))
                 return null;
 
             // Verificar estado activo
@@ -101,8 +101,8 @@ namespace TESIS_OG.Services.UsuariosService
             if (rol == null)
                 return null; // Rol no encontrado
 
-            // Hashear la contraseña
-            var contraseñaHash = BCrypt.Net.BCrypt.HashPassword(usuarioDto.Contraseña);
+            // Hashear la contrasena
+            var contrasenaHash = BCrypt.Net.BCrypt.HashPassword(usuarioDto.Contrasena);
 
             // Crear el nuevo usuario
             var nuevoUsuario = new Usuario
@@ -110,7 +110,7 @@ namespace TESIS_OG.Services.UsuariosService
                 NombreUsuario = usuarioDto.NombreUsuario,
                 ApellidoUsuario = usuarioDto.ApellidoUsuario,
                 Email = usuarioDto.Email,
-                Contraseña = contraseñaHash,
+                Contrasena = contrasenaHash,
                 IdRol = rol.IdRol, 
                 Estado = "Activo",
                 FechaCreacion = DateOnly.FromDateTime(DateTime.Now),
