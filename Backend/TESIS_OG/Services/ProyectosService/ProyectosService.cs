@@ -951,6 +951,6 @@ namespace TESIS_OG.Services.ProyectoService
         Materiales = materiales,
         AlertasStock = alertasStock
     };
-}
+    }
 
 }
