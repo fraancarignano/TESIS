@@ -1,6 +1,6 @@
 export interface LoginCredentials {
   nombreUsuario: string;
-  contraseña: string;
+  contrasena: string;
 }
 
 export interface LoginResponse {
@@ -19,7 +19,7 @@ export interface UsuarioCreate {
   nombreUsuario: string;
   apellidoUsuario: string;
   email: string;
-  contraseña: string;
+  contrasena: string;
   nombreRol: string; // 'Administrador', 'Operador', 'Supervisor'
 }
 
