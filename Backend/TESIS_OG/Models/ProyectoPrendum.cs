@@ -19,7 +19,7 @@ public partial class ProyectoPrendum
 
     public bool? TieneEstampado { get; set; }
 
-    public string? DescripcionDiseño { get; set; }
+    public string? DescripcionDiseno { get; set; }
 
     public int? Orden { get; set; }
 
