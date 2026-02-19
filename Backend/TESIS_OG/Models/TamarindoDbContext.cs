@@ -644,7 +644,7 @@ public partial class TamarindoDbContext : DbContext
                 .HasDefaultValue("Gerencia y Administración");
             entity.Property(e => e.AvanceControlCalidad).HasDefaultValue(0);
             entity.Property(e => e.AvanceDepositoLogistica).HasDefaultValue(0);
-            entity.Property(e => e.AvanceDiseñoDesarrollo).HasDefaultValue(0);
+            entity.Property(e => e.AvanceDisenoDesarrollo).HasDefaultValue(0);
             entity.Property(e => e.AvanceEtiquetadoEmpaquetado).HasDefaultValue(0);
             entity.Property(e => e.AvanceGerenciaAdmin).HasDefaultValue(0);
             entity.Property(e => e.CantidadProducida).HasDefaultValue(0);
@@ -858,10 +858,10 @@ public partial class TamarindoDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("apellido_Usuario");
-            entity.Property(e => e.Contraseña)
+            entity.Property(e => e.Contrasena)
                 .HasMaxLength(255)
                 .IsUnicode(false)
-                .HasColumnName("contraseña");
+                .HasColumnName("contrasena");
             entity.Property(e => e.Email)
                 .HasMaxLength(80)
                 .IsUnicode(false)
