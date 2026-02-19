@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
-namespace TESIS_OG.Models;
+namespace TESIS_OG.Data;
 
 public partial class TamarindoDbContext : DbContext
 {
