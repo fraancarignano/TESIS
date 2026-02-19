@@ -35,6 +35,9 @@ namespace TESIS_OG
             builder.Services.AddScoped<IClienteService, ClienteService>();
             builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
             builder.Services.AddScoped<IInsumoService, InsumoService>();
+            builder.Services.AddScoped<AuditoriaService.IProyectoAuditoriaService, AuditoriaService.ProyectoAuditoriaService>();
+            builder.Services.AddScoped<ValidacionService.IProyectoValidacionService, ValidacionService.ProyectoValidacionService>();
+            builder.Services.AddHttpContextAccessor();
 
             // ================= CORS =================
             builder.Services.AddCors(options =>
@@ -80,16 +83,6 @@ namespace TESIS_OG
                 };
             });
 
-<<<<<<< HEAD
-            // ================= BUILD =================
-=======
-            builder.Services.AddScoped<IClienteService, ClienteService>();
-            builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
-            builder.Services.AddScoped<IInsumoService, InsumoService>();
-            builder.Services.AddScoped<AuditoriaService.IProyectoAuditoriaService, AuditoriaService.ProyectoAuditoriaService>();
-            builder.Services.AddScoped<ValidacionService.IProyectoValidacionService, ValidacionService.ProyectoValidacionService>();
-            builder.Services.AddHttpContextAccessor();
->>>>>>> developer
             var app = builder.Build();
 
             // ================= PORT (RAILWAY) =================
@@ -99,10 +92,9 @@ namespace TESIS_OG
             // ================= MIDDLEWARE =================
             if (app.Environment.IsDevelopment())
             {
-                app.UseHttpsRedirection(); // HTTPS solo en dev
+                app.UseHttpsRedirection();
             }
 
-            // Swagger siempre activo para probar en Railway
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
