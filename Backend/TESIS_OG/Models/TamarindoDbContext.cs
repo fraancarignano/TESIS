@@ -1,4 +1,5 @@
 ﻿using System;
+using TESIS_OG.Models;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
