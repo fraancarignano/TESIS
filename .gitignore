@@ -55,6 +55,7 @@ libpeerconnection.log/
 
 # Build results
 bin/
+.vs/
 obj/
 
 # Visual Studio cache

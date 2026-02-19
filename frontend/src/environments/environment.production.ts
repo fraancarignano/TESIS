@@ -1,4 +1,4 @@
-const apiBaseUrl = 'https://localhost:7163';
+const apiBaseUrl = 'https://tesis-production-0618.up.railway.app';
 
 export const environment = {
   production: true,

@@ -128,7 +128,11 @@ GO
 CREATE TABLE Proveedor (
     id_Proveedor INT IDENTITY(1,1) PRIMARY KEY,
     nombre_Proveedor VARCHAR(100) NOT NULL,
-    cuit VARCHAR(15)
+    cuit VARCHAR(15),
+    id_Ciudad INT NULL,
+    id_Provincia INT NULL,
+    FOREIGN KEY (id_Ciudad) REFERENCES Ciudad(id_Ciudad),
+    FOREIGN KEY (id_Provincia) REFERENCES Provincia(id_Provincia)
 );
 GO
 
