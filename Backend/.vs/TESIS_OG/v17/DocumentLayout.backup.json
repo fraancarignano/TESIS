@@ -1,9 +1,13 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\",
+  "WorkspaceRootPath": "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{412E00FC-A6ED-4B13-8E3D-A76108CABCFA}|TESIS_OG\\TESIS_OG.csproj|c:\\users\\usuario\\documents\\facu\\tesis\\proyecto\\tamarindo-escmb-frontend\\backend\\tesis_og\\controllers\\proveedorcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{412E00FC-A6ED-4B13-8E3D-A76108CABCFA}|TESIS_OG\\TESIS_OG.csproj|c:\\users\\alans\\downloads\\unc-2025\\programacion\\repositorio\\tesis\\backend\\tesis_og\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{412E00FC-A6ED-4B13-8E3D-A76108CABCFA}|TESIS_OG\\TESIS_OG.csproj|solutionrelative:tesis_og\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{412E00FC-A6ED-4B13-8E3D-A76108CABCFA}|TESIS_OG\\TESIS_OG.csproj|c:\\users\\alans\\downloads\\unc-2025\\programacion\\repositorio\\tesis\\backend\\tesis_og\\controllers\\proveedorcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{412E00FC-A6ED-4B13-8E3D-A76108CABCFA}|TESIS_OG\\TESIS_OG.csproj|solutionrelative:tesis_og\\controllers\\proveedorcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -14,46 +18,32 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 0,
           "Children": [
-            {
-              "$type": "Bookmark",
-              "Name": "ST:130:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:131:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{320fd13f-632f-4b16-9527-a1adfe555f6c}"
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
-            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "ProveedorController.cs",
-              "DocumentMoniker": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Controllers\\ProveedorController.cs",
-              "RelativeDocumentMoniker": "TESIS_OG\\Controllers\\ProveedorController.cs",
-              "ToolTip": "C:\\Users\\Usuario\\Documents\\Facu\\TESIS\\Proyecto\\Tamarindo-ESCMB-Frontend\\Backend\\TESIS_OG\\Controllers\\ProveedorController.cs",
-              "RelativeToolTip": "TESIS_OG\\Controllers\\ProveedorController.cs",
-              "ViewState": "AgIAAKcAAAAAAAAAAAAuwLQAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-17T16:07:34.696Z",
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\appsettings.json",
+              "RelativeDocumentMoniker": "TESIS_OG\\appsettings.json",
+              "ToolTip": "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\appsettings.json",
+              "RelativeToolTip": "TESIS_OG\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAACPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-02-19T21:16:47.881Z",
               "EditorCaption": ""
-            }
-          ]
-        },
-        {
-          "DockedWidth": 1002,
-          "SelectedChildIndex": -1,
-          "Children": [
+            },
             {
-              "$type": "Bookmark",
-              "Name": "ST:1:0:{e8034f19-ab72-4f06-83fd-f6832b41aa63}"
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ProveedorController.cs",
+              "DocumentMoniker": "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\Controllers\\ProveedorController.cs",
+              "RelativeDocumentMoniker": "TESIS_OG\\Controllers\\ProveedorController.cs",
+              "ToolTip": "C:\\Users\\alans\\Downloads\\UNC-2025\\PROGRAMACION\\REPOSITORIO\\TESIS\\Backend\\TESIS_OG\\Controllers\\ProveedorController.cs",
+              "RelativeToolTip": "TESIS_OG\\Controllers\\ProveedorController.cs",
+              "ViewState": "AgIAAN4AAAAAAAAAAAAcwN4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-17T16:07:34.696Z"
             }
           ]
         }

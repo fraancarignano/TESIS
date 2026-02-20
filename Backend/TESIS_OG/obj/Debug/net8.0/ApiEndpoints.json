@@ -1,5 +1,23 @@
 [
   {
+    "ContainingType": "TESIS_OG.Program\u002B\u003C\u003Ec",
+    "Method": "\u003CMain\u003Eb__0_5",
+    "RelativePath": "",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.String",
+        "MediaTypes": [
+          "text/plain"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "TESIS_OG.Controllers.Localidad.CiudadController",
     "Method": "GetCiudades",
     "RelativePath": "api/Ciudad",

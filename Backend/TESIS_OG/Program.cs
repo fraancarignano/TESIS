@@ -86,8 +86,12 @@ namespace TESIS_OG
             var app = builder.Build();
 
             // ================= PORT (RAILWAY) =================
-            var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-            app.Urls.Add($"http://*:{port}");
+            // ================= PORT (RAILWAY) =================
+            var port = Environment.GetEnvironmentVariable("PORT");
+            if (!string.IsNullOrEmpty(port))
+            {
+                app.Urls.Add($"http://*:{port}");
+            }
 
             // ================= MIDDLEWARE =================
             if (app.Environment.IsDevelopment())

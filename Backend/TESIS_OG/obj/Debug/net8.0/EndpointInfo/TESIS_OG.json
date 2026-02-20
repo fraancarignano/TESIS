@@ -2187,6 +2187,25 @@
         }
       }
     },
+    "/": {
+      "get": {
+        "tags": [
+          "TESIS_OG"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Test/test-connection": {
       "get": {
         "tags": [
@@ -2789,7 +2808,7 @@
             "type": "string",
             "nullable": true
           },
-          "contraseña": {
+          "contrasena": {
             "type": "string",
             "nullable": true
           }
@@ -3566,7 +3585,7 @@
           "tieneEstampado": {
             "type": "boolean"
           },
-          "descripcionDiseño": {
+          "descripcionDiseno": {
             "maxLength": 500,
             "minLength": 0,
             "type": "string",
@@ -3621,7 +3640,7 @@
           "tieneEstampado": {
             "type": "boolean"
           },
-          "descripcionDiseño": {
+          "descripcionDiseno": {
             "type": "string",
             "nullable": true
           },
@@ -3758,7 +3777,7 @@
       "UsuarioCreateDto": {
         "required": [
           "apellidoUsuario",
-          "contraseña",
+          "contrasena",
           "email",
           "nombreRol",
           "nombreUsuario"
@@ -3780,7 +3799,7 @@
             "type": "string",
             "format": "email"
           },
-          "contraseña": {
+          "contrasena": {
             "maxLength": 100,
             "minLength": 4,
             "type": "string"
@@ -3906,6 +3925,9 @@
     },
     {
       "name": "Reportes"
+    },
+    {
+      "name": "TESIS_OG"
     },
     {
       "name": "Test"
