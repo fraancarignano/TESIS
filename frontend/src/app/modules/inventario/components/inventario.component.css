@@ -505,3 +505,14 @@ td {
     flex-direction: column;
   }
 }
+
+.codigo-ubicacion {
+  background-color: #f0f4f8;
+  color: #546e7a;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 12px;
+  border: 1px solid #cfd8dc;
+}

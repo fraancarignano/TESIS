@@ -43,6 +43,7 @@ namespace TESIS_OG.Services.InsumoService
         StockActual = insumoDto.StockActual,
         StockMinimo = insumoDto.StockMinimo,
         IdProveedor = insumoDto.IdProveedor,
+        IdUbicacion = insumoDto.IdUbicacion,
         Estado = insumoDto.Estado ?? "Disponible",
         FechaActualizacion = DateOnly.FromDateTime(DateTime.Now)
       };
@@ -58,6 +59,7 @@ namespace TESIS_OG.Services.InsumoService
       var insumos = await _context.Insumos
           .Include(i => i.IdTipoInsumoNavigation)
           .Include(i => i.IdProveedorNavigation)
+          .Include(i => i.IdUbicacionNavigation)
           .Select(i => new InsumoIndexDTO
           {
             IdInsumo = i.IdInsumo,
@@ -71,7 +73,9 @@ namespace TESIS_OG.Services.InsumoService
             IdProveedor = i.IdProveedor,
             NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
             CuitProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.Cuit : null,
-            Estado = i.Estado
+            Estado = i.Estado,
+            IdUbicacion = i.IdUbicacion,
+            CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();
@@ -84,6 +88,7 @@ namespace TESIS_OG.Services.InsumoService
       var insumo = await _context.Insumos
           .Include(i => i.IdTipoInsumoNavigation)
           .Include(i => i.IdProveedorNavigation)
+          .Include(i => i.IdUbicacionNavigation)
           .Include(i => i.MaterialCalculados)
             .ThenInclude(mc => mc.IdProyectoNavigation)
           .Include(i => i.MaterialCalculados)
@@ -104,6 +109,8 @@ namespace TESIS_OG.Services.InsumoService
             NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
             CuitProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.Cuit : null,
             Estado = i.Estado,
+            IdUbicacion = i.IdUbicacion,
+            CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
             ProyectosAsignados = i.MaterialCalculados
                 .Where(mc => mc.IdProyectoNavigation.Estado != "Archivado" && mc.IdProyectoNavigation.Estado != "Cancelado")
                 .Select(mc => new ProyectoAsignadoDTO
@@ -154,6 +161,7 @@ namespace TESIS_OG.Services.InsumoService
       insumo.StockActual = insumoDto.StockActual;
       insumo.StockMinimo = insumoDto.StockMinimo;
       insumo.IdProveedor = insumoDto.IdProveedor;
+      insumo.IdUbicacion = insumoDto.IdUbicacion;
       insumo.Estado = insumoDto.Estado;
       insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
 
@@ -178,6 +186,7 @@ namespace TESIS_OG.Services.InsumoService
       var query = _context.Insumos
           .Include(i => i.IdTipoInsumoNavigation)
           .Include(i => i.IdProveedorNavigation)
+          .Include(i => i.IdUbicacionNavigation)
           .AsQueryable();
 
       // Aplicar filtros
@@ -221,7 +230,9 @@ namespace TESIS_OG.Services.InsumoService
             IdProveedor = i.IdProveedor,
             NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
             CuitProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.Cuit : null,
-            Estado = i.Estado
+            Estado = i.Estado,
+            IdUbicacion = i.IdUbicacion,
+            CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();

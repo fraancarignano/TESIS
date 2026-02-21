@@ -1,11 +1,13 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Insumo } from '../models/insumo.model';
+import { UbicacionDetalleModalComponent } from '../../ubicaciones/components/ubicacion-detalle-modal/ubicacion-detalle-modal.component';
+import { UbicacionesService, Ubicacion } from '../../ubicaciones/services/ubicaciones.service';
 
 @Component({
   selector: 'app-insumo-detalle-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, UbicacionDetalleModalComponent],
   template: `
     <div class="modal-overlay" (click)="cerrar.emit()">
       <div class="modal-container" (click)="$event.stopPropagation()">
@@ -84,6 +86,17 @@ import { Insumo } from '../models/insumo.model';
                 <label>Stock Mínimo</label>
                 <div class="valor">
                   {{ insumo.stockMinimo ? (insumo.stockMinimo + ' ' + insumo.unidadMedida) : 'No definido' }}
+                </div>
+              </div>
+              <div class="campo">
+                <label>Ubicación Física</label>
+                <div class="valor">
+                  <span *ngIf="insumo.codigoUbicacion" 
+                    class="badge-ubicacion clickable" 
+                    (click)="verDetalleUbicacion()">
+                    {{ insumo.codigoUbicacion }}
+                  </span>
+                  <span *ngIf="!insumo.codigoUbicacion" style="color: #999;">No asignada</span>
                 </div>
               </div>
               <div class="campo">
@@ -172,6 +185,11 @@ import { Insumo } from '../models/insumo.model';
         </div>
       </div>
     </div>
+
+    <app-ubicacion-detalle-modal *ngIf="mostrarDetalleUbicacion" 
+      [ubicacion]="ubicacionSeleccionada!" 
+      (cerrar)="mostrarDetalleUbicacion = false">
+    </app-ubicacion-detalle-modal>
   `,
   styles: [`
     .modal-overlay {
@@ -377,6 +395,29 @@ import { Insumo } from '../models/insumo.model';
       color: #2e7d32;
     }
 
+    .badge-ubicacion {
+      background-color: #f0f4f8;
+      color: #546e7a;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: 600;
+      font-size: 11px;
+      border: 1px solid #cfd8dc;
+    }
+
+    .badge-ubicacion.clickable {
+      cursor: pointer;
+      color: #2196f3;
+      border-color: #2196f3;
+      transition: all 0.2s;
+    }
+
+    .badge-ubicacion.clickable:hover {
+      background: #e3f2fd;
+      transform: scale(1.05);
+    }
+
     .alerta-stock-bajo {
       background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
       border-left: 4px solid #ff9800;
@@ -491,6 +532,24 @@ import { Insumo } from '../models/insumo.model';
 export class InsumoDetalleModalComponent {
   @Input() insumo!: Insumo;
   @Output() cerrar = new EventEmitter<void>();
+
+  mostrarDetalleUbicacion = false;
+  ubicacionSeleccionada: Ubicacion | null = null;
+
+  constructor(private ubicacionesService: UbicacionesService) { }
+
+  verDetalleUbicacion(): void {
+    if (!this.insumo.idUbicacion) return;
+
+    // Necesitamos el objeto Ubicacion completo para el modal
+    this.ubicacionesService.getUbicacion(this.insumo.idUbicacion).subscribe({
+      next: (u) => {
+        this.ubicacionSeleccionada = u;
+        this.mostrarDetalleUbicacion = true;
+      },
+      error: (err: any) => console.error('Error al cargar ubicación:', err)
+    });
+  }
 
   getEstadoClass(): string {
     const estado = (this.insumo.estado || 'disponible').toLowerCase();

@@ -1423,5 +1423,100 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TESIS_OG.Controllers.UbicacionController",
+    "Method": "CrearUbicacion",
+    "RelativePath": "api/Ubicacion",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "TESIS_OG.DTOs.Ubicacion.UbicacionCreateDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TESIS_OG.Controllers.UbicacionController",
+    "Method": "ObtenerUbicaciones",
+    "RelativePath": "api/Ubicacion",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TESIS_OG.Controllers.UbicacionController",
+    "Method": "ObtenerUbicacionPorId",
+    "RelativePath": "api/Ubicacion/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TESIS_OG.Controllers.UbicacionController",
+    "Method": "ActualizarUbicacion",
+    "RelativePath": "api/Ubicacion/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "TESIS_OG.DTOs.Ubicacion.UbicacionEditDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TESIS_OG.Controllers.UbicacionController",
+    "Method": "EliminarUbicacion",
+    "RelativePath": "api/Ubicacion/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TESIS_OG.Controllers.UbicacionController",
+    "Method": "ObtenerInsumosPorUbicacion",
+    "RelativePath": "api/Ubicacion/{id}/insumos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
   }
 ]

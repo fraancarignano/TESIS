@@ -38,6 +38,11 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'ubicaciones',
+    loadComponent: () => import('./modules/ubicaciones/components/ubicaciones.component').then(m => m.UbicacionesComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'reportes/inventario',
     loadComponent: () => import('./modules/reportes/Inventario/reporte-inventario-critico.component'),
     canActivate: [authGuard]

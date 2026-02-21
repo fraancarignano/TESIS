@@ -141,6 +141,8 @@ export class InsumosService {
         nombreProveedor: data.nombreProveedor,
         cuit: data.cuitProveedor
       } : undefined,
+      idUbicacion: data.idUbicacion,
+      codigoUbicacion: data.codigoUbicacion,
       estado: data.estado
     };
   }
@@ -156,6 +158,7 @@ export class InsumosService {
       stockActual: insumo.stockActual,
       stockMinimo: insumo.stockMinimo,
       idProveedor: insumo.idProveedor,
+      idUbicacion: insumo.idUbicacion,
       estado: insumo.estado
     };
   }

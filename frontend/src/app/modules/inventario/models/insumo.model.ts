@@ -31,6 +31,9 @@ export interface Insumo {
   fechaActualizacion: string;
   idProveedor?: number;
   proveedor?: Proveedor;
+  idUbicacion?: number;
+  codigoUbicacion?: string;
+  nombreTipoInsumo?: string;
   estado?: string;
   proyectosAsignados?: ProyectoAsignado[];
 }

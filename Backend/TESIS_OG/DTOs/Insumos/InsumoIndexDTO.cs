@@ -14,6 +14,8 @@ namespace TESIS_OG.DTOs.Insumos
     public string? NombreProveedor { get; set; }
     public string? CuitProveedor { get; set; }
     public string? Estado { get; set; }
+    public int? IdUbicacion { get; set; }
+    public string? CodigoUbicacion { get; set; }
         
     public List<ProyectoAsignadoDTO>? ProyectosAsignados { get; set; }
 

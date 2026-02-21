@@ -78,6 +78,7 @@ public partial class TamarindoDbContext : DbContext
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
     public virtual DbSet<ProyectoAuditoria> ProyectoAuditorias { get; set; }
+    public virtual DbSet<Ubicacion> Ubicacions { get; set; }
 
     public virtual DbSet<VwMaterialesProyecto> VwMaterialesProyectos { get; set; }
 
@@ -506,6 +507,10 @@ public partial class TamarindoDbContext : DbContext
                 .HasForeignKey(d => d.IdTipoInsumo)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Insumo__id_TipoI__17036CC0");
+
+            entity.HasOne(d => d.IdUbicacionNavigation).WithMany(p => p.Insumos)
+                .HasForeignKey(d => d.IdUbicacion)
+                .HasConstraintName("FK_Insumo_Ubicacion");
         });
 
         modelBuilder.Entity<InventarioMovimiento>(entity =>
@@ -1050,6 +1055,28 @@ public partial class TamarindoDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false)
                 .HasColumnName("nombre_Prenda");
+        });
+
+        modelBuilder.Entity<Ubicacion>(entity =>
+        {
+            entity.HasKey(e => e.IdUbicacion).HasName("PK_Ubicacion");
+
+            entity.ToTable("Ubicacion");
+
+            entity.HasIndex(e => e.Codigo, "UQ_Ubicacion_Codigo").IsUnique();
+
+            entity.Property(e => e.IdUbicacion).HasColumnName("id_Ubicacion");
+            entity.Property(e => e.Codigo)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("codigo");
+            entity.Property(e => e.Rack).HasColumnName("rack");
+            entity.Property(e => e.Division).HasColumnName("division");
+            entity.Property(e => e.Espacio).HasColumnName("espacio");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("descripcion");
         });
 
         modelBuilder.Entity<UnidadMedidum>(entity =>

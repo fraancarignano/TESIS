@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Insumo, TipoInsumo, Proveedor } from '../models/insumo.model';
 import { InsumosService } from '../services/insumos.service';
 import { AlertasService } from '../../../core/services/alertas';
+import { UbicacionesService, Ubicacion } from '../../ubicaciones/services/ubicaciones.service';
 
 @Component({
   selector: 'app-insumo-form',
@@ -28,11 +29,13 @@ export class InsumoFormComponent implements OnInit {
 
   tiposInsumo: TipoInsumo[] = [];
   proveedores: Proveedor[] = [];
+  ubicaciones: Ubicacion[] = [];
   esEdicion = false;
   guardando = false;
 
   constructor(
     private insumosService: InsumosService,
+    private ubicacionesService: UbicacionesService,
     private alertas: AlertasService
   ) { }
 
@@ -40,12 +43,17 @@ export class InsumoFormComponent implements OnInit {
     // Cargar tipos de insumo y proveedores
     this.insumosService.getTiposInsumo().subscribe({
       next: (tipos) => this.tiposInsumo = tipos,
-      error: (error) => console.error('Error al cargar tipos:', error)
+      error: (error: any) => console.error('Error al cargar tipos:', error)
     });
 
     this.insumosService.getProveedores().subscribe({
       next: (proveedores) => this.proveedores = proveedores,
-      error: (error) => console.error('Error al cargar proveedores:', error)
+      error: (error: any) => console.error('Error al cargar proveedores:', error)
+    });
+
+    this.ubicacionesService.getUbicaciones().subscribe({
+      next: (ubicaciones) => this.ubicaciones = ubicaciones,
+      error: (error: any) => console.error('Error al cargar ubicaciones:', error)
     });
 
     if (this.insumo) {
@@ -93,7 +101,7 @@ export class InsumoFormComponent implements OnInit {
         this.alertas.success('Exito', mensaje);
         this.cerrar.emit();
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al guardar:', error);
         this.alertas.error('Error', 'Error al guardar el insumo. Verifique los datos.');
         this.guardando = false;

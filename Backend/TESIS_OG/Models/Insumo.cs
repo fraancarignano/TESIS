@@ -29,6 +29,8 @@ public partial class Insumo
 
     public decimal? RatioKgUnidad { get; set; }
 
+    public int? IdUbicacion { get; set; }
+
     public virtual ICollection<DetalleMaterialProyecto> DetalleMaterialProyectos { get; set; } = new List<DetalleMaterialProyecto>();
 
     public virtual ICollection<DetalleOrdenCompra> DetalleOrdenCompras { get; set; } = new List<DetalleOrdenCompra>();
@@ -36,6 +38,8 @@ public partial class Insumo
     public virtual Proveedor? IdProveedorNavigation { get; set; }
 
     public virtual TipoInsumo IdTipoInsumoNavigation { get; set; } = null!;
+
+    public virtual Ubicacion? IdUbicacionNavigation { get; set; }
 
     public virtual ICollection<InventarioMovimiento> InventarioMovimientos { get; set; } = new List<InventarioMovimiento>();
 

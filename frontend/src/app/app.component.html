@@ -4,19 +4,16 @@
     <div class="logo">
       TAMARINDO
     </div>
-    
+
     <nav class="nav-menu">
 
       <!-- Proyectos con submenu -->
       <div class="nav-item-container">
-        <a routerLink="/proyectos" 
-          routerLinkActive="active" 
-          class="nav-item parent" 
-          [class.active]="proyectoAbierto"
+        <a routerLink="/proyectos" routerLinkActive="active" class="nav-item parent" [class.active]="proyectoAbierto"
           (click)="toggleProyectos()">
           <span class="text">Proyectos</span>
         </a>
-        
+
         <div class="submenu" [class.open]="proyectoAbierto">
           <a routerLink="/proyectos/crear" routerLinkActive="active" class="nav-item sub">
             <span class="text">Crear Proyecto</span>
@@ -27,23 +24,25 @@
         </div>
       </div>
 
-            
+
       <a routerLink="/clientes" routerLinkActive="active" class="nav-item">
         <span class="text">Clientes</span>
       </a>
-      
+
       <a routerLink="/inventario" routerLinkActive="active" class="nav-item">
         <span class="text">Inventario</span>
       </a>
 
+      <a routerLink="/ubicaciones" routerLinkActive="active" class="nav-item">
+        <span class="text">Ubicaciones</span>
+      </a>
+
       <!-- Reportes con submenu -->
       <div class="nav-item-container">
-        <div class="nav-item parent" 
-             [class.active]="reportesAbierto"
-             (click)="toggleReportes()">
+        <div class="nav-item parent" [class.active]="reportesAbierto" (click)="toggleReportes()">
           <span class="text">Reportes</span>
         </div>
-        
+
         <div class="submenu" [class.open]="reportesAbierto">
           <a routerLink="/reportes/proyectos" routerLinkActive="active" class="nav-item sub">
             <span class="text">Reporte de Proyectos</span>
@@ -59,12 +58,10 @@
           </a>
         </div>
       </div>
-                  
-       <!-- Usuarios con submenu -->
+
+      <!-- Usuarios con submenu -->
       <div class="nav-item-container">
-        <div class="nav-item parent"
-             [class.active]="usuariosAbierto"
-             (click)="toggleUsuarios()">
+        <div class="nav-item parent" [class.active]="usuariosAbierto" (click)="toggleUsuarios()">
           <span class="text">Usuarios</span>
         </div>
 
@@ -74,7 +71,7 @@
           </a>
         </div>
       </div>
-      
+
 
       <a routerLink="/ordenes" routerLinkActive="active" class="nav-item">
         <span class="text">Órdenes de Compra</span>
@@ -83,13 +80,15 @@
 
     <div class="user-profile">
       <div class="avatar">
-        <img src="assets/avatar.jpg" alt="User" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <img src="assets/avatar.jpg" alt="User"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
         <div class="avatar-placeholder">{{ obtenerIniciales() }}</div>
       </div>
       <div class="user-info">
         <div class="user-name">{{ obtenerNombreUsuario() }}</div>
         <button class="logout-btn" (click)="cerrarSesion()" title="Cerrar sesión">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>
             <line x1="21" y1="12" x2="9" y2="12"></line>

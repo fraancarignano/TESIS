@@ -57,7 +57,7 @@ export class InventarioComponent implements OnInit {
       next: (insumos) => {
         this.insumos = insumos;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al cargar insumos:', error);
       }
     });
@@ -83,7 +83,7 @@ export class InventarioComponent implements OnInit {
       next: (insumos) => {
         this.insumos = insumos;
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error al buscar insumos:', err);
       }
     });
@@ -117,7 +117,7 @@ export class InventarioComponent implements OnInit {
           this.insumoDetalle = insumoDetalle;
           this.mostrarDetalle = true;
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Error al obtener detalle:', error);
           this.insumoDetalle = insumo;
           this.mostrarDetalle = true;
@@ -139,7 +139,7 @@ export class InventarioComponent implements OnInit {
         next: () => {
           this.cargarInsumos();
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Error al eliminar:', error);
           alert('Error al eliminar el insumo');
         }
@@ -178,7 +178,7 @@ export class InventarioComponent implements OnInit {
           this.insumos[idx] = { ...this.insumos[idx], estado: nuevoEstado };
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error al cambiar estado:', error);
         alert('Error al cambiar el estado');
       }
