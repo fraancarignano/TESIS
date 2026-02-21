@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InsumosService } from '../services/insumos.service';
@@ -29,10 +29,27 @@ export class InventarioComponent implements OnInit {
   terminoBusqueda = '';
   filtrosActivos: FiltrosInsumo = {};
 
+  // Dropdown de estado
+  insumoDropdownAbierto: number | null = null;
+  estadosDisponibles = ['Disponible', 'En uso', 'A designar', 'Agotado'];
+
+  // Confirmación de cambio de estado
+  confirmacion: {
+    visible: boolean;
+    insumo: Insumo | null;
+    nuevoEstado: string;
+  } = { visible: false, insumo: null, nuevoEstado: '' };
+
   constructor(private insumosService: InsumosService) { }
 
   ngOnInit(): void {
     this.cargarInsumos();
+  }
+
+  // Cierra el dropdown si se hace click fuera
+  @HostListener('document:click')
+  cerrarDropdownGlobal(): void {
+    this.insumoDropdownAbierto = null;
   }
 
   cargarInsumos(): void {
@@ -90,7 +107,7 @@ export class InventarioComponent implements OnInit {
   cerrarFormulario(): void {
     this.mostrarFormulario = false;
     this.insumoSeleccionado = null;
-    this.cargarInsumos(); // Recargar después de crear/editar
+    this.cargarInsumos();
   }
 
   abrirDetalle(insumo: Insumo): void {
@@ -102,7 +119,6 @@ export class InventarioComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al obtener detalle:', error);
-          // Fallback al objeto que ya tenemos si falla el fetch
           this.insumoDetalle = insumo;
           this.mostrarDetalle = true;
         }
@@ -121,7 +137,6 @@ export class InventarioComponent implements OnInit {
     if (confirm('¿Está seguro de eliminar este insumo?')) {
       this.insumosService.eliminarInsumo(id).subscribe({
         next: () => {
-          alert('Insumo eliminado correctamente');
           this.cargarInsumos();
         },
         error: (error) => {
@@ -132,23 +147,46 @@ export class InventarioComponent implements OnInit {
     }
   }
 
-  cambiarEstado(insumo: Insumo, event: Event): void {
+  // Abre/cierra el dropdown del estado
+  toggleDropdownEstado(insumo: Insumo, event: Event): void {
     event.stopPropagation();
+    this.insumoDropdownAbierto =
+      this.insumoDropdownAbierto === insumo.idInsumo ? null : insumo.idInsumo!;
+  }
 
-    // Ciclo de estados
-    const estados = ['En uso', 'A designar', 'Agotado', 'Disponible'];
-    const indexActual = estados.indexOf(insumo.estado || 'Disponible');
-    const nuevoEstado = estados[(indexActual + 1) % estados.length];
+  // Cuando se selecciona un estado del dropdown → muestra confirmación
+  seleccionarEstado(insumo: Insumo, nuevoEstado: string): void {
+    const estadoActual = insumo.estado || 'Disponible';
+    this.insumoDropdownAbierto = null;
+
+    if (estadoActual === nuevoEstado) return;
+
+    this.confirmacion = { visible: true, insumo, nuevoEstado };
+  }
+
+  confirmarCambio(): void {
+    if (!this.confirmacion.insumo) return;
+    const insumo = this.confirmacion.insumo;
+    const nuevoEstado = this.confirmacion.nuevoEstado;
+
+    this.confirmacion = { visible: false, insumo: null, nuevoEstado: '' };
 
     this.insumosService.cambiarEstado(insumo.idInsumo!, nuevoEstado).subscribe({
       next: () => {
-        this.cargarInsumos();
+        const idx = this.insumos.findIndex(i => i.idInsumo === insumo.idInsumo);
+        if (idx !== -1) {
+          this.insumos[idx] = { ...this.insumos[idx], estado: nuevoEstado };
+        }
       },
       error: (error) => {
         console.error('Error al cambiar estado:', error);
         alert('Error al cambiar el estado');
       }
     });
+  }
+
+  cancelarCambio(): void {
+    this.confirmacion = { visible: false, insumo: null, nuevoEstado: '' };
   }
 
   getEstadoClass(estado?: string): string {

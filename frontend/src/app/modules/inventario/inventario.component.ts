@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InsumosService } from './services/insumos.service';
@@ -29,10 +29,27 @@ export class InventarioComponent implements OnInit {
   terminoBusqueda = '';
   filtrosActivos: FiltrosInsumo = {};
 
+  // Dropdown de estado
+  insumoDropdownAbierto: number | null = null;
+  estadosDisponibles = ['Disponible', 'En uso', 'A designar', 'Agotado'];
+
+  // Confirmación de cambio de estado
+  confirmacion: {
+    visible: boolean;
+    insumo: Insumo | null;
+    nuevoEstado: string;
+  } = { visible: false, insumo: null, nuevoEstado: '' };
+
   constructor(private insumosService: InsumosService) { }
 
   ngOnInit(): void {
     this.cargarInsumos();
+  }
+
+  // Cierra el dropdown si se hace click fuera
+  @HostListener('document:click')
+  cerrarDropdownGlobal(): void {
+    this.insumoDropdownAbierto = null;
   }
 
   cargarInsumos(): void {
@@ -47,13 +64,11 @@ export class InventarioComponent implements OnInit {
   }
 
   aplicarFiltrosAvanzados(): void {
-    // Si no hay filtros avanzados activos ni término de búsqueda, cargar todos
     if (Object.keys(this.filtrosActivos).length === 0 && !this.terminoBusqueda) {
       this.cargarInsumos();
       return;
     }
 
-    // Preparar el DTO de búsqueda combinando el término de búsqueda con los filtros
     const searchDto: FiltrosInsumo = {
       ...this.filtrosActivos,
       nombreInsumo: this.terminoBusqueda || undefined
@@ -70,10 +85,6 @@ export class InventarioComponent implements OnInit {
   }
 
   get insumosFiltrados(): Insumo[] {
-    // Como ahora la búsqueda se hace por backend al cambiar filtros o término,
-    // simplemente devolvemos la lista actual. 
-    // Nota: Para una búsqueda "en vivo" mientras se escribe en el input, 
-    // lo ideal sería llamar a aplicarFiltrosAvanzados() en el (ngModelChange) del input.
     return this.insumos;
   }
 
@@ -91,6 +102,7 @@ export class InventarioComponent implements OnInit {
   cerrarFormulario(): void {
     this.mostrarFormulario = false;
     this.insumoSeleccionado = null;
+    this.cargarInsumos();
   }
 
   abrirDetalle(insumo: Insumo): void {
@@ -111,15 +123,47 @@ export class InventarioComponent implements OnInit {
     }
   }
 
-  cambiarEstado(insumo: Insumo, event: Event): void {
+  // Abre/cierra el dropdown del estado
+  toggleDropdownEstado(insumo: Insumo, event: Event): void {
     event.stopPropagation();
+    this.insumoDropdownAbierto =
+      this.insumoDropdownAbierto === insumo.idInsumo ? null : insumo.idInsumo!;
+  }
 
-    // Ciclo de estados
-    const estados = ['En uso', 'A designar', 'Agotado', 'Disponible'];
-    const indexActual = estados.indexOf(insumo.estado || 'Disponible');
-    const nuevoEstado = estados[(indexActual + 1) % estados.length];
+  // Cuando se selecciona un estado del dropdown → muestra confirmación
+  seleccionarEstado(insumo: Insumo, nuevoEstado: string): void {
+    const estadoActual = insumo.estado || 'Disponible';
+    this.insumoDropdownAbierto = null;
 
-    this.insumosService.cambiarEstado(insumo.idInsumo!, nuevoEstado);
+    if (estadoActual === nuevoEstado) return; // Sin cambio, no hacer nada
+
+    this.confirmacion = { visible: true, insumo, nuevoEstado };
+  }
+
+  confirmarCambio(): void {
+    if (!this.confirmacion.insumo) return;
+    const insumo = this.confirmacion.insumo;
+    const nuevoEstado = this.confirmacion.nuevoEstado;
+
+    // Cerrar modal inmediatamente para feedback ágil
+    this.confirmacion = { visible: false, insumo: null, nuevoEstado: '' };
+
+    this.insumosService.cambiarEstado(insumo.idInsumo!, nuevoEstado).subscribe({
+      next: () => {
+        // Actualizar localmente para feedback inmediato sin recargar toda la lista
+        const idx = this.insumos.findIndex(i => i.idInsumo === insumo.idInsumo);
+        if (idx !== -1) {
+          this.insumos[idx] = { ...this.insumos[idx], estado: nuevoEstado };
+        }
+      },
+      error: (err) => {
+        console.error('Error al cambiar estado:', err);
+      }
+    });
+  }
+
+  cancelarCambio(): void {
+    this.confirmacion = { visible: false, insumo: null, nuevoEstado: '' };
   }
 
   getEstadoClass(estado?: string): string {
