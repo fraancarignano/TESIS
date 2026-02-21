@@ -176,7 +176,7 @@ export interface CambiarEstadoDTO {
 }
 
 export interface ActualizarAvanceDTO {
-  area: string; // "gerenciaAdmin", "diseñoDesarrollo", etc.
+  idArea: number;
   porcentaje: number; // 0-100
   observaciones?: string;
 }

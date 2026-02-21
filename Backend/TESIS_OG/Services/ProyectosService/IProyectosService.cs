@@ -88,6 +88,7 @@ namespace TESIS_OG.Services.ProyectosService
         // ========================================
 
         Task<bool> ActualizarAvanceAsync(int idProyecto, ActualizarAvanceDTO avanceDto);
+        Task<bool> RetrocederAreaAsync(int idProyecto);
 
         // ========================================
         // GESTIÓN DE SCRAP (MANTENER COMPATIBILIDAD)

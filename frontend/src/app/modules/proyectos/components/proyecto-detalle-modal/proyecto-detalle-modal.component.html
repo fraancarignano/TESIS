@@ -147,8 +147,122 @@
             <!-- FORMULARIO DEL ÁREA -->
             <div class="form-area">
 
+              <div *ngIf="esAreaControlCalidad" class="calidad-form">
+                <div class="calidad-header">
+                  <h4><i class="fas fa-vial"></i> Inspección manual por prenda</h4>
+                  <span class="calidad-resumen">
+                    {{ criteriosEvaluados }}/{{ criteriosCalidad.length }} criterios evaluados
+                  </span>
+                </div>
+                <div class="calidad-kpis">
+                  <span class="kpi kpi-ok">Cumple: {{ criteriosCumplen }}</span>
+                  <span class="kpi kpi-bad">No cumple: {{ criteriosNoCumplen }}</span>
+                  <span class="kpi kpi-na">No aplica: {{ criteriosNoAplica }}</span>
+                </div>
+                <div class="calidad-kpis">
+                  <span class="kpi kpi-total">Guardadas: {{ historialInspeccionesCalidad.length }}</span>
+                  <span class="kpi kpi-total">Cantidad: {{ totalGuardadoCalidad }}/{{ totalObjetivoCalidad }} ({{ porcentajeCompletadoCalidad }}%)</span>
+                </div>
+
+                <div class="calidad-talles">
+                  <div class="talle-item" *ngFor="let t of seguimientoTalles; trackBy: trackByTalle">
+                    <div class="talle-head">
+                      <strong>{{ t.talle }}</strong>
+                      <span class="talle-badge">{{ t.guardado }}/{{ t.objetivo }}</span>
+                    </div>
+                    <div class="talle-restante">Restante: {{ t.restante }}</div>
+                    <input
+                      type="number"
+                      min="0"
+                      [max]="t.restante"
+                      [ngModel]="inspeccionPorTalleActual[t.talle]"
+                      (ngModelChange)="actualizarCantidadTalle(t.talle, $event)"
+                      [disabled]="!puedeEditarFormularioCalidad || t.restante === 0">
+                  </div>
+                </div>
+
+                <div class="calidad-lista">
+                  <div class="criterio-item" *ngFor="let criterio of criteriosCalidad; trackBy: trackByCriterio">
+                    <div class="criterio-top">
+                      <div class="criterio-main">
+                        <div class="criterio-titulo">
+                          <strong>{{ criterio.nombre }}</strong>
+                          <span class="badge-critico" *ngIf="criterio.esCritico">Crítico</span>
+                        </div>
+                        <small>{{ criterio.descripcion }}</small>
+                      </div>
+
+                      <div class="criterio-acciones">
+                        <button
+                          type="button"
+                          class="btn-criterio btn-cumple"
+                          [class.active]="criterio.resultado === 'cumple'"
+                          (click)="setResultadoCriterio(criterio, 'cumple')"
+                          [disabled]="!puedeEditarFormularioCalidad">
+                          <i class="fas fa-check"></i>
+                          <span>Aprueba</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-criterio btn-no-cumple"
+                          [class.active]="criterio.resultado === 'no_cumple'"
+                          (click)="setResultadoCriterio(criterio, 'no_cumple')"
+                          [disabled]="!puedeEditarFormularioCalidad">
+                          <i class="fas fa-times"></i>
+                          <span>No aprueba</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-criterio btn-no-aplica"
+                          [class.active]="criterio.resultado === 'no_aplica'"
+                          (click)="setResultadoCriterio(criterio, 'no_aplica')"
+                          [disabled]="!puedeEditarFormularioCalidad">
+                          <i class="fas fa-minus"></i>
+                          <span>No aplica</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <textarea
+                      rows="2"
+                      [(ngModel)]="criterio.observacion"
+                      placeholder="Observación del criterio (opcional)"
+                      [disabled]="!puedeEditarFormularioCalidad">
+                    </textarea>
+                  </div>
+                </div>
+
+                <div class="calidad-alerta" *ngIf="criteriosNoCumplen > 0">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  {{ criteriosNoCumplen }} criterio(s) marcados como "No cumple".
+                </div>
+                <div class="calidad-alerta" *ngIf="tieneExcesoEnTallesActuales">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  Hay cantidades por talle que superan el restante permitido.
+                </div>
+
+                <div class="calidad-actions">
+                  <button
+                    type="button"
+                    class="btn-guardar-inspeccion"
+                    (click)="guardarInspeccionCalidad()"
+                    [disabled]="!puedeGuardarInspeccionCalidad || guardandoInspeccionCalidad">
+                    <i class="fas" [ngClass]="guardandoInspeccionCalidad ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                    {{ guardandoInspeccionCalidad ? 'Guardando...' : 'Guardar inspección' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-limpiar-inspeccion"
+                    (click)="reiniciarFormularioCalidad()"
+                    [disabled]="guardandoInspeccionCalidad || !tieneCambiosInspeccionPendientes">
+                    <i class="fas fa-eraser"></i>
+                    Limpiar
+                  </button>
+                </div>
+              </div>
+
               <!-- Aquí irán los campos específicos de cada área en el futuro -->
-              <div class="form-placeholder">
+              <div *ngIf="!esAreaControlCalidad" class="form-placeholder">
                 <i class="fas fa-clipboard-list"></i>
                 <p>Formulario específico del área</p>
                 <small>Los campos personalizados se agregarán aquí</small>
@@ -168,13 +282,38 @@
 
               <!-- BOTÓN DE CONTINUAR / FINALIZAR -->
               <button *ngIf="!estaCompleta(areaSeleccionada)" class="btn-continuar" [class.btn-finalizar]="esUltimaArea"
-                (click)="continuarSiguienteArea()" [disabled]="procesandoArea">
+                (click)="continuarSiguienteArea()"
+                [disabled]="procesandoArea || !puedeContinuarAreaSeleccionada() || !puedeContinuarControlCalidad">
                 <i class="fas"
                   [ngClass]="procesandoArea ? 'fa-spinner fa-spin' : (esUltimaArea ? 'fa-flag-checkered' : 'fa-arrow-right')"></i>
                 <span *ngIf="!procesandoArea">
                   {{ esUltimaArea ? 'Finalizar Proyecto' : 'Continuar a ' + siguienteArea?.nombreCorto }}
                 </span>
                 <span *ngIf="procesandoArea">Procesando...</span>
+              </button>
+
+              <small *ngIf="esAreaControlCalidad && !puedeContinuarControlCalidad"
+                style="display:block; margin-top: .35rem; color: #9e9e9e;">
+                Debe existir al menos una inspección guardada y no quedar cambios pendientes sin guardar.
+              </small>
+
+              <small *ngIf="esAreaControlCalidad && !puedeEditarFormularioCalidad"
+                style="display:block; margin-top: .35rem; color: #9e9e9e;">
+                Para cargar calidad, el área anterior debe estar al 100% y el proyecto debe estar En Proceso.
+              </small>
+
+              <small *ngIf="!puedeGestionarAvance" style="display:block; margin-top: .35rem; color: #9e9e9e;">
+                Solo se puede avanzar áreas cuando el proyecto está en estado En Proceso.
+              </small>
+              <small *ngIf="puedeGestionarAvance && areaAnteriorSeleccionada && !estaCompleta(areaAnteriorSeleccionada)"
+                style="display:block; margin-top: .35rem; color: #9e9e9e;">
+                Debes completar el área anterior para continuar.
+              </small>
+
+              <button class="btn-retroceder" (click)="retrocederArea()"
+                [disabled]="procesandoArea || !puedeRetrocederArea()">
+                <i class="fas fa-arrow-left"></i>
+                Volver al área anterior
               </button>
 
               <div class="area-completada-msg" *ngIf="estaCompleta(areaSeleccionada)">

@@ -138,6 +138,13 @@ export class ProyectosService {
     );
   }
 
+  retrocederArea(id: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}/retroceder-area`, {}).pipe(
+      tap(() => this.obtenerProyectos().subscribe()),
+      catchError(this.handleError)
+    );
+  }
+
   /**
    * Registrar scrap
    */
