@@ -19,6 +19,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -44,6 +45,7 @@
     opacity: 0;
     transform: translateY(40px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -292,9 +294,61 @@
   height: 13px;
 }
 
-.input-wrapper input:focus ~ .input-icon,
-.input-wrapper select:focus ~ .input-icon {
+.input-wrapper input:focus~.input-icon,
+.input-wrapper select:focus~.input-icon {
   color: #ff5722;
+}
+
+/* Catalog Info Styles */
+.catalog-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: #f0f7ff;
+  border-radius: 6px;
+  border: 1px solid #d0e3ff;
+}
+
+.catalog-badge {
+  background: #3498db;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.edit-link {
+  color: #2980b9;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+}
+
+.edit-link:hover {
+  color: #1a5276;
+  text-decoration: underline;
+}
+
+.edit-link svg {
+  opacity: 0.8;
+}
+
+/* Disabled state improvements */
+select:disabled,
+input:disabled {
+  background-color: #f8f9fa !important;
+  cursor: not-allowed;
+  opacity: 0.8;
+  border-color: #e9ecef !important;
+  color: #6c757d !important;
 }
 
 /* === ERROR MESSAGE === */
@@ -420,10 +474,11 @@
     width: 100%;
   }
 }
+
 .input-wrapper select {
   padding: 8px 32px 8px 36px !important;
   padding-right: 32px !important;
-  appearance: none !important;  
+  appearance: none !important;
   background-color: #fafafa !important;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
@@ -460,4 +515,105 @@
 
 .alerta-info svg {
   color: #ff9800;
+}
+
+/* === AUTOCOMPLETE SEARCH === */
+.search-container {
+  position: relative;
+}
+
+.search-results {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e0e0e0;
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.search-item:last-child {
+  border-bottom: none;
+}
+
+.search-item:hover {
+  background: #fff3e0;
+}
+
+.item-icon {
+  width: 32px;
+  height: 32px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff5722;
+  flex-shrink: 0;
+}
+
+.search-item:hover .item-icon {
+  background: white;
+}
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.item-meta {
+  font-size: 11px;
+  color: #777;
+}
+
+/* Ajustes para el input con icono de búsqueda */
+.search-container input {
+  padding-left: 36px !important;
+}
+
+.search-container .input-icon {
+  transition: color 0.3s ease;
+}
+
+.search-container input:focus+.input-icon,
+.search-container input:not(:placeholder-shown)+.input-icon {
+  color: #ff5722;
 }

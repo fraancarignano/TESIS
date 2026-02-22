@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TESIS_OG")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cead1e187413bc7f01f0e34b8e5eb8c0ab36f269")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c96bcb3f14447a3e66be57a446bffa974a4057dc")]
 [assembly: System.Reflection.AssemblyProductAttribute("TESIS_OG")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TESIS_OG")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

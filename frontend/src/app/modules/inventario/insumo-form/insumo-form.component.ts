@@ -5,6 +5,7 @@ import { Insumo, TipoInsumo, Proveedor } from '../models/insumo.model';
 import { InsumosService } from '../services/insumos.service';
 import { AlertasService } from '../../../core/services/alertas';
 import { UbicacionesService, Ubicacion } from '../../ubicaciones/services/ubicaciones.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-insumo-form',
@@ -30,13 +31,22 @@ export class InsumoFormComponent implements OnInit {
   tiposInsumo: TipoInsumo[] = [];
   proveedores: Proveedor[] = [];
   ubicaciones: Ubicacion[] = [];
+
+  // Autocomplete
+  insumosCatalogo: Insumo[] = [];
+  insumosFiltrados: Insumo[] = [];
+  mostrarResultados = false;
+  busquedaInsumo = '';
+
   esEdicion = false;
   guardando = false;
+  esInsumoDeCatalogo = false;
 
   constructor(
     private insumosService: InsumosService,
     private ubicacionesService: UbicacionesService,
-    private alertas: AlertasService
+    private alertas: AlertasService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -56,10 +66,65 @@ export class InsumoFormComponent implements OnInit {
       error: (error: any) => console.error('Error al cargar ubicaciones:', error)
     });
 
+    this.cargarCatalogo();
+
     if (this.insumo) {
       this.esEdicion = true;
       this.formulario = { ...this.insumo };
+      this.busquedaInsumo = this.formulario.nombreInsumo;
+      // Si el insumo ya tiene ID, lo tratamos como algo que viene de una definición existente
+      this.esInsumoDeCatalogo = true;
     }
+  }
+
+  cargarCatalogo(): void {
+    this.insumosService.getInsumos().subscribe({
+      next: (insumos) => {
+        this.insumosCatalogo = insumos;
+      },
+      error: (error: any) => console.error('Error al cargar catálogo:', error)
+    });
+  }
+
+  onSearchChange(): void {
+    if (!this.busquedaInsumo.trim()) {
+      this.insumosFiltrados = [];
+      this.mostrarResultados = false;
+      return;
+    }
+
+    const term = this.busquedaInsumo.toLowerCase();
+    this.insumosFiltrados = this.insumosCatalogo.filter(i =>
+      i.nombreInsumo.toLowerCase().includes(term)
+    );
+    this.mostrarResultados = this.insumosFiltrados.length > 0;
+
+    // Al escribir, actualizamos el nombre en el formulario
+    this.formulario.nombreInsumo = this.busquedaInsumo;
+  }
+
+  seleccionarInsumo(insumo: Insumo): void {
+    this.formulario = {
+      ...this.formulario,
+      idInsumo: insumo.idInsumo,
+      nombreInsumo: insumo.nombreInsumo,
+      idTipoInsumo: insumo.idTipoInsumo,
+      unidadMedida: insumo.unidadMedida,
+      stockMinimo: insumo.stockMinimo || 0,
+      idProveedor: insumo.idProveedor,
+      estado: insumo.estado || 'Disponible'
+    };
+
+    // Si seleccionamos uno existente, se convierte en una edición técnica para el backend
+    this.esEdicion = true;
+    this.esInsumoDeCatalogo = true;
+    this.busquedaInsumo = insumo.nombreInsumo;
+    this.mostrarResultados = false;
+  }
+
+  irAGestionDeInsumos(): void {
+    this.cerrar.emit();
+    this.router.navigate(['/inventario/catalogo']);
   }
 
   stockBajo(): boolean {

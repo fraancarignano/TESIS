@@ -51,6 +51,20 @@ namespace TESIS_OG.Services.InsumoService
       _context.Insumos.Add(nuevoInsumo);
       await _context.SaveChangesAsync();
 
+      // Si se proporcionó una ubicación, crear entrada en InsumoStock
+      if (insumoDto.IdUbicacion.HasValue && insumoDto.StockActual > 0)
+      {
+          var stockEntry = new InsumoStock
+          {
+              IdInsumo = nuevoInsumo.IdInsumo,
+              IdUbicacion = insumoDto.IdUbicacion.Value,
+              Cantidad = insumoDto.StockActual,
+              FechaActualizacion = DateTime.Now
+          };
+          _context.InsumoStocks.Add(stockEntry);
+          await _context.SaveChangesAsync();
+      }
+
       return await ObtenerInsumoPorIdAsync(nuevoInsumo.IdInsumo);
     }
 
@@ -186,6 +200,31 @@ namespace TESIS_OG.Services.InsumoService
       insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
 
       await _context.SaveChangesAsync();
+
+      // Sincronizar InsumoStock para la ubicación "General" (sin proyecto)
+      if (insumo.IdUbicacion.HasValue)
+      {
+          var stockEntry = await _context.InsumoStocks
+              .FirstOrDefaultAsync(s => s.IdInsumo == id && s.IdUbicacion == insumo.IdUbicacion && s.IdProyecto == null);
+
+          if (stockEntry == null)
+          {
+              stockEntry = new InsumoStock
+              {
+                  IdInsumo = id,
+                  IdUbicacion = insumo.IdUbicacion.Value,
+                  Cantidad = insumo.StockActual,
+                  FechaActualizacion = DateTime.Now
+              };
+              _context.InsumoStocks.Add(stockEntry);
+          }
+          else
+          {
+              stockEntry.Cantidad = insumo.StockActual;
+              stockEntry.FechaActualizacion = DateTime.Now;
+          }
+          await _context.SaveChangesAsync();
+      }
 
       return await ObtenerInsumoPorIdAsync(id);
     }
