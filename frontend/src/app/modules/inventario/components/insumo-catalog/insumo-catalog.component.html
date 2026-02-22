@@ -1,0 +1,97 @@
+<div class="catalog-container">
+    <div class="header">
+        <div class="breadcrumb">
+            <span>Inventario</span>
+            <span class="separator">></span>
+            <span class="active">Gestión de Insumos</span>
+        </div>
+        <div class="header-main">
+            <h1>Catálogo de Insumos</h1>
+            <button class="btn-nuevo" (click)="abrirNuevo()" *ngIf="!mostrarFormulario">
+                + Nuevo Insumo
+            </button>
+        </div>
+    </div>
+
+    <!-- Formulario rápido -->
+    <div class="form-card" *ngIf="mostrarFormulario">
+        <h3>Definir Nuevo Insumo</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nombre del Insumo</label>
+                <input type="text" [(ngModel)]="nuevoInsumo.nombreInsumo" placeholder="Ej: Hilo de Poliéster Negro">
+            </div>
+            <div class="form-group">
+                <label>Unidad de Medida</label>
+                <select [(ngModel)]="nuevoInsumo.unidadMedida">
+                    <option value="">Seleccione...</option>
+                    <option *ngFor="let u of unidadesMedida" [value]="u">{{ u }}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Proveedor (Opcional)</label>
+                <select [(ngModel)]="nuevoInsumo.idProveedor">
+                    <option [ngValue]="undefined">Sin proveedor</option>
+                    <option *ngFor="let p of proveedores" [ngValue]="p.idProveedor">{{ p.nombreProveedor }}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Tipo de Insumo (Categoría)</label>
+                <select [(ngModel)]="nuevoInsumo.idTipoInsumo">
+                    <option *ngFor="let t of tiposInsumo" [value]="t.idTipoInsumo">{{ t.nombreTipo }}</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn-cancelar" (click)="cancelar()">Cancelar</button>
+            <button class="btn-guardar" (click)="guardar()" [disabled]="guardando">
+                {{ guardando ? 'Guardando...' : 'Registrar Insumo' }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Lista de Insumos -->
+    <div class="list-card">
+        <div class="list-header">
+            <span>Insumos Definidos ({{ insumos.length }})</span>
+            <div class="cargando-spinner" *ngIf="cargando">Cargando...</div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Proveedor</th>
+                        <th>Unidad</th>
+                        <th>Tipo</th>
+                        <th>Stock Actual</th>
+                        <th style="text-align: right;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let insumo of insumos">
+                        <td class="nombre">{{ insumo.nombreInsumo }}</td>
+                        <td>{{ insumo.nombreProveedor || '-' }}</td>
+                        <td>{{ insumo.unidadMedida }}</td>
+                        <td>{{ insumo.tipoInsumo?.nombreTipo || '-' }}</td>
+                        <td>{{ insumo.stockActual }}</td>
+                        <td class="acciones">
+                            <button class="btn-icon" (click)="eliminar(insumo.idInsumo!)" title="Eliminar">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                    </path>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="insumos.length === 0 && !cargando">
+                        <td colspan="5" class="empty-list">No hay insumos definidos en el catálogo.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

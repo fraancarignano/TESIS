@@ -24,12 +24,24 @@ namespace TESIS_OG.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new { message = "Datos inválidos", errors = ModelState });
 
-            var result = await _ordenCompraService.CrearOrdenCompraAsync(ordenDto);
+            try
+            {
+                var result = await _ordenCompraService.CrearOrdenCompraAsync(ordenDto);
 
-            if (result == null)
-                return BadRequest(new { message = "No se pudo crear la orden de compra. Verifique los datos." });
+                if (result == null)
+                    return BadRequest(new { message = "No se pudo crear la orden de compra. Verifique los datos." });
 
-            return CreatedAtAction(nameof(ObtenerOrdenPorId), new { id = result.IdOrdenCompra }, result);
+                return CreatedAtAction(nameof(ObtenerOrdenPorId), new { id = result.IdOrdenCompra }, result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { 
+                    message = "Error interno del servidor al crear la orden", 
+                    error = ex.Message,
+                    innerError = ex.InnerException?.Message,
+                    stackTrace = ex.StackTrace 
+                });
+            }
         }
 
         /// <summary>

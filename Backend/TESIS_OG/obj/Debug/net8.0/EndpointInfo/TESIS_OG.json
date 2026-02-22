@@ -2090,6 +2090,49 @@
         }
       }
     },
+    "/api/Proyecto/{id}/retroceder-area": {
+      "put": {
+        "tags": [
+          "ProyectoArea"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Reportes/inventario-critico": {
       "get": {
         "tags": [
@@ -2544,6 +2587,37 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Ubicacion/transfer": {
+      "post": {
+        "tags": [
+          "Ubicacion"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InsumoTransferDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InsumoTransferDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InsumoTransferDTO"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -3061,6 +3135,42 @@
           "fechaHasta": {
             "type": "string",
             "format": "date",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InsumoTransferDTO": {
+        "required": [
+          "idOrdenCompra",
+          "idsInsumos",
+          "idUbicacionDestino"
+        ],
+        "type": "object",
+        "properties": {
+          "idOrdenCompra": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idsInsumos": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "idUbicacionDestino": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idProyecto": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "idUsuario": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           }
         },
@@ -3770,6 +3880,35 @@
             "type": "string",
             "nullable": true
           },
+          "areaActual": {
+            "type": "string",
+            "nullable": true
+          },
+          "avanceDiseno": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "avanceCorte": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "avanceConfeccion": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "avanceCalidadPrenda": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "avanceEtiquetadoEmpaquetado": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "esMultiPrenda": {
             "type": "boolean"
           },
@@ -4282,6 +4421,9 @@
     },
     {
       "name": "Proyecto"
+    },
+    {
+      "name": "ProyectoArea"
     },
     {
       "name": "Reportes"

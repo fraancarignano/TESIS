@@ -99,25 +99,110 @@ namespace TESIS_OG.Services.UbicacionService
 
         public async Task<List<InsumoIndexDTO>> ObtenerInsumosPorUbicacionAsync(int idUbicacion)
         {
-            return await _context.Insumos
-                .Where(i => i.IdUbicacion == idUbicacion)
-                .Select(i => new InsumoIndexDTO
+            return await _context.InsumoStocks
+                .Include(s => s.IdInsumoNavigation)
+                    .ThenInclude(i => i.IdTipoInsumoNavigation)
+                .Include(s => s.IdProyectoNavigation)
+                .Where(s => s.IdUbicacion == idUbicacion)
+                .Select(s => new InsumoIndexDTO
                 {
-                    IdInsumo = i.IdInsumo,
-                    NombreInsumo = i.NombreInsumo,
-                    IdTipoInsumo = i.IdTipoInsumo,
-                    NombreTipoInsumo = i.IdTipoInsumoNavigation.NombreTipo,
-                    UnidadMedida = i.UnidadMedida,
-                    StockActual = i.StockActual,
-                    StockMinimo = i.StockMinimo,
-                    FechaActualizacion = i.FechaActualizacion,
-                    IdProveedor = i.IdProveedor,
-                    NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
-                    Estado = i.Estado,
-                    IdUbicacion = i.IdUbicacion,
-                    CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null
+                    IdInsumo = s.IdInsumo,
+                    NombreInsumo = s.IdInsumoNavigation.NombreInsumo,
+                    IdTipoInsumo = s.IdInsumoNavigation.IdTipoInsumo,
+                    NombreTipoInsumo = s.IdInsumoNavigation.IdTipoInsumoNavigation.NombreTipo,
+                    UnidadMedida = s.IdInsumoNavigation.UnidadMedida,
+                    StockActual = s.Cantidad,
+                    StockMinimo = s.IdInsumoNavigation.StockMinimo,
+                    FechaActualizacion = DateOnly.FromDateTime(s.FechaActualizacion),
+                    IdProveedor = s.IdInsumoNavigation.IdProveedor,
+                    Estado = s.IdInsumoNavigation.Estado,
+                    IdUbicacion = s.IdUbicacion,
+                    CodigoUbicacion = s.IdUbicacionNavigation != null ? s.IdUbicacionNavigation.Codigo : null,
+                    DetalleStock = new List<InsumoStockDTO>
+                    {
+                        new InsumoStockDTO
+                        {
+                            IdInsumoStock = s.IdInsumoStock,
+                            IdInsumo = s.IdInsumo,
+                            IdProyecto = s.IdProyecto,
+                            NombreProyecto = s.IdProyectoNavigation != null ? s.IdProyectoNavigation.NombreProyecto : "General",
+                            CodigoProyecto = s.IdProyectoNavigation != null ? s.IdProyectoNavigation.CodigoProyecto : null,
+                            IdUbicacion = s.IdUbicacion,
+                            CodigoUbicacion = s.IdUbicacionNavigation != null ? s.IdUbicacionNavigation.Codigo : null,
+                            IdOrdenCompra = s.IdOrdenCompra,
+                            Cantidad = s.Cantidad,
+                            FechaActualizacion = s.FechaActualizacion
+                        }
+                    }
                 })
                 .ToListAsync();
+        }
+
+        public async Task<bool> TransferirInsumosDesdeOrdenAsync(InsumoTransferDTO transferDto)
+        {
+            var ubicacionDestino = await _context.Ubicacions.FindAsync(transferDto.IdUbicacionDestino);
+            if (ubicacionDestino == null) return false;
+
+            var orden = await _context.OrdenCompras
+                .Include(o => o.DetalleOrdenCompras)
+                .FirstOrDefaultAsync(o => o.IdOrdenCompra == transferDto.IdOrdenCompra);
+            if (orden == null) return false;
+
+            foreach (var idInsumo in transferDto.IdsInsumos)
+            {
+                var detalle = orden.DetalleOrdenCompras.FirstOrDefault(d => d.IdInsumo == idInsumo);
+                if (detalle == null) continue;
+
+                var insumo = await _context.Insumos.FindAsync(idInsumo);
+                if (insumo == null) continue;
+
+                // Actualizar stock global del insumo (cache)
+                insumo.StockActual += detalle.Cantidad;
+                insumo.IdUbicacion = transferDto.IdUbicacionDestino;
+                insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+
+                // Crear o actualizar entrada granular en InsumoStock
+                var stockEntry = await _context.InsumoStocks
+                    .FirstOrDefaultAsync(s => s.IdInsumo == idInsumo 
+                                           && s.IdUbicacion == transferDto.IdUbicacionDestino 
+                                           && s.IdProyecto == transferDto.IdProyecto);
+
+                if (stockEntry == null)
+                {
+                    stockEntry = new InsumoStock
+                    {
+                        IdInsumo = idInsumo,
+                        IdUbicacion = transferDto.IdUbicacionDestino,
+                        IdProyecto = transferDto.IdProyecto,
+                        IdOrdenCompra = orden.IdOrdenCompra,
+                        Cantidad = detalle.Cantidad,
+                        FechaActualizacion = DateTime.Now
+                    };
+                    _context.InsumoStocks.Add(stockEntry);
+                }
+                else
+                {
+                    stockEntry.Cantidad += detalle.Cantidad;
+                    stockEntry.FechaActualizacion = DateTime.Now;
+                    stockEntry.IdOrdenCompra = orden.IdOrdenCompra;
+                }
+
+                var movimiento = new InventarioMovimiento
+                {
+                    IdInsumo = insumo.IdInsumo,
+                    IdOrdenCompra = orden.IdOrdenCompra,
+                    TipoMovimiento = "Transferencia",
+                    Cantidad = detalle.Cantidad,
+                    FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+                    Origen = $"Orden de Compra #{orden.NroOrden}",
+                    Observacion = $"Transferido a {ubicacionDestino.Codigo}" + (transferDto.IdProyecto.HasValue ? $" para Proyecto ID {transferDto.IdProyecto}" : ""),
+                    IdUsuario = transferDto.IdUsuario
+                };
+                _context.InventarioMovimientos.Add(movimiento);
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

@@ -33,14 +33,7 @@ export class InsumosService {
   getInsumoById(id: number): Observable<Insumo> {
     return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
       tap(data => console.log('Insumo obtenido:', data)),
-      map(data => {
-        const insumo = this.mapToFrontend(data);
-        // Mapear proyectos asignados si existen
-        if (data.proyectosAsignados) {
-          insumo.proyectosAsignados = data.proyectosAsignados;
-        }
-        return insumo;
-      }),
+      map(data => this.mapToFrontend(data)),
       catchError(this.handleError)
     );
   }
@@ -143,7 +136,9 @@ export class InsumosService {
       } : undefined,
       idUbicacion: data.idUbicacion,
       codigoUbicacion: data.codigoUbicacion,
-      estado: data.estado
+      estado: data.estado,
+      detalleStock: data.detalleStock || [],
+      proyectosAsignados: data.proyectosAsignados || []
     };
   }
 

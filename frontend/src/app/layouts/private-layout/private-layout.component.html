@@ -6,13 +6,8 @@
 
     <nav class="nav-menu">
       <div class="nav-item-container">
-        <a
-          routerLink="/proyectos"
-          routerLinkActive="active"
-          class="nav-item parent"
-          [class.active]="proyectoAbierto"
-          (click)="toggleProyectos()"
-        >
+        <a routerLink="/proyectos" routerLinkActive="active" class="nav-item parent" [class.active]="proyectoAbierto"
+          (click)="toggleProyectos()">
           <span class="text">Proyectos</span>
         </a>
 
@@ -30,9 +25,25 @@
         <span class="text">Clientes</span>
       </a>
 
-      <a routerLink="/inventario" routerLinkActive="active" class="nav-item">
-        <span class="text">Inventario</span>
-      </a>
+      <div class="nav-item-container">
+        <a routerLink="/inventario" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+          class="nav-item parent" [class.active]="inventarioAbierto" (click)="toggleInventario()">
+          <span class="text">Inventario</span>
+        </a>
+
+        <div class="submenu" [class.open]="inventarioAbierto">
+          <a routerLink="/inventario" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+            class="nav-item sub">
+            <span class="text">Consultar Inventario</span>
+          </a>
+          <a routerLink="/inventario/catalogo" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Gestión de Insumos</span>
+          </a>
+          <a routerLink="/inventario/transferir" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Transferir Insumos</span>
+          </a>
+        </div>
+      </div>
 
       <a routerLink="/ubicaciones" routerLinkActive="active" class="nav-item">
         <span class="text">Ubicaciones</span>
@@ -78,13 +89,15 @@
 
     <div class="user-profile">
       <div class="avatar">
-        <img src="assets/avatar.jpg" alt="User" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+        <img src="assets/avatar.jpg" alt="User"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
         <div class="avatar-placeholder">{{ obtenerIniciales() }}</div>
       </div>
       <div class="user-info">
         <div class="user-name">{{ obtenerNombreUsuario() }}</div>
         <button class="logout-btn" (click)="cerrarSesion()" title="Cerrar sesion">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>
             <line x1="21" y1="12" x2="9" y2="12"></line>

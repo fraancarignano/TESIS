@@ -4,10 +4,10 @@ import { UbicacionesService, Ubicacion } from '../../services/ubicaciones.servic
 import { Insumo } from '../../../inventario/models/insumo.model';
 
 @Component({
-    selector: 'app-ubicacion-detalle-modal',
-    standalone: true,
-    imports: [CommonModule],
-    template: `
+  selector: 'app-ubicacion-detalle-modal',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
     <div class="modal-overlay" (click)="cerrar.emit()">
       <div class="modal-container" (click)="$event.stopPropagation()">
         <div class="modal-header">
@@ -43,7 +43,7 @@ import { Insumo } from '../../../inventario/models/insumo.model';
                 <thead>
                   <tr>
                     <th>Nombre</th>
-                    <th>Tipo</th>
+                    <th>Proyecto</th>
                     <th>Stock</th>
                     <th>Estado</th>
                   </tr>
@@ -51,7 +51,12 @@ import { Insumo } from '../../../inventario/models/insumo.model';
                 <tbody>
                   <tr *ngFor="let insumo of insumos">
                     <td>{{ insumo.nombreInsumo }}</td>
-                    <td>{{ insumo.nombreTipoInsumo || '-' }}</td>
+                    <td>
+                      <span *ngIf="insumo.detalleStock && insumo.detalleStock.length > 0">
+                        {{ insumo.detalleStock[0].nombreProyecto || 'General' }}
+                      </span>
+                      <span *ngIf="!insumo.detalleStock || insumo.detalleStock.length === 0">-</span>
+                    </td>
                     <td>{{ insumo.stockActual }} {{ insumo.unidadMedida }}</td>
                     <td>
                       <span class="badge-estado" [ngClass]="getEstadoClass(insumo.estado)">
@@ -75,7 +80,7 @@ import { Insumo } from '../../../inventario/models/insumo.model';
       </div>
     </div>
   `,
-    styles: [`
+  styles: [`
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -234,36 +239,36 @@ import { Insumo } from '../../../inventario/models/insumo.model';
   `]
 })
 export class UbicacionDetalleModalComponent implements OnInit {
-    @Input() ubicacion!: Ubicacion;
-    @Output() cerrar = new EventEmitter<void>();
+  @Input() ubicacion!: Ubicacion;
+  @Output() cerrar = new EventEmitter<void>();
 
-    insumos: Insumo[] = [];
-    cargando = true;
+  insumos: Insumo[] = [];
+  cargando = true;
 
-    constructor(private ubicacionesService: UbicacionesService) { }
+  constructor(private ubicacionesService: UbicacionesService) { }
 
-    ngOnInit(): void {
-        if (this.ubicacion.idUbicacion) {
-            this.ubicacionesService.getInsumosPorUbicacion(this.ubicacion.idUbicacion).subscribe({
-                next: (res) => {
-                    this.insumos = res;
-                    this.cargando = false;
-                },
-                error: (err: any) => {
-                    console.error('Error al cargar insumos de la ubicación:', err);
-                    this.cargando = false;
-                }
-            });
+  ngOnInit(): void {
+    if (this.ubicacion.idUbicacion) {
+      this.ubicacionesService.getInsumosPorUbicacion(this.ubicacion.idUbicacion).subscribe({
+        next: (res) => {
+          this.insumos = res;
+          this.cargando = false;
+        },
+        error: (err: any) => {
+          console.error('Error al cargar insumos de la ubicación:', err);
+          this.cargando = false;
         }
+      });
     }
+  }
 
-    getEstadoClass(estado?: string): string {
-        if (!estado) return 'estado-disponible';
-        switch (estado.toLowerCase()) {
-            case 'en uso': return 'estado-en-uso';
-            case 'agotado': return 'estado-agotado';
-            case 'a designar': return 'estado-a-designar';
-            default: return 'estado-disponible';
-        }
+  getEstadoClass(estado?: string): string {
+    if (!estado) return 'estado-disponible';
+    switch (estado.toLowerCase()) {
+      case 'en uso': return 'estado-en-uso';
+      case 'agotado': return 'estado-agotado';
+      case 'a designar': return 'estado-a-designar';
+      default: return 'estado-disponible';
     }
+  }
 }

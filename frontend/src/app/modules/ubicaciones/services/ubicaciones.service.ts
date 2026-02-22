@@ -44,4 +44,8 @@ export class UbicacionesService {
     getInsumosPorUbicacion(id: number): Observable<Insumo[]> {
         return this.http.get<Insumo[]>(`${this.apiUrl}/${id}/insumos`);
     }
+
+    transferirDesdeOrden(transferDto: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/transfer`, transferDto);
+    }
 }

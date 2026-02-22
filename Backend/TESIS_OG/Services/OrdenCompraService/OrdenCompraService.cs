@@ -16,69 +16,78 @@ namespace TESIS_OG.Services.OrdenCompraService
 
         public async Task<OrdenCompraIndexDTO?> CrearOrdenCompraAsync(OrdenCompraCreateDTO ordenDto)
         {
-            // Validar que el proveedor exista
-            var proveedorExiste = await _context.Proveedors
-                .AnyAsync(p => p.IdProveedor == ordenDto.IdProveedor);
-            if (!proveedorExiste) return null;
-
-            // Validar que todos los insumos existan y tengan stock suficiente
-            foreach (var detalle in ordenDto.Detalles)
+            try
             {
-                var insumo = await _context.Insumos
-                    .FirstOrDefaultAsync(i => i.IdInsumo == detalle.IdInsumo);
+                // Validar que el proveedor exista
+                var proveedorExiste = await _context.Proveedors
+                    .AnyAsync(p => p.IdProveedor == ordenDto.IdProveedor);
+                if (!proveedorExiste) return null;
 
-                if (insumo == null) return null;
-
-                // Validación: cantidad debe ser mayor a 0
-                if (detalle.Cantidad <= 0) return null;
-
-                // Validación: precio unitario debe ser mayor a 0
-                if (detalle.PrecioUnitario <= 0) return null;
-
-                // Calcular subtotal
-                detalle.Subtotal = detalle.Cantidad * detalle.PrecioUnitario;
-            }
-
-            // Validar que el total coincida
-            var totalCalculado = ordenDto.Detalles.Sum(d => d.Subtotal);
-            if (Math.Abs(totalCalculado - ordenDto.TotalOrden) > 0.01m)
-            {
-                // Ajustar el total automáticamente
-                ordenDto.TotalOrden = totalCalculado;
-            }
-
-            // Crear la orden de compra
-            var nuevaOrden = new OrdenCompra
-            {
-                NroOrden = ordenDto.NroOrden,
-                IdProveedor = ordenDto.IdProveedor,
-                FechaSolicitud = ordenDto.FechaSolicitud,
-                FechaEntregaEstimada = ordenDto.FechaEntregaEstimada,
-                Estado = ordenDto.Estado,
-                TotalOrden = ordenDto.TotalOrden
-            };
-
-            _context.OrdenCompras.Add(nuevaOrden);
-            await _context.SaveChangesAsync();
-
-            // Crear los detalles
-            foreach (var detalleDto in ordenDto.Detalles)
-            {
-                var detalle = new DetalleOrdenCompra
+                // Validar que todos los insumos existan y tengan stock suficiente
+                foreach (var detalle in ordenDto.Detalles)
                 {
-                    IdOrdenCompra = nuevaOrden.IdOrdenCompra,
-                    IdInsumo = detalleDto.IdInsumo,
-                    Cantidad = detalleDto.Cantidad,
-                    PrecioUnitario = detalleDto.PrecioUnitario,
-                    Subtotal = detalleDto.Subtotal
+                    var insumo = await _context.Insumos
+                        .FirstOrDefaultAsync(i => i.IdInsumo == detalle.IdInsumo);
+
+                    if (insumo == null) return null;
+
+                    // Validación: cantidad debe ser mayor a 0
+                    if (detalle.Cantidad <= 0) return null;
+
+                    // Validación: precio unitario debe ser mayor a 0
+                    if (detalle.PrecioUnitario <= 0) return null;
+
+                    // Calcular subtotal
+                    detalle.Subtotal = detalle.Cantidad * detalle.PrecioUnitario;
+                }
+
+                // Validar que el total coincida
+                var totalCalculado = ordenDto.Detalles.Sum(d => d.Subtotal);
+                if (Math.Abs(totalCalculado - ordenDto.TotalOrden) > 0.01m)
+                {
+                    // Ajustar el total automáticamente
+                    ordenDto.TotalOrden = totalCalculado;
+                }
+
+                // Crear la orden de compra
+                var nuevaOrden = new OrdenCompra
+                {
+                    NroOrden = ordenDto.NroOrden,
+                    IdProveedor = ordenDto.IdProveedor,
+                    FechaSolicitud = ordenDto.FechaSolicitud,
+                    FechaEntregaEstimada = ordenDto.FechaEntregaEstimada,
+                    Estado = ordenDto.Estado,
+                    TotalOrden = ordenDto.TotalOrden
                 };
 
-                _context.DetalleOrdenCompras.Add(detalle);
+                _context.OrdenCompras.Add(nuevaOrden);
+                await _context.SaveChangesAsync();
+
+                // Crear los detalles
+                foreach (var detalleDto in ordenDto.Detalles)
+                {
+                    var detalle = new DetalleOrdenCompra
+                    {
+                        IdOrdenCompra = nuevaOrden.IdOrdenCompra,
+                        IdInsumo = detalleDto.IdInsumo,
+                        Cantidad = detalleDto.Cantidad,
+                        PrecioUnitario = detalleDto.PrecioUnitario,
+                        Subtotal = detalleDto.Subtotal
+                    };
+
+                    _context.DetalleOrdenCompras.Add(detalle);
+                }
+
+                await _context.SaveChangesAsync();
+
+                return await ObtenerOrdenPorIdAsync(nuevaOrden.IdOrdenCompra);
             }
-
-            await _context.SaveChangesAsync();
-
-            return await ObtenerOrdenPorIdAsync(nuevaOrden.IdOrdenCompra);
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en CrearOrdenCompraAsync: {ex.Message}");
+                if (ex.InnerException != null) Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                throw;
+            }
         }
 
         public async Task<List<OrdenCompraIndexDTO>> ObtenerTodasLasOrdenesAsync()

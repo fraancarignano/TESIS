@@ -24,4 +24,6 @@ public partial class OrdenCompra
     public virtual Proveedor IdProveedorNavigation { get; set; } = null!;
 
     public virtual ICollection<InventarioMovimiento> InventarioMovimientos { get; set; } = new List<InventarioMovimiento>();
+
+    public virtual ICollection<InsumoStock> InsumoStocks { get; set; } = new List<InsumoStock>();
 }

@@ -15,11 +15,12 @@ export class PrivateLayoutComponent {
   reportesAbierto = false;
   proyectoAbierto = false;
   usuariosAbierto = false;
+  inventarioAbierto = false;
 
   constructor(
     private authService: AuthService,
     private alertas: AlertasService
-  ) {}
+  ) { }
 
   obtenerNombreUsuario(): string {
     const usuario = this.authService.obtenerUsuarioActual();
@@ -49,6 +50,7 @@ export class PrivateLayoutComponent {
       this.reportesAbierto = false;
       this.proyectoAbierto = false;
       this.usuariosAbierto = false;
+      this.inventarioAbierto = false;
       this.authService.cerrarSesion();
     }
   }
@@ -63,5 +65,9 @@ export class PrivateLayoutComponent {
 
   toggleUsuarios(): void {
     this.usuariosAbierto = !this.usuariosAbierto;
+  }
+
+  toggleInventario(): void {
+    this.inventarioAbierto = !this.inventarioAbierto;
   }
 }

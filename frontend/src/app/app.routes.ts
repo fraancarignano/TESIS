@@ -38,6 +38,14 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/inventario/components/inventario.component').then(m => m.InventarioComponent)
       },
       {
+        path: 'inventario/transferir',
+        loadComponent: () => import('./modules/inventario/components/ubicacion-transfer/ubicacion-transfer.component').then(m => m.UbicacionTransferComponent)
+      },
+      {
+        path: 'inventario/catalogo',
+        loadComponent: () => import('./modules/inventario/components/insumo-catalog/insumo-catalog.component').then(m => m.InsumoCatalogComponent)
+      },
+      {
         path: 'ubicaciones',
         loadComponent: () => import('./modules/ubicaciones/components/ubicaciones.component').then(m => m.UbicacionesComponent)
       },

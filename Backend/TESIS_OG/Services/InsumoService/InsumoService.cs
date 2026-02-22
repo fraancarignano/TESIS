@@ -89,6 +89,12 @@ namespace TESIS_OG.Services.InsumoService
           .Include(i => i.IdTipoInsumoNavigation)
           .Include(i => i.IdProveedorNavigation)
           .Include(i => i.IdUbicacionNavigation)
+          .Include(i => i.InsumoStocks)
+            .ThenInclude(s => s.IdProyectoNavigation)
+          .Include(i => i.InsumoStocks)
+            .ThenInclude(s => s.IdUbicacionNavigation)
+          .Include(i => i.InsumoStocks)
+            .ThenInclude(s => s.IdOrdenCompraNavigation)
           .Include(i => i.MaterialCalculados)
             .ThenInclude(mc => mc.IdProyectoNavigation)
           .Include(i => i.MaterialCalculados)
@@ -111,6 +117,20 @@ namespace TESIS_OG.Services.InsumoService
             Estado = i.Estado,
             IdUbicacion = i.IdUbicacion,
             CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
+            DetalleStock = i.InsumoStocks.Select(s => new InsumoStockDTO
+            {
+                IdInsumoStock = s.IdInsumoStock,
+                IdInsumo = s.IdInsumo,
+                IdProyecto = s.IdProyecto,
+                NombreProyecto = s.IdProyectoNavigation != null ? s.IdProyectoNavigation.NombreProyecto : "General",
+                CodigoProyecto = s.IdProyectoNavigation != null ? s.IdProyectoNavigation.CodigoProyecto : null,
+                IdUbicacion = s.IdUbicacion,
+                CodigoUbicacion = s.IdUbicacionNavigation != null ? s.IdUbicacionNavigation.Codigo : null,
+                IdOrdenCompra = s.IdOrdenCompra,
+                NroOrden = s.IdOrdenCompraNavigation != null ? s.IdOrdenCompraNavigation.NroOrden : null,
+                Cantidad = s.Cantidad,
+                FechaActualizacion = s.FechaActualizacion
+            }).ToList(),
             ProyectosAsignados = i.MaterialCalculados
                 .Where(mc => mc.IdProyectoNavigation.Estado != "Archivado" && mc.IdProyectoNavigation.Estado != "Cancelado")
                 .Select(mc => new ProyectoAsignadoDTO

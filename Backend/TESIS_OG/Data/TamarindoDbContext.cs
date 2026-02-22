@@ -79,6 +79,7 @@ public partial class TamarindoDbContext : DbContext
     public virtual DbSet<Usuario> Usuarios { get; set; }
     public virtual DbSet<ProyectoAuditoria> ProyectoAuditorias { get; set; }
     public virtual DbSet<Ubicacion> Ubicacions { get; set; }
+    public virtual DbSet<InsumoStock> InsumoStocks { get; set; }
 
     public virtual DbSet<VwMaterialesProyecto> VwMaterialesProyectos { get; set; }
 
@@ -1212,6 +1213,38 @@ public partial class TamarindoDbContext : DbContext
                 .HasColumnName("nombre_Proyecto");
             entity.Property(e => e.TieneBordado).HasColumnName("tiene_Bordado");
             entity.Property(e => e.TieneEstampado).HasColumnName("tiene_Estampado");
+        });
+
+        modelBuilder.Entity<InsumoStock>(entity =>
+        {
+            entity.HasKey(e => e.IdInsumoStock);
+
+            entity.ToTable("Insumo_Stock");
+
+            entity.Property(e => e.IdInsumoStock).HasColumnName("id_Insumo_Stock");
+            entity.Property(e => e.IdInsumo).HasColumnName("id_Insumo");
+            entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            entity.Property(e => e.IdUbicacion).HasColumnName("id_Ubicacion");
+            entity.Property(e => e.IdOrdenCompra).HasColumnName("id_OrdenCompra");
+            entity.Property(e => e.Cantidad).HasColumnType("decimal(18, 2)").HasColumnName("cantidad");
+            entity.Property(e => e.FechaActualizacion).HasColumnType("datetime").HasColumnName("fecha_Actualizacion");
+
+            entity.HasOne(d => d.IdInsumoNavigation).WithMany(p => p.InsumoStocks)
+                .HasForeignKey(d => d.IdInsumo)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_InsumoStock_Insumo");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InsumoStocks)
+                .HasForeignKey(d => d.IdProyecto)
+                .HasConstraintName("FK_InsumoStock_Proyecto");
+
+            entity.HasOne(d => d.IdUbicacionNavigation).WithMany(p => p.InsumoStocks)
+                .HasForeignKey(d => d.IdUbicacion)
+                .HasConstraintName("FK_InsumoStock_Ubicacion");
+
+            entity.HasOne(d => d.IdOrdenCompraNavigation).WithMany(p => p.InsumoStocks)
+                .HasForeignKey(d => d.IdOrdenCompra)
+                .HasConstraintName("FK_InsumoStock_OrdenCompra");
         });
 
         OnModelCreatingPartial(modelBuilder);

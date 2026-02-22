@@ -44,6 +44,6 @@ public partial class Insumo
     public virtual ICollection<InventarioMovimiento> InventarioMovimientos { get; set; } = new List<InventarioMovimiento>();
 
     public virtual ICollection<MaterialCalculado> MaterialCalculados { get; set; } = new List<MaterialCalculado>();
-
+    public virtual ICollection<InsumoStock> InsumoStocks { get; set; } = new List<InsumoStock>();
     public virtual ICollection<Scrap> Scraps { get; set; } = new List<Scrap>();
 }

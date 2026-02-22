@@ -68,6 +68,6 @@ public partial class Proyecto
     public virtual ICollection<ObservacionProyecto> ObservacionProyectos { get; set; } = new List<ObservacionProyecto>();
 
     public virtual ICollection<ProyectoPrendum> ProyectoPrenda { get; set; } = new List<ProyectoPrendum>();
-
+    public virtual ICollection<InsumoStock> InsumoStocks { get; set; } = new List<InsumoStock>();
     public virtual ICollection<Scrap> Scraps { get; set; } = new List<Scrap>();
 }
