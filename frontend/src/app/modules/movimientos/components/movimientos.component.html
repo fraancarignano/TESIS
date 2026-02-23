@@ -1,0 +1,91 @@
+<div class="movimientos-container">
+    <div class="header">
+        <div class="breadcrumb">
+            <span class="breadcrumb-item">Auditoría</span>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-item active">Movimientos de Inventario</span>
+        </div>
+        <h1>Historial de Movimientos</h1>
+    </div>
+
+    <div class="filtros-card">
+        <div class="filtros-grid">
+            <div class="filtro-item">
+                <label>Fecha desde:</label>
+                <input type="date" [(ngModel)]="filtros.fechaDesde">
+            </div>
+            <div class="filtro-item">
+                <label>Fecha hasta:</label>
+                <input type="date" [(ngModel)]="filtros.fechaHasta">
+            </div>
+            <div class="filtro-item">
+                <label>Insumo / Acción:</label>
+                <div class="search-container">
+                    <input type="text" placeholder="Buscar insumo o acción..." [(ngModel)]="filtros.terminoBusqueda"
+                        (ngModelChange)="onSearchChange()" (keyup.enter)="consultar()"
+                        (blur)="mostrarResultados = false" autocomplete="off">
+
+                    <!-- Resultados Autocomplete -->
+                    <div class="search-results" *ngIf="mostrarResultados">
+                        <div class="search-item" *ngFor="let item of insumosFiltrados"
+                            (mousedown)="seleccionarInsumo(item.nombreInsumo)">
+                            <div class="item-details">
+                                <span class="item-name">{{ item.nombreInsumo }}</span>
+                                <span class="item-meta">{{ item.tipoInsumo?.nombreTipo }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="filtro-acciones">
+                <button class="btn-consultar" (click)="consultar()" [disabled]="cargando">
+                    <span *ngIf="!cargando">Consultar</span>
+                    <span *ngIf="cargando" class="spinner"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabla-contenedor">
+        <table class="tabla-movimientos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tipo Movimiento</th>
+                    <th>Fecha</th>
+                    <th>Usuario</th>
+                    <th>Origen</th>
+                    <th>Destino</th>
+                    <th>Artículo</th>
+                    <th class="text-right">Unidades</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let m of movimientos" [class.fila-nueva]="false">
+                    <td>{{ m.idMovimiento }}</td>
+                    <td>
+                        <span class="badge" [ngClass]="getBadgeClass(m.tipoMovimiento)">
+                            {{ m.tipoMovimiento }}
+                        </span>
+                    </td>
+                    <td>{{ m.fechaMovimiento | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ m.usuario || 'Sistema' }}</td>
+                    <td>{{ m.origen || '-' }}</td>
+                    <td>{{ m.destino || '-' }}</td>
+                    <td>
+                        <div class="articulo-cell">
+                            <span class="nombre-articulo">{{ m.nombreInsumo }}</span>
+                            <small class="observacion" *ngIf="m.observacion">{{ m.observacion }}</small>
+                        </div>
+                    </td>
+                    <td class="text-right font-bold">{{ m.unidadesDetalle }}</td>
+                </tr>
+                <tr *ngIf="movimientos.length === 0 && !cargando">
+                    <td colspan="8" class="sin-resultados">
+                        No se encontraron movimientos para los filtros seleccionados
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -165,7 +165,7 @@ namespace TESIS_OG.Services.InsumoService
       return insumo;
     }
 
-    public async Task<InsumoIndexDTO?> ActualizarInsumoAsync(int id, InsumoEditDTO insumoDto)
+    public async Task<InsumoIndexDTO?> ActualizarInsumoAsync(int id, InsumoEditDTO insumoDto, int? idUsuario = null)
     {
       var insumo = await _context.Insumos.FindAsync(id);
       if (insumo == null) return null;
@@ -187,6 +187,25 @@ namespace TESIS_OG.Services.InsumoService
       var existeNombre = await _context.Insumos
           .AnyAsync(i => i.NombreInsumo.ToLower() == insumoDto.NombreInsumo.ToLower() && i.IdInsumo != id);
       if (existeNombre) return null;
+
+      // Registrar movimiento si cambió el stock
+      if (insumo.StockActual != insumoDto.StockActual)
+      {
+          decimal diferencia = insumoDto.StockActual - insumo.StockActual;
+          var movimiento = new InventarioMovimiento
+          {
+              IdInsumo = id,
+              NombreInsumo = insumo.NombreInsumo,
+              TipoMovimiento = "Editar",
+              Cantidad = diferencia,
+              FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+              Origen = "-",
+              Destino = insumo.IdUbicacionNavigation?.Codigo ?? "Sin Ubicación",
+              Observacion = "Cambio manual de stock",
+              IdUsuario = idUsuario
+          };
+          _context.InventarioMovimientos.Add(movimiento);
+      }
 
       // Actualizar campos
       insumo.NombreInsumo = insumoDto.NombreInsumo;
@@ -229,10 +248,34 @@ namespace TESIS_OG.Services.InsumoService
       return await ObtenerInsumoPorIdAsync(id);
     }
 
-    public async Task<bool> EliminarInsumoAsync(int id)
+    public async Task<bool> EliminarInsumoAsync(int id, int? idUsuario = null)
     {
-      var insumo = await _context.Insumos.FindAsync(id);
+      var insumo = await _context.Insumos
+          .Include(i => i.InsumoStocks)
+          .FirstOrDefaultAsync(i => i.IdInsumo == id);
+          
       if (insumo == null) return false;
+
+      // Registrar movimiento antes de eliminar
+      var movimiento = new InventarioMovimiento
+      {
+          IdInsumo = null,
+          NombreInsumo = insumo.NombreInsumo,
+          TipoMovimiento = "Eliminar",
+          Cantidad = insumo.StockActual,
+          FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+          Origen = "-",
+          Destino = "-",
+          Observacion = "Insumo eliminado del sistema",
+          IdUsuario = idUsuario
+      };
+      _context.InventarioMovimientos.Add(movimiento);
+
+      // Limpiar stock asociado para evitar errores de integridad
+      if (insumo.InsumoStocks.Any())
+      {
+          _context.InsumoStocks.RemoveRange(insumo.InsumoStocks);
+      }
 
       _context.Insumos.Remove(insumo);
       await _context.SaveChangesAsync();
@@ -299,13 +342,28 @@ namespace TESIS_OG.Services.InsumoService
       return insumos;
     }
 
-    public async Task<bool> CambiarEstadoAsync(int id, string nuevoEstado)
+    public async Task<bool> CambiarEstadoAsync(int id, string nuevoEstado, int? idUsuario = null)
     {
       var insumo = await _context.Insumos.FindAsync(id);
       if (insumo == null) return false;
 
       insumo.Estado = nuevoEstado;
       insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+
+      // Registrar movimiento de cambio de estado
+      var movimiento = new InventarioMovimiento
+      {
+          IdInsumo = id,
+          NombreInsumo = insumo.NombreInsumo,
+          TipoMovimiento = "Editar",
+          Cantidad = 0,
+          FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+          Origen = "-",
+          Destino = "-",
+          Observacion = $"Cambio de estado a: {nuevoEstado}",
+          IdUsuario = idUsuario
+      };
+      _context.InventarioMovimientos.Add(movimiento);
 
       await _context.SaveChangesAsync();
 

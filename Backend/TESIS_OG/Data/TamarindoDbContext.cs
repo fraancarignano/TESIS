@@ -526,6 +526,10 @@ public partial class TamarindoDbContext : DbContext
                 .HasColumnName("cantidad");
             entity.Property(e => e.FechaMovimiento).HasColumnName("fecha_Movimiento");
             entity.Property(e => e.IdInsumo).HasColumnName("id_Insumo");
+            entity.Property(e => e.NombreInsumo)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("nombre_insumo");
             entity.Property(e => e.IdOrdenCompra).HasColumnName("id_OrdenCompra");
             entity.Property(e => e.IdUsuario).HasColumnName("id_Usuario");
             entity.Property(e => e.Observacion)
@@ -533,17 +537,21 @@ public partial class TamarindoDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("observacion");
             entity.Property(e => e.Origen)
-                .HasMaxLength(30)
+                .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("origen");
+            entity.Property(e => e.Destino)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("destino");
             entity.Property(e => e.TipoMovimiento)
-                .HasMaxLength(15)
+                .HasMaxLength(30)
                 .IsUnicode(false)
                 .HasColumnName("tipo_Movimiento");
 
             entity.HasOne(d => d.IdInsumoNavigation).WithMany(p => p.InventarioMovimientos)
                 .HasForeignKey(d => d.IdInsumo)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK__Inventari__id_In__17F790F9");
 
             entity.HasOne(d => d.IdOrdenCompraNavigation).WithMany(p => p.InventarioMovimientos)

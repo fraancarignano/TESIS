@@ -11,6 +11,6 @@ namespace TESIS_OG.Services.UbicacionService
         Task<UbicacionDTO?> ActualizarUbicacionAsync(int id, UbicacionEditDTO ubicacionDto);
         Task<bool> EliminarUbicacionAsync(int id);
         Task<List<InsumoIndexDTO>> ObtenerInsumosPorUbicacionAsync(int idUbicacion);
-        Task<bool> TransferirInsumosDesdeOrdenAsync(InsumoTransferDTO transferDto);
+        Task<bool> TransferirInsumosAsync(InsumoTransferDTO transferDto);
     }
 }

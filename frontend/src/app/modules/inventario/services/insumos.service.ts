@@ -75,7 +75,11 @@ export class InsumosService {
    */
   actualizarInsumo(insumo: Insumo): Observable<any> {
     const dto = this.mapToBackend(insumo);
-    return this.http.put(`${this.apiUrl}/${insumo.idInsumo}`, dto).pipe(
+    const usuarioJson = localStorage.getItem('usuario');
+    const idUsuario = usuarioJson ? JSON.parse(usuarioJson).idUsuario : null;
+
+    const url = `${this.apiUrl}/${insumo.idInsumo}${idUsuario ? `?idUsuario=${idUsuario}` : ''}`;
+    return this.http.put<Insumo>(url, dto).pipe(
       tap(data => console.log('Insumo actualizado:', data)),
       catchError(this.handleError)
     );
@@ -85,7 +89,11 @@ export class InsumosService {
    * Eliminar insumo
    */
   eliminarInsumo(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+    const usuarioJson = localStorage.getItem('usuario');
+    const idUsuario = usuarioJson ? JSON.parse(usuarioJson).idUsuario : null;
+
+    const url = `${this.apiUrl}/${id}${idUsuario ? `?idUsuario=${idUsuario}` : ''}`;
+    return this.http.delete<void>(url).pipe(
       tap(() => console.log('Insumo eliminado:', id)),
       catchError(this.handleError)
     );
@@ -95,7 +103,11 @@ export class InsumosService {
    * Cambiar estado del insumo
    */
   cambiarEstado(id: number, nuevoEstado: string): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/${id}/estado`, { nuevoEstado }).pipe(
+    const usuarioJson = localStorage.getItem('usuario');
+    const idUsuario = usuarioJson ? JSON.parse(usuarioJson).idUsuario : null;
+
+    const url = `${this.apiUrl}/${id}/estado${idUsuario ? `?idUsuario=${idUsuario}` : ''}`;
+    return this.http.patch(url, { nuevoEstado }).pipe(
       tap(() => console.log('Estado cambiado:', { id, nuevoEstado })),
       catchError(this.handleError)
     );

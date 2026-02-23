@@ -40,6 +40,12 @@ export class InventarioComponent implements OnInit {
     nuevoEstado: string;
   } = { visible: false, insumo: null, nuevoEstado: '' };
 
+  // Confirmación de eliminación
+  confirmacionEliminar: {
+    visible: boolean;
+    insumo: Insumo | null;
+  } = { visible: false, insumo: null };
+
   constructor(private insumosService: InsumosService) { }
 
   ngOnInit(): void {
@@ -133,18 +139,31 @@ export class InventarioComponent implements OnInit {
 
   eliminarInsumo(id: number, event: Event): void {
     event.stopPropagation();
-
-    if (confirm('¿Está seguro de eliminar este insumo?')) {
-      this.insumosService.eliminarInsumo(id).subscribe({
-        next: () => {
-          this.cargarInsumos();
-        },
-        error: (error: any) => {
-          console.error('Error al eliminar:', error);
-          alert('Error al eliminar el insumo');
-        }
-      });
+    const insumo = this.insumos.find(i => i.idInsumo === id);
+    if (insumo) {
+      this.confirmacionEliminar = { visible: true, insumo };
     }
+  }
+
+  confirmarEliminar(): void {
+    if (!this.confirmacionEliminar.insumo?.idInsumo) return;
+    const id = this.confirmacionEliminar.insumo.idInsumo;
+
+    this.insumosService.eliminarInsumo(id).subscribe({
+      next: () => {
+        this.confirmacionEliminar = { visible: false, insumo: null };
+        this.cargarInsumos();
+      },
+      error: (error: any) => {
+        console.error('Error al eliminar:', error);
+        alert('Error al eliminar el insumo');
+        this.confirmacionEliminar = { visible: false, insumo: null };
+      }
+    });
+  }
+
+  cancelarEliminar(): void {
+    this.confirmacionEliminar = { visible: false, insumo: null };
   }
 
   // Abre/cierra el dropdown del estado

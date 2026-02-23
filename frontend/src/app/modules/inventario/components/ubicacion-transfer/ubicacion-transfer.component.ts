@@ -20,7 +20,9 @@ export class UbicacionTransferComponent implements OnInit {
     ubicaciones: Ubicacion[] = [];
     proyectos: Proyecto[] = [];
 
+    tipoOrigen: 'OC' | 'UBICACION' = 'OC';
     idOrdenSeleccionada: number | null = null;
+    idUbicacionOrigen: number | null = null;
     idUbicacionDestino: number | null = null;
     idProyectoSeleccionado: number | null = null;
 
@@ -72,6 +74,10 @@ export class UbicacionTransferComponent implements OnInit {
         });
     }
 
+    onOrigenTypeChange(): void {
+        this.limpiar(false);
+    }
+
     onOrdenChange(): void {
         if (!this.idOrdenSeleccionada) {
             this.insumosParaTransferir = [];
@@ -80,19 +86,39 @@ export class UbicacionTransferComponent implements OnInit {
 
         const orden = this.ordenesRecibidas.find(o => o.idOrdenCompra === this.idOrdenSeleccionada);
         if (orden && orden.detalles) {
-            // Mapear los detalles a una lista de insumos con stock y checkbox
-            // Nota: El detalle OC tiene el NombreInsumo, pero necesitamos el ID para transferir
             this.insumosParaTransferir = orden.detalles.map((d: any) => ({
                 idInsumo: d.idInsumo,
                 nombreInsumo: d.nombreInsumo,
-                stockActual: d.cantidad, // Mostramos la cantidad que vino en la orden
+                stockActual: d.cantidad,
                 seleccionado: true,
-                // Otras propiedades requeridas por el modelo Insumo (o las necesarias para la vista)
                 nombreTipoInsumo: '',
                 unidadMedida: ''
             } as any));
             this.todosSeleccionados = true;
         }
+    }
+
+    onUbicacionOrigenChange(): void {
+        if (!this.idUbicacionOrigen) {
+            this.insumosParaTransferir = [];
+            return;
+        }
+
+        this.cargando = true;
+        this.ubicacionesService.getInsumosPorUbicacion(this.idUbicacionOrigen).subscribe({
+            next: (insumos: Insumo[]) => {
+                this.insumosParaTransferir = insumos.map((i: Insumo) => ({
+                    ...i,
+                    seleccionado: true
+                }));
+                this.todosSeleccionados = true;
+                this.cargando = false;
+            },
+            error: (err: any) => {
+                console.error('Error al cargar insumos de ubicación:', err);
+                this.cargando = false;
+            }
+        });
     }
 
     toggleTodos(): void {
@@ -119,11 +145,22 @@ export class UbicacionTransferComponent implements OnInit {
             return;
         }
 
+        if (this.tipoOrigen === 'UBICACION' && this.idUbicacionOrigen === this.idUbicacionDestino) {
+            alert('La ubicación de origen y destino no pueden ser la misma.');
+            return;
+        }
+
+        // Obtener ID de usuario del localStorage (ajustar según tu sistema de auth)
+        const currentUser = JSON.parse(localStorage.getItem('usuario') || '{}');
+        const idUsuario = currentUser.idUsuario || null;
+
         const transferDto = {
-            idOrdenCompra: this.idOrdenSeleccionada,
+            idOrdenCompra: this.tipoOrigen === 'OC' ? this.idOrdenSeleccionada : null,
+            idUbicacionOrigen: this.tipoOrigen === 'UBICACION' ? this.idUbicacionOrigen : null,
             idsInsumos: idsSeleccionados,
             idUbicacionDestino: this.idUbicacionDestino,
-            idProyecto: this.idProyectoSeleccionado
+            idProyecto: this.idProyectoSeleccionado,
+            idUsuario: idUsuario
         };
 
         this.ubicacionesService.transferirDesdeOrden(transferDto).subscribe({
@@ -139,8 +176,11 @@ export class UbicacionTransferComponent implements OnInit {
         });
     }
 
-    limpiar(): void {
-        this.idOrdenSeleccionada = null;
+    limpiar(todo: boolean = true): void {
+        if (todo) {
+            this.idOrdenSeleccionada = null;
+            this.idUbicacionOrigen = null;
+        }
         this.idUbicacionDestino = null;
         this.idProyectoSeleccionado = null;
         this.insumosParaTransferir = [];

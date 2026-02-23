@@ -70,15 +70,15 @@ namespace TESIS_OG.Controllers
         }
 
         [HttpPost("transfer")]
-        public async Task<IActionResult> TransferirDesdeOrden([FromBody] InsumoTransferDTO transferDto)
+        public async Task<IActionResult> TransferirInsumos([FromBody] InsumoTransferDTO transferDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new { message = "Datos inválidos", errors = ModelState });
 
-            var result = await _ubicacionService.TransferirInsumosDesdeOrdenAsync(transferDto);
+            var result = await _ubicacionService.TransferirInsumosAsync(transferDto);
 
             if (!result)
-                return BadRequest(new { message = "No se pudo realizar la transferencia. Verifique que la ubicación y la orden existan." });
+                return BadRequest(new { message = "No se pudo realizar la transferencia. Verifique que el origen y destino existan y tengan stock suficiente." });
 
             return Ok(new { message = "Transferencia realizada con éxito" });
         }

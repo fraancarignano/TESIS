@@ -490,6 +490,26 @@ td {
   box-shadow: 0 4px 10px rgba(255, 87, 34, 0.35);
 }
 
+.confirm-icon.danger {
+  background: #ffebee;
+  color: #f44336;
+}
+
+.btn-danger {
+  background: #f44336 !important;
+}
+
+.btn-danger:hover {
+  background: #d32f2f !important;
+  box-shadow: 0 4px 10px rgba(244, 67, 54, 0.35) !important;
+}
+
+.confirm-warning {
+  color: #d32f2f !important;
+  font-weight: 600;
+  margin-top: -10px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .actions-bar {
