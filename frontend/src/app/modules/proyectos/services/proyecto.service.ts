@@ -77,6 +77,15 @@ export class ProyectosService {
   }
 
   /**
+   * Obtener proyectos asignados a un taller externo
+   */
+  obtenerProyectosPorTaller(idTaller: number): Observable<Proyecto[]> {
+    return this.http.get<Proyecto[]>(`${environment.apiUrl}/Taller/${idTaller}/proyectos`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
    * Crear nuevo proyecto
    */
   crearProyecto(proyecto: CrearProyectoDTO): Observable<Proyecto> {
