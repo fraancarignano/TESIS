@@ -43,12 +43,27 @@ namespace TESIS_OG.Services.InsumoService
         StockActual = insumoDto.StockActual,
         StockMinimo = insumoDto.StockMinimo,
         IdProveedor = insumoDto.IdProveedor,
+        IdUbicacion = insumoDto.IdUbicacion,
         Estado = insumoDto.Estado ?? "Disponible",
         FechaActualizacion = DateOnly.FromDateTime(DateTime.Now)
       };
 
       _context.Insumos.Add(nuevoInsumo);
       await _context.SaveChangesAsync();
+
+      // Si se proporcionó una ubicación, crear entrada en InsumoStock
+      if (insumoDto.IdUbicacion.HasValue && insumoDto.StockActual > 0)
+      {
+          var stockEntry = new InsumoStock
+          {
+              IdInsumo = nuevoInsumo.IdInsumo,
+              IdUbicacion = insumoDto.IdUbicacion.Value,
+              Cantidad = insumoDto.StockActual,
+              FechaActualizacion = DateTime.Now
+          };
+          _context.InsumoStocks.Add(stockEntry);
+          await _context.SaveChangesAsync();
+      }
 
       return await ObtenerInsumoPorIdAsync(nuevoInsumo.IdInsumo);
     }
@@ -58,6 +73,7 @@ namespace TESIS_OG.Services.InsumoService
       var insumos = await _context.Insumos
           .Include(i => i.IdTipoInsumoNavigation)
           .Include(i => i.IdProveedorNavigation)
+          .Include(i => i.IdUbicacionNavigation)
           .Select(i => new InsumoIndexDTO
           {
             IdInsumo = i.IdInsumo,
@@ -71,7 +87,9 @@ namespace TESIS_OG.Services.InsumoService
             IdProveedor = i.IdProveedor,
             NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
             CuitProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.Cuit : null,
-            Estado = i.Estado
+            Estado = i.Estado,
+            IdUbicacion = i.IdUbicacion,
+            CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();
@@ -84,6 +102,13 @@ namespace TESIS_OG.Services.InsumoService
       var insumo = await _context.Insumos
           .Include(i => i.IdTipoInsumoNavigation)
           .Include(i => i.IdProveedorNavigation)
+          .Include(i => i.IdUbicacionNavigation)
+          .Include(i => i.InsumoStocks)
+            .ThenInclude(s => s.IdProyectoNavigation)
+          .Include(i => i.InsumoStocks)
+            .ThenInclude(s => s.IdUbicacionNavigation)
+          .Include(i => i.InsumoStocks)
+            .ThenInclude(s => s.IdOrdenCompraNavigation)
           .Include(i => i.MaterialCalculados)
             .ThenInclude(mc => mc.IdProyectoNavigation)
           .Include(i => i.MaterialCalculados)
@@ -104,6 +129,22 @@ namespace TESIS_OG.Services.InsumoService
             NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
             CuitProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.Cuit : null,
             Estado = i.Estado,
+            IdUbicacion = i.IdUbicacion,
+            CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
+            DetalleStock = i.InsumoStocks.Select(s => new InsumoStockDTO
+            {
+                IdInsumoStock = s.IdInsumoStock,
+                IdInsumo = s.IdInsumo,
+                IdProyecto = s.IdProyecto,
+                NombreProyecto = s.IdProyectoNavigation != null ? s.IdProyectoNavigation.NombreProyecto : "General",
+                CodigoProyecto = s.IdProyectoNavigation != null ? s.IdProyectoNavigation.CodigoProyecto : null,
+                IdUbicacion = s.IdUbicacion,
+                CodigoUbicacion = s.IdUbicacionNavigation != null ? s.IdUbicacionNavigation.Codigo : null,
+                IdOrdenCompra = s.IdOrdenCompra,
+                NroOrden = s.IdOrdenCompraNavigation != null ? s.IdOrdenCompraNavigation.NroOrden : null,
+                Cantidad = s.Cantidad,
+                FechaActualizacion = s.FechaActualizacion
+            }).ToList(),
             ProyectosAsignados = i.MaterialCalculados
                 .Where(mc => mc.IdProyectoNavigation.Estado != "Archivado" && mc.IdProyectoNavigation.Estado != "Cancelado")
                 .Select(mc => new ProyectoAsignadoDTO
@@ -124,7 +165,7 @@ namespace TESIS_OG.Services.InsumoService
       return insumo;
     }
 
-    public async Task<InsumoIndexDTO?> ActualizarInsumoAsync(int id, InsumoEditDTO insumoDto)
+    public async Task<InsumoIndexDTO?> ActualizarInsumoAsync(int id, InsumoEditDTO insumoDto, int? idUsuario = null)
     {
       var insumo = await _context.Insumos.FindAsync(id);
       if (insumo == null) return null;
@@ -147,6 +188,25 @@ namespace TESIS_OG.Services.InsumoService
           .AnyAsync(i => i.NombreInsumo.ToLower() == insumoDto.NombreInsumo.ToLower() && i.IdInsumo != id);
       if (existeNombre) return null;
 
+      // Registrar movimiento si cambió el stock
+      if (insumo.StockActual != insumoDto.StockActual)
+      {
+          decimal diferencia = insumoDto.StockActual - insumo.StockActual;
+          var movimiento = new InventarioMovimiento
+          {
+              IdInsumo = id,
+              NombreInsumo = insumo.NombreInsumo,
+              TipoMovimiento = "Editar",
+              Cantidad = diferencia,
+              FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+              Origen = "-",
+              Destino = insumo.IdUbicacionNavigation?.Codigo ?? "Sin Ubicación",
+              Observacion = "Cambio manual de stock",
+              IdUsuario = idUsuario
+          };
+          _context.InventarioMovimientos.Add(movimiento);
+      }
+
       // Actualizar campos
       insumo.NombreInsumo = insumoDto.NombreInsumo;
       insumo.IdTipoInsumo = insumoDto.IdTipoInsumo;
@@ -154,18 +214,68 @@ namespace TESIS_OG.Services.InsumoService
       insumo.StockActual = insumoDto.StockActual;
       insumo.StockMinimo = insumoDto.StockMinimo;
       insumo.IdProveedor = insumoDto.IdProveedor;
+      insumo.IdUbicacion = insumoDto.IdUbicacion;
       insumo.Estado = insumoDto.Estado;
       insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
 
       await _context.SaveChangesAsync();
 
+      // Sincronizar InsumoStock para la ubicación "General" (sin proyecto)
+      if (insumo.IdUbicacion.HasValue)
+      {
+          var stockEntry = await _context.InsumoStocks
+              .FirstOrDefaultAsync(s => s.IdInsumo == id && s.IdUbicacion == insumo.IdUbicacion && s.IdProyecto == null);
+
+          if (stockEntry == null)
+          {
+              stockEntry = new InsumoStock
+              {
+                  IdInsumo = id,
+                  IdUbicacion = insumo.IdUbicacion.Value,
+                  Cantidad = insumo.StockActual,
+                  FechaActualizacion = DateTime.Now
+              };
+              _context.InsumoStocks.Add(stockEntry);
+          }
+          else
+          {
+              stockEntry.Cantidad = insumo.StockActual;
+              stockEntry.FechaActualizacion = DateTime.Now;
+          }
+          await _context.SaveChangesAsync();
+      }
+
       return await ObtenerInsumoPorIdAsync(id);
     }
 
-    public async Task<bool> EliminarInsumoAsync(int id)
+    public async Task<bool> EliminarInsumoAsync(int id, int? idUsuario = null)
     {
-      var insumo = await _context.Insumos.FindAsync(id);
+      var insumo = await _context.Insumos
+          .Include(i => i.InsumoStocks)
+          .FirstOrDefaultAsync(i => i.IdInsumo == id);
+          
       if (insumo == null) return false;
+
+      // Registrar movimiento antes de eliminar
+      var movimiento = new InventarioMovimiento
+      {
+          IdInsumo = null,
+          NombreInsumo = insumo.NombreInsumo,
+          TipoMovimiento = "Eliminar",
+          Cantidad = insumo.StockActual,
+          FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+          Origen = "-",
+          Destino = "-",
+          Observacion = "Insumo eliminado del sistema",
+          IdUsuario = idUsuario
+      };
+      _context.InventarioMovimientos.Add(movimiento);
+
+      // Limpiar stock asociado para evitar errores de integridad
+      if (insumo.InsumoStocks.Any())
+      {
+          _context.InsumoStocks.RemoveRange(insumo.InsumoStocks);
+      }
 
       _context.Insumos.Remove(insumo);
       await _context.SaveChangesAsync();
@@ -178,6 +288,7 @@ namespace TESIS_OG.Services.InsumoService
       var query = _context.Insumos
           .Include(i => i.IdTipoInsumoNavigation)
           .Include(i => i.IdProveedorNavigation)
+          .Include(i => i.IdUbicacionNavigation)
           .AsQueryable();
 
       // Aplicar filtros
@@ -221,7 +332,9 @@ namespace TESIS_OG.Services.InsumoService
             IdProveedor = i.IdProveedor,
             NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
             CuitProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.Cuit : null,
-            Estado = i.Estado
+            Estado = i.Estado,
+            IdUbicacion = i.IdUbicacion,
+            CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();
@@ -229,13 +342,28 @@ namespace TESIS_OG.Services.InsumoService
       return insumos;
     }
 
-    public async Task<bool> CambiarEstadoAsync(int id, string nuevoEstado)
+    public async Task<bool> CambiarEstadoAsync(int id, string nuevoEstado, int? idUsuario = null)
     {
       var insumo = await _context.Insumos.FindAsync(id);
       if (insumo == null) return false;
 
       insumo.Estado = nuevoEstado;
       insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+
+      // Registrar movimiento de cambio de estado
+      var movimiento = new InventarioMovimiento
+      {
+          IdInsumo = id,
+          NombreInsumo = insumo.NombreInsumo,
+          TipoMovimiento = "Editar",
+          Cantidad = 0,
+          FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+          Origen = "-",
+          Destino = "-",
+          Observacion = $"Cambio de estado a: {nuevoEstado}",
+          IdUsuario = idUsuario
+      };
+      _context.InventarioMovimientos.Add(movimiento);
 
       await _context.SaveChangesAsync();
 

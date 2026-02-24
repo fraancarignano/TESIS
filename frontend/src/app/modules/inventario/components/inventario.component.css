@@ -168,9 +168,12 @@ td {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -263,6 +266,250 @@ td {
   box-shadow: 0 2px 6px rgba(198, 255, 0, 0.3);
 }
 
+/* Dropdown de estado */
+.td-estado {
+  position: relative;
+}
+
+.estado-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.badge-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.badge-estado:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.chevron-icon {
+  flex-shrink: 0;
+  opacity: 0.65;
+}
+
+.estado-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 200;
+  min-width: 150px;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+.dropdown-item.activo {
+  background-color: #f0f0f0;
+  font-weight: 700;
+}
+
+.dot-estado {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: none !important;
+}
+
+.dot-estado.estado-disponible {
+  background-color: #66bb6a;
+}
+
+.dot-estado.estado-en-uso {
+  background-color: #ef5350;
+}
+
+.dot-estado.estado-a-designar {
+  background-color: #fdd835;
+}
+
+.dot-estado.estado-agotado {
+  background-color: #9e9e9e;
+}
+
+/* Modal de confirmación */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.confirm-modal {
+  background: white;
+  border-radius: 14px;
+  padding: 28px 24px 22px;
+  max-width: 380px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.confirm-icon {
+  width: 56px;
+  height: 56px;
+  background: #fff3e0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+  color: #ff5722;
+}
+
+.confirm-modal h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+.confirm-modal p {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+
+.badge-estado-inline {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btn-cancelar {
+  padding: 9px 22px;
+  border: 1.5px solid #ccc;
+  border-radius: 7px;
+  background: white;
+  color: #555;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancelar:hover {
+  border-color: #999;
+  color: #222;
+}
+
+.btn-confirmar {
+  padding: 9px 22px;
+  border: none;
+  border-radius: 7px;
+  background: #ff5722;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-confirmar:hover {
+  background: #e64a19;
+  box-shadow: 0 4px 10px rgba(255, 87, 34, 0.35);
+}
+
+.confirm-icon.danger {
+  background: #ffebee;
+  color: #f44336;
+}
+
+.btn-danger {
+  background: #f44336 !important;
+}
+
+.btn-danger:hover {
+  background: #d32f2f !important;
+  box-shadow: 0 4px 10px rgba(244, 67, 54, 0.35) !important;
+}
+
+.confirm-warning {
+  color: #d32f2f !important;
+  font-weight: 600;
+  margin-top: -10px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .actions-bar {
@@ -277,4 +524,15 @@ td {
   .acciones {
     flex-direction: column;
   }
+}
+
+.codigo-ubicacion {
+  background-color: #f0f4f8;
+  color: #546e7a;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 12px;
+  border: 1px solid #cfd8dc;
 }

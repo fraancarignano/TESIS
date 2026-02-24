@@ -78,6 +78,8 @@ public partial class TamarindoDbContext : DbContext
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
     public virtual DbSet<ProyectoAuditoria> ProyectoAuditorias { get; set; }
+    public virtual DbSet<Ubicacion> Ubicacions { get; set; }
+    public virtual DbSet<InsumoStock> InsumoStocks { get; set; }
 
     public virtual DbSet<VwMaterialesProyecto> VwMaterialesProyectos { get; set; }
 
@@ -506,6 +508,10 @@ public partial class TamarindoDbContext : DbContext
                 .HasForeignKey(d => d.IdTipoInsumo)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Insumo__id_TipoI__17036CC0");
+
+            entity.HasOne(d => d.IdUbicacionNavigation).WithMany(p => p.Insumos)
+                .HasForeignKey(d => d.IdUbicacion)
+                .HasConstraintName("FK_Insumo_Ubicacion");
         });
 
         modelBuilder.Entity<InventarioMovimiento>(entity =>
@@ -520,6 +526,10 @@ public partial class TamarindoDbContext : DbContext
                 .HasColumnName("cantidad");
             entity.Property(e => e.FechaMovimiento).HasColumnName("fecha_Movimiento");
             entity.Property(e => e.IdInsumo).HasColumnName("id_Insumo");
+            entity.Property(e => e.NombreInsumo)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("nombre_insumo");
             entity.Property(e => e.IdOrdenCompra).HasColumnName("id_OrdenCompra");
             entity.Property(e => e.IdUsuario).HasColumnName("id_Usuario");
             entity.Property(e => e.Observacion)
@@ -527,17 +537,21 @@ public partial class TamarindoDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("observacion");
             entity.Property(e => e.Origen)
-                .HasMaxLength(30)
+                .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("origen");
+            entity.Property(e => e.Destino)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("destino");
             entity.Property(e => e.TipoMovimiento)
-                .HasMaxLength(15)
+                .HasMaxLength(30)
                 .IsUnicode(false)
                 .HasColumnName("tipo_Movimiento");
 
             entity.HasOne(d => d.IdInsumoNavigation).WithMany(p => p.InventarioMovimientos)
                 .HasForeignKey(d => d.IdInsumo)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK__Inventari__id_In__17F790F9");
 
             entity.HasOne(d => d.IdOrdenCompraNavigation).WithMany(p => p.InventarioMovimientos)
@@ -1052,6 +1066,28 @@ public partial class TamarindoDbContext : DbContext
                 .HasColumnName("nombre_Prenda");
         });
 
+        modelBuilder.Entity<Ubicacion>(entity =>
+        {
+            entity.HasKey(e => e.IdUbicacion).HasName("PK_Ubicacion");
+
+            entity.ToTable("Ubicacion");
+
+            entity.HasIndex(e => e.Codigo, "UQ_Ubicacion_Codigo").IsUnique();
+
+            entity.Property(e => e.IdUbicacion).HasColumnName("id_Ubicacion");
+            entity.Property(e => e.Codigo)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("codigo");
+            entity.Property(e => e.Rack).HasColumnName("rack");
+            entity.Property(e => e.Division).HasColumnName("division");
+            entity.Property(e => e.Espacio).HasColumnName("espacio");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("descripcion");
+        });
+
         modelBuilder.Entity<UnidadMedidum>(entity =>
         {
             entity.HasKey(e => e.IdUnidad).HasName("PK__Unidad_M__06C748258040E0AB");
@@ -1185,6 +1221,38 @@ public partial class TamarindoDbContext : DbContext
                 .HasColumnName("nombre_Proyecto");
             entity.Property(e => e.TieneBordado).HasColumnName("tiene_Bordado");
             entity.Property(e => e.TieneEstampado).HasColumnName("tiene_Estampado");
+        });
+
+        modelBuilder.Entity<InsumoStock>(entity =>
+        {
+            entity.HasKey(e => e.IdInsumoStock);
+
+            entity.ToTable("Insumo_Stock");
+
+            entity.Property(e => e.IdInsumoStock).HasColumnName("id_Insumo_Stock");
+            entity.Property(e => e.IdInsumo).HasColumnName("id_Insumo");
+            entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            entity.Property(e => e.IdUbicacion).HasColumnName("id_Ubicacion");
+            entity.Property(e => e.IdOrdenCompra).HasColumnName("id_OrdenCompra");
+            entity.Property(e => e.Cantidad).HasColumnType("decimal(18, 2)").HasColumnName("cantidad");
+            entity.Property(e => e.FechaActualizacion).HasColumnType("datetime").HasColumnName("fecha_Actualizacion");
+
+            entity.HasOne(d => d.IdInsumoNavigation).WithMany(p => p.InsumoStocks)
+                .HasForeignKey(d => d.IdInsumo)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_InsumoStock_Insumo");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InsumoStocks)
+                .HasForeignKey(d => d.IdProyecto)
+                .HasConstraintName("FK_InsumoStock_Proyecto");
+
+            entity.HasOne(d => d.IdUbicacionNavigation).WithMany(p => p.InsumoStocks)
+                .HasForeignKey(d => d.IdUbicacion)
+                .HasConstraintName("FK_InsumoStock_Ubicacion");
+
+            entity.HasOne(d => d.IdOrdenCompraNavigation).WithMany(p => p.InsumoStocks)
+                .HasForeignKey(d => d.IdOrdenCompra)
+                .HasConstraintName("FK_InsumoStock_OrdenCompra");
         });
 
         OnModelCreatingPartial(modelBuilder);

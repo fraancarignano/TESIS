@@ -142,30 +142,32 @@ namespace TESIS_OG.Controllers
       }
     }
     /// <summary>
-    /// Obtener producción por tipo de prenda
+    /// Obtener producción por tipo de prenda (con filtros opcionales)
     /// </summary>
     [HttpGet("produccion-por-prenda")]
-    public async Task<ActionResult<List<DTOs.Reportes.ProduccionPorPrendaDTO>>> GetProduccionPorTipoPrenda(DateOnly? fechaInicio, DateOnly? fechaFin)
+    public async Task<ActionResult<List<DTOs.Reportes.ProduccionPorPrendaDTO>>> GetProduccionPorTipoPrenda(
+        DateOnly? fechaInicio, DateOnly? fechaFin, int? idCliente, string? nombrePrenda)
     {
         try
         {
-            // Si no se especifican fechas, tomar el último año por defecto
             var fin = fechaFin ?? DateOnly.FromDateTime(DateTime.Now);
             var inicio = fechaInicio ?? DateOnly.FromDateTime(DateTime.Now.AddYears(-1));
 
-            // Consultar prendas de proyectos calculados (MaterialCalculado tiene IdProyectoPrenda para prendas calculadas)
-            // O mejor, consultar ProyectoPrenda directamente
-            // Necesitamos saber cuántas prendas se hicieron.
-            // La entidad DetalleTallerProyecto registraba entregas, pero ProyectoPrenda tiene la cantidad total del proyecto.
-            // Si el proyecto está "Terminado" o "En Proceso", se puede contar lo planificado.
-            // El usuario dijo "cantidad tomada de proyectos".
-            
-            var produccion = await _context.ProyectoPrenda
+            var query = _context.ProyectoPrenda
                 .Include(pp => pp.IdProyectoNavigation)
+                    .ThenInclude(p => p.IdClienteNavigation)
                 .Include(pp => pp.IdTipoPrendaNavigation)
-                .Where(pp => pp.IdProyectoNavigation.FechaInicio >= inicio && 
+                .Where(pp => pp.IdProyectoNavigation.FechaInicio >= inicio &&
                              pp.IdProyectoNavigation.FechaInicio <= fin &&
-                             pp.IdProyectoNavigation.Estado != "Cancelado") // Include all active/planned projects
+                             pp.IdProyectoNavigation.Estado != "Cancelado");
+
+            if (idCliente.HasValue)
+                query = query.Where(pp => pp.IdProyectoNavigation.IdCliente == idCliente.Value);
+
+            if (!string.IsNullOrEmpty(nombrePrenda))
+                query = query.Where(pp => pp.IdTipoPrendaNavigation.NombrePrenda == nombrePrenda);
+
+            var produccion = await query
                 .GroupBy(pp => pp.IdTipoPrendaNavigation.NombrePrenda)
                 .Select(g => new DTOs.Reportes.ProduccionPorPrendaDTO
                 {
@@ -179,12 +181,104 @@ namespace TESIS_OG.Controllers
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new
-            {
-                message = "Error al obtener reporte de producción",
-                error = ex.Message
-            });
+            return StatusCode(500, new { message = "Error al obtener reporte de producción", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Evolución temporal de una prenda específica (por mes)
+    /// </summary>
+    [HttpGet("evolucion-prenda")]
+    public async Task<ActionResult<List<object>>> GetEvolucionPrenda(
+        string nombrePrenda, DateOnly? fechaInicio, DateOnly? fechaFin, int? idCliente)
+    {
+        try
+        {
+            var fin = fechaFin ?? DateOnly.FromDateTime(DateTime.Now);
+            var inicio = fechaInicio ?? DateOnly.FromDateTime(DateTime.Now.AddYears(-1));
+
+            var query = _context.ProyectoPrenda
+                .Include(pp => pp.IdProyectoNavigation)
+                .Include(pp => pp.IdTipoPrendaNavigation)
+                .Where(pp => pp.IdTipoPrendaNavigation.NombrePrenda == nombrePrenda &&
+                             pp.IdProyectoNavigation.FechaInicio >= inicio &&
+                             pp.IdProyectoNavigation.FechaInicio <= fin &&
+                             pp.IdProyectoNavigation.Estado != "Cancelado");
+
+            if (idCliente.HasValue)
+                query = query.Where(pp => pp.IdProyectoNavigation.IdCliente == idCliente.Value);
+
+            var evolucion = await query
+                .GroupBy(pp => new { pp.IdProyectoNavigation.FechaInicio.Year, pp.IdProyectoNavigation.FechaInicio.Month })
+                .Select(g => new
+                {
+                    Año = g.Key.Year,
+                    Mes = g.Key.Month,
+                    Cantidad = g.Sum(pp => pp.CantidadTotal)
+                })
+                .OrderBy(x => x.Año).ThenBy(x => x.Mes)
+                .ToListAsync();
+
+            return Ok(evolucion);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al obtener evolución", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Obtener clientes que tienen al menos un proyecto (para filtros)
+    /// </summary>
+    [HttpGet("clientes-con-proyectos")]
+    public async Task<ActionResult<List<object>>> GetClientesConProyectos()
+    {
+        try
+        {
+            var clientes = await _context.Proyectos
+                .Include(p => p.IdClienteNavigation)
+                .Where(p => p.Estado != "Cancelado")
+                .Select(p => new
+                {
+                    p.IdClienteNavigation.IdCliente,
+                    Nombre = (p.IdClienteNavigation.RazonSocial != null)
+                        ? p.IdClienteNavigation.RazonSocial
+                        : (p.IdClienteNavigation.Nombre + " " + p.IdClienteNavigation.Apellido).Trim()
+                })
+                .Distinct()
+                .OrderBy(c => c.Nombre)
+                .ToListAsync();
+
+            return Ok(clientes);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al obtener clientes", error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Obtener tipos de prenda usados en proyectos (para filtros)
+    /// </summary>
+    [HttpGet("tipos-prenda")]
+    public async Task<ActionResult<List<string>>> GetTiposPrenda()
+    {
+        try
+        {
+            var tipos = await _context.ProyectoPrenda
+                .Include(pp => pp.IdTipoPrendaNavigation)
+                .Select(pp => pp.IdTipoPrendaNavigation.NombrePrenda)
+                .Distinct()
+                .OrderBy(n => n)
+                .ToListAsync();
+
+            return Ok(tipos);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al obtener tipos de prenda", error = ex.Message });
         }
     }
   }
 }
+

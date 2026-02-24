@@ -55,9 +55,9 @@ namespace TESIS_OG.Controllers
     /// Actualizar un insumo existente
     /// </summary>
     [HttpPut("{id}")]
-    public async Task<IActionResult> ActualizarInsumo(int id, [FromBody] InsumoEditDTO insumoDto)
+    public async Task<IActionResult> ActualizarInsumo(int id, [FromBody] InsumoEditDTO insumoDto, [FromQuery] int? idUsuario = null)
     {
-      var result = await _insumoService.ActualizarInsumoAsync(id, insumoDto);
+      var result = await _insumoService.ActualizarInsumoAsync(id, insumoDto, idUsuario);
       if (result == null)
         return BadRequest(new { message = "No se pudo actualizar el insumo. Verifique que el tipo de insumo y proveedor existan." });
 
@@ -68,9 +68,9 @@ namespace TESIS_OG.Controllers
     /// Eliminar un insumo
     /// </summary>
     [HttpDelete("{id}")]
-    public async Task<IActionResult> EliminarInsumo(int id)
+    public async Task<IActionResult> EliminarInsumo(int id, [FromQuery] int? idUsuario = null)
     {
-      var result = await _insumoService.EliminarInsumoAsync(id);
+      var result = await _insumoService.EliminarInsumoAsync(id, idUsuario);
       if (!result)
         return NotFound(new { message = $"Insumo con ID {id} no encontrado" });
 
@@ -91,9 +91,9 @@ namespace TESIS_OG.Controllers
     /// Cambiar el estado de un insumo
     /// </summary>
     [HttpPatch("{id}/estado")]
-    public async Task<IActionResult> CambiarEstado(int id, [FromBody] CambiarEstadoRequest request)
+    public async Task<IActionResult> CambiarEstado(int id, [FromBody] CambiarEstadoRequest request, [FromQuery] int? idUsuario = null)
     {
-      var result = await _insumoService.CambiarEstadoAsync(id, request.NuevoEstado);
+      var result = await _insumoService.CambiarEstadoAsync(id, request.NuevoEstado, idUsuario);
       if (!result)
         return NotFound(new { message = $"Insumo con ID {id} no encontrado" });
 

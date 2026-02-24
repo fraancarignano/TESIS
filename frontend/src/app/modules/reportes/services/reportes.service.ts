@@ -57,6 +57,18 @@ export interface ProduccionPorPrenda {
   cantidadProducida: number;
 }
 
+export interface EvolucionPrenda {
+  año: number;
+  mes: number;
+  cantidad: number;
+}
+
+export interface ClienteResumen {
+  idCliente: number;
+  nombre: string;
+}
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -92,20 +104,51 @@ export class ReportesService {
   }
 
   /**
-   * Obtener reporte de producción por tipo de prenda
+   * Obtener reporte de producción por tipo de prenda (con filtros)
    */
-  obtenerProduccionPorTipoPrenda(fechaInicio?: string, fechaFin?: string): Observable<ProduccionPorPrenda[]> {
-    let params = '';
-    if (fechaInicio && fechaFin) {
-      params = `?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
-    }
-    console.log('🔍 Llamando a:', `${this.apiUrl}/produccion-por-prenda${params}`);
+  obtenerProduccionPorTipoPrenda(
+    fechaInicio?: string, fechaFin?: string, idCliente?: number, nombrePrenda?: string
+  ): Observable<ProduccionPorPrenda[]> {
+    const params: string[] = [];
+    if (fechaInicio) params.push(`fechaInicio=${fechaInicio}`);
+    if (fechaFin) params.push(`fechaFin=${fechaFin}`);
+    if (idCliente) params.push(`idCliente=${idCliente}`);
+    if (nombrePrenda) params.push(`nombrePrenda=${encodeURIComponent(nombrePrenda)}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
 
-    return this.http.get<ProduccionPorPrenda[]>(`${this.apiUrl}/produccion-por-prenda${params}`)
-      .pipe(
-        tap(datos => console.log('✅ Datos de producción recibidos:', datos)),
-        catchError(this.handleError)
-      );
+    return this.http.get<ProduccionPorPrenda[]>(`${this.apiUrl}/produccion-por-prenda${qs}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Obtener evolución temporal de una prenda por mes
+   */
+  obtenerEvolucionPrenda(
+    nombrePrenda: string, fechaInicio?: string, fechaFin?: string, idCliente?: number
+  ): Observable<EvolucionPrenda[]> {
+    const params: string[] = [`nombrePrenda=${encodeURIComponent(nombrePrenda)}`];
+    if (fechaInicio) params.push(`fechaInicio=${fechaInicio}`);
+    if (fechaFin) params.push(`fechaFin=${fechaFin}`);
+    if (idCliente) params.push(`idCliente=${idCliente}`);
+
+    return this.http.get<EvolucionPrenda[]>(`${this.apiUrl}/evolucion-prenda?${params.join('&')}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Clientes que tienen proyectos (para el filtro)
+   */
+  obtenerClientesConProyectos(): Observable<ClienteResumen[]> {
+    return this.http.get<ClienteResumen[]>(`${this.apiUrl}/clientes-con-proyectos`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Tipos de prenda usados en proyectos (para el filtro)
+   */
+  obtenerTiposPrenda(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.apiUrl}/tipos-prenda`)
+      .pipe(catchError(this.handleError));
   }
 
   /**

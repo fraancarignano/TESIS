@@ -431,6 +431,308 @@
   gap: 0.7rem;
 }
 
+.calidad-form {
+  background: #ffffff;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.calidad-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.calidad-header h4 {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.calidad-resumen {
+  background: #fff3e0;
+  color: #ef6c00;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.calidad-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.kpi {
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.14rem 0.42rem;
+}
+
+.kpi-ok {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.kpi-bad {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.kpi-na {
+  background: #eceff1;
+  color: #455a64;
+}
+
+.kpi-total {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.calidad-talles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.45rem;
+}
+
+.talle-item {
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.talle-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.talle-badge {
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: 999px;
+  padding: 0.12rem 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.talle-restante {
+  font-size: 0.7rem;
+  color: #666;
+}
+
+.talle-item input[type="number"] {
+  padding: 0.45rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.talle-item input[type="number"]:focus {
+  outline: none;
+  border-color: #ff5722;
+}
+
+.calidad-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.criterio-item {
+  border: 1px solid #ededed;
+  border-radius: 10px;
+  padding: 0.55rem;
+  background: #fafafa;
+}
+
+.criterio-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 0.6rem;
+}
+
+.criterio-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-bottom: 0.45rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.criterio-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.criterio-main small {
+  color: #6f6f6f;
+  font-size: 0.72rem;
+}
+
+.badge-critico {
+  background: #ffebee;
+  color: #c62828;
+  border-radius: 999px;
+  padding: 0.15rem 0.38rem;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.criterio-acciones {
+  display: grid;
+  grid-template-columns: repeat(3, 88px);
+  gap: 0.35rem;
+  min-height: 78px;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.btn-criterio {
+  border: 1px solid transparent;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.28rem 0.45rem;
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.btn-criterio:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.btn-criterio i {
+  font-size: 1rem;
+}
+
+.btn-criterio span {
+  line-height: 1.1;
+}
+
+.btn-criterio:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-cumple {
+  background: #2e7d32;
+  border-color: #2e7d32;
+}
+
+.btn-no-cumple {
+  background: #c62828;
+  border-color: #c62828;
+}
+
+.btn-no-aplica {
+  background: #607d8b;
+  border-color: #607d8b;
+}
+
+.btn-criterio.active {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+.btn-cumple.active i {
+  color: #fff;
+}
+
+.btn-no-cumple.active i {
+  color: #fff;
+}
+
+.btn-no-aplica.active i {
+  color: #fff;
+}
+
+.calidad-alerta {
+  border: 1px solid #ffccbc;
+  background: #fff3e0;
+  color: #bf360c;
+  border-radius: 8px;
+  padding: 0.42rem 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.calidad-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.btn-guardar-inspeccion,
+.btn-limpiar-inspeccion {
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: 0.2s;
+}
+
+.btn-guardar-inspeccion {
+  background: #1976d2;
+  color: #fff;
+}
+
+.btn-guardar-inspeccion:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+.btn-limpiar-inspeccion {
+  background: #eceff1;
+  color: #455a64;
+}
+
+.btn-limpiar-inspeccion:hover:not(:disabled) {
+  background: #dfe5e8;
+}
+
+.btn-guardar-inspeccion:disabled,
+.btn-limpiar-inspeccion:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .form-placeholder {
   background: white;
   border: 2px dashed #e0e0e0;
@@ -534,6 +836,32 @@ textarea:disabled {
 
 .btn-finalizar:hover:not(:disabled) {
   box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.btn-retroceder {
+  margin-top: 0.45rem;
+  padding: 0.58rem 0.8rem;
+  background: #eceff1;
+  color: #455a64;
+  border: 1px solid #cfd8dc;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.btn-retroceder:hover:not(:disabled) {
+  background: #dfe5e8;
+}
+
+.btn-retroceder:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* ==================== ÁREA COMPLETADA ==================== */
@@ -826,5 +1154,19 @@ textarea:disabled {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .calidad-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .criterio-acciones {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .criterio-top {
+    flex-direction: column;
   }
 }

@@ -1,0 +1,254 @@
+.movimientos-container {
+    padding: 2rem;
+    background-color: #f8fafc;
+    min-height: 100vh;
+}
+
+.header {
+    margin-bottom: 2rem;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.breadcrumb-item.active {
+    color: #1e293b;
+    font-weight: 500;
+}
+
+h1 {
+    color: #1e293b;
+    font-size: 1.875rem;
+    font-weight: 700;
+}
+
+.filtros-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 150px;
+    gap: 1.5rem;
+    align-items: flex-end;
+}
+
+.filtro-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filtro-item label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.filtro-item input {
+    padding: 0.625rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.filtro-item input:focus {
+    outline: none;
+    border-color: #d97706;
+    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+}
+
+.btn-consultar {
+    background-color: #d97706;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+}
+
+.btn-consultar:hover {
+    background-color: #b45309;
+}
+
+.btn-consultar:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.tabla-contenedor {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.tabla-movimientos {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.tabla-movimientos th {
+    background-color: #f8fafc;
+    padding: 1rem 1.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.tabla-movimientos td {
+    padding: 1rem 1.5rem;
+    font-size: 0.95rem;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.articulo-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.nombre-articulo {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.observacion {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.badge {
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-info {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+.badge-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-secondary {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.sin-resultados {
+    text-align: center;
+    padding: 3rem !important;
+    color: #94a3b8;
+    background: #f8fafc;
+}
+
+/* Intelligent Search Autocomplete */
+.search-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-results {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.search-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.search-item:last-child {
+    border-bottom: none;
+}
+
+.search-item:hover {
+    background-color: #f8fafc;
+}
+
+.item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.item-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.item-meta {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

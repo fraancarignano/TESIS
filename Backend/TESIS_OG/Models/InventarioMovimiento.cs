@@ -7,7 +7,9 @@ public partial class InventarioMovimiento
 {
     public int IdMovimiento { get; set; }
 
-    public int IdInsumo { get; set; }
+    public int? IdInsumo { get; set; }
+
+    public string? NombreInsumo { get; set; }
 
     public string TipoMovimiento { get; set; } = null!;
 
@@ -17,13 +19,15 @@ public partial class InventarioMovimiento
 
     public string Origen { get; set; } = null!;
 
+    public string? Destino { get; set; }
+
     public int? IdOrdenCompra { get; set; }
 
     public int? IdUsuario { get; set; }
 
     public string? Observacion { get; set; }
 
-    public virtual Insumo IdInsumoNavigation { get; set; } = null!;
+    public virtual Insumo? IdInsumoNavigation { get; set; }
 
     public virtual OrdenCompra? IdOrdenCompraNavigation { get; set; }
 

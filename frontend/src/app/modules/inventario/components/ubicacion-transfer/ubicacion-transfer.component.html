@@ -1,0 +1,108 @@
+<div class="transfer-container">
+    <div class="header">
+        <div class="breadcrumb">
+            <span>Inventario</span>
+            <span class="separator">></span>
+            <span class="active">Transferir Insumos</span>
+        </div>
+        <h1>Transferir Insumos a Ubicación</h1>
+    </div>
+
+    <div class="transfer-card">
+        <div class="selection-grid">
+            <div class="form-group full-width">
+                <label>Tipo de Origen</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" [(ngModel)]="tipoOrigen" value="OC" (change)="onOrigenTypeChange()">
+                        Orden de Compra (Ingreso)
+                    </label>
+                    <label>
+                        <input type="radio" [(ngModel)]="tipoOrigen" value="UBICACION" (change)="onOrigenTypeChange()">
+                        Ubicación Actual (Movimiento Interno)
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" *ngIf="tipoOrigen === 'OC'">
+                <label>Pendientes de Ingreso (OC Recibidas)</label>
+                <select [(ngModel)]="idOrdenSeleccionada" (change)="onOrdenChange()" name="origen">
+                    <option [ngValue]="null">Seleccione una orden...</option>
+                    <option *ngFor="let o of ordenesRecibidas" [ngValue]="o.idOrdenCompra">
+                        OC #{{ o.nroOrden }} - {{ o.nombreProveedor }} ({{ o.fechaSolicitud }})
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group" *ngIf="tipoOrigen === 'UBICACION'">
+                <label>Ubicación de Origen</label>
+                <select [(ngModel)]="idUbicacionOrigen" (change)="onUbicacionOrigenChange()" name="origenUb">
+                    <option [ngValue]="null">Seleccione origen...</option>
+                    <option *ngFor="let u of ubicaciones" [ngValue]="u.idUbicacion">
+                        {{ u.codigo }} - {{ u.descripcion || 'Sin descripción' }}
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Destino (Nueva Ubicación)</label>
+                <select [(ngModel)]="idUbicacionDestino" name="destino">
+                    <option [ngValue]="null">Seleccione destino...</option>
+                    <option *ngFor="let u of ubicaciones" [ngValue]="u.idUbicacion">
+                        {{ u.codigo }} - {{ u.descripcion || 'Sin descripción' }}
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Proyecto (Opcional)</label>
+                <select [(ngModel)]="idProyectoSeleccionado" name="proyecto">
+                    <option [ngValue]="null">Stock General (Sin Proyecto)</option>
+                    <option *ngFor="let p of proyectos" [ngValue]="p.idProyecto">
+                        {{ p.nombreProyecto }} ({{ p.codigoProyecto }})
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <div class="items-checklist"
+            *ngIf="(idOrdenSeleccionada || idUbicacionOrigen) && insumosParaTransferir.length > 0">
+            <div class="checklist-header">
+                <h3>Insumos para Transferir</h3>
+                <div class="select-all">
+                    <input type="checkbox" [checked]="todosSeleccionados" (change)="toggleTodos()" id="selectAll">
+                    <label for="selectAll" style="margin: 0; cursor: pointer;">Seleccionar Todos</label>
+                </div>
+            </div>
+
+            <div class="items-list">
+                <div class="item-row" *ngFor="let item of insumosParaTransferir">
+                    <input type="checkbox" [(ngModel)]="item.seleccionado" (change)="actualizarTodosSeleccionados()"
+                        [id]="'item-' + item.idInsumo">
+                    <label [for]="'item-' + item.idInsumo" class="item-info">
+                        <span class="item-name">{{ item.nombreInsumo }}</span>
+                        <span class="item-stock">Disponible: {{ item.stockActual }}</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn-cancelar" (click)="limpiar()">Limpiar</button>
+                <button class="btn-confirmar" (click)="confirmarTransferencia()"
+                    [disabled]="!idUbicacionDestino || cargando">
+                    <span *ngIf="!cargando">Confirmar transferencia</span>
+                    <span *ngIf="cargando">Procesando...</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="empty-state"
+            *ngIf="(idOrdenSeleccionada || idUbicacionOrigen) && insumosParaTransferir.length === 0">
+            No hay insumos disponibles para transferir desde el origen seleccionado.
+        </div>
+
+        <div class="initial-state" *ngIf="!idOrdenSeleccionada && !idUbicacionOrigen">
+            Seleccione un origen (Orden de Compra o Ubicación) para comenzar la transferencia de insumos.
+        </div>
+    </div>
+</div>

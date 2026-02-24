@@ -41,7 +41,7 @@ export class OrdenCompraFormComponent implements OnInit {
   constructor(
     private ordenCompraService: OrdenCompraService,
     private alertas: AlertasService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.cargarProveedores();
@@ -79,14 +79,9 @@ export class OrdenCompraFormComponent implements OnInit {
   }
 
   actualizarInsumosDisponibles(): void {
-    if (!this.idProveedorSeleccionado) {
-      this.insumosDisponibles = this.insumos;
-    } else {
-      // Filtrar insumos por proveedor
-      this.insumosDisponibles = this.insumos.filter(
-        i => i.idProveedor === this.idProveedorSeleccionado
-      );
-    }
+    // Mostramos todos los insumos definidos en el sistema para que puedan ser comprados 
+    // a cualquier proveedor, independientemente de si ya tienen uno asignado o no.
+    this.insumosDisponibles = this.insumos;
   }
 
   agregarInsumo(): void {
@@ -163,7 +158,9 @@ export class OrdenCompraFormComponent implements OnInit {
       error: (err) => {
         this.cargando = false;
         console.error('Error al crear orden:', err);
-        this.alertas.error('Error', 'No se pudo crear la orden de compra');
+        const errorMsg = err.error?.error || err.error?.message || err.message || 'Error desconocido';
+        const innerMsg = err.error?.innerError ? `\n\nDetalle técnico: ${err.error.innerError}` : '';
+        this.alertas.error('Error', `No se pudo crear la orden: ${errorMsg}${innerMsg}`);
       }
     });
   }

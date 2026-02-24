@@ -11,11 +11,14 @@ namespace TESIS_OG.Controllers
     public class LoginController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly ILogger<LoginController> _logger;
         private readonly TamarindoDbContext _context;
 
-        public LoginController(IAuthService authService)
+        public LoginController(IAuthService authService, TamarindoDbContext context, ILogger<LoginController> logger)
         {
             _authService = authService;
+            _context = context;
+            _logger = logger;
         }
 
         /// <summary>
@@ -24,14 +27,23 @@ namespace TESIS_OG.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
+            _logger.LogInformation("Intento de login para usuario: {Usuario}", loginDto.NombreUsuario);
+
             if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("Datos de login inválidos para usuario: {Usuario}", loginDto.NombreUsuario);
                 return BadRequest(new { message = "Datos inválidos", errors = ModelState });
+            }
 
             var result = await _authService.LoginAsync(loginDto);
 
             if (result == null)
+            {
+                _logger.LogWarning("Login fallido para usuario: {Usuario}. Credenciales incorrectas o usuario inactivo.", loginDto.NombreUsuario);
                 return Unauthorized(new { message = "Usuario o contraseña incorrectos, o usuario inactivo" });
+            }
 
+            _logger.LogInformation("Login exitoso para usuario: {Usuario}", loginDto.NombreUsuario);
             return Ok(result);
         }
 

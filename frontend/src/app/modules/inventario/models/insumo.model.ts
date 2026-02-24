@@ -20,6 +20,20 @@ export interface ProyectoAsignado {
   nombrePrenda?: string;
 }
 
+export interface InsumoStock {
+  idInsumoStock: number;
+  idInsumo: number;
+  idProyecto?: number;
+  nombreProyecto?: string;
+  codigoProyecto?: string;
+  idUbicacion?: number;
+  codigoUbicacion?: string;
+  idOrdenCompra?: number;
+  nroOrden?: string;
+  cantidad: number;
+  fechaActualizacion: string;
+}
+
 export interface Insumo {
   idInsumo?: number;
   nombreInsumo: string;
@@ -31,6 +45,11 @@ export interface Insumo {
   fechaActualizacion: string;
   idProveedor?: number;
   proveedor?: Proveedor;
+  nombreProveedor?: string;
+  idUbicacion?: number;
+  codigoUbicacion?: string;
+  nombreTipoInsumo?: string;
   estado?: string;
   proyectosAsignados?: ProyectoAsignado[];
+  detalleStock?: InsumoStock[];
 }

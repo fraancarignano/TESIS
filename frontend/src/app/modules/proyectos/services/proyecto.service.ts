@@ -77,6 +77,15 @@ export class ProyectosService {
   }
 
   /**
+   * Obtener proyectos asignados a un taller externo
+   */
+  obtenerProyectosPorTaller(idTaller: number): Observable<Proyecto[]> {
+    return this.http.get<Proyecto[]>(`${environment.apiUrl}/Taller/${idTaller}/proyectos`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
    * Crear nuevo proyecto
    */
   crearProyecto(proyecto: CrearProyectoDTO): Observable<Proyecto> {
@@ -133,6 +142,13 @@ export class ProyectosService {
    */
   actualizarAvance(id: number, avance: ActualizarAvanceDTO): Observable<any> {
     return this.http.put(`${this.apiUrl}/${id}/avance`, avance).pipe(
+      tap(() => this.obtenerProyectos().subscribe()),
+      catchError(this.handleError)
+    );
+  }
+
+  retrocederArea(id: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}/retroceder-area`, {}).pipe(
       tap(() => this.obtenerProyectos().subscribe()),
       catchError(this.handleError)
     );

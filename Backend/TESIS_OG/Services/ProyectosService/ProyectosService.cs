@@ -651,20 +651,71 @@ namespace TESIS_OG.Services.ProyectoService
         {
             var proyecto = await _context.Proyectos.FindAsync(idProyecto);
             if (proyecto == null) return false;
+            if (!string.Equals(proyecto.Estado, "En Proceso", StringComparison.OrdinalIgnoreCase)) return false;
+
+            var areasOrdenadas = await ObtenerAreasOrdenadasAsync();
+            if (!areasOrdenadas.Any()) return false;
+
+            var areaSeleccionada = areasOrdenadas.FirstOrDefault(a => a.IdArea == avanceDto.IdArea);
+            if (areaSeleccionada == null && avanceDto.IdArea > 0 && avanceDto.IdArea <= areasOrdenadas.Count)
+            {
+                // Fallback: permite que el frontend envíe el índice de etapa (1..N).
+                areaSeleccionada = areasOrdenadas[avanceDto.IdArea - 1];
+            }
+
+            if (areaSeleccionada == null) return false;
+
+            var porcentaje = Math.Clamp(avanceDto.Porcentaje, 0, 100);
+            var avancesActuales = await ObtenerAvancesActualesPorAreaAsync(idProyecto, areasOrdenadas);
+            var indiceArea = areasOrdenadas.FindIndex(a => a.IdArea == areaSeleccionada.IdArea);
+            if (indiceArea > 0)
+            {
+                var areaAnterior = areasOrdenadas[indiceArea - 1];
+                if (avancesActuales[areaAnterior.IdArea] < 100) return false;
+            }
 
             var avanceArea = new AvanceAreaProyecto
             {
                 IdProyecto = idProyecto,
-                IdArea = avanceDto.IdArea,
-                PorcentajeAvance = avanceDto.Porcentaje,
+                IdArea = areaSeleccionada.IdArea,
+                PorcentajeAvance = porcentaje,
                 FechaActualizacion = DateTime.Now,
                 Observaciones = avanceDto.Observaciones
             };
 
-            // FIX: se agrega el registro al contexto antes de guardar
             _context.AvanceAreaProyectos.Add(avanceArea);
+            await SincronizarEstadoAreasProyectoAsync(proyecto, areaSeleccionada.IdArea, porcentaje);
             await _context.SaveChangesAsync();
 
+            return true;
+        }
+
+        public async Task<bool> RetrocederAreaAsync(int idProyecto)
+        {
+            var proyecto = await _context.Proyectos.FindAsync(idProyecto);
+            if (proyecto == null) return false;
+
+            var areas = await ObtenerAreasOrdenadasAsync();
+            if (!areas.Any()) return false;
+
+            var avances = await ObtenerAvancesActualesPorAreaAsync(idProyecto, areas);
+            var indiceUltimaCompleta = areas.FindLastIndex(a => avances[a.IdArea] >= 100);
+
+            if (indiceUltimaCompleta < 0) return false;
+
+            var areaARetroceder = areas[indiceUltimaCompleta];
+
+            _context.AvanceAreaProyectos.Add(new AvanceAreaProyecto
+            {
+                IdProyecto = idProyecto,
+                IdArea = areaARetroceder.IdArea,
+                PorcentajeAvance = 0,
+                FechaActualizacion = DateTime.Now,
+                Observaciones = "Retroceso manual de área"
+            });
+
+            await SincronizarEstadoAreasProyectoAsync(proyecto, areaARetroceder.IdArea, 0);
+            await _context.SaveChangesAsync();
             return true;
         }
 
@@ -734,6 +785,62 @@ namespace TESIS_OG.Services.ProyectoService
             proyecto.Estado = nuevoEstado;
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        private async Task<List<AreaProduccion>> ObtenerAreasOrdenadasAsync()
+        {
+            return await _context.AreaProduccions
+                .OrderBy(a => a.Orden)
+                .ToListAsync();
+        }
+
+        private async Task<Dictionary<int, int>> ObtenerAvancesActualesPorAreaAsync(int idProyecto, List<AreaProduccion> areas)
+        {
+            var ultimoAvancePorArea = await _context.AvanceAreaProyectos
+                .Where(a => a.IdProyecto == idProyecto)
+                .GroupBy(a => a.IdArea)
+                .Select(g => g.OrderByDescending(x => x.FechaActualizacion).ThenByDescending(x => x.IdAvanceArea).First())
+                .ToListAsync();
+
+            var avances = areas.ToDictionary(a => a.IdArea, _ => 0);
+            foreach (var avance in ultimoAvancePorArea)
+            {
+                avances[avance.IdArea] = avance.PorcentajeAvance;
+            }
+
+            return avances;
+        }
+
+        private async Task SincronizarEstadoAreasProyectoAsync(Proyecto proyecto, int idAreaActualizado, int porcentajeActualizado)
+        {
+            var areas = await ObtenerAreasOrdenadasAsync();
+            var avances = await ObtenerAvancesActualesPorAreaAsync(proyecto.IdProyecto, areas);
+            avances[idAreaActualizado] = porcentajeActualizado;
+
+            var slots = areas.Select(a => avances[a.IdArea]).ToList();
+            proyecto.AvanceGerenciaAdmin = slots.Count > 0 ? slots[0] : 0;
+            proyecto.AvanceDisenoDesarrollo = slots.Count > 1 ? slots[1] : 0;
+            proyecto.AvanceControlCalidad = slots.Count > 2 ? slots[2] : 0;
+            proyecto.AvanceEtiquetadoEmpaquetado = slots.Count > 3 ? slots[3] : 0;
+            proyecto.AvanceDepositoLogistica = slots.Count > 4 ? slots[4] : 0;
+
+            var siguientePendiente = areas.FirstOrDefault(a => avances[a.IdArea] < 100);
+            if (siguientePendiente == null)
+            {
+                proyecto.AreaActual = areas.LastOrDefault()?.NombreArea ?? proyecto.AreaActual;
+                proyecto.Estado = "Finalizado";
+                return;
+            }
+
+            proyecto.AreaActual = siguientePendiente.NombreArea;
+            if (proyecto.Estado == "Finalizado")
+            {
+                proyecto.Estado = "En Proceso";
+            }
+            else if (proyecto.Estado == "Pendiente")
+            {
+                proyecto.Estado = "En Proceso";
+            }
         }
 
         // ========================================
@@ -915,6 +1022,10 @@ namespace TESIS_OG.Services.ProyectoService
                 .Select(m => $"Stock insuficiente de {m.NombreInsumo}")
                 .ToList();
 
+            var areas = await ObtenerAreasOrdenadasAsync();
+            var avances = await ObtenerAvancesActualesPorAreaAsync(proyecto.IdProyecto, areas);
+            var slots = areas.Select(a => avances[a.IdArea]).ToList();
+
             return new ProyectoDetalleDTO
             {
                 IdProyecto = proyecto.IdProyecto,
@@ -939,6 +1050,13 @@ namespace TESIS_OG.Services.ProyectoService
                 NombreUsuarioEncargado = proyecto.IdUsuarioEncargadoNavigation != null
                     ? $"{proyecto.IdUsuarioEncargadoNavigation.NombreUsuario ?? ""} {proyecto.IdUsuarioEncargadoNavigation.ApellidoUsuario ?? ""}".Trim()
                     : null,
+
+                AreaActual = proyecto.AreaActual,
+                AvanceDiseno = slots.Count > 0 ? slots[0] : 0,
+                AvanceCorte = slots.Count > 1 ? slots[1] : 0,
+                AvanceConfeccion = slots.Count > 2 ? slots[2] : 0,
+                AvanceCalidadPrenda = slots.Count > 3 ? slots[3] : 0,
+                AvanceEtiquetadoEmpaquetado = slots.Count > 4 ? slots[4] : 0,
 
                 EsMultiPrenda = proyecto.EsMultiPrenda ?? false,
                 Prendas = prendas,
