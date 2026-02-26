@@ -1,7 +1,7 @@
-<div class="reporte-inventario-container">
+﻿<div class="reporte-inventario-container">
   <!-- Cabecera -->
   <div class="reporte-header">
-    <h1>Reporte de Inventario Crítico</h1>
+    <h1>Reporte de Inventario CrÃ­tico</h1>
     <button class="btn-recargar" (click)="cargarDatos()" [disabled]="loading">
       <i class="bi bi-arrow-clockwise"></i>
       {{ loading ? 'Cargando...' : 'Recargar' }}
@@ -24,10 +24,10 @@
 
   <!-- Contenido del reporte -->
   <div *ngIf="datosReporte && !loading && !error" class="reporte-content">
-    
+
     <!-- Tarjetas de resumen -->
     <div class="resumen-cards">
-      
+
       <!-- Card: Total Monitoreados -->
       <div class="card card-info">
         <div class="card-icon">
@@ -50,14 +50,14 @@
         </div>
       </div>
 
-      <!-- Card: Críticos -->
+      <!-- Card: CrÃ­ticos -->
       <div class="card card-warning">
         <div class="card-icon">
           <i class="bi bi-exclamation-triangle"></i>
         </div>
         <div class="card-content">
           <h3>{{ datosReporte.insumosCriticos }}</h3>
-          <p>Críticos</p>
+          <p>CrÃ­ticos</p>
         </div>
       </div>
 
@@ -102,7 +102,7 @@
       <p>No hay insumos registrados en el sistema</p>
     </div>
 
-    <!-- Gráfico Principal - SIEMPRE se muestra si hay insumos --><!-- Tabla de Insumos - SIEMPRE se muestra si hay insumos -->
+    <!-- GrÃ¡fico Principal - SIEMPRE se muestra si hay insumos --><!-- Tabla de Insumos - SIEMPRE se muestra si hay insumos -->
     <div class="tabla-container" *ngIf="datosReporte.insumos.length > 0">
       <div class="tabla-header">
         <h2>Inventario Completo</h2>
@@ -116,10 +116,10 @@
               <th>Insumo</th>
               <th>Tipo</th>
               <th>Stock Actual</th>
-              <th>Stock Mínimo</th>
+              <th>Stock MÃ­nimo</th>
               <th>Unidad</th>
               <th>Criticidad</th>
-              <th *ngIf="tieneDiasRestantes()">Días Restantes</th>
+              <th *ngIf="tieneDiasRestantes()">DÃ­as Restantes</th>
             </tr>
           </thead>
           <tbody>
@@ -143,7 +143,7 @@
               </td>
               <td class="text-center" *ngIf="tieneDiasRestantes()">
                 <span *ngIf="insumo.diasRestantes !== null && insumo.diasRestantes !== undefined">
-                  {{ insumo.diasRestantes }} días
+                  {{ insumo.diasRestantes }} dÃ­as
                 </span>
                 <span *ngIf="insumo.diasRestantes === null || insumo.diasRestantes === undefined">
                   -
@@ -154,10 +154,168 @@
         </table>
       </div>
     </div>
-    <!-- Gr�fico Principal - SIEMPRE se muestra si hay insumos -->
+    <!-- Gráfico Principal - SIEMPRE se muestra si hay insumos -->
     <div class="grafico-principal" *ngIf="datosReporte.insumos.length > 0">
       <canvas #chartStockVsMinimo></canvas>
     </div>
   </div>
-</div>
 
+  <hr style="margin-top: 40px; margin-bottom: 20px; border: 0; border-top: 1px solid #efefef;">
+
+  <!-- ============================================== -->
+  <!-- REPORTE DE ROTACIÓN DE INSUMOS -->
+  <!-- ============================================== -->
+
+  <div class="reporte-header" style="margin-top: 2rem;">
+    <div class="header-left">
+      <h2>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        Rotación de Insumos
+      </h2>
+      <span class="modo-badge" *ngIf="!loadingRotacion && !errorRotacion && filtrosRotacion.idInsumo"
+        style="margin-left: 1rem; padding: 4px 10px; background: #eef2f5; border-radius: 12px; font-size: 0.85rem; color: #5c6b7a;">
+        {{ insumoSeleccionadoNombre }} · {{ filtrosRotacion.anio }}
+      </span>
+    </div>
+    <div class="header-right">
+      <span class="total-badge" *ngIf="!loadingRotacion && !errorRotacion && datosRotacion.length > 0"
+        style="padding: 4px 10px; background: #e3f2fd; color: #1976d2; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
+        {{ datosRotacion.length }} mes{{ datosRotacion.length !== 1 ? 'es' : '' }} con movs
+      </span>
+    </div>
+  </div>
+
+  <!-- Panel de filtros para Rotación -->
+  <div class="filtros-panel mt-3"
+    style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-top: 1rem;">
+    <div class="filtros-grid"
+      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+      <div class="filtro-group" style="display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-weight: 500; font-size: 0.9rem; color: #444;">Insumo</label>
+        <select [(ngModel)]="filtrosRotacion.idInsumo" [disabled]="insumos.length === 0"
+          style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; outline: none; transition: border-color 0.2s;">
+          <option [ngValue]="undefined">Seleccione un insumo</option>
+          <option *ngFor="let i of insumos" [ngValue]="i.idInsumo">{{ i.nombreInsumo }}</option>
+        </select>
+      </div>
+      <div class="filtro-group" style="display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-weight: 500; font-size: 0.9rem; color: #444;">Año</label>
+        <select [(ngModel)]="filtrosRotacion.anio"
+          style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; outline: none; transition: border-color 0.2s;">
+          <option *ngFor="let a of aniosRotacion" [value]="a">{{ a }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="filtros-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+      <button class="btn-limpiar" (click)="limpiarFiltrosRotacion()" title="Limpiar filtros"
+        [disabled]="loadingRotacion"
+        style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; border: 1px solid #ddd; background: white; border-radius: 6px; cursor: pointer; color: #666;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        Limpiar
+      </button>
+      <button class="btn-aplicar" (click)="aplicarFiltrosRotacion()"
+        [disabled]="!filtrosRotacion.idInsumo || loadingRotacion"
+        style="display: flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; background: #2c3e50; color: white; border-radius: 6px; cursor: pointer; font-weight: 500;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        Aplicar
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Rotación -->
+  <div class="loading-container" *ngIf="loadingRotacion">
+    <div class="spinner"></div>
+    <p>Cargando datos de rotación...</p>
+  </div>
+
+  <!-- Error Rotación -->
+  <div class="error-container" *ngIf="errorRotacion">
+    <i class="bi bi-exclamation-triangle"></i>
+    <h3>Error al cargar rotación</h3>
+    <p>⚠️ {{ mensajeErrorRotacion }}</p>
+    <button class="btn-retry" (click)="aplicarFiltrosRotacion()">Reintentar</button>
+  </div>
+
+  <!-- Tarjetas de Resumen Rotación -->
+  <div class="resumen-cards" *ngIf="!loadingRotacion && !errorRotacion && !sinDatosRotacion" style="margin-top: 15px;">
+
+    <!-- Card: Consumo -->
+    <div class="card card-warning" style="border-left-color: #e85d04;">
+      <div class="card-icon" style="background-color: rgba(232, 93, 4, 0.1); color: #e85d04;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+          <polyline points="16 7 22 7 22 13"></polyline>
+        </svg>
+      </div>
+      <div class="card-content">
+        <h3 style="color: #e85d04;">{{ totalConsumo }}</h3>
+        <p>Total Consumo</p>
+      </div>
+    </div>
+
+    <!-- Card: Reposición -->
+    <div class="card card-info" style="border-left-color: #2c3e50;">
+      <div class="card-icon" style="background-color: rgba(44, 62, 80, 0.1); color: #2c3e50;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline>
+          <polyline points="16 17 22 17 22 11"></polyline>
+        </svg>
+      </div>
+      <div class="card-content">
+        <h3 style="color: #2c3e50;">{{ totalReposicion }}</h3>
+        <p>Total Reposición</p>
+      </div>
+    </div>
+
+    <!-- Card: Diferencia -->
+    <div class="card" [ngClass]="diferenciaRotacion < 0 ? 'card-danger' : 'card-alert'">
+      <div class="card-icon"
+        [ngStyle]="{'background-color': diferenciaRotacion < 0 ? 'rgba(220, 53, 69, 0.1)' : 'rgba(32, 201, 151, 0.1)', 'color': diferenciaRotacion < 0 ? '#dc3545' : '#20c997'}">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+          <line *ngIf="diferenciaRotacion >= 0" x1="12" y1="8" x2="12" y2="16"></line>
+        </svg>
+      </div>
+      <div class="card-content">
+        <h3 [ngStyle]="{'color': diferenciaRotacion < 0 ? '#dc3545' : '#20c997'}">{{ diferenciaRotacion > 0 ? '+' : ''
+          }}{{ diferenciaRotacion }}</h3>
+        <p>Balance (Reposición - Consumo)</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Advertencia Visual (Opcional Mejora) -->
+  <div class="hint-evolucion"
+    style="margin-top: 15px; padding: 12px 16px; background: #fff8e1; border: 1px solid #ffe082; color: #f57f17; border-radius: 8px; display: flex; align-items: center; gap: 10px; font-size: 0.9rem;"
+    *ngIf="!loadingRotacion && !errorRotacion && !sinDatosRotacion">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span><strong>Tip:</strong> Si el Consumo supera constantemente a la Reposición, considera aumentar el stock
+      mínimo.</span>
+  </div>
+
+  <!-- Gráfico Rotación -->
+  <div class="grafico-principal" *ngIf="!loadingRotacion && !errorRotacion && !sinDatosRotacion"
+    style="margin-top: 1rem; height: 350px;">
+    <canvas #chartRotacion></canvas>
+  </div>
+
+  <!-- Sin datos Rotación -->
+  <div class="no-data" *ngIf="sinDatosRotacion && filtrosRotacion.idInsumo">
+    <i class="bi bi-inbox" style="font-size: 2rem; color: #ccc; margin-bottom: 10px;"></i>
+    <p>No se registraron movimientos para "{{ insumoSeleccionadoNombre }}" en {{ filtrosRotacion.anio }}.</p>
+  </div>

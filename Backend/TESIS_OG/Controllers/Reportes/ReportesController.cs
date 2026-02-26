@@ -483,6 +483,39 @@ namespace TESIS_OG.Controllers
         .Where(x => !string.IsNullOrWhiteSpace(x))
         .ToList();
     }
+
+    /// <summary>
+    /// Obtener rotación de un insumo (consumo vs reposición) por mes
+    /// </summary>
+    [HttpGet("rotacion-insumo")]
+    public async Task<ActionResult<List<DTOs.Reportes.RotacionInsumoDTO>>> GetRotacionInsumo(
+        int idInsumo, int? anio)
+    {
+        try
+        {
+            var anioFiltro = anio ?? DateTime.Now.Year;
+
+            var query = _context.InventarioMovimientos
+                .Where(m => m.IdInsumo == idInsumo && m.FechaMovimiento.Year == anioFiltro);
+
+            var movimientos = await query
+                .GroupBy(m => m.FechaMovimiento.Month)
+                .Select(g => new DTOs.Reportes.RotacionInsumoDTO
+                {
+                    Año = anioFiltro,
+                    Mes = g.Key,
+                    Consumo = g.Where(m => m.TipoMovimiento == "Salida").Sum(m => m.Cantidad),
+                    Reposicion = g.Where(m => m.TipoMovimiento == "Entrada").Sum(m => m.Cantidad)
+                })
+                .OrderBy(x => x.Mes)
+                .ToListAsync();
+
+            return Ok(movimientos);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error al obtener rotación del insumo", error = ex.Message });
+        }
+    }
   }
 }
-

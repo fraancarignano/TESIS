@@ -63,6 +63,13 @@ export interface EvolucionPrenda {
   cantidad: number;
 }
 
+export interface RotacionInsumo {
+  año: number;
+  mes: number;
+  consumo: number;
+  reposicion: number;
+}
+
 export interface ClienteResumen {
   idCliente: number;
   nombre: string;
@@ -168,6 +175,17 @@ export class ReportesService {
     if (idCliente) params.push(`idCliente=${idCliente}`);
 
     return this.http.get<EvolucionPrenda[]>(`${this.apiUrl}/evolucion-prenda?${params.join('&')}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Obtener rotación temporal de un insumo (consumo vs reposición)
+   */
+  obtenerRotacionInsumo(idInsumo: number, anio?: number): Observable<RotacionInsumo[]> {
+    const params: string[] = [`idInsumo=${idInsumo}`];
+    if (anio) params.push(`anio=${anio}`);
+
+    return this.http.get<RotacionInsumo[]>(`${this.apiUrl}/rotacion-insumo?${params.join('&')}`)
       .pipe(catchError(this.handleError));
   }
 
