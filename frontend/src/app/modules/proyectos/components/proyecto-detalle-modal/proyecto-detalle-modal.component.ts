@@ -620,6 +620,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
       ? 'RECHAZADA'
       : (noCumplen.length > 0 ? 'OBSERVADA' : 'APROBADA');
     const tallesJson = JSON.stringify(cantidadesTalle);
+    const fallas = noCumplen.map(c => c.id).join('|');
     const resumenBase = [
       '[CONTROL_CALIDAD]',
       `res=${estadoFinal}`,
@@ -628,6 +629,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
       `c=${cumplen.length}`,
       `nc=${noCumplen.length}`,
       `na=${noAplica.length}`,
+      `f=${fallas || '-'}`,
       `tj=${tallesJson}`
     ].join(' ');
 

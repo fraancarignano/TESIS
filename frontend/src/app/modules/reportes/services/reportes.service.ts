@@ -68,6 +68,42 @@ export interface ClienteResumen {
   nombre: string;
 }
 
+export interface ReporteCalidad {
+  totalInspecciones: number;
+  totalUnidadesInspeccionadas: number;
+  inspeccionesAprobadas: number;
+  inspeccionesObservadas: number;
+  inspeccionesRechazadas: number;
+  porcentajeAprobacion: number;
+  distribucionResultados: ResultadoCalidad[];
+  distribucionPorTalle: TalleCalidad[];
+  fallasPorCriterio: CriterioFalla[];
+  resumenPorProyecto: ProyectoCalidad[];
+}
+
+export interface ResultadoCalidad {
+  resultado: string;
+  cantidad: number;
+}
+
+export interface TalleCalidad {
+  talle: string;
+  cantidad: number;
+}
+
+export interface CriterioFalla {
+  criterio: string;
+  cantidadFallas: number;
+}
+
+export interface ProyectoCalidad {
+  idProyecto: number;
+  nombreProyecto: string;
+  totalInspecciones: number;
+  unidadesInspeccionadas: number;
+  rechazadas: number;
+}
+
 
 @Injectable({
   providedIn: 'root'
@@ -148,6 +184,17 @@ export class ReportesService {
    */
   obtenerTiposPrenda(): Observable<string[]> {
     return this.http.get<string[]>(`${this.apiUrl}/tipos-prenda`)
+      .pipe(catchError(this.handleError));
+  }
+
+  obtenerReporteCalidad(idProyecto?: number, fechaInicio?: string, fechaFin?: string): Observable<ReporteCalidad> {
+    const params: string[] = [];
+    if (idProyecto) params.push(`idProyecto=${idProyecto}`);
+    if (fechaInicio) params.push(`fechaInicio=${fechaInicio}`);
+    if (fechaFin) params.push(`fechaFin=${fechaFin}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+
+    return this.http.get<ReporteCalidad>(`${this.apiUrl}/calidad${qs}`)
       .pipe(catchError(this.handleError));
   }
 

@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using TESIS_OG.Data;
+using TESIS_OG.DTOs.Reportes.Calidad;
 using TESIS_OG.DTOs.Reportes.Inventario;
 
 namespace TESIS_OG.Controllers
@@ -14,6 +17,136 @@ namespace TESIS_OG.Controllers
     public ReportesController(TamarindoDbContext context)
     {
       _context = context;
+    }
+
+    [HttpGet("calidad")]
+    public async Task<ActionResult<ReporteCalidadDTO>> ReporteCalidad(
+      int? idProyecto,
+      DateOnly? fechaInicio,
+      DateOnly? fechaFin)
+    {
+      try
+      {
+        var query = _context.ObservacionProyectos
+          .Include(o => o.IdProyectoNavigation)
+          .Where(o => o.Descripcion.Contains("[CONTROL_CALIDAD]"));
+
+        if (idProyecto.HasValue)
+          query = query.Where(o => o.IdProyecto == idProyecto.Value);
+
+        if (fechaInicio.HasValue)
+        {
+          var inicio = fechaInicio.Value.ToDateTime(TimeOnly.MinValue);
+          query = query.Where(o => o.Fecha >= inicio);
+        }
+
+        if (fechaFin.HasValue)
+        {
+          var fin = fechaFin.Value.ToDateTime(TimeOnly.MaxValue);
+          query = query.Where(o => o.Fecha <= fin);
+        }
+
+        var observaciones = await query.ToListAsync();
+
+        var resultadoCount = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var tallesCount = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var fallasCount = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var proyectosMap = new Dictionary<int, ProyectoCalidadDTO>();
+
+        var totalUnidades = 0;
+        var aprobadas = 0;
+        var observadas = 0;
+        var rechazadas = 0;
+
+        foreach (var obs in observaciones)
+        {
+          var descripcion = obs.Descripcion ?? string.Empty;
+          var resultado = ExtraerResultadoCalidad(descripcion);
+          var lote = ExtraerLote(descripcion);
+          var talles = ExtraerTalles(descripcion);
+          var fallas = ExtraerFallas(descripcion);
+
+          totalUnidades += lote;
+
+          if (resultado.Equals("APROBADA", StringComparison.OrdinalIgnoreCase)) aprobadas++;
+          else if (resultado.Equals("OBSERVADA", StringComparison.OrdinalIgnoreCase)) observadas++;
+          else if (resultado.Equals("RECHAZADA", StringComparison.OrdinalIgnoreCase)) rechazadas++;
+
+          if (!resultadoCount.ContainsKey(resultado)) resultadoCount[resultado] = 0;
+          resultadoCount[resultado]++;
+
+          foreach (var talle in talles)
+          {
+            if (!tallesCount.ContainsKey(talle.Key)) tallesCount[talle.Key] = 0;
+            tallesCount[talle.Key] += talle.Value;
+          }
+
+          foreach (var falla in fallas)
+          {
+            if (!fallasCount.ContainsKey(falla)) fallasCount[falla] = 0;
+            fallasCount[falla]++;
+          }
+
+          if (!proyectosMap.ContainsKey(obs.IdProyecto))
+          {
+            proyectosMap[obs.IdProyecto] = new ProyectoCalidadDTO
+            {
+              IdProyecto = obs.IdProyecto,
+              NombreProyecto = obs.IdProyectoNavigation?.NombreProyecto ?? $"Proyecto {obs.IdProyecto}",
+              TotalInspecciones = 0,
+              UnidadesInspeccionadas = 0,
+              Rechazadas = 0
+            };
+          }
+
+          var proyectoDto = proyectosMap[obs.IdProyecto];
+          proyectoDto.TotalInspecciones++;
+          proyectoDto.UnidadesInspeccionadas += lote;
+          if (resultado.Equals("RECHAZADA", StringComparison.OrdinalIgnoreCase))
+            proyectoDto.Rechazadas++;
+        }
+
+        var totalInspecciones = observaciones.Count;
+        var porcentajeAprobacion = totalInspecciones > 0
+          ? Math.Round((decimal)aprobadas / totalInspecciones * 100m, 2)
+          : 0m;
+
+        var reporte = new ReporteCalidadDTO
+        {
+          TotalInspecciones = totalInspecciones,
+          TotalUnidadesInspeccionadas = totalUnidades,
+          InspeccionesAprobadas = aprobadas,
+          InspeccionesObservadas = observadas,
+          InspeccionesRechazadas = rechazadas,
+          PorcentajeAprobacion = porcentajeAprobacion,
+          DistribucionResultados = resultadoCount
+            .Select(x => new ResultadoCalidadDTO { Resultado = x.Key, Cantidad = x.Value })
+            .OrderByDescending(x => x.Cantidad)
+            .ToList(),
+          DistribucionPorTalle = tallesCount
+            .Select(x => new TalleCalidadDTO { Talle = x.Key, Cantidad = x.Value })
+            .OrderByDescending(x => x.Cantidad)
+            .ToList(),
+          FallasPorCriterio = fallasCount
+            .Select(x => new CriterioFallaDTO { Criterio = x.Key, CantidadFallas = x.Value })
+            .OrderByDescending(x => x.CantidadFallas)
+            .ToList(),
+          ResumenPorProyecto = proyectosMap.Values
+            .OrderByDescending(p => p.Rechazadas)
+            .ThenByDescending(p => p.TotalInspecciones)
+            .ToList()
+        };
+
+        return Ok(reporte);
+      }
+      catch (Exception ex)
+      {
+        return StatusCode(500, new
+        {
+          message = "Error al generar el reporte de calidad",
+          error = ex.Message
+        });
+      }
     }
 
     /// <summary>
@@ -278,6 +411,77 @@ namespace TESIS_OG.Controllers
         {
             return StatusCode(500, new { message = "Error al obtener tipos de prenda", error = ex.Message });
         }
+    }
+
+    private static string ExtraerResultadoCalidad(string descripcion)
+    {
+      var matchCompacto = Regex.Match(descripcion, @"\bres=([A-Z]+)\b", RegexOptions.IgnoreCase);
+      if (matchCompacto.Success) return matchCompacto.Groups[1].Value.ToUpperInvariant();
+
+      var matchLegacy = Regex.Match(descripcion, @"Resultado:\s*([A-ZÁÉÍÓÚ]+)", RegexOptions.IgnoreCase);
+      if (matchLegacy.Success) return matchLegacy.Groups[1].Value.ToUpperInvariant();
+
+      return "SIN_DATO";
+    }
+
+    private static int ExtraerLote(string descripcion)
+    {
+      var matchCompacto = Regex.Match(descripcion, @"\blot=(\d+)\b", RegexOptions.IgnoreCase);
+      if (matchCompacto.Success && int.TryParse(matchCompacto.Groups[1].Value, out var loteCompacto))
+      {
+        return loteCompacto;
+      }
+
+      var matchLegacy = Regex.Match(descripcion, @"Lote inspeccionado:\s*(\d+)", RegexOptions.IgnoreCase);
+      if (matchLegacy.Success && int.TryParse(matchLegacy.Groups[1].Value, out var loteLegacy))
+      {
+        return loteLegacy;
+      }
+
+      return 0;
+    }
+
+    private static Dictionary<string, int> ExtraerTalles(string descripcion)
+    {
+      var payload = "";
+      var matchCompacto = Regex.Match(descripcion, @"\btj=(\{.*\})", RegexOptions.IgnoreCase);
+      if (matchCompacto.Success) payload = matchCompacto.Groups[1].Value;
+
+      if (string.IsNullOrWhiteSpace(payload))
+      {
+        var matchLegacy = Regex.Match(descripcion, @"TALLES_JSON:\s*(\{.*\})", RegexOptions.IgnoreCase);
+        if (matchLegacy.Success) payload = matchLegacy.Groups[1].Value;
+      }
+
+      if (string.IsNullOrWhiteSpace(payload))
+      {
+        return new Dictionary<string, int>();
+      }
+
+      try
+      {
+        var parsed = JsonSerializer.Deserialize<Dictionary<string, int>>(payload);
+        return parsed ?? new Dictionary<string, int>();
+      }
+      catch
+      {
+        return new Dictionary<string, int>();
+      }
+    }
+
+    private static List<string> ExtraerFallas(string descripcion)
+    {
+      var match = Regex.Match(descripcion, @"\bf=([^\s]+)", RegexOptions.IgnoreCase);
+      if (!match.Success) return new List<string>();
+
+      var raw = match.Groups[1].Value;
+      if (raw == "-") return new List<string>();
+
+      return raw
+        .Split('|', StringSplitOptions.RemoveEmptyEntries)
+        .Select(x => x.Trim().ToLowerInvariant())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .ToList();
     }
   }
 }
