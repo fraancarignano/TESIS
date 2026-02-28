@@ -58,8 +58,20 @@ export class UsuariosInternosComponent implements OnInit {
       }
     });
 
-    this.usuariosService.obtenerRoles().subscribe({ next: (roles) => (this.roles = roles) });
-    this.usuariosService.obtenerAreasSubrol().subscribe({ next: (areas) => (this.areasSubrol = areas) });
+    this.usuariosService.obtenerRoles().subscribe({
+      next: (roles) => {
+        const tieneDeposito = roles.some(r => this.normalizarTexto(r.nombreRol) === 'deposito');
+        this.roles = tieneDeposito
+          ? roles
+          : [...roles, { idRol: 4, nombreRol: 'Deposito' }];
+      }
+    });
+
+    this.usuariosService.obtenerAreasSubrol().subscribe({
+      next: (areas) => {
+        this.areasSubrol = areas.filter(a => this.normalizarTexto(a.nombreArea) !== 'confeccion');
+      }
+    });
   }
 
   get usuariosFiltrados(): UsuarioInterno[] {
@@ -182,5 +194,13 @@ export class UsuariosInternosComponent implements OnInit {
 
   getEstadoClass(estado: string): string {
     return estado?.toLowerCase() === 'activo' ? 'badge-activo' : 'badge-inactivo';
+  }
+
+  private normalizarTexto(valor: string): string {
+    return (valor || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
   }
 }

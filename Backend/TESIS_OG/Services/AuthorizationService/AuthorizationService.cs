@@ -28,11 +28,13 @@ namespace TESIS_OG.Services.AuthorizationService
             var accionNorm = Normalizar(accion);
 
             // 1) Override por usuario.
-            var permiso = await _context.Permisos
+            var permisos = await _context.Permisos
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p =>
-                    p.NombrePermiso != null &&
-                    CoincidePermisoNombre(p.NombrePermiso, moduloNorm, accionNorm));
+                .Where(p => p.NombrePermiso != null)
+                .ToListAsync();
+
+            var permiso = permisos
+                .FirstOrDefault(p => CoincidePermisoNombre(p.NombrePermiso!, moduloNorm, accionNorm));
 
             if (permiso != null)
             {
@@ -66,13 +68,14 @@ namespace TESIS_OG.Services.AuthorizationService
             if (usuario.IdRol == 1) return true; // Admin
 
             var areaNorm = Normalizar(area);
-
-            return await _context.UsuarioAreas
+            var areasUsuario = await _context.UsuarioAreas
                 .AsNoTracking()
                 .Include(ua => ua.IdAreaNavigation)
-                .AnyAsync(ua =>
-                    ua.IdUsuario == idUsuario &&
-                    Normalizar(ua.IdAreaNavigation.NombreArea) == areaNorm);
+                .Where(ua => ua.IdUsuario == idUsuario)
+                .Select(ua => ua.IdAreaNavigation.NombreArea)
+                .ToListAsync();
+
+            return areasUsuario.Any(nombreArea => Normalizar(nombreArea) == areaNorm);
         }
 
         public async Task<List<string>> ObtenerAreasUsuario(int idUsuario)
