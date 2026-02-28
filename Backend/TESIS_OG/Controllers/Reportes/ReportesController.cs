@@ -3,8 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using TESIS_OG.Data;
+using TESIS_OG.DTOs.Reportes;
 using TESIS_OG.DTOs.Reportes.Calidad;
 using TESIS_OG.DTOs.Reportes.Inventario;
+using TESIS_OG.Services.ReportesService;
 
 namespace TESIS_OG.Controllers
 {
@@ -13,10 +15,17 @@ namespace TESIS_OG.Controllers
   public class ReportesController : ControllerBase
   {
     private readonly TamarindoDbContext _context;
+    private readonly IReportesService _reportesService;
+    private readonly ILogger<ReportesController> _logger;
 
-    public ReportesController(TamarindoDbContext context)
+    public ReportesController(
+      TamarindoDbContext context,
+      IReportesService reportesService,
+      ILogger<ReportesController> logger)
     {
       _context = context;
+      _reportesService = reportesService;
+      _logger = logger;
     }
 
     [HttpGet("calidad")]
@@ -144,6 +153,64 @@ namespace TESIS_OG.Controllers
         return StatusCode(500, new
         {
           message = "Error al generar el reporte de calidad",
+          error = ex.Message
+        });
+      }
+    }
+
+    /// <summary>
+    /// Obtener reporte de clientes por temporada (SP: sp_ReporteClientesPorTemporada)
+    /// </summary>
+    /// <param name="anioInicio">Año de inicio del filtro (opcional)</param>
+    /// <param name="anioFin">Año de fin del filtro (opcional)</param>
+    /// <param name="idCliente">ID de cliente específico (opcional)</param>
+    /// <param name="temporada">Temporada específica (opcional)</param>
+    /// <returns>Listado de clientes por temporada con métricas de proyectos y prendas</returns>
+    [HttpGet("clientes-temporada")]
+    [ProducesResponseType(typeof(ReporteClientesTemporadaResponseDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<ReporteClientesTemporadaResponseDTO>> ObtenerClientesPorTemporada(
+      [FromQuery] int? anioInicio,
+      [FromQuery] int? anioFin,
+      [FromQuery] int? idCliente,
+      [FromQuery] string? temporada)
+    {
+      try
+      {
+        if (anioInicio.HasValue && anioFin.HasValue && anioInicio > anioFin)
+        {
+          return BadRequest(new
+          {
+            message = "El parámetro anioInicio no puede ser mayor que anioFin."
+          });
+        }
+
+        var request = new ReporteClientesTemporadaRequestDTO
+        {
+          AnioInicio = anioInicio,
+          AnioFin = anioFin,
+          IdCliente = idCliente,
+          Temporada = temporada
+        };
+
+        var response = await _reportesService.ObtenerReporteClientesPorTemporada(request);
+        return Ok(response);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(
+          ex,
+          "Error en endpoint reporte clientes-temporada. anioInicio={AnioInicio}, anioFin={AnioFin}, idCliente={IdCliente}, temporada={Temporada}",
+          anioInicio,
+          anioFin,
+          idCliente,
+          temporada
+        );
+
+        return StatusCode(StatusCodes.Status500InternalServerError, new
+        {
+          message = "Error al generar el reporte de clientes por temporada",
           error = ex.Message
         });
       }

@@ -1,0 +1,117 @@
+<div class="reporte-container">
+  <div class="reporte-header">
+    <div class="header-left">
+      <h2>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        Reporte de Clientes por Temporada
+      </h2>
+    </div>
+    <div class="header-right">
+      <span class="total-badge" *ngIf="!loading && !error">
+        {{ filas.length }} registro{{ filas.length !== 1 ? 's' : '' }}
+      </span>
+      <button class="btn-exportar" (click)="exportarExcel()">
+        Exportar Excel
+      </button>
+    </div>
+  </div>
+
+  <div class="filtros-panel">
+    <div class="filtros-grid">
+      <div class="filtro-group">
+        <label>Año Inicio</label>
+        <select [(ngModel)]="filtros.anioInicio">
+          <option [ngValue]="undefined">Todos</option>
+          <option *ngFor="let anio of aniosDisponibles" [ngValue]="anio">{{ anio }}</option>
+        </select>
+      </div>
+
+      <div class="filtro-group">
+        <label>Año Fin</label>
+        <select [(ngModel)]="filtros.anioFin">
+          <option [ngValue]="undefined">Todos</option>
+          <option *ngFor="let anio of aniosDisponibles" [ngValue]="anio">{{ anio }}</option>
+        </select>
+      </div>
+
+      <div class="filtro-group">
+        <label>Cliente</label>
+        <select [(ngModel)]="filtros.idCliente">
+          <option [ngValue]="undefined">Todos los clientes</option>
+          <option *ngFor="let cliente of clientes" [ngValue]="cliente.idCliente">{{ cliente.nombre }}</option>
+        </select>
+      </div>
+
+      <div class="filtro-group">
+        <label>Temporada</label>
+        <select [(ngModel)]="filtros.temporada">
+          <option [ngValue]="undefined">Todas</option>
+          <option *ngFor="let t of temporadas" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filtros-actions">
+      <button class="btn-limpiar" (click)="limpiarFiltros()">Limpiar</button>
+      <button class="btn-aplicar" (click)="aplicarFiltros()">Aplicar</button>
+    </div>
+  </div>
+
+  <div class="loading-spinner" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Cargando reporte...</p>
+  </div>
+
+  <div class="error-mensaje" *ngIf="error">
+    <p>{{ mensajeError }}</p>
+    <button (click)="aplicarFiltros()">Reintentar</button>
+  </div>
+
+  <div class="no-data" *ngIf="sinDatos">
+    <p>No hay datos para los filtros seleccionados.</p>
+  </div>
+
+  <div class="grafico-modal" *ngIf="!loading && !error && !sinDatos">
+    <div class="grafico-header">
+      <h3>Demanda por cliente</h3>
+    </div>
+    <div class="grafico-container">
+      <canvas #chartClientesTemporada></canvas>
+    </div>
+  </div>
+
+  <div class="tabla-container" *ngIf="!loading && !error && !sinDatos">
+    <div class="tabla-wrapper">
+      <table class="tabla-reporte">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Tipo Cliente</th>
+            <th>Año</th>
+            <th>Temporada</th>
+            <th>Cant. Proyectos</th>
+            <th>Total Prendas</th>
+            <th>Finalizados</th>
+            <th>Cancelados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let fila of filas">
+            <td>{{ fila.cliente }}</td>
+            <td>{{ fila.tipoCliente }}</td>
+            <td>{{ fila.anio }}</td>
+            <td>{{ fila.temporada }}</td>
+            <td>{{ fila.cantidadProyectos }}</td>
+            <td>{{ fila.totalPrendas }}</td>
+            <td>{{ fila.proyectosFinalizados }}</td>
+            <td>{{ fila.proyectosCancelados }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

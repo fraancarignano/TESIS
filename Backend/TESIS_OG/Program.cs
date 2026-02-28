@@ -8,6 +8,7 @@ using TESIS_OG.Services.InsumoService;
 using TESIS_OG.Services.OrdenCompraService;
 using TESIS_OG.Services.ProyectoService;
 using TESIS_OG.Services.ProyectosService;
+using TESIS_OG.Services.ReportesService;
 using TESIS_OG.Services.UsuariosService;
 using TESIS_OG.Services.UbicacionService;
 using TESIS_OG.Services.MovimientoService;
@@ -39,6 +40,7 @@ namespace TESIS_OG
             builder.Services.AddScoped<IInsumoService, InsumoService>();
             builder.Services.AddScoped<IUbicacionService, UbicacionService>();
             builder.Services.AddScoped<IMovimientoService, TESIS_OG.Services.MovimientoService.MovimientoService>();
+            builder.Services.AddScoped<IReportesService, ReportesService>();
             builder.Services.AddScoped<AuditoriaService.IProyectoAuditoriaService, AuditoriaService.ProyectoAuditoriaService>();
             builder.Services.AddScoped<ValidacionService.IProyectoValidacionService, ValidacionService.ProyectoValidacionService>();
             builder.Services.AddHttpContextAccessor();

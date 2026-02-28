@@ -66,6 +66,14 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/reportes/Calidad/reporte-calidad.component')
       },
       {
+        path: 'reportes/clientes',
+        loadComponent: () => import('./modules/reportes/components/clientes-temporada/clientes-temporada.component')
+      },
+      {
+        path: 'reportes/clientes-temporada',
+        loadComponent: () => import('./modules/reportes/components/clientes-temporada/clientes-temporada.component')
+      },
+      {
         path: 'ordenes',
         loadComponent: () => import('./modules/orden-compra/components/orden-compra.component').then(m => m.OrdenCompraComponent)
       },

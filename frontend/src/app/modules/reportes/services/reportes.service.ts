@@ -3,6 +3,10 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
+import {
+  ReporteClientesTemporadaRequest,
+  ReporteClientesTemporadaResponse
+} from '../models/reporte.model';
 
 // Interfaz para el resumen del reporte
 export interface ResumenInventarioCritico {
@@ -213,6 +217,22 @@ export class ReportesService {
     const qs = params.length ? `?${params.join('&')}` : '';
 
     return this.http.get<ReporteCalidad>(`${this.apiUrl}/calidad${qs}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  obtenerReporteClientesTemporada(
+    filtros: ReporteClientesTemporadaRequest
+  ): Observable<ReporteClientesTemporadaResponse> {
+    const params: string[] = [];
+
+    if (filtros.anioInicio !== undefined) params.push(`anioInicio=${filtros.anioInicio}`);
+    if (filtros.anioFin !== undefined) params.push(`anioFin=${filtros.anioFin}`);
+    if (filtros.idCliente !== undefined) params.push(`idCliente=${filtros.idCliente}`);
+    if (filtros.temporada) params.push(`temporada=${encodeURIComponent(filtros.temporada)}`);
+
+    const qs = params.length ? `?${params.join('&')}` : '';
+
+    return this.http.get<ReporteClientesTemporadaResponse>(`${this.apiUrl}/clientes-temporada${qs}`)
       .pipe(catchError(this.handleError));
   }
 

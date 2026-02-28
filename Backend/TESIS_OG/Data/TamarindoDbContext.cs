@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using TESIS_OG.DTOs.Reportes;
 using TESIS_OG.Models;
 
 namespace TESIS_OG.Data;
@@ -80,6 +81,7 @@ public partial class TamarindoDbContext : DbContext
     public virtual DbSet<ProyectoAuditoria> ProyectoAuditorias { get; set; }
     public virtual DbSet<Ubicacion> Ubicacions { get; set; }
     public virtual DbSet<InsumoStock> InsumoStocks { get; set; }
+    public virtual DbSet<ReporteClientesTemporadaItemDTO> ReporteClientesTemporadaItems { get; set; }
 
     public virtual DbSet<VwMaterialesProyecto> VwMaterialesProyectos { get; set; }
 
@@ -1253,6 +1255,12 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdOrdenCompraNavigation).WithMany(p => p.InsumoStocks)
                 .HasForeignKey(d => d.IdOrdenCompra)
                 .HasConstraintName("FK_InsumoStock_OrdenCompra");
+        });
+
+        modelBuilder.Entity<ReporteClientesTemporadaItemDTO>(entity =>
+        {
+            entity.HasNoKey();
+            entity.ToView(null);
         });
 
         OnModelCreatingPartial(modelBuilder);
