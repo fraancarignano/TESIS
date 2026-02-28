@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ObservacionProyecto, ProyectoVista } from '../../models/proyecto.model';
 import { ProyectosService } from '../../services/proyecto.service';
 import { AlertasService } from '../../../../core/services/alertas';
+import { PermissionService } from '../../../../core/services/permission.service';
 import { environment } from '../../../../../environments/environment';
-import { AvanceAreasComponent } from '../avance-areas/avance-areas.component';
 import {
   AREAS_PRODUCCION,
   AreaProduccion,
@@ -20,12 +20,13 @@ import {
 @Component({
   selector: 'app-proyecto-detalle-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, AvanceAreasComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './proyecto-detalle-modal.component.html',
   styleUrls: ['./proyecto-detalle-modal.component.css']
 })
 export class ProyectoDetalleModalComponent implements OnInit {
   @Input() proyecto!: ProyectoVista;
+  @Input() modoPantallaCompleta = false;
   @Output() cerrar = new EventEmitter<void>();
   @Output() actualizado = new EventEmitter<void>();
 
@@ -55,6 +56,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
   constructor(
     private proyectosService: ProyectosService,
     private alertas: AlertasService,
+    private permissionService: PermissionService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -212,12 +214,27 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   puedeContinuarAreaSeleccionada(): boolean {
     if (!this.areaSeleccionada || !this.puedeGestionarAvance) return false;
+    if (!this.tienePermisoAreaSeleccionada()) return false;
     if (this.estaCompleta(this.areaSeleccionada)) return false;
 
     const anterior = this.areaAnteriorSeleccionada;
     if (!anterior) return true;
 
     return this.estaCompleta(anterior);
+  }
+
+  tienePermisoAreaSeleccionada(): boolean {
+    if (!this.areaSeleccionada) return false;
+    if (!this.permissionService.tienePermiso('Proyectos', 'CompletarArea')) return false;
+
+    const areasAsignadas = this.permissionService.obtenerAreasAsignadas();
+    if (!areasAsignadas.length) return true;
+
+    const areaActual = this.normalizarTexto(this.areaSeleccionada.nombre);
+    return areasAsignadas.some((area) => {
+      const asignada = this.normalizarTexto(area);
+      return areaActual.includes(asignada) || asignada.includes(areaActual);
+    });
   }
 
   async continuarSiguienteArea(): Promise<void> {
@@ -717,6 +734,14 @@ export class ProyectoDetalleModalComponent implements OnInit {
   private limitarLongitudObservacion(texto: string, maxLength: number): string {
     if (texto.length <= maxLength) return texto;
     return texto.substring(0, Math.max(0, maxLength - 3)) + '...';
+  }
+
+  private normalizarTexto(valor: string): string {
+    return (valor || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
   }
 
   private refrescarHistorialInspeccionesCalidad(): void {

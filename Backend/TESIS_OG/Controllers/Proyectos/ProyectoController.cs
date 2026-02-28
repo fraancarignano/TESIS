@@ -1,6 +1,12 @@
-using Microsoft.AspNetCore.Mvc;
+ï»¿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using TESIS_OG.Data;
 using TESIS_OG.DTOs.Proyectos;
 using TESIS_OG.DTOs.Configuracion;
+using TESIS_OG.Security;
+using AppAuthorizationService = TESIS_OG.Services.AuthorizationService;
 using TESIS_OG.Services.ProyectosService;
 using TESIS_OG.Services.ProyectoAuditoriaService;
 using TESIS_OG.Services.ProyectoValidacionService;
@@ -15,17 +21,23 @@ namespace TESIS_OG.Controllers
         private readonly ILogger<ProyectoController> _logger;
         private readonly IProyectoAuditoriaService _auditoriaService;
         private readonly IProyectoValidacionService _validacionService;
+        private readonly TamarindoDbContext _context;
+        private readonly AppAuthorizationService.IAuthorizationService _authorizationService;
 
         public ProyectoController(
             IProyectosService proyectoService,
             ILogger<ProyectoController> logger,
             IProyectoAuditoriaService auditoriaService,
-            IProyectoValidacionService validacionService)
+            IProyectoValidacionService validacionService,
+            TamarindoDbContext context,
+            AppAuthorizationService.IAuthorizationService authorizationService)
         {
             _proyectoService = proyectoService;
             _logger = logger;
             _auditoriaService = auditoriaService;
             _validacionService = validacionService;
+            _context = context;
+            _authorizationService = authorizationService;
         }
 
         // ========================================
@@ -33,7 +45,7 @@ namespace TESIS_OG.Controllers
         // ========================================
 
         /// <summary>
-        /// Crea un nuevo proyecto con múltiples prendas
+        /// Crea un nuevo proyecto con mÃºltiples prendas
         /// </summary>
         [HttpPost]
         [ProducesResponseType(typeof(ProyectoDetalleDTO), StatusCodes.Status201Created)]
@@ -54,7 +66,7 @@ namespace TESIS_OG.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning(ex, "Error de validación al crear proyecto");
+                _logger.LogWarning(ex, "Error de validaciÃ³n al crear proyecto");
                 return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
@@ -84,7 +96,7 @@ namespace TESIS_OG.Controllers
         }
 
         /// <summary>
-        /// Obtiene un proyecto por ID con toda su información
+        /// Obtiene un proyecto por ID con toda su informaciÃ³n
         /// </summary>
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ProyectoDetalleDTO), StatusCodes.Status200OK)]
@@ -285,7 +297,7 @@ namespace TESIS_OG.Controllers
         // ========================================
 
         /// <summary>
-        /// Obtiene las prendas de un proyecto con su distribución de talles
+        /// Obtiene las prendas de un proyecto con su distribuciÃ³n de talles
         /// </summary>
         [HttpGet("{id}/prendas")]
         [ProducesResponseType(typeof(List<ProyectoPrendaDTO>), StatusCodes.Status200OK)]
@@ -361,9 +373,10 @@ namespace TESIS_OG.Controllers
         // ========================================
 
         /// <summary>
-        /// Actualiza el avance de un área del proyecto
+        /// Actualiza el avance de un Ã¡rea del proyecto
         /// </summary>
         [HttpPut("{id}/avance")]
+        [RequiresPermission("Proyectos", "CompletarArea")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ActualizarAvance(int id, [FromBody] ActualizarAvanceDTO dto)
@@ -372,6 +385,44 @@ namespace TESIS_OG.Controllers
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
+
+                var idUsuario = ObtenerIdUsuarioDesdeToken();
+                if (!idUsuario.HasValue)
+                    return Unauthorized(new { message = "No se pudo identificar al usuario autenticado." });
+
+                var usuario = await _context.Usuarios
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.IdUsuario == idUsuario.Value);
+
+                if (usuario == null || !string.Equals(usuario.Estado, "Activo", StringComparison.OrdinalIgnoreCase))
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "Usuario inactivo o inexistente." });
+
+                // Operario: solo puede actualizar Ã¡reas asignadas en UsuarioArea.
+                if (usuario.IdRol == 3)
+                {
+                    var areasOrdenadas = await _context.AreaProduccions
+                        .AsNoTracking()
+                        .OrderBy(a => a.Orden)
+                        .ToListAsync();
+
+                    var areaSeleccionada = areasOrdenadas.FirstOrDefault(a => a.IdArea == dto.IdArea);
+                    if (areaSeleccionada == null && dto.IdArea > 0 && dto.IdArea <= areasOrdenadas.Count)
+                    {
+                        areaSeleccionada = areasOrdenadas[dto.IdArea - 1];
+                    }
+
+                    if (areaSeleccionada == null)
+                        return BadRequest(new { message = "Ãrea invÃ¡lida para actualizar avance." });
+
+                    var puedeEditarArea = await _authorizationService.PuedeEditarArea(idUsuario.Value, areaSeleccionada.NombreArea);
+                    if (!puedeEditarArea)
+                    {
+                        return StatusCode(StatusCodes.Status403Forbidden, new
+                        {
+                            message = "No tiene asignada esta Ã¡rea para poder actualizarla."
+                        });
+                    }
+                }
 
                 var ok = await _proyectoService.ActualizarAvanceAsync(id, dto);
 
@@ -415,7 +466,7 @@ namespace TESIS_OG.Controllers
         }
 
         /// <summary>
-        /// Agrega una observación al proyecto
+        /// Agrega una observaciÃ³n al proyecto
         /// </summary>
         [HttpPost("{id}/observaciones")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -430,14 +481,14 @@ namespace TESIS_OG.Controllers
                 var ok = await _proyectoService.AgregarObservacionAsync(id, dto);
 
                 if (!ok)
-                    return BadRequest(new { message = "No se pudo agregar la observación" });
+                    return BadRequest(new { message = "No se pudo agregar la observaciÃ³n" });
 
-                return Ok(new { message = "Observación agregada correctamente" });
+                return Ok(new { message = "ObservaciÃ³n agregada correctamente" });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al agregar observación al proyecto {IdProyecto}", id);
-                return StatusCode(500, new { message = "Error al agregar observación" });
+                _logger.LogError(ex, "Error al agregar observaciÃ³n al proyecto {IdProyecto}", id);
+                return StatusCode(500, new { message = "Error al agregar observaciÃ³n" });
             }
         }
 
@@ -460,7 +511,7 @@ namespace TESIS_OG.Controllers
                     return BadRequest(ModelState);
 
                 if (string.IsNullOrWhiteSpace(dto.Estado))
-                    return BadRequest(new { message = "El estado no puede estar vacío" });
+                    return BadRequest(new { message = "El estado no puede estar vacÃ­o" });
 
                 var ok = await _proyectoService.CambiarEstadoAsync(id, dto.Estado);
 
@@ -477,11 +528,11 @@ namespace TESIS_OG.Controllers
         }
 
         // ========================================
-        // VALIDACIÓN DE EDICIÓN Y HISTORIAL
+        // VALIDACIÃ“N DE EDICIÃ“N Y HISTORIAL
         // ========================================
 
         /// <summary>
-        /// Valida qué campos se pueden editar según el estado del proyecto
+        /// Valida quÃ© campos se pueden editar segÃºn el estado del proyecto
         /// </summary>
         [HttpGet("{id}/validar-edicion")]
         [ProducesResponseType(typeof(ProyectoValidacionEdicionDTO), StatusCodes.Status200OK)]
@@ -499,8 +550,8 @@ namespace TESIS_OG.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al validar edición del proyecto {IdProyecto}", id);
-                return StatusCode(500, new { message = "Error al validar edición" });
+                _logger.LogError(ex, "Error al validar ediciÃ³n del proyecto {IdProyecto}", id);
+                return StatusCode(500, new { message = "Error al validar ediciÃ³n" });
             }
         }
 
@@ -535,6 +586,15 @@ namespace TESIS_OG.Controllers
                 _logger.LogError(ex, "Error al obtener historial del proyecto {IdProyecto}", id);
                 return StatusCode(500, new { message = "Error al obtener historial" });
             }
+        }
+
+        private int? ObtenerIdUsuarioDesdeToken()
+        {
+            var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                ?? User.FindFirstValue("sub");
+
+            return int.TryParse(raw, out var idUsuario) ? idUsuario : null;
         }
     }
 

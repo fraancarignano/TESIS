@@ -113,8 +113,3 @@
 <!-- MODAL NUEVO PROYECTO -->
 <app-proyecto-form-nuevo *ngIf="mostrarModalNuevoProyecto" (cerrar)="cerrarModalNuevoProyecto()">
 </app-proyecto-form-nuevo>
-
-<!-- MODAL DETALLE -->
-<app-proyecto-detalle-modal *ngIf="mostrarModalDetalle && proyectoSeleccionado" [proyecto]="proyectoSeleccionado"
-  (cerrar)="cerrarModalDetalle()" (actualizado)="cargarProyectos()">
-</app-proyecto-detalle-modal>

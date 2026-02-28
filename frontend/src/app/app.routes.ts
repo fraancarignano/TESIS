@@ -35,6 +35,12 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/proyectos/components/proyectos.component').then(m => m.ProyectosComponent)
       },
       {
+        path: 'proyectos/:id',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Proyectos', accion: 'Ver' } },
+        loadComponent: () => import('./modules/proyectos/components/proyecto-detalle-page/proyecto-detalle-page.component').then(m => m.ProyectoDetallePageComponent)
+      },
+      {
         path: 'proyectos/crear',
         loadComponent: () => import('./modules/proyectos/components/nuevo-proyecto-modal/proyecto-form.component').then(m => m.ProyectoFormNuevoComponent)
       },

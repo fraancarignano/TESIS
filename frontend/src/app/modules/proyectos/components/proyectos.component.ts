@@ -2,10 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { Router } from '@angular/router';
 import { ProyectosService } from '../services/proyecto.service';
 import { ProyectoFormNuevoComponent } from './nuevo-proyecto-modal/proyecto-form.component';
 import { ProyectoCardComponent } from './proyecto-card/proyecto-card.component';
-import { ProyectoDetalleModalComponent } from './proyecto-detalle-modal/proyecto-detalle-modal.component';
 
 
 import {
@@ -19,7 +19,7 @@ import {
 @Component({
   selector: 'app-proyectos',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule, ProyectoFormNuevoComponent, ProyectoCardComponent, ProyectoDetalleModalComponent],
+  imports: [CommonModule, FormsModule, DragDropModule, ProyectoFormNuevoComponent, ProyectoCardComponent],
   templateUrl: './proyectos.component.html',
   styleUrls: ['./proyectos.component.css']
 })
@@ -70,10 +70,8 @@ export class ProyectosComponent implements OnInit {
 
   // Modal
   mostrarModalNuevoProyecto: boolean = false;
-  proyectoSeleccionado: ProyectoVista | null = null;
-  mostrarModalDetalle: boolean = false;
 
-  constructor(private proyectosService: ProyectosService) { }
+  constructor(private proyectosService: ProyectosService, private router: Router) { }
 
   ngOnInit(): void {
     this.cargarProyectos();
@@ -208,16 +206,8 @@ export class ProyectosComponent implements OnInit {
    * Ver detalle de un proyecto
    */
   verDetalleProyecto(proyecto: ProyectoVista): void {
-    this.proyectoSeleccionado = proyecto;
-    this.mostrarModalDetalle = true;
-  }
-
-  /**
-   * Cerrar modal de detalle
-   */
-  cerrarModalDetalle(): void {
-    this.mostrarModalDetalle = false;
-    this.proyectoSeleccionado = null;
+    if (!proyecto.idProyecto) return;
+    this.router.navigate(['/proyectos', proyecto.idProyecto]);
   }
 
   /**

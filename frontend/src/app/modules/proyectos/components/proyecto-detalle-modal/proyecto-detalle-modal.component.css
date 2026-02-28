@@ -11,6 +11,14 @@
   animation: fadeIn 0.2s ease;
 }
 
+.modal-overlay.pantalla-completa {
+  position: static;
+  inset: auto;
+  background: transparent;
+  display: block;
+  padding: 0;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -34,6 +42,15 @@
   flex-direction: column;
   animation: slideUp 0.3s ease;
   font-size: 0.9rem;
+}
+
+.modal-detalle.pantalla-completa {
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  min-height: calc(100vh - 120px);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
 @keyframes slideUp {

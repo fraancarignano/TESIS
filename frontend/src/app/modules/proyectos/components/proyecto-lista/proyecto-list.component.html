@@ -113,11 +113,6 @@
   (cerrar)="cerrarModalEdicion()"
 ></app-proyecto-form-nuevo>
 
-<!-- Modal de Detalles del Proyecto -->
-<app-proyecto-detalle-modal *ngIf="mostrarModalDetalle && proyectoSeleccionado" [proyecto]="proyectoSeleccionado"
-  (cerrar)="cerrarModalDetalle()" (actualizado)="onProyectoActualizado()">
-</app-proyecto-detalle-modal>
-
 <div class="modal-overlay" *ngIf="mostrarModalAsignarTaller" (click)="cerrarModalAsignarTaller()">
   <div class="modal-asignar" (click)="$event.stopPropagation()">
     <div class="modal-asignar-header">
