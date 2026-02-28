@@ -82,6 +82,8 @@ public partial class TamarindoDbContext : DbContext
     public virtual DbSet<Ubicacion> Ubicacions { get; set; }
     public virtual DbSet<InsumoStock> InsumoStocks { get; set; }
     public virtual DbSet<ReporteClientesTemporadaItemDTO> ReporteClientesTemporadaItems { get; set; }
+    public virtual DbSet<UsuarioArea> UsuarioAreas { get; set; }
+    public virtual DbSet<UsuarioPermiso> UsuarioPermisos { get; set; }
 
     public virtual DbSet<VwMaterialesProyecto> VwMaterialesProyectos { get; set; }
 
@@ -1261,6 +1263,47 @@ public partial class TamarindoDbContext : DbContext
         {
             entity.HasNoKey();
             entity.ToView(null);
+        });
+
+        modelBuilder.Entity<UsuarioArea>(entity =>
+        {
+            entity.HasKey(e => new { e.IdUsuario, e.IdArea }).HasName("PK_UsuarioArea");
+
+            entity.ToTable("UsuarioArea");
+
+            entity.Property(e => e.IdUsuario).HasColumnName("id_Usuario");
+            entity.Property(e => e.IdArea).HasColumnName("id_Area");
+
+            entity.HasOne(d => d.IdAreaNavigation).WithMany(p => p.UsuarioAreas)
+                .HasForeignKey(d => d.IdArea)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UsuarioArea_AreaProduccion");
+
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.UsuarioAreas)
+                .HasForeignKey(d => d.IdUsuario)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UsuarioArea_Usuario");
+        });
+
+        modelBuilder.Entity<UsuarioPermiso>(entity =>
+        {
+            entity.HasKey(e => new { e.IdUsuario, e.IdPermiso }).HasName("PK_UsuarioPermiso");
+
+            entity.ToTable("UsuarioPermiso");
+
+            entity.Property(e => e.IdUsuario).HasColumnName("id_Usuario");
+            entity.Property(e => e.IdPermiso).HasColumnName("id_Permiso");
+            entity.Property(e => e.PuedeAcceder).HasColumnName("puede_Acceder");
+
+            entity.HasOne(d => d.IdPermisoNavigation).WithMany(p => p.UsuarioPermisos)
+                .HasForeignKey(d => d.IdPermiso)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UsuarioPermiso_Permiso");
+
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.UsuarioPermisos)
+                .HasForeignKey(d => d.IdUsuario)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_UsuarioPermiso_Usuario");
         });
 
         OnModelCreatingPartial(modelBuilder);

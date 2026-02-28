@@ -34,4 +34,8 @@ public partial class Usuario
     public virtual ICollection<ObservacionProyecto> ObservacionProyectos { get; set; } = new List<ObservacionProyecto>();
 
     public virtual ICollection<Proyecto> Proyectos { get; set; } = new List<Proyecto>();
+
+    public virtual ICollection<UsuarioArea> UsuarioAreas { get; set; } = new List<UsuarioArea>();
+
+    public virtual ICollection<UsuarioPermiso> UsuarioPermisos { get; set; } = new List<UsuarioPermiso>();
 }

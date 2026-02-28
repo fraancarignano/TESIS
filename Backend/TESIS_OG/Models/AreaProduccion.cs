@@ -16,4 +16,6 @@ public partial class AreaProduccion
     public string? Estado { get; set; }
 
     public virtual ICollection<AvanceAreaProyecto> AvanceAreaProyectos { get; set; } = new List<AvanceAreaProyecto>();
+
+    public virtual ICollection<UsuarioArea> UsuarioAreas { get; set; } = new List<UsuarioArea>();
 }
