@@ -7,6 +7,10 @@ export interface OrdenCompra {
   fechaEntregaEstimada?: string;
   estado: string;
   totalOrden: number;
+  // Control de Recepción
+  fechaHabilitacionControl?: string;
+  fechaRecepcionControl?: string;
+  observacionControl?: string;
   detalles?: DetalleOrdenCompra[];
 }
 

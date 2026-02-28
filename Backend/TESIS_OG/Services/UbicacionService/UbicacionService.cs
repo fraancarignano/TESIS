@@ -115,7 +115,9 @@ namespace TESIS_OG.Services.UbicacionService
                     StockMinimo = s.IdInsumoNavigation.StockMinimo,
                     FechaActualizacion = DateOnly.FromDateTime(s.FechaActualizacion),
                     IdProveedor = s.IdInsumoNavigation.IdProveedor,
-                    Estado = s.IdInsumoNavigation.Estado,
+                    Estado = s.IdInsumoNavigation.Estado != null && s.IdInsumoNavigation.Estado.ToLower() == "pulenta"
+                      ? "Disponible"
+                      : (s.IdInsumoNavigation.Estado ?? "Disponible"),
                     IdUbicacion = s.IdUbicacion,
                     CodigoUbicacion = s.IdUbicacionNavigation != null ? s.IdUbicacionNavigation.Codigo : null,
                     DetalleStock = new List<InsumoStockDTO>

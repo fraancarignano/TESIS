@@ -11,12 +11,17 @@
         <input type="text" placeholder="Buscar en Inventario..." [(ngModel)]="terminoBusqueda"
           (ngModelChange)="aplicarFiltrosAvanzados()">
       </div>
-      <button class="btn-nuevo" (click)="abrirFormularioNuevo()">
-        <span>+</span> Agregar nuevo insumo
+      <button class="btn btn-primary" (click)="abrirFormularioNuevo()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        Nuevo Insumo
       </button>
     </div>
   </div>
-
   <app-insumo-filtros (filtrosChange)="onFiltrosChange($event)"></app-insumo-filtros>
 
   <div class="tabla-inventario">
@@ -27,7 +32,7 @@
           <th>Tipo</th>
           <th>Unidad</th>
           <th>Proveedor</th>
-          <th>Ubicación</th>
+          <th>Ubicacion</th>
           <th>Stock Actual</th>
           <th style="text-align: center;">Estado</th>
           <th style="text-align: right;">Acciones</th>
@@ -38,8 +43,8 @@
           <td>
             <div class="nombre-con-alerta">
               {{ insumo.nombreInsumo }}
-              <span *ngIf="stockBajo(insumo)" class="alerta-stock" title="Stock por debajo del mínimo">
-                ⚠️
+              <span *ngIf="stockBajo(insumo)" class="alerta-stock" title="Stock por debajo del minimo">
+                ??
               </span>
             </div>
           </td>
@@ -77,18 +82,43 @@
               </div>
             </div>
           </td>
-          <td class="acciones">
-            <button class="btn-eliminar" (click)="eliminarInsumo(insumo.idInsumo!, $event)">
-              Eliminar
-            </button>
-            <button class="btn-modificar" (click)="abrirFormularioEditar(insumo, $event)">
-              Modificar
-            </button>
+          <td class="td-acciones">
+            <div class="acciones">
+              <button class="btn-icon btn-edit" (click)="abrirFormularioEditar(insumo, $event)" title="Editar insumo">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button class="btn-icon btn-delete" (click)="eliminarInsumo(insumo.idInsumo!, $event)"
+                title="Eliminar insumo">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+              <button
+                class="btn-icon btn-notify"
+                *ngIf="permissionService.esDeposito()"
+                (click)="abrirModalNotificacion(insumo, $event)"
+                title="Notificar stock al supervisor">
+                ??
+              </button>
+            </div>
           </td>
         </tr>
         <tr *ngIf="insumosFiltrados.length === 0">
-          <td colspan="7" class="sin-resultados">
-            No se encontraron insumos
+          <td colspan="8" class="sin-resultados">
+            <h3>No se encontraron insumos</h3>
+            <button class="btn btn-primary" (click)="abrirFormularioNuevo()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Agregar primer insumo
+            </button>
           </td>
         </tr>
       </tbody>
@@ -96,7 +126,7 @@
   </div>
 </div>
 
-<!-- Modal de confirmación de eliminación -->
+<!-- Modal de confirmacion de eliminacion -->
 <div class="confirm-overlay" *ngIf="confirmacionEliminar.visible" (click)="cancelarEliminar()">
   <div class="confirm-modal delete-modal" (click)="$event.stopPropagation()">
     <div class="confirm-icon danger">
@@ -108,11 +138,11 @@
       </svg>
     </div>
     <h3>Eliminar Insumo</h3>
-    <p>¿Deseas eliminar el insumo <strong>{{ confirmacionEliminar.insumo?.nombreInsumo }}</strong>?</p>
-    <p class="confirm-warning">Esta acción no se puede deshacer y borrará todo su stock asociado.</p>
+    <p>Deseas eliminar el insumo <strong>{{ confirmacionEliminar.insumo?.nombreInsumo }}</strong>?</p>
+    <p class="confirm-warning">Esta accion no se puede deshacer y borrara todo su stock asociado.</p>
     <div class="confirm-actions">
       <button class="btn-cancelar" (click)="cancelarEliminar()">Cancelar</button>
-      <button class="btn-confirmar btn-danger" (click)="confirmarEliminar()">Sí, eliminar</button>
+      <button class="btn-confirmar btn-danger" (click)="confirmarEliminar()">Si, eliminar</button>
     </div>
   </div>
 </div>
@@ -123,7 +153,7 @@
 <app-insumo-detalle-modal *ngIf="mostrarDetalle" [insumo]="insumoDetalle!"
   (cerrar)="cerrarDetalle()"></app-insumo-detalle-modal>
 
-<!-- Modal de confirmación de cambio de estado -->
+<!-- Modal de confirmacion de cambio de estado -->
 <div class="confirm-overlay" *ngIf="confirmacion.visible" (click)="cancelarCambio()">
   <div class="confirm-modal" (click)="$event.stopPropagation()">
     <div class="confirm-icon">
@@ -134,14 +164,57 @@
     </div>
     <h3>Cambiar estado</h3>
     <p>
-      ¿Querés cambiar <strong>{{ confirmacion.insumo?.nombreInsumo }}</strong> al estado
+      Queres cambiar <strong>{{ confirmacion.insumo?.nombreInsumo }}</strong> al estado
       <span class="badge-estado-inline" [ngClass]="getEstadoClass(confirmacion.nuevoEstado)">
         {{ confirmacion.nuevoEstado }}
       </span>?
     </p>
     <div class="confirm-actions">
       <button class="btn-cancelar" (click)="cancelarCambio()">Cancelar</button>
-      <button class="btn-confirmar" (click)="confirmarCambio()">Sí, cambiar</button>
+      <button class="btn-confirmar" (click)="confirmarCambio()">Si, cambiar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal notificacion stock -->
+<div class="confirm-overlay" *ngIf="notificacionModal.visible" (click)="cerrarModalNotificacion()">
+  <div class="confirm-modal modal-notificacion" (click)="$event.stopPropagation()">
+    <div class="confirm-icon">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path>
+        <path d="M9 17a3 3 0 0 0 6 0"></path>
+      </svg>
+    </div>
+
+    <h3>Notificar a Supervisor</h3>
+    <p class="modal-subtitle">
+      Insumo: <strong>{{ notificacionModal.insumo?.nombreInsumo }}</strong>
+      <br>
+      Stock actual: {{ notificacionModal.insumo?.stockActual }} | Minimo: {{ notificacionModal.insumo?.stockMinimo }}
+    </p>
+
+    <div class="campo-form">
+      <label for="tipoNotificacion">Tipo de alerta</label>
+      <select id="tipoNotificacion" [(ngModel)]="notificacionModal.tipo">
+        <option value="Faltante">Faltante</option>
+        <option value="Sobrante">Sobrante</option>
+      </select>
+    </div>
+
+    <div class="campo-form">
+      <label for="mensajeNotificacion">Detalle</label>
+      <textarea
+        id="mensajeNotificacion"
+        rows="4"
+        [(ngModel)]="notificacionModal.mensaje"
+        placeholder="Describe por que notificas este faltante/sobrante..."></textarea>
+    </div>
+
+    <div class="confirm-actions">
+      <button class="btn-cancelar" (click)="cerrarModalNotificacion()" [disabled]="notificacionModal.enviando">Cancelar</button>
+      <button class="btn-confirmar" (click)="enviarNotificacionStock()" [disabled]="notificacionModal.enviando">
+        {{ notificacionModal.enviando ? 'Enviando...' : 'Enviar notificacion' }}
+      </button>
     </div>
   </div>
 </div>

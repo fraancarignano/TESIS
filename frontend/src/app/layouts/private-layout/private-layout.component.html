@@ -5,7 +5,7 @@
     </div>
 
     <nav class="nav-menu">
-      <div class="nav-item-container">
+      <div class="nav-item-container" *appHasPermission="{ modulo: 'Proyectos', accion: 'Ver' }">
         <a routerLink="/proyectos" routerLinkActive="active" class="nav-item parent" [class.active]="proyectoAbierto"
           (click)="toggleProyectos()">
           <span class="text">Proyectos</span>
@@ -21,11 +21,12 @@
         </div>
       </div>
 
-      <a routerLink="/clientes" routerLinkActive="active" class="nav-item">
+      <a routerLink="/clientes" routerLinkActive="active" class="nav-item"
+        *appHasPermission="{ modulo: 'Clientes', accion: 'Ver' }">
         <span class="text">Clientes</span>
       </a>
 
-      <div class="nav-item-container">
+      <div class="nav-item-container" *appHasPermission="{ modulo: 'Inventario', accion: 'Ver' }">
         <a routerLink="/inventario" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
           class="nav-item parent" [class.active]="inventarioAbierto" (click)="toggleInventario()">
           <span class="text">Inventario</span>
@@ -45,14 +46,18 @@
           <a routerLink="/inventario/movimientos" routerLinkActive="active" class="nav-item sub">
             <span class="text">Historial de Movimientos</span>
           </a>
+          <a routerLink="/inventario/control-recepcion" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Control Recepción</span>
+          </a>
         </div>
       </div>
 
-      <a routerLink="/ubicaciones" routerLinkActive="active" class="nav-item">
+      <a routerLink="/ubicaciones" routerLinkActive="active" class="nav-item"
+        *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Ver' }">
         <span class="text">Ubicaciones</span>
       </a>
 
-      <div class="nav-item-container">
+      <div class="nav-item-container" *appHasPermission="{ modulo: 'Reportes', accion: 'Ver' }">
         <div class="nav-item parent" [class.active]="reportesAbierto" (click)="toggleReportes()">
           <span class="text">Reportes</span>
         </div>
@@ -64,6 +69,9 @@
           <a routerLink="/reportes/inventario" routerLinkActive="active" class="nav-item sub">
             <span class="text">Reporte de Inventario</span>
           </a>
+          <a routerLink="/reportes/calidad" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Reporte de Calidad</span>
+          </a>
           <a routerLink="/reportes/financiero" routerLinkActive="active" class="nav-item sub">
             <span class="text">Reporte Financiero</span>
           </a>
@@ -73,12 +81,15 @@
         </div>
       </div>
 
-      <div class="nav-item-container">
+      <div class="nav-item-container" *ngIf="permissionService.esAdmin()">
         <div class="nav-item parent" [class.active]="usuariosAbierto" (click)="toggleUsuarios()">
           <span class="text">Usuarios</span>
         </div>
 
         <div class="submenu" [class.open]="usuariosAbierto">
+          <a routerLink="/usuarios/internos" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Usuarios Internos</span>
+          </a>
           <a routerLink="/usuarios/proveedores" routerLinkActive="active" class="nav-item sub">
             <span class="text">Proveedores</span>
           </a>
@@ -88,8 +99,14 @@
         </div>
       </div>
 
-      <a routerLink="/ordenes" routerLinkActive="active" class="nav-item">
+      <a routerLink="/ordenes" routerLinkActive="active" class="nav-item"
+        *appHasPermission="{ modulo: 'OrdenesCompra', accion: 'Recepcionar' }">
         <span class="text">Ordenes de Compra</span>
+      </a>
+
+      <a routerLink="/notificaciones" routerLinkActive="active" class="nav-item" *appHasPermission="{ modulo: 'Notificaciones', accion: 'Ver' }">
+        <span class="text">Notificaciones</span>
+        <span class="badge-count" *ngIf="notificacionesStockCount > 0">{{ notificacionesStockCount }}</span>
       </a>
     </nav>
 

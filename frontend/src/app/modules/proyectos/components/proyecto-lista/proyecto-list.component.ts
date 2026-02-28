@@ -3,11 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProyectosService } from '../../services/proyecto.service';
-import { Proyecto, EstadoProyecto, PrioridadProyecto, proyectoToVista } from '../../models/proyecto.model';
+import { Proyecto, EstadoProyecto, PrioridadProyecto } from '../../models/proyecto.model';
 import { AlertasService } from '../../../../core/services/alertas';
 import { ExportService } from '../../../../core/services/export.service';
 import { ProyectoFiltrosComponent } from '../proyecto-filtros/proyecto-filtros.component';
-import { ProyectoDetalleModalComponent } from '../proyecto-detalle-modal/proyecto-detalle-modal.component';
 import { ProyectoFormNuevoComponent } from '../nuevo-proyecto-modal/proyecto-form.component';
 import { TalleresService } from '../../../talleres/services/talleres.service';
 import { Taller } from '../../../talleres/models/taller.model';
@@ -23,7 +22,7 @@ export interface FiltrosProyecto {
 @Component({
   selector: 'app-proyecto-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProyectoFiltrosComponent, ProyectoDetalleModalComponent, ProyectoFormNuevoComponent],
+  imports: [CommonModule, FormsModule, ProyectoFiltrosComponent, ProyectoFormNuevoComponent],
   templateUrl: './proyecto-list.component.html',
   styleUrls: ['./proyecto-list.component.css']
 })
@@ -35,7 +34,6 @@ export class ProyectoListComponent implements OnInit {
   filtrosActuales: FiltrosProyecto | null = null;
   mostrarMenuExportar = false;
 
-  mostrarModalDetalle = false;
   proyectoSeleccionado: any = null;
   mostrarModalEdicion = false;
 
@@ -188,13 +186,8 @@ export class ProyectoListComponent implements OnInit {
   }
 
   abrirDetalle(proyecto: Proyecto): void {
-    this.proyectoSeleccionado = proyectoToVista(proyecto);
-    this.mostrarModalDetalle = true;
-  }
-
-  cerrarModalDetalle(): void {
-    this.mostrarModalDetalle = false;
-    this.proyectoSeleccionado = null;
+    if (!proyecto.idProyecto) return;
+    this.router.navigate(['/proyectos', proyecto.idProyecto]);
   }
 
   onProyectoActualizado(): void {

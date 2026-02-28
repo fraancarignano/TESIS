@@ -1,16 +1,15 @@
-// core/interceptors/auth.interceptor.ts
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+﻿import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
-import { AuthService } from '../../modules/login/services/auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
-  
-  // Agregar el token a las peticiones (excepto login/registro)
-  const token = authService.obtenerToken();
+  const router = inject(Router);
+
+  // Agregar token a peticiones privadas.
+  const token = localStorage.getItem('token');
   const esRutaPublica = req.url.includes('/login') || req.url.includes('/registrar');
-  
+
   if (token && !esRutaPublica) {
     req = req.clone({
       setHeaders: {
@@ -18,15 +17,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       }
     });
   }
-  
+
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Si recibe 401 (no autorizado), cerrar sesión
       if (error.status === 401 && !esRutaPublica) {
-        console.error('🚫 Error 401: Token inválido o expirado');
-        authService.cerrarSesion();
+        console.error('Error 401: token invalido o expirado');
+        localStorage.removeItem('token');
+        localStorage.removeItem('token_expiration');
+        localStorage.removeItem('usuario');
+        sessionStorage.removeItem('permisos_efectivos');
+        router.navigate(['/login']);
       }
-      
+
       return throwError(() => error);
     })
   );

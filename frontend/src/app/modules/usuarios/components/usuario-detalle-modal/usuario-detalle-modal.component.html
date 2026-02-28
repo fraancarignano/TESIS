@@ -1,0 +1,53 @@
+<div class="modal-overlay" (click)="cerrar.emit()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Detalle Usuario Interno</h2>
+      <button class="btn-close" (click)="cerrar.emit()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Nombre</label>
+          <span>{{ usuario.nombre }} {{ usuario.apellido }}</span>
+        </div>
+        <div class="info-item">
+          <label>Usuario ingreso</label>
+          <span>{{ usuario.nombreUsuarioIngreso }}</span>
+        </div>
+        <div class="info-item">
+          <label>Rol</label>
+          <span>{{ usuario.nombreRol }}</span>
+        </div>
+        <div class="info-item">
+          <label>Estado</label>
+          <span>{{ usuario.estado }}</span>
+        </div>
+      </div>
+
+      <div class="auditoria-box">
+        <h3>Auditoría</h3>
+        <p><strong>Fecha creación:</strong> {{ formatearFecha(auditoria?.fechaCreacion || usuario.fechaCreacion) }}</p>
+        <p><strong>Última conexión:</strong> {{ formatearFecha(auditoria?.ultimoAcceso || usuario.ultimoAcceso || null) }}</p>
+
+        <div *ngIf="loadingAuditoria" class="loading-text">Cargando auditoría...</div>
+
+        <div *ngIf="!loadingAuditoria && auditoria?.eventos?.length" class="eventos-lista">
+          <div class="evento" *ngFor="let evento of auditoria?.eventos">
+            <span class="accion">{{ evento.accion }}</span>
+            <span class="modulo">{{ evento.modulo || 'Sistema' }}</span>
+            <span class="fecha">{{ formatearFecha(evento.fechaAccion) }}</span>
+          </div>
+        </div>
+
+        <p *ngIf="!loadingAuditoria && (!auditoria || !auditoria.eventos.length)" class="sin-eventos">
+          Sin eventos de auditoría registrados.
+        </p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="cerrar.emit()">Cerrar</button>
+    </div>
+  </div>
+</div>

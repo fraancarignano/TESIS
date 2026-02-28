@@ -281,5 +281,127 @@ namespace TESIS_OG.Services.OrdenCompraService
             // 8. Retornar la orden actualizada
             return await ObtenerOrdenPorIdAsync(orden.IdOrdenCompra);
         }
+
+        // ==================== CONTROL DE RECEPCIÓN ====================
+
+        public async Task<OrdenCompraIndexDTO?> HabilitarControlAsync(int id, HabilitarControlDTO dto)
+        {
+            var orden = await _context.OrdenCompras.FirstOrDefaultAsync(o => o.IdOrdenCompra == id);
+            if (orden == null) return null;
+
+            // Solo se puede habilitar si está Pendiente o Aprobada
+            if (orden.Estado == "PendienteControl" || orden.Estado == "Recibida" || orden.Estado == "Cancelada")
+                return null;
+
+            orden.Estado = "PendienteControl";
+            orden.FechaHabilitacionControl = DateOnly.FromDateTime(DateTime.Now);
+
+            await _context.SaveChangesAsync();
+            return await ObtenerOrdenPorIdAsync(id);
+        }
+
+        public async Task<List<OrdenCompraIndexDTO>> ObtenerOrdenesPendienteControlAsync()
+        {
+            var ordenes = await _context.OrdenCompras
+                .Include(o => o.IdProveedorNavigation)
+                .Include(o => o.DetalleOrdenCompras)
+                    .ThenInclude(d => d.IdInsumoNavigation)
+                .Where(o => o.Estado == "PendienteControl")
+                .Select(o => new OrdenCompraIndexDTO
+                {
+                    IdOrdenCompra = o.IdOrdenCompra,
+                    NroOrden = o.NroOrden,
+                    IdProveedor = o.IdProveedor,
+                    NombreProveedor = o.IdProveedorNavigation.NombreProveedor,
+                    FechaSolicitud = o.FechaSolicitud,
+                    FechaEntregaEstimada = o.FechaEntregaEstimada,
+                    Estado = o.Estado,
+                    TotalOrden = o.TotalOrden ?? 0m,
+                    FechaHabilitacionControl = o.FechaHabilitacionControl,
+                    FechaRecepcionControl = o.FechaRecepcionControl,
+                    ObservacionControl = o.ObservacionControl,
+                    Detalles = o.DetalleOrdenCompras.Select(d => new DetalleOrdenCompraIndexDTO
+                    {
+                        IdDetalle = d.IdDetalle,
+                        IdInsumo = d.IdInsumo,
+                        NombreInsumo = d.IdInsumoNavigation.NombreInsumo,
+                        Cantidad = d.Cantidad,
+                        PrecioUnitario = d.PrecioUnitario,
+                        Subtotal = d.Subtotal ?? 0m
+                    }).ToList()
+                })
+                .OrderByDescending(o => o.FechaSolicitud)
+                .ToListAsync();
+
+            return ordenes;
+        }
+
+        public async Task<OrdenCompraIndexDTO?> RegistrarControlRecepcionAsync(ControlRecepcionDTO dto)
+        {
+            var orden = await _context.OrdenCompras
+                .Include(o => o.DetalleOrdenCompras)
+                .FirstOrDefaultAsync(o => o.IdOrdenCompra == dto.IdOrdenCompra);
+
+            if (orden == null) return null;
+
+            // Solo se puede controlar si está PendienteControl
+            if (orden.Estado != "PendienteControl") return null;
+
+            // Validar detalles
+            foreach (var detalle in dto.Detalles)
+            {
+                var insumo = await _context.Insumos.FirstOrDefaultAsync(i => i.IdInsumo == detalle.IdInsumo);
+                if (insumo == null) return null;
+                if (detalle.CantidadRecibida <= 0) return null;
+            }
+
+            // Actualizar stock y registrar movimientos
+            var fechaControl = DateOnly.Parse(dto.FechaControl);
+            foreach (var detalle in dto.Detalles)
+            {
+                var insumo = await _context.Insumos.FirstOrDefaultAsync(i => i.IdInsumo == detalle.IdInsumo);
+                if (insumo != null)
+                {
+                    insumo.StockActual += detalle.CantidadRecibida;
+                    insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+                }
+
+                _context.InventarioMovimientos.Add(new InventarioMovimiento
+                {
+                    IdInsumo = detalle.IdInsumo,
+                    IdOrdenCompra = orden.IdOrdenCompra,
+                    TipoMovimiento = "Entrada",
+                    Cantidad = detalle.CantidadRecibida,
+                    FechaMovimiento = fechaControl,
+                    Origen = "Control Recepción de Orden de Compra",
+                    Observacion = detalle.ObservacionDetalle ?? dto.Observacion,
+                    IdUsuario = dto.IdUsuarioControl
+                });
+            }
+
+            // Actualizar estado de la orden
+            orden.Estado = "Recibida";
+            orden.FechaRecepcionControl = fechaControl;
+            orden.IdUsuarioControl = dto.IdUsuarioControl;
+            orden.ObservacionControl = dto.Observacion;
+
+            await _context.SaveChangesAsync();
+            return await ObtenerOrdenPorIdAsync(orden.IdOrdenCompra);
+        }
+
+        public async Task<OrdenCompraIndexDTO?> RecalcularRecepcionAsync(int id)
+        {
+            var orden = await _context.OrdenCompras.FirstOrDefaultAsync(o => o.IdOrdenCompra == id);
+            if (orden == null) return null;
+
+            // Solo se puede recalcular si está Recibida
+            if (orden.Estado != "Recibida") return null;
+
+            orden.Estado = "PendienteControl";
+            orden.FechaRecepcionControl = null;
+
+            await _context.SaveChangesAsync();
+            return await ObtenerOrdenPorIdAsync(id);
+        }
     }
 }

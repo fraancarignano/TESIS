@@ -39,7 +39,7 @@
 
             <form (ngSubmit)="iniciarSesion()">
                 <div class="campo">
-                    <label for="usuario">Usuario</label>
+                    <label for="usuario">Usuario de ingreso</label>
                     <div class="input-wrapper">
                         <span class="icono-input">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -54,7 +54,7 @@
                             id="usuario"
                             [(ngModel)]="nombreUsuario"
                             name="usuario"
-                            placeholder="Usuario"
+                            placeholder="admin@test.com"
                             [disabled]="cargando"
                             required
                         />

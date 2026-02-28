@@ -22,9 +22,9 @@ namespace TESIS_OG.Services.UsuariosService
 
         public async Task<LoginResponseDTO?> LoginAsync(LoginDTO loginDto)
         {
-            // Buscar usuario por nombre de usuario
+            // Buscar usuario por nombre de ingreso (columna nombreIngreso en BD)
             var usuario = await _context.Usuarios
-                .FirstOrDefaultAsync(u => u.NombreUsuario == loginDto.NombreUsuario);
+                .FirstOrDefaultAsync(u => u.UsuarioIngreso == loginDto.NombreUsuario);
 
             if (usuario == null)
                 return null;
@@ -39,6 +39,13 @@ namespace TESIS_OG.Services.UsuariosService
 
             // Actualizar último acceso
             usuario.UltimoAcceso = DateOnly.FromDateTime(DateTime.Now);
+            _context.HistorialUsuarios.Add(new HistorialUsuario
+            {
+                IdUsuario = usuario.IdUsuario,
+                Accion = "INICIO_SESION",
+                Modulo = "Login",
+                FechaAccion = DateOnly.FromDateTime(DateTime.Now)
+            });
             await _context.SaveChangesAsync();
 
             // Generar token JWT
@@ -49,7 +56,7 @@ namespace TESIS_OG.Services.UsuariosService
                 Token = token,
                 IdUsuario = usuario.IdUsuario,
                 NombreUsuario = $"{usuario.NombreUsuario} {usuario.ApellidoUsuario}",
-                Email = usuario.Email
+                UsuarioIngreso = usuario.UsuarioIngreso
             };
         }
 
@@ -87,12 +94,12 @@ namespace TESIS_OG.Services.UsuariosService
             if (existeUsuario)
                 return null; // Usuario duplicado
 
-            // Verificar si el email ya existe
-            var existeEmail = await _context.Usuarios
-                .AnyAsync(u => u.Email == usuarioDto.Email);
+            // Verificar si el usuario de ingreso ya existe
+            var existeUsuarioIngreso = await _context.Usuarios
+                .AnyAsync(u => u.UsuarioIngreso == usuarioDto.UsuarioIngreso);
 
-            if (existeEmail)
-                return null; // Email duplicado
+            if (existeUsuarioIngreso)
+                return null; // Usuario de ingreso duplicado
 
             // ⬅️ CAMBIO: Buscar el rol por nombre
             var rol = await _context.Rols
@@ -109,7 +116,7 @@ namespace TESIS_OG.Services.UsuariosService
             {
                 NombreUsuario = usuarioDto.NombreUsuario,
                 ApellidoUsuario = usuarioDto.ApellidoUsuario,
-                Email = usuarioDto.Email,
+                UsuarioIngreso = usuarioDto.UsuarioIngreso,
                 Contrasena = contrasenaHash,
                 IdRol = rol.IdRol, 
                 Estado = "Activo",
@@ -125,7 +132,7 @@ namespace TESIS_OG.Services.UsuariosService
                 IdUsuario = nuevoUsuario.IdUsuario,
                 NombreUsuario = nuevoUsuario.NombreUsuario,
                 ApellidoUsuario = nuevoUsuario.ApellidoUsuario,
-                Email = nuevoUsuario.Email,
+                UsuarioIngreso = nuevoUsuario.UsuarioIngreso,
                 IdRol = nuevoUsuario.IdRol,
                 Estado = nuevoUsuario.Estado,
                 FechaCreacion = nuevoUsuario.FechaCreacion,
@@ -141,7 +148,7 @@ namespace TESIS_OG.Services.UsuariosService
                     IdUsuario = u.IdUsuario,
                     NombreUsuario = u.NombreUsuario,
                     ApellidoUsuario = u.ApellidoUsuario,
-                    Email = u.Email,
+                    UsuarioIngreso = u.UsuarioIngreso,
                     NombreRol = u.IdRolNavigation.NombreRol,
                     Estado = u.Estado,
                     FechaCreacion = u.FechaCreacion,
@@ -167,7 +174,7 @@ namespace TESIS_OG.Services.UsuariosService
                 IdUsuario = usuario.IdUsuario,
                 NombreUsuario = usuario.NombreUsuario,
                 ApellidoUsuario = usuario.ApellidoUsuario,
-                Email = usuario.Email,
+                UsuarioIngreso = usuario.UsuarioIngreso,
                 IdRol = usuario.IdRol,
                 Estado = usuario.Estado,
                 FechaCreacion = usuario.FechaCreacion,

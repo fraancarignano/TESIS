@@ -127,5 +127,67 @@ namespace TESIS_OG.Controllers
                 data = result
             });
         }
+
+        // ==================== CONTROL DE RECEPCIÓN ====================
+
+        /// <summary>
+        /// Obtener órdenes en estado PendienteControl (para la vista del operario)
+        /// </summary>
+        [HttpGet("pendiente-control")]
+        public async Task<IActionResult> ObtenerOrdenesPendienteControl()
+        {
+            var ordenes = await _ordenCompraService.ObtenerOrdenesPendienteControlAsync();
+            return Ok(ordenes);
+        }
+
+        /// <summary>
+        /// [Admin] Habilitar el control de recepción de una orden
+        /// La orden pasa a estado PendienteControl
+        /// </summary>
+        [HttpPost("{id}/habilitar-control")]
+        public async Task<IActionResult> HabilitarControl(int id, [FromBody] HabilitarControlDTO dto)
+        {
+            var result = await _ordenCompraService.HabilitarControlAsync(id, dto);
+
+            if (result == null)
+                return BadRequest(new { message = "No se pudo habilitar el control. La orden debe estar en estado Pendiente o Aprobada." });
+
+            return Ok(new { message = "Control de recepción habilitado. La orden ya está disponible para el operario.", data = result });
+        }
+
+        /// <summary>
+        /// [Operario/Depósito] Confirmar el control físico de recepción
+        /// Actualiza el stock y marca la orden como Recibida
+        /// </summary>
+        [HttpPost("{id}/control")]
+        public async Task<IActionResult> RegistrarControlRecepcion(int id, [FromBody] ControlRecepcionDTO dto)
+        {
+            if (id != dto.IdOrdenCompra)
+                return BadRequest(new { message = "El ID de la orden no coincide" });
+
+            if (!ModelState.IsValid)
+                return BadRequest(new { message = "Datos inválidos", errors = ModelState });
+
+            var result = await _ordenCompraService.RegistrarControlRecepcionAsync(dto);
+
+            if (result == null)
+                return BadRequest(new { message = "No se pudo registrar el control. La orden debe estar en estado PendienteControl y las cantidades deben ser válidas." });
+
+            return Ok(new { message = "Control de recepción confirmado. Stock actualizado.", data = result });
+        }
+
+        /// <summary>
+        /// [Admin] Recalcular (reabrir) el control de recepción de una orden ya recibida
+        /// </summary>
+        [HttpPost("{id}/recalcular")]
+        public async Task<IActionResult> RecalcularRecepcion(int id)
+        {
+            var result = await _ordenCompraService.RecalcularRecepcionAsync(id);
+
+            if (result == null)
+                return BadRequest(new { message = "No se puede recalcular. La orden debe estar en estado Recibida." });
+
+            return Ok(new { message = "Control reabierto. La orden vuelve a estar disponible para el operario.", data = result });
+        }
     }
 }

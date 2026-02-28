@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TESIS_OG.Data;
+using AppAuthorizationService = TESIS_OG.Services.AuthorizationService;
 using TESIS_OG.Services.ClienteService;
 using TESIS_OG.Services.InsumoService;
 using TESIS_OG.Services.OrdenCompraService;
 using TESIS_OG.Services.ProyectoService;
 using TESIS_OG.Services.ProyectosService;
+using TESIS_OG.Services.ReportesService;
 using TESIS_OG.Services.UsuariosService;
 using TESIS_OG.Services.UbicacionService;
 using TESIS_OG.Services.MovimientoService;
@@ -33,12 +35,14 @@ namespace TESIS_OG
             builder.Services.AddRazorPages();
 
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<AppAuthorizationService.IAuthorizationService, AppAuthorizationService.AuthorizationService>();
             builder.Services.AddScoped<IProyectosService, ProyectoService>();
             builder.Services.AddScoped<IClienteService, ClienteService>();
             builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
             builder.Services.AddScoped<IInsumoService, InsumoService>();
             builder.Services.AddScoped<IUbicacionService, UbicacionService>();
             builder.Services.AddScoped<IMovimientoService, TESIS_OG.Services.MovimientoService.MovimientoService>();
+            builder.Services.AddScoped<IReportesService, ReportesService>();
             builder.Services.AddScoped<AuditoriaService.IProyectoAuditoriaService, AuditoriaService.ProyectoAuditoriaService>();
             builder.Services.AddScoped<ValidacionService.IProyectoValidacionService, ValidacionService.ProyectoValidacionService>();
             builder.Services.AddHttpContextAccessor();

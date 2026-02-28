@@ -1,0 +1,95 @@
+﻿<div class="modal-overlay" (click)="cancelar()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ titulo }}</h2>
+      <button class="btn-close" (click)="cancelar()">&times;</button>
+    </div>
+
+    <form [formGroup]="formulario" (ngSubmit)="guardarFormulario()" class="form-grid">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" formControlName="nombre" [class.error]="tieneError('nombre')" />
+        <small class="field-error" *ngIf="tieneError('nombre')">Nombre obligatorio (min. 2).</small>
+      </div>
+
+      <div class="form-group">
+        <label>Apellido</label>
+        <input type="text" formControlName="apellido" [class.error]="tieneError('apellido')" />
+        <small class="field-error" *ngIf="tieneError('apellido')">Apellido obligatorio (min. 2).</small>
+      </div>
+
+      <div class="form-group full-width">
+        <label>Usuario de ingreso</label>
+        <input type="text" formControlName="nombreUsuarioIngreso" [class.error]="tieneError('nombreUsuarioIngreso')" />
+        <small class="field-error" *ngIf="tieneError('nombreUsuarioIngreso')">Usuario de ingreso obligatorio (min. 3).</small>
+      </div>
+
+      <div class="form-group full-width">
+        <label>Contraseña {{ esEdicion ? '(dejar vacío para no cambiar)' : '' }}</label>
+        <div class="password-input">
+          <input [type]="mostrarContrasena ? 'text' : 'password'" formControlName="contrasena" [class.error]="tieneError('contrasena')" />
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="toggleMostrarContrasena()"
+            [attr.aria-label]="mostrarContrasena ? 'Ocultar contraseña' : 'Ver contraseña'"
+            [title]="mostrarContrasena ? 'Ocultar contraseña' : 'Ver contraseña'"
+          >
+            <svg *ngIf="!mostrarContrasena" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <svg *ngIf="mostrarContrasena" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m1 1 22 22"></path>
+              <path d="M10.58 10.58a2 2 0 1 0 2.83 2.83"></path>
+              <path d="M9.88 5.09A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a21.8 21.8 0 0 1-5.08 5.91"></path>
+              <path d="M6.61 6.61C3.39 8.43 1 12 1 12a21.86 21.86 0 0 0 8.5 7.5"></path>
+            </svg>
+          </button>
+        </div>
+        <small class="field-error" *ngIf="tieneError('contrasena')">Contraseña obligatoria (min. 4).</small>
+      </div>
+
+      <div class="form-group">
+        <label>Rol</label>
+        <select formControlName="idRol" [class.error]="tieneError('idRol')" (change)="onRolChange()">
+          <option [ngValue]="null">Seleccionar rol</option>
+          <option *ngFor="let rol of roles" [ngValue]="rol.idRol">{{ rol.nombreRol }}</option>
+        </select>
+        <small class="field-error" *ngIf="tieneError('idRol')">Selecciona un rol.</small>
+      </div>
+
+      <div class="form-group" *ngIf="esEdicion">
+        <label>Estado</label>
+        <select formControlName="estado">
+          <option value="Activo">Activo</option>
+          <option value="Inactivo">Inactivo</option>
+        </select>
+      </div>
+
+      <div class="form-group full-width" *ngIf="esOperario">
+        <label>Subroles por área (selección múltiple)</label>
+        <small *ngIf="!areasSubrol.length">No hay áreas disponibles para seleccionar.</small>
+        <div class="subroles-grid">
+          <label class="subrol-option" *ngFor="let area of areasSubrol">
+            <input
+              type="checkbox"
+              [checked]="subRolesSeleccionados.includes(area.idArea)"
+              (change)="onToggleSubrol(area.idArea)"
+            />
+            <span>{{ area.nombreArea }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group full-width" *ngIf="!esOperario && formulario.get('idRol')?.value">
+        <small>Los subroles múltiples solo aplican para el rol Operario/Operador.</small>
+      </div>
+
+      <div class="modal-actions full-width">
+        <button type="button" class="btn btn-secondary" (click)="cancelar()">Cancelar</button>
+        <button type="button" class="btn btn-primary" (click)="guardarFormulario()">{{ esEdicion ? 'Guardar cambios' : 'Crear usuario' }}</button>
+      </div>
+    </form>
+  </div>
+</div>

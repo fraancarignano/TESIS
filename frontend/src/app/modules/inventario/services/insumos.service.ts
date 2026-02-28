@@ -20,6 +20,7 @@ export class InsumosService {
    */
   getInsumos(): Observable<Insumo[]> {
     return this.http.get<any[]>(this.apiUrl).pipe(
+      map(items => items.map(item => this.mapToFrontend(item))),
       tap(data => {
         console.log('Insumos obtenidos:', data);
       }),
@@ -148,7 +149,7 @@ export class InsumosService {
       } : undefined,
       idUbicacion: data.idUbicacion,
       codigoUbicacion: data.codigoUbicacion,
-      estado: data.estado,
+      estado: this.normalizarEstado(data.estado),
       detalleStock: data.detalleStock || [],
       proyectosAsignados: data.proyectosAsignados || []
     };
@@ -166,8 +167,13 @@ export class InsumosService {
       stockMinimo: insumo.stockMinimo,
       idProveedor: insumo.idProveedor,
       idUbicacion: insumo.idUbicacion,
-      estado: insumo.estado
+      estado: this.normalizarEstado(insumo.estado)
     };
+  }
+
+  private normalizarEstado(estado?: string | null): string {
+    if (!estado) return 'Disponible';
+    return estado.trim().toLowerCase() === 'pulenta' ? 'Disponible' : estado.trim();
   }
 
   /**

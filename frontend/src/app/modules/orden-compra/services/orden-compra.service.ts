@@ -5,6 +5,14 @@ import { OrdenCompra, NuevaOrdenCompra, Proveedor, Insumo } from '../models/orde
 import { OrdenCompraReceiveDTO } from '../models/orden-compra-receive.model';
 import { environment } from '../../../../environments/environment';
 
+export interface ControlRecepcionDTO {
+  idOrdenCompra: number;
+  idUsuarioControl: number;
+  fechaControl: string;
+  observacion?: string;
+  detalles: { idInsumo: number; cantidadRecibida: number; observacionDetalle?: string }[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -13,7 +21,7 @@ export class OrdenCompraService {
   private proveedorUrl = `${environment.apiUrl}/Proveedor`;
   private insumoUrl = `${environment.apiUrl}/Insumo`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   obtenerOrdenes(): Observable<OrdenCompra[]> {
     return this.http.get<OrdenCompra[]>(this.apiUrl);
@@ -36,8 +44,26 @@ export class OrdenCompraService {
   }
 
   registrarRecepcion(id: number, recepcion: OrdenCompraReceiveDTO): Observable<any> {
-  return this.http.post<any>(`${this.apiUrl}/${id}/receive`, recepcion);
-}
+    return this.http.post<any>(`${this.apiUrl}/${id}/receive`, recepcion);
+  }
+
+  // ==================== CONTROL DE RECEPCIÓN ====================
+
+  obtenerOrdenesPendienteControl(): Observable<OrdenCompra[]> {
+    return this.http.get<OrdenCompra[]>(`${this.apiUrl}/pendiente-control`);
+  }
+
+  habilitarControl(id: number, idUsuarioAdmin: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/habilitar-control`, { idUsuarioAdmin });
+  }
+
+  registrarControlRecepcion(id: number, dto: ControlRecepcionDTO): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/control`, dto);
+  }
+
+  recalcularRecepcion(id: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/recalcular`, {});
+  }
 
   // Proveedores
   obtenerProveedores(): Observable<Proveedor[]> {

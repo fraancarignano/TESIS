@@ -42,6 +42,7 @@ export class ReporteProyectosComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     @ViewChild('chartProduccion') chartRef!: ElementRef<HTMLCanvasElement>;
+
     private chart?: Chart;
 
     constructor(

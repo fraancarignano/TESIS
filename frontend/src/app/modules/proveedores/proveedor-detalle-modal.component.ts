@@ -33,11 +33,11 @@ import { Proveedor } from './models/proveedor.model';
             <div class="campos-grid">
               <div class="campo">
                 <label>Razon social</label>
-                <div class="valor">{{ proveedor?.nombreProveedor || '-' }}</div>
+                <div class="valor">{{ proveedor.nombreProveedor || '-' }}</div>
               </div>
               <div class="campo">
                 <label>CUIT</label>
-                <div class="valor">{{ proveedor?.cuit || '-' }}</div>
+                <div class="valor">{{ proveedor.cuit || '-' }}</div>
               </div>
             </div>
           </div>
@@ -49,36 +49,36 @@ import { Proveedor } from './models/proveedor.model';
             <div class="campos-grid">
               <div class="campo">
                 <label>Telefono</label>
-                <div class="valor">{{ proveedor?.telefono || '-' }}</div>
+                <div class="valor">{{ proveedor.telefono || '-' }}</div>
               </div>
               <div class="campo">
                 <label>Email</label>
-                <div class="valor">{{ proveedor?.email || '-' }}</div>
+                <div class="valor">{{ proveedor.email || '-' }}</div>
               </div>
               <div class="campo">
                 <label>Direccion</label>
-                <div class="valor">{{ proveedor?.direccion || '-' }}</div>
+                <div class="valor">{{ proveedor.direccion || '-' }}</div>
               </div>
               <div class="campo">
                 <label>Provincia</label>
-                <div class="valor">{{ proveedor?.nombreProvincia || '-' }}</div>
+                <div class="valor">{{ proveedor.nombreProvincia || '-' }}</div>
               </div>
               <div class="campo">
                 <label>Ciudad</label>
-                <div class="valor">{{ proveedor?.nombreCiudad || '-' }}</div>
+                <div class="valor">{{ proveedor.nombreCiudad || '-' }}</div>
               </div>
               <div class="campo">
                 <label>Fecha alta</label>
-                <div class="valor">{{ formatearFecha(proveedor?.fechaAlta) }}</div>
+                <div class="valor">{{ formatearFecha(proveedor.fechaAlta) }}</div>
               </div>
             </div>
           </div>
 
-          <div class="seccion" *ngIf="proveedor?.observaciones">
+          <div class="seccion" *ngIf="proveedor.observaciones">
             <div class="seccion-titulo">
               <span>Observaciones</span>
             </div>
-            <div class="observaciones-texto">{{ proveedor?.observaciones }}</div>
+            <div class="observaciones-texto">{{ proveedor.observaciones }}</div>
           </div>
         </div>
 

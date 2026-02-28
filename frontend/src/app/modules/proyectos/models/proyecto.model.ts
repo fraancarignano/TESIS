@@ -195,6 +195,21 @@ export interface AgregarObservacionDTO {
   descripcion: string;
 }
 
+export interface ProyectoAvanceArea {
+  idProyecto: number;
+  idArea: number;
+  area: string;
+  estado: 'Pendiente' | 'EnProceso' | 'Completado';
+  porcentajeAvance: number;
+  idUsuarioCompleto?: number | null;
+  fechaCompletado?: string | null;
+  observaciones?: string | null;
+}
+
+export interface CompletarAreaRequestDTO {
+  observaciones?: string;
+}
+
 // ============================================
 // INTERFAZ PARA VISTA (CON DATOS CALCULADOS)
 // ============================================

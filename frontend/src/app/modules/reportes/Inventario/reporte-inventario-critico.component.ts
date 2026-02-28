@@ -1,16 +1,21 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
-import { ReportesService, ResumenInventarioCritico, DashboardInventario } from '../services/reportes.service'
+import { ReportesService, ResumenInventarioCritico, DashboardInventario, RotacionInsumo } from '../services/reportes.service';
+import { InsumosService } from '../../inventario/services/insumos.service';
+import { Insumo } from '../../inventario/models/insumo.model';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
 // Registrar todos los componentes de Chart.js
 Chart.register(...registerables);
 
+const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
 @Component({
   selector: 'app-reporte-inventario-critico',
   standalone: true,
-  imports: [CommonModule, HttpClientModule],
+  imports: [CommonModule, HttpClientModule, FormsModule],
   templateUrl: './reporte-inventario-critico.component.html',
   styleUrls: ['./reporte-inventario-critico.component.css']
 })
@@ -23,23 +28,45 @@ export class ReporteInventarioCriticoComponent implements OnInit, AfterViewInit,
 
   // Referencias al canvas para el gráfico
   @ViewChild('chartStockVsMinimo') chartStockVsMinimoRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartRotacion') chartRotacionRef!: ElementRef<HTMLCanvasElement>;
 
   // Instancia del gráfico
   private chartStockVsMinimo?: Chart;
+  private chartRotacion?: Chart;
+
+  // --- Estados para Rotación de Insumos ---
+  datosRotacion: RotacionInsumo[] = [];
+  loadingRotacion = false;
+  errorRotacion = false;
+  mensajeErrorRotacion = '';
+
+  // Totales para las tarjetas de resumen
+  totalConsumo = 0;
+  totalReposicion = 0;
+  diferenciaRotacion = 0;
+
+  insumos: Insumo[] = [];
+  aniosRotacion: number[] = [];
+  filtrosRotacion = {
+    idInsumo: undefined as number | undefined,
+    anio: new Date().getFullYear()
+  };
 
   constructor(
     private reportesService: ReportesService,
+    private insumosService: InsumosService,
     private cdr: ChangeDetectorRef
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.cargarDatos();
+    this.cargarOpcionesRotacion();
   }
 
   ngAfterViewInit(): void {
     console.log('👁️ ngAfterViewInit ejecutado');
     console.log('   Canvas disponible?', !!this.chartStockVsMinimoRef);
-    
+
     // Si ya tenemos datos, crear el gráfico ahora
     if (this.datosReporte) {
       console.log('   Datos ya disponibles, creando gráfico...');
@@ -61,10 +88,10 @@ export class ReporteInventarioCriticoComponent implements OnInit, AfterViewInit,
         this.loading = false;
         console.log('✅ Datos del reporte cargados:', datos);
         console.log('📦 Cantidad de insumos críticos:', datos.insumos?.length || 0);
-        
+
         // Forzar detección de cambios para que Angular renderice el *ngIf
         this.cdr.detectChanges();
-        
+
         // Dar tiempo a que el DOM se actualice completamente
         setTimeout(() => {
           console.log('🎨 Intentando crear gráfico después de detectChanges...');
@@ -89,12 +116,12 @@ export class ReporteInventarioCriticoComponent implements OnInit, AfterViewInit,
     console.log('🎨 === INICIANDO CREACIÓN DE GRÁFICO ===');
     console.log('1. datosReporte existe?', !!this.datosReporte);
     console.log('2. chartStockVsMinimoRef existe?', !!this.chartStockVsMinimoRef);
-    
+
     if (!this.datosReporte) {
       console.error('❌ No hay datosReporte');
       return;
     }
-    
+
     if (!this.chartStockVsMinimoRef) {
       console.error('❌ No hay chartStockVsMinimoRef (ViewChild no encontrado)');
       console.log('Posible causa: el canvas no está en el DOM todavía');
@@ -131,10 +158,10 @@ export class ReporteInventarioCriticoComponent implements OnInit, AfterViewInit,
     const labels = insumosMostrar.map(i => i.nombreInsumo);
     const stockActual = insumosMostrar.map(i => i.stockActual);
     const stockMinimo = insumosMostrar.map(i => i.stockMinimo);
-    
+
     // Colores dinámicos según nivel de criticidad
     const coloresStock = insumosMostrar.map(i => {
-      switch(i.nivelCriticidad) {
+      switch (i.nivelCriticidad) {
         case 'Agotado': return '#dc3545';   // Rojo
         case 'Crítico': return '#fd7e14';   // Naranja
         case 'Bajo': return '#ffc107';      // Amarillo
@@ -279,7 +306,7 @@ export class ReporteInventarioCriticoComponent implements OnInit, AfterViewInit,
     const alturaBase = insumosMostrar.length > 5 ? insumosMostrar.length * 50 : 450;
     const alturaMaxima = 800;
     const alturaFinal = Math.min(alturaBase, alturaMaxima);
-    
+
     this.chartStockVsMinimoRef.nativeElement.style.height = `${alturaFinal}px`;
     console.log(`📏 Altura del gráfico ajustada a: ${alturaFinal}px`);
 
@@ -296,12 +323,158 @@ export class ReporteInventarioCriticoComponent implements OnInit, AfterViewInit,
     }
   }
 
+  // ==========================================
+  // LÓGICA ROTACIÓN DE INSUMOS
+  // ==========================================
+
+  cargarOpcionesRotacion(): void {
+    this.insumosService.getInsumos().subscribe({
+      next: (i) => {
+        this.insumos = i.filter(ins => ins.estado !== 'Inactivo');
+        if (this.insumos.length > 0 && !this.filtrosRotacion.idInsumo) {
+          this.filtrosRotacion.idInsumo = this.insumos[0].idInsumo;
+          this.cargarDatosRotacion();
+        }
+      },
+      error: () => { }
+    });
+
+    const anioActual = new Date().getFullYear();
+    for (let i = 0; i < 5; i++) {
+      this.aniosRotacion.push(anioActual - i);
+    }
+  }
+
+  cargarDatosRotacion(): void {
+    if (!this.filtrosRotacion.idInsumo) return;
+
+    this.loadingRotacion = true;
+    this.errorRotacion = false;
+
+    this.reportesService.obtenerRotacionInsumo(this.filtrosRotacion.idInsumo, this.filtrosRotacion.anio).subscribe({
+      next: (datos) => {
+        this.datosRotacion = datos;
+        this.loadingRotacion = false;
+        this.cdr.detectChanges();
+        setTimeout(() => this.crearGraficoRotacion(), 0);
+      },
+      error: (err) => {
+        console.error('Error al cargar rotación:', err);
+        this.errorRotacion = true;
+        this.mensajeErrorRotacion = err.message;
+        this.loadingRotacion = false;
+      }
+    });
+  }
+
+  aplicarFiltrosRotacion(): void {
+    this.cargarDatosRotacion();
+  }
+
+  limpiarFiltrosRotacion(): void {
+    this.filtrosRotacion.anio = new Date().getFullYear();
+    if (this.insumos.length > 0) {
+      this.filtrosRotacion.idInsumo = this.insumos[0].idInsumo;
+    }
+    this.cargarDatosRotacion();
+  }
+
+  crearGraficoRotacion(): void {
+    if (!this.chartRotacionRef) return;
+    if (this.chartRotacion) this.chartRotacion.destroy();
+
+    const ctx = this.chartRotacionRef.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    // Crear arrays vacíos para los 12 meses (inicializados en 0)
+    const dataConsumo = new Array(12).fill(0);
+    const dataReposicion = new Array(12).fill(0);
+
+    this.totalConsumo = 0;
+    this.totalReposicion = 0;
+
+    // Llenar los arrays con los datos reales que llegaron del backend
+    for (const d of this.datosRotacion) {
+      // En DTO, 'mes' va de 1 a 12, por eso mes - 1
+      dataConsumo[d.mes - 1] = d.consumo;
+      dataReposicion[d.mes - 1] = d.reposicion;
+
+      this.totalConsumo += d.consumo;
+      this.totalReposicion += d.reposicion;
+    }
+
+    this.diferenciaRotacion = this.totalReposicion - this.totalConsumo;
+
+    const config: ChartConfiguration = {
+      type: 'bar',
+      data: {
+        labels: MESES,
+        datasets: [
+          {
+            label: 'Consumo',
+            data: dataConsumo,
+            backgroundColor: '#e85d04', // Naranja
+            borderRadius: 4,
+            barPercentage: 0.8,
+            categoryPercentage: 0.4
+          },
+          {
+            label: 'Reposición',
+            data: dataReposicion,
+            backgroundColor: '#2c3e50', // Azul oscuro
+            borderRadius: 4,
+            barPercentage: 0.8,
+            categoryPercentage: 0.4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: true, position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: (c) => `${c.dataset.label}: ${c.parsed.y} Un`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { display: true, color: '#f0f0f0' },
+            ticks: { font: { size: 11 }, color: '#666' }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 11, weight: 'bold' }, color: '#2c3e50' }
+          }
+        },
+        layout: { padding: 10 }
+      }
+    };
+
+    this.chartRotacion = new Chart(ctx, config);
+  }
+
+  get sinDatosRotacion(): boolean {
+    return !this.loadingRotacion && !this.errorRotacion && this.datosRotacion.length === 0;
+  }
+
+  get insumoSeleccionadoNombre(): string {
+    const insumo = this.insumos.find(i => i.idInsumo === this.filtrosRotacion.idInsumo);
+    return insumo ? insumo.nombreInsumo : '';
+  }
+
   /**
    * Limpiar recursos al destruir el componente
    */
   ngOnDestroy(): void {
     if (this.chartStockVsMinimo) {
       this.chartStockVsMinimo.destroy();
+    }
+    if (this.chartRotacion) {
+      this.chartRotacion.destroy();
     }
   }
 
@@ -338,7 +511,7 @@ export class ReporteInventarioCriticoComponent implements OnInit, AfterViewInit,
    */
   tieneDiasRestantes(): boolean {
     if (!this.datosReporte) return false;
-    return this.datosReporte.insumos.some(i => 
+    return this.datosReporte.insumos.some(i =>
       i.diasRestantes !== null && i.diasRestantes !== undefined
     );
   }

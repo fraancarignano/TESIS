@@ -1,0 +1,103 @@
+<div class="reporte-calidad-container">
+  <div class="reporte-header">
+    <h1>Reporte de Calidad</h1>
+    <p>Resumen de inspecciones registradas desde el módulo de control de calidad.</p>
+  </div>
+
+  <div class="filtros">
+    <div class="filtro-item">
+      <label>Proyecto (ID)</label>
+      <input type="number" [(ngModel)]="filtroProyectoId" placeholder="Ej: 12">
+    </div>
+    <div class="filtro-item">
+      <label>Fecha inicio</label>
+      <input type="date" [(ngModel)]="filtroFechaInicio">
+    </div>
+    <div class="filtro-item">
+      <label>Fecha fin</label>
+      <input type="date" [(ngModel)]="filtroFechaFin">
+    </div>
+    <div class="filtro-actions">
+      <button class="btn btn-primary" (click)="aplicarFiltros()">Aplicar</button>
+      <button class="btn btn-secondary" (click)="limpiarFiltros()">Limpiar</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="estado">Cargando reporte...</div>
+  <div *ngIf="error" class="estado error">{{ mensajeError }}</div>
+
+  <div *ngIf="datosReporte && !loading && !error">
+    <div class="kpis">
+      <div class="kpi-card">
+        <span>Total inspecciones</span>
+        <h3>{{ datosReporte.totalInspecciones }}</h3>
+      </div>
+      <div class="kpi-card">
+        <span>Unidades inspeccionadas</span>
+        <h3>{{ datosReporte.totalUnidadesInspeccionadas }}</h3>
+      </div>
+      <div class="kpi-card ok">
+        <span>Aprobadas</span>
+        <h3>{{ datosReporte.inspeccionesAprobadas }}</h3>
+      </div>
+      <div class="kpi-card warn">
+        <span>Observadas</span>
+        <h3>{{ datosReporte.inspeccionesObservadas }}</h3>
+      </div>
+      <div class="kpi-card bad">
+        <span>Rechazadas</span>
+        <h3>{{ datosReporte.inspeccionesRechazadas }}</h3>
+      </div>
+      <div class="kpi-card">
+        <span>% aprobación</span>
+        <h3>{{ datosReporte.porcentajeAprobacion }}%</h3>
+      </div>
+    </div>
+
+    <div class="graficos-grid">
+      <div class="grafico-card">
+        <h3>Distribución de resultados</h3>
+        <div class="canvas-wrap">
+          <canvas #chartResultados></canvas>
+        </div>
+      </div>
+      <div class="grafico-card">
+        <h3>Inspecciones por talle</h3>
+        <div class="canvas-wrap">
+          <canvas #chartTalles></canvas>
+        </div>
+      </div>
+      <div class="grafico-card full">
+        <h3>Fallas por criterio</h3>
+        <div class="canvas-wrap">
+          <canvas #chartFallas></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabla-container">
+      <h3>Resumen por proyecto</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Proyecto</th>
+            <th>Inspecciones</th>
+            <th>Unidades inspeccionadas</th>
+            <th>Rechazadas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of datosReporte.resumenPorProyecto">
+            <td>{{ p.idProyecto }}</td>
+            <td>{{ p.nombreProyecto }}</td>
+            <td>{{ p.totalInspecciones }}</td>
+            <td>{{ p.unidadesInspeccionadas }}</td>
+            <td>{{ p.rechazadas }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+

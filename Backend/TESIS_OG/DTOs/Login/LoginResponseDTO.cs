@@ -5,7 +5,7 @@
         public int IdUsuario { get; set; }
         public string NombreUsuario { get; set; } = null!;
         public string ApellidoUsuario { get; set; } = null!;
-        public string Email { get; set; } = null!;
+        public string UsuarioIngreso { get; set; } = null!;
         public int IdRol { get; set; }
         public string NombreRol { get; set; }
         public string Estado { get; set; } = null!;

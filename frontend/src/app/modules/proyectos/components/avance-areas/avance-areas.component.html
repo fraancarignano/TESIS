@@ -1,0 +1,39 @@
+<section class="avance-areas">
+  <header class="header">
+    <h3>Avance por áreas</h3>
+    <button type="button" class="btn-recargar" (click)="cargarAvance()">Recargar</button>
+  </header>
+
+  <div class="estado" *ngIf="loading">Cargando avance...</div>
+  <div class="estado error" *ngIf="!loading && error">{{ error }}</div>
+
+  <div class="timeline" *ngIf="!loading && !error">
+    <div
+      class="area-item"
+      *ngFor="let area of areas"
+      [class.seleccionada]="areaSeleccionada?.idArea === area.idArea"
+      (click)="seleccionar(area)"
+    >
+      <div class="area-nombre">{{ area.area }}</div>
+      <div class="area-estado" [class]="estadoClass(area)">
+        {{ area.estado }}
+      </div>
+      <div class="area-meta">
+        <span>{{ area.porcentajeAvance }}%</span>
+        <span *ngIf="area.fechaCompletado">· {{ area.fechaCompletado | date: 'dd/MM/yyyy HH:mm' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-completar" *ngIf="areaSeleccionada && puedeCompletar(areaSeleccionada)">
+    <h4>Completar: {{ areaSeleccionada.area }}</h4>
+    <textarea
+      [(ngModel)]="observaciones"
+      rows="3"
+      placeholder="Observaciones (opcional)"
+    ></textarea>
+    <button type="button" class="btn-completar" (click)="completarSeleccionada()" [disabled]="guardando">
+      {{ guardando ? 'Guardando...' : 'Marcar como completado' }}
+    </button>
+  </div>
+</section>

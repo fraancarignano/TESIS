@@ -44,7 +44,7 @@ namespace TESIS_OG.Services.InsumoService
         StockMinimo = insumoDto.StockMinimo,
         IdProveedor = insumoDto.IdProveedor,
         IdUbicacion = insumoDto.IdUbicacion,
-        Estado = insumoDto.Estado ?? "Disponible",
+        Estado = NormalizarEstadoInsumo(insumoDto.Estado),
         FechaActualizacion = DateOnly.FromDateTime(DateTime.Now)
       };
 
@@ -87,7 +87,9 @@ namespace TESIS_OG.Services.InsumoService
             IdProveedor = i.IdProveedor,
             NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
             CuitProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.Cuit : null,
-            Estado = i.Estado,
+            Estado = i.Estado != null && i.Estado.ToLower() == "pulenta"
+              ? "Disponible"
+              : (i.Estado ?? "Disponible"),
             IdUbicacion = i.IdUbicacion,
             CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null
           })
@@ -128,7 +130,9 @@ namespace TESIS_OG.Services.InsumoService
             IdProveedor = i.IdProveedor,
             NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
             CuitProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.Cuit : null,
-            Estado = i.Estado,
+            Estado = i.Estado != null && i.Estado.ToLower() == "pulenta"
+              ? "Disponible"
+              : (i.Estado ?? "Disponible"),
             IdUbicacion = i.IdUbicacion,
             CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
             DetalleStock = i.InsumoStocks.Select(s => new InsumoStockDTO
@@ -215,7 +219,7 @@ namespace TESIS_OG.Services.InsumoService
       insumo.StockMinimo = insumoDto.StockMinimo;
       insumo.IdProveedor = insumoDto.IdProveedor;
       insumo.IdUbicacion = insumoDto.IdUbicacion;
-      insumo.Estado = insumoDto.Estado;
+      insumo.Estado = NormalizarEstadoInsumo(insumoDto.Estado);
       insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
 
       await _context.SaveChangesAsync();
@@ -305,7 +309,19 @@ namespace TESIS_OG.Services.InsumoService
         query = query.Where(i => i.IdProveedor == filtros.IdProveedor.Value);
 
       if (!string.IsNullOrEmpty(filtros.Estado))
-        query = query.Where(i => i.Estado == filtros.Estado);
+      {
+        var estadoBuscado = NormalizarEstadoInsumo(filtros.Estado);
+        if (estadoBuscado == "Disponible")
+        {
+          query = query.Where(i =>
+            i.Estado == "Disponible" ||
+            (i.Estado != null && i.Estado.ToLower() == "pulenta"));
+        }
+        else
+        {
+          query = query.Where(i => i.Estado == estadoBuscado);
+        }
+      }
 
       // Filtro especial para stock bajo
       if (filtros.SoloStockBajo == true)
@@ -332,7 +348,9 @@ namespace TESIS_OG.Services.InsumoService
             IdProveedor = i.IdProveedor,
             NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
             CuitProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.Cuit : null,
-            Estado = i.Estado,
+            Estado = i.Estado != null && i.Estado.ToLower() == "pulenta"
+              ? "Disponible"
+              : (i.Estado ?? "Disponible"),
             IdUbicacion = i.IdUbicacion,
             CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null
           })
@@ -347,7 +365,8 @@ namespace TESIS_OG.Services.InsumoService
       var insumo = await _context.Insumos.FindAsync(id);
       if (insumo == null) return false;
 
-      insumo.Estado = nuevoEstado;
+      var estadoNormalizado = NormalizarEstadoInsumo(nuevoEstado);
+      insumo.Estado = estadoNormalizado;
       insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
 
       // Registrar movimiento de cambio de estado
@@ -360,7 +379,7 @@ namespace TESIS_OG.Services.InsumoService
           FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
           Origen = "-",
           Destino = "-",
-          Observacion = $"Cambio de estado a: {nuevoEstado}",
+          Observacion = $"Cambio de estado a: {estadoNormalizado}",
           IdUsuario = idUsuario
       };
       _context.InventarioMovimientos.Add(movimiento);
@@ -368,6 +387,18 @@ namespace TESIS_OG.Services.InsumoService
       await _context.SaveChangesAsync();
 
       return true;
+    }
+
+    private static string NormalizarEstadoInsumo(string? estado)
+    {
+      if (string.IsNullOrWhiteSpace(estado))
+        return "Disponible";
+
+      var estadoLimpio = estado.Trim();
+      if (estadoLimpio.Equals("pulenta", StringComparison.OrdinalIgnoreCase))
+        return "Disponible";
+
+      return estadoLimpio;
     }
   }
 }

@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using TESIS_OG.Data;
 using TESIS_OG.DTOs.Login;
+using TESIS_OG.Security;
 using TESIS_OG.Services.UsuariosService;
 
 namespace TESIS_OG.Controllers
@@ -65,7 +66,7 @@ namespace TESIS_OG.Controllers
                     detalles = new[]
                      {
                         "- El nombre de usuario no esté duplicado",
-                        "- El email no esté duplicado",
+                        "- El usuario de ingreso no esté duplicado",
                         "- El rol exista (ej: 'Administrador', 'Operador', 'Supervisor')"
                      }
                 });
@@ -86,13 +87,58 @@ namespace TESIS_OG.Controllers
             return Ok(roles);
         }
 
+        /// <summary>
+        /// Obtener subroles/permiso disponibles
+        /// </summary>
+        [HttpGet("permisos")]
+        public async Task<IActionResult> ObtenerPermisos()
+        {
+            var permisos = await _context.Permisos
+                .Select(p => new { p.IdPermiso, p.NombrePermiso })
+                .ToListAsync();
+
+            return Ok(permisos);
+        }
+
+        /// <summary>
+        /// Obtener áreas de producción para subroles de operario
+        /// </summary>
+        [HttpGet("areas")]
+        public async Task<IActionResult> ObtenerAreas()
+        {
+            var areas = await _context.AreaProduccions
+                .Where(a => a.Estado == null || a.Estado == "Activo")
+                .OrderBy(a => a.Orden)
+                .Select(a => new { a.IdArea, a.NombreArea })
+                .ToListAsync();
+
+            return Ok(areas);
+        }
+
         // <summary>
         /// Obtener todos los usuarios
         /// </summary>
         [HttpGet("usuarios")]
+        [RequiresPermission("Usuarios", "Ver")]
         public async Task<IActionResult> ObtenerUsuarios()
         {
-            var usuarios = await _authService.ObtenerTodosLosUsuariosAsync();
+            var usuarios = await _context.Usuarios
+                .Include(u => u.IdRolNavigation)
+                .Select(u => new UsuarioInternoIndexDTO
+                {
+                    IdUsuario = u.IdUsuario,
+                    Nombre = u.NombreUsuario,
+                    Apellido = u.ApellidoUsuario,
+                    NombreUsuarioIngreso = u.UsuarioIngreso,
+                    IdRol = u.IdRol,
+                    NombreRol = u.IdRolNavigation.NombreRol,
+                    Estado = u.Estado,
+                    FechaCreacion = u.FechaCreacion,
+                    UltimoAcceso = u.UltimoAcceso,
+                    SubRolesAreaIds = u.UsuarioAreas.Select(ua => ua.IdArea).ToList()
+                })
+                .OrderByDescending(u => u.FechaCreacion)
+                .ToListAsync();
             return Ok(usuarios);
         }
 
@@ -100,14 +146,276 @@ namespace TESIS_OG.Controllers
         /// Obtener un usuario por ID
         /// </summary>
         [HttpGet("usuarios/{id}")]
+        [RequiresPermission("Usuarios", "Ver")]
         public async Task<IActionResult> ObtenerUsuarioPorId(int id)
         {
-            var usuario = await _authService.ObtenerUsuarioPorIdAsync(id);
+            var usuario = await _context.Usuarios
+                .Include(u => u.IdRolNavigation)
+                .Where(u => u.IdUsuario == id)
+                .Select(u => new UsuarioInternoIndexDTO
+                {
+                    IdUsuario = u.IdUsuario,
+                    Nombre = u.NombreUsuario,
+                    Apellido = u.ApellidoUsuario,
+                    NombreUsuarioIngreso = u.UsuarioIngreso,
+                    IdRol = u.IdRol,
+                    NombreRol = u.IdRolNavigation.NombreRol,
+                    Estado = u.Estado,
+                    FechaCreacion = u.FechaCreacion,
+                    UltimoAcceso = u.UltimoAcceso,
+                    SubRolesAreaIds = u.UsuarioAreas.Select(ua => ua.IdArea).ToList()
+                })
+                .FirstOrDefaultAsync();
 
             if (usuario == null)
                 return NotFound(new { message = $"Usuario con ID {id} no encontrado" });
 
             return Ok(usuario);
+        }
+
+        /// <summary>
+        /// Crear usuario interno
+        /// </summary>
+        [HttpPost("usuarios")]
+        [RequiresPermission("Usuarios", "Crear")]
+        public async Task<IActionResult> CrearUsuarioInterno([FromBody] UsuarioInternoCreateDTO dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Nombre) ||
+                string.IsNullOrWhiteSpace(dto.Apellido) ||
+                string.IsNullOrWhiteSpace(dto.NombreUsuarioIngreso) ||
+                string.IsNullOrWhiteSpace(dto.Contrasena))
+            {
+                return BadRequest(new { message = "Nombre, apellido, usuario y contraseña son obligatorios." });
+            }
+
+            var rol = await _context.Rols.FirstOrDefaultAsync(r => r.IdRol == dto.IdRol);
+            if (rol == null) return BadRequest(new { message = "Rol inválido." });
+
+            var username = dto.NombreUsuarioIngreso.Trim();
+
+            var existeUsername = await _context.Usuarios.AnyAsync(u =>
+                u.UsuarioIngreso == username);
+            if (existeUsername)
+            {
+                return BadRequest(new { message = "El usuario de ingreso ya existe." });
+            }
+
+            var nuevoUsuario = new Models.Usuario
+            {
+                NombreUsuario = dto.Nombre.Trim(),
+                ApellidoUsuario = dto.Apellido.Trim(),
+                UsuarioIngreso = username,
+                Contrasena = BCrypt.Net.BCrypt.HashPassword(dto.Contrasena.Trim()),
+                IdRol = dto.IdRol,
+                Estado = "Activo",
+                FechaCreacion = DateOnly.FromDateTime(DateTime.Now),
+                UltimoAcceso = null
+            };
+
+            _context.Usuarios.Add(nuevoUsuario);
+            await _context.SaveChangesAsync();
+
+            if (EsRolOperario(rol.NombreRol))
+            {
+                await GuardarAreasOperarioAsync(nuevoUsuario.IdUsuario, dto.SubRolesAreaIds);
+            }
+
+            _context.HistorialUsuarios.Add(new Models.HistorialUsuario
+            {
+                IdUsuario = nuevoUsuario.IdUsuario,
+                Accion = "ALTA_USUARIO_INTERNO",
+                Modulo = "Usuarios Internos",
+                FechaAccion = DateOnly.FromDateTime(DateTime.Now)
+            });
+            await _context.SaveChangesAsync();
+
+            return Ok(new UsuarioInternoIndexDTO
+            {
+                IdUsuario = nuevoUsuario.IdUsuario,
+                Nombre = nuevoUsuario.NombreUsuario,
+                Apellido = nuevoUsuario.ApellidoUsuario,
+                NombreUsuarioIngreso = nuevoUsuario.UsuarioIngreso,
+                IdRol = rol.IdRol,
+                NombreRol = rol.NombreRol,
+                Estado = nuevoUsuario.Estado,
+                FechaCreacion = nuevoUsuario.FechaCreacion,
+                UltimoAcceso = nuevoUsuario.UltimoAcceso,
+                SubRolesAreaIds = EsRolOperario(rol.NombreRol)
+                    ? dto.SubRolesAreaIds.Distinct().ToList()
+                    : new List<int>()
+            });
+        }
+
+        /// <summary>
+        /// Actualizar usuario interno
+        /// </summary>
+        [HttpPut("usuarios/{id}")]
+        [RequiresPermission("Usuarios", "Editar")]
+        public async Task<IActionResult> ActualizarUsuarioInterno(int id, [FromBody] UsuarioInternoUpdateDTO dto)
+        {
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == id);
+            if (usuario == null) return NotFound(new { message = "Usuario no encontrado." });
+
+            if (string.IsNullOrWhiteSpace(dto.Nombre) ||
+                string.IsNullOrWhiteSpace(dto.Apellido) ||
+                string.IsNullOrWhiteSpace(dto.NombreUsuarioIngreso))
+            {
+                return BadRequest(new { message = "Nombre, apellido y usuario de ingreso son obligatorios." });
+            }
+
+            var rol = await _context.Rols.FirstOrDefaultAsync(r => r.IdRol == dto.IdRol);
+            if (rol == null) return BadRequest(new { message = "Rol inválido." });
+
+            var username = dto.NombreUsuarioIngreso.Trim();
+            var existeUsername = await _context.Usuarios.AnyAsync(u =>
+                u.IdUsuario != id && u.UsuarioIngreso == username);
+            if (existeUsername)
+            {
+                return BadRequest(new { message = "El usuario de ingreso ya existe." });
+            }
+
+            usuario.NombreUsuario = dto.Nombre.Trim();
+            usuario.ApellidoUsuario = dto.Apellido.Trim();
+            usuario.UsuarioIngreso = username;
+            usuario.IdRol = dto.IdRol;
+            usuario.Estado = string.IsNullOrWhiteSpace(dto.Estado) ? "Activo" : dto.Estado.Trim();
+
+            if (!string.IsNullOrWhiteSpace(dto.Contrasena))
+            {
+                usuario.Contrasena = BCrypt.Net.BCrypt.HashPassword(dto.Contrasena.Trim());
+            }
+
+            _context.HistorialUsuarios.Add(new Models.HistorialUsuario
+            {
+                IdUsuario = usuario.IdUsuario,
+                Accion = "MODIFICACION_USUARIO_INTERNO",
+                Modulo = "Usuarios Internos",
+                FechaAccion = DateOnly.FromDateTime(DateTime.Now)
+            });
+
+            // Reemplazar subroles por áreas según rol actual.
+            await GuardarAreasOperarioAsync(usuario.IdUsuario, EsRolOperario(rol.NombreRol)
+                ? dto.SubRolesAreaIds
+                : new List<int>());
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new UsuarioInternoIndexDTO
+            {
+                IdUsuario = usuario.IdUsuario,
+                Nombre = usuario.NombreUsuario,
+                Apellido = usuario.ApellidoUsuario,
+                NombreUsuarioIngreso = usuario.UsuarioIngreso,
+                IdRol = rol.IdRol,
+                NombreRol = rol.NombreRol,
+                Estado = usuario.Estado,
+                FechaCreacion = usuario.FechaCreacion,
+                UltimoAcceso = usuario.UltimoAcceso,
+                SubRolesAreaIds = EsRolOperario(rol.NombreRol)
+                    ? dto.SubRolesAreaIds.Distinct().ToList()
+                    : new List<int>()
+            });
+        }
+
+        /// <summary>
+        /// Baja lógica de usuario interno
+        /// </summary>
+        [HttpDelete("usuarios/{id}")]
+        [RequiresPermission("Usuarios", "Eliminar")]
+        public async Task<IActionResult> BorrarUsuarioInterno(int id)
+        {
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == id);
+            if (usuario == null) return NotFound(new { message = "Usuario no encontrado." });
+
+            usuario.Estado = "Inactivo";
+            _context.HistorialUsuarios.Add(new Models.HistorialUsuario
+            {
+                IdUsuario = usuario.IdUsuario,
+                Accion = "BAJA_USUARIO_INTERNO",
+                Modulo = "Usuarios Internos",
+                FechaAccion = DateOnly.FromDateTime(DateTime.Now)
+            });
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Usuario desactivado correctamente." });
+        }
+
+        /// <summary>
+        /// Auditoría de usuario interno
+        /// </summary>
+        [HttpGet("usuarios/{id}/auditoria")]
+        [RequiresPermission("Auditoria", "Ver")]
+        public async Task<IActionResult> ObtenerAuditoriaUsuario(int id)
+        {
+            var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == id);
+            if (usuario == null) return NotFound(new { message = "Usuario no encontrado." });
+
+            var eventos = await _context.HistorialUsuarios
+                .Where(h => h.IdUsuario == id)
+                .OrderByDescending(h => h.FechaAccion)
+                .Select(h => new UsuarioAuditoriaEventoDTO
+                {
+                    Accion = h.Accion,
+                    Modulo = h.Modulo,
+                    FechaAccion = h.FechaAccion
+                })
+                .ToListAsync();
+
+            var auditoria = new UsuarioAuditoriaDTO
+            {
+                IdUsuario = usuario.IdUsuario,
+                FechaCreacion = usuario.FechaCreacion,
+                UltimoAcceso = usuario.UltimoAcceso,
+                Eventos = eventos
+            };
+
+            return Ok(auditoria);
+        }
+
+        private static bool EsRolOperario(string nombreRol)
+        {
+            var rol = (nombreRol ?? string.Empty).Trim().ToLowerInvariant();
+            return rol.Contains("operario") || rol.Contains("operador");
+        }
+
+        private async Task GuardarAreasOperarioAsync(int idUsuario, List<int>? idsAreas)
+        {
+            var actuales = await _context.UsuarioAreas
+                .Where(ua => ua.IdUsuario == idUsuario)
+                .ToListAsync();
+
+            if (actuales.Count > 0)
+            {
+                _context.UsuarioAreas.RemoveRange(actuales);
+            }
+
+            var idsLimpios = (idsAreas ?? new List<int>())
+                .Distinct()
+                .Where(id => id > 0)
+                .ToList();
+
+            if (idsLimpios.Count == 0)
+            {
+                return;
+            }
+
+            var idsValidos = await _context.AreaProduccions
+                .Where(a => idsLimpios.Contains(a.IdArea))
+                .Select(a => a.IdArea)
+                .ToListAsync();
+
+            if (idsValidos.Count == 0)
+            {
+                return;
+            }
+
+            var nuevas = idsValidos.Select(idArea => new Models.UsuarioArea
+            {
+                IdUsuario = idUsuario,
+                IdArea = idArea
+            });
+
+            _context.UsuarioAreas.AddRange(nuevas);
         }
 
     }

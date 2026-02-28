@@ -3,6 +3,10 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
+import {
+  ReporteClientesTemporadaRequest,
+  ReporteClientesTemporadaResponse
+} from '../models/reporte.model';
 
 // Interfaz para el resumen del reporte
 export interface ResumenInventarioCritico {
@@ -63,9 +67,52 @@ export interface EvolucionPrenda {
   cantidad: number;
 }
 
+export interface RotacionInsumo {
+  año: number;
+  mes: number;
+  consumo: number;
+  reposicion: number;
+}
+
 export interface ClienteResumen {
   idCliente: number;
   nombre: string;
+}
+
+export interface ReporteCalidad {
+  totalInspecciones: number;
+  totalUnidadesInspeccionadas: number;
+  inspeccionesAprobadas: number;
+  inspeccionesObservadas: number;
+  inspeccionesRechazadas: number;
+  porcentajeAprobacion: number;
+  distribucionResultados: ResultadoCalidad[];
+  distribucionPorTalle: TalleCalidad[];
+  fallasPorCriterio: CriterioFalla[];
+  resumenPorProyecto: ProyectoCalidad[];
+}
+
+export interface ResultadoCalidad {
+  resultado: string;
+  cantidad: number;
+}
+
+export interface TalleCalidad {
+  talle: string;
+  cantidad: number;
+}
+
+export interface CriterioFalla {
+  criterio: string;
+  cantidadFallas: number;
+}
+
+export interface ProyectoCalidad {
+  idProyecto: number;
+  nombreProyecto: string;
+  totalInspecciones: number;
+  unidadesInspeccionadas: number;
+  rechazadas: number;
 }
 
 
@@ -136,6 +183,17 @@ export class ReportesService {
   }
 
   /**
+   * Obtener rotación temporal de un insumo (consumo vs reposición)
+   */
+  obtenerRotacionInsumo(idInsumo: number, anio?: number): Observable<RotacionInsumo[]> {
+    const params: string[] = [`idInsumo=${idInsumo}`];
+    if (anio) params.push(`anio=${anio}`);
+
+    return this.http.get<RotacionInsumo[]>(`${this.apiUrl}/rotacion-insumo?${params.join('&')}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Clientes que tienen proyectos (para el filtro)
    */
   obtenerClientesConProyectos(): Observable<ClienteResumen[]> {
@@ -148,6 +206,33 @@ export class ReportesService {
    */
   obtenerTiposPrenda(): Observable<string[]> {
     return this.http.get<string[]>(`${this.apiUrl}/tipos-prenda`)
+      .pipe(catchError(this.handleError));
+  }
+
+  obtenerReporteCalidad(idProyecto?: number, fechaInicio?: string, fechaFin?: string): Observable<ReporteCalidad> {
+    const params: string[] = [];
+    if (idProyecto) params.push(`idProyecto=${idProyecto}`);
+    if (fechaInicio) params.push(`fechaInicio=${fechaInicio}`);
+    if (fechaFin) params.push(`fechaFin=${fechaFin}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+
+    return this.http.get<ReporteCalidad>(`${this.apiUrl}/calidad${qs}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  obtenerReporteClientesTemporada(
+    filtros: ReporteClientesTemporadaRequest
+  ): Observable<ReporteClientesTemporadaResponse> {
+    const params: string[] = [];
+
+    if (filtros.anioInicio !== undefined) params.push(`anioInicio=${filtros.anioInicio}`);
+    if (filtros.anioFin !== undefined) params.push(`anioFin=${filtros.anioFin}`);
+    if (filtros.idCliente !== undefined) params.push(`idCliente=${filtros.idCliente}`);
+    if (filtros.temporada) params.push(`temporada=${encodeURIComponent(filtros.temporada)}`);
+
+    const qs = params.length ? `?${params.join('&')}` : '';
+
+    return this.http.get<ReporteClientesTemporadaResponse>(`${this.apiUrl}/clientes-temporada${qs}`)
       .pipe(catchError(this.handleError));
   }
 

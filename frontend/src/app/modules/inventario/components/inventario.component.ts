@@ -6,6 +6,9 @@ import { Insumo } from './../models/insumo.model';
 import { InsumoDetalleModalComponent } from '../insumo-detalle-modal/insumo-detalle-modal.component';
 import { InsumoFormComponent } from '../insumo-form/insumo-form.component';
 import { InsumoFiltrosComponent, FiltrosInsumo } from './insumo-filtros/insumo-filtros.component';
+import { AlertasService } from '../../../core/services/alertas';
+import { NotificacionesService } from '../../../core/services/notificaciones.service';
+import { PermissionService } from '../../../core/services/permission.service';
 
 @Component({
   selector: 'app-inventario',
@@ -33,20 +36,40 @@ export class InventarioComponent implements OnInit {
   insumoDropdownAbierto: number | null = null;
   estadosDisponibles = ['Disponible', 'En uso', 'A designar', 'Agotado'];
 
-  // Confirmación de cambio de estado
+  // Confirmacion de cambio de estado
   confirmacion: {
     visible: boolean;
     insumo: Insumo | null;
     nuevoEstado: string;
   } = { visible: false, insumo: null, nuevoEstado: '' };
 
-  // Confirmación de eliminación
+  // Confirmacion de eliminacion
   confirmacionEliminar: {
     visible: boolean;
     insumo: Insumo | null;
   } = { visible: false, insumo: null };
 
-  constructor(private insumosService: InsumosService) { }
+  // Modal de notificacion de stock
+  notificacionModal: {
+    visible: boolean;
+    insumo: Insumo | null;
+    tipo: 'Faltante' | 'Sobrante';
+    mensaje: string;
+    enviando: boolean;
+  } = {
+    visible: false,
+    insumo: null,
+    tipo: 'Faltante',
+    mensaje: '',
+    enviando: false
+  };
+
+  constructor(
+    private insumosService: InsumosService,
+    private alertas: AlertasService,
+    private notificacionesService: NotificacionesService,
+    public permissionService: PermissionService
+  ) { }
 
   ngOnInit(): void {
     this.cargarInsumos();
@@ -173,7 +196,7 @@ export class InventarioComponent implements OnInit {
       this.insumoDropdownAbierto === insumo.idInsumo ? null : insumo.idInsumo!;
   }
 
-  // Cuando se selecciona un estado del dropdown → muestra confirmación
+  // Cuando se selecciona un estado del dropdown -> muestra confirmacion
   seleccionarEstado(insumo: Insumo, nuevoEstado: string): void {
     const estadoActual = insumo.estado || 'Disponible';
     this.insumoDropdownAbierto = null;
@@ -228,5 +251,61 @@ export class InventarioComponent implements OnInit {
   stockBajo(insumo: Insumo): boolean {
     if (!insumo.stockMinimo) return false;
     return insumo.stockActual < insumo.stockMinimo;
+  }
+
+  stockSobrante(insumo: Insumo): boolean {
+    if (!insumo.stockMinimo || insumo.stockMinimo <= 0) return false;
+    return insumo.stockActual > (insumo.stockMinimo * 1.5);
+  }
+
+  abrirModalNotificacion(insumo: Insumo, event: Event): void {
+    event.stopPropagation();
+
+    const tipoSugerido: 'Faltante' | 'Sobrante' = this.stockBajo(insumo) ? 'Faltante' : 'Sobrante';
+    const mensajeSugerido = tipoSugerido === 'Faltante'
+      ? 'Stock por debajo del minimo, gestionar compra.'
+      : 'Stock alto, revisar reposicion y consumo.';
+
+    this.notificacionModal = {
+      visible: true,
+      insumo,
+      tipo: tipoSugerido,
+      mensaje: mensajeSugerido,
+      enviando: false
+    };
+  }
+
+  cerrarModalNotificacion(): void {
+    this.notificacionModal = {
+      visible: false,
+      insumo: null,
+      tipo: 'Faltante',
+      mensaje: '',
+      enviando: false
+    };
+  }
+
+  enviarNotificacionStock(): void {
+    if (!this.notificacionModal.insumo?.idInsumo || this.notificacionModal.enviando) return;
+
+    const { insumo, tipo, mensaje } = this.notificacionModal;
+    this.notificacionModal.enviando = true;
+
+    this.notificacionesService.crearNotificacionStock({
+      idInsumo: insumo.idInsumo!,
+      tipo,
+      stockActual: insumo.stockActual,
+      stockMinimo: insumo.stockMinimo,
+      mensaje: mensaje.trim() || undefined
+    }).subscribe({
+      next: () => {
+        this.alertas.success('Notificacion enviada', 'Se notifico al supervisor correctamente');
+        this.cerrarModalNotificacion();
+      },
+      error: () => {
+        this.notificacionModal.enviando = false;
+        this.alertas.error('Error', 'No se pudo enviar la notificacion');
+      }
+    });
   }
 }

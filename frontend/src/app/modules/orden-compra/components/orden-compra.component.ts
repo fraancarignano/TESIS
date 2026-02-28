@@ -6,6 +6,7 @@ import { OrdenCompra } from '../models/orden-compra.model';
 import { OrdenCompraFormComponent } from './orden-compra-form/orden-compra-form.component';
 import { OrdenCompraReceiveComponent } from './orden-compra-receive/orden-compra-receive.component';
 import { AlertasService } from '../../../core/services/alertas';
+import { AuthService } from '../../login/services/auth.service';
 
 @Component({
   selector: 'app-orden-compra',
@@ -26,7 +27,8 @@ export class OrdenCompraComponent implements OnInit {
 
   constructor(
     private ordenCompraService: OrdenCompraService,
-    private alertas: AlertasService
+    private alertas: AlertasService,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {
@@ -107,6 +109,49 @@ export class OrdenCompraComponent implements OnInit {
     }
   }
 
+  async habilitarControl(orden: OrdenCompra, event?: Event): Promise<void> {
+    event?.stopPropagation();
+
+    const confirmado = await this.alertas.confirmar(
+      '¿Habilitar recepción?',
+      `La orden ${orden.nroOrden} quedará disponible para que el operario realice el control de recepción.`,
+      'Sí, habilitar'
+    );
+    if (!confirmado) return;
+
+    const usuario = this.authService.obtenerUsuarioActual();
+    if (!usuario) { this.alertas.error('Error', 'No se pudo obtener el usuario actual'); return; }
+
+    this.ordenCompraService.habilitarControl(orden.idOrdenCompra, usuario.idUsuario).subscribe({
+      next: () => {
+        this.alertas.success('Recepción habilitada', 'El operario ya puede realizar el control.');
+        this.cargarOrdenes();
+        this.cerrarDetalle();
+      },
+      error: () => this.alertas.error('Error', 'No se pudo habilitar el control de recepción.')
+    });
+  }
+
+  async recalcularRecepcion(orden: OrdenCompra, event?: Event): Promise<void> {
+    event?.stopPropagation();
+
+    const confirmado = await this.alertas.confirmar(
+      '¿Recalcular recepción?',
+      `La orden ${orden.nroOrden} volverá a estado "Pendiente Control" para que el operario realice un nuevo control. El stock registrado no se revertirá.`,
+      'Sí, recalcular'
+    );
+    if (!confirmado) return;
+
+    this.ordenCompraService.recalcularRecepcion(orden.idOrdenCompra).subscribe({
+      next: () => {
+        this.alertas.success('Control reabierto', 'La orden está nuevamente disponible para el operario.');
+        this.cargarOrdenes();
+        this.cerrarDetalle();
+      },
+      error: () => this.alertas.error('Error', 'No se pudo recalcular la recepción.')
+    });
+  }
+
   async eliminarOrden(orden: OrdenCompra, event: Event): Promise<void> {
     event.stopPropagation();
 
@@ -134,6 +179,7 @@ export class OrdenCompraComponent implements OnInit {
     const estados: { [key: string]: string } = {
       'Pendiente': 'badge-pendiente',
       'Aprobada': 'badge-aprobada',
+      'PendienteControl': 'badge-pendiente-control',
       'Recibida': 'badge-recibida',
       'Cancelada': 'badge-cancelada'
     };

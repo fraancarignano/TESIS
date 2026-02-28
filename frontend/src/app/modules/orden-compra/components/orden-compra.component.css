@@ -67,22 +67,25 @@
 }
 
 .btn-nuevo {
-  background: #ff6b35;
+  background: #ff5722;
   color: white;
   border: none;
-  padding: 8px 14px;
+  padding: 0.58rem 0.9rem;
   border-radius: 6px;
   font-size: 0.82rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   white-space: nowrap;
 }
 
 .btn-nuevo:hover {
-  background: #ff5722;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  background: #f4511e;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.25);
 }
 
 .loading-container,
@@ -194,24 +197,92 @@
   color: #721c24;
 }
 
-.acciones {
-  display: flex;
-  gap: 6px;
+.badge-pendiente-control {
+  background: #fff0d6;
+  color: #7d4d00;
+  border: 1px solid #f5c842;
 }
 
-.btn-eliminar {
-  background: #f44336;
+.btn-warning {
+  background: #ff9800;
   color: white;
   border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 0.7rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  margin-left: 12px;
 }
 
-.btn-eliminar:hover {
-  background: #d32f2f;
+.btn-warning:hover {
+  background: #e65100;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+.btn-habilitar:hover {
+  background: #e8f5e9;
+}
+
+.btn-recalcular:hover {
+  background: #fff3e0;
+}
+
+.acciones {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.btn-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 4px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  padding: 0;
+}
+
+.btn-delete {
+  color: #d32f2f;
+}
+
+.btn-delete:hover {
+  background: #ffebee;
+}
+
+.btn-icon svg {
+  width: 0.76rem;
+  height: 0.76rem;
+}
+
+.btn-agregar {
+  background: #ff5722;
+  color: white;
+  border: none;
+  padding: 0.58rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.btn-agregar:hover {
+  background: #f4511e;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.25);
 }
 
 .empty-state {
@@ -233,17 +304,6 @@
 .empty-state p {
   color: #999;
   margin-bottom: 24px;
-}
-
-.btn-agregar {
-  background: #ff6b35;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .footer-info {

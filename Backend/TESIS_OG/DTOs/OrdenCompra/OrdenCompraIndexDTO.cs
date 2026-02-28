@@ -11,6 +11,11 @@
         public string Estado { get; set; } = null!;
         public decimal TotalOrden { get; set; }
 
+        // Control Recepción
+        public DateOnly? FechaHabilitacionControl { get; set; }
+        public DateOnly? FechaRecepcionControl { get; set; }
+        public string? ObservacionControl { get; set; }
+
         // Lista de detalles
         public List<DetalleOrdenCompraIndexDTO>? Detalles { get; set; }
     }
