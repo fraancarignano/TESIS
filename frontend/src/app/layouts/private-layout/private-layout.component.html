@@ -97,6 +97,11 @@
       <a routerLink="/ordenes" routerLinkActive="active" class="nav-item" *appHasPermission="{ modulo: 'OrdenesCompra', accion: 'Recepcionar' }">
         <span class="text">Ordenes de Compra</span>
       </a>
+
+      <a routerLink="/notificaciones" routerLinkActive="active" class="nav-item" *appHasPermission="{ modulo: 'Notificaciones', accion: 'Ver' }">
+        <span class="text">Notificaciones</span>
+        <span class="badge-count" *ngIf="notificacionesStockCount > 0">{{ notificacionesStockCount }}</span>
+      </a>
     </nav>
 
     <div class="user-profile">

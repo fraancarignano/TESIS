@@ -276,6 +276,14 @@ td {
   background: #ffebee;
 }
 
+.btn-notify {
+  color: #ff5722;
+}
+
+.btn-notify:hover {
+  background: #fff3e0;
+}
+
 .btn-icon svg {
   width: 0.76rem;
   height: 0.76rem;
@@ -523,6 +531,45 @@ td {
   color: #d32f2f !important;
   font-weight: 600;
   margin-top: -10px;
+}
+
+.modal-notificacion {
+  max-width: 520px;
+  text-align: left;
+}
+
+.modal-subtitle {
+  margin-bottom: 14px;
+}
+
+.campo-form {
+  margin-bottom: 12px;
+}
+
+.campo-form label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.campo-form select,
+.campo-form textarea {
+  width: 100%;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+}
+
+.campo-form select:focus,
+.campo-form textarea:focus {
+  outline: none;
+  border-color: #ff5722;
+  box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.12);
 }
 
 /* Responsive */

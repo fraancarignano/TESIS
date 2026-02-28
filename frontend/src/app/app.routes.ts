@@ -99,6 +99,12 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/orden-compra/components/orden-compra.component').then(m => m.OrdenCompraComponent)
       },
       {
+        path: 'notificaciones',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Notificaciones', accion: 'Ver' } },
+        loadComponent: () => import('./modules/notificaciones/components/notificaciones.component')
+      },
+      {
         path: 'usuarios',
         redirectTo: '/usuarios/internos',
         pathMatch: 'full'
