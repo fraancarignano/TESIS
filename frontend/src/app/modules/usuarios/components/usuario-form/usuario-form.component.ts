@@ -32,6 +32,7 @@ export class UsuarioFormComponent implements OnInit {
   formulario!: FormGroup;
   esEdicion = false;
   mostrarContrasena = false;
+  intentoGuardar = false;
 
   constructor(private fb: FormBuilder) {}
 
@@ -69,6 +70,8 @@ export class UsuarioFormComponent implements OnInit {
   }
 
   guardarFormulario(): void {
+    this.intentoGuardar = true;
+
     if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
       return;
@@ -88,6 +91,7 @@ export class UsuarioFormComponent implements OnInit {
   }
 
   cancelar(): void {
+    this.intentoGuardar = false;
     this.cerrar.emit();
   }
 
@@ -97,6 +101,6 @@ export class UsuarioFormComponent implements OnInit {
 
   tieneError(campo: string): boolean {
     const control = this.formulario.get(campo);
-    return !!control && control.invalid && control.touched;
+    return !!control && control.invalid && (control.touched || this.intentoGuardar);
   }
 }
