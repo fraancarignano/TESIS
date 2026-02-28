@@ -6,12 +6,14 @@ using TESIS_OG.Data;
 using TESIS_OG.DTOs.Reportes;
 using TESIS_OG.DTOs.Reportes.Calidad;
 using TESIS_OG.DTOs.Reportes.Inventario;
+using TESIS_OG.Security;
 using TESIS_OG.Services.ReportesService;
 
 namespace TESIS_OG.Controllers
 {
   [ApiController]
   [Route("api/[controller]")]
+  [RequiresPermission("Reportes", "Ver")]
   public class ReportesController : ControllerBase
   {
     private readonly TamarindoDbContext _context;

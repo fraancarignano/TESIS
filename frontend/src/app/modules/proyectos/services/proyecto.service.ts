@@ -13,6 +13,8 @@ import {
   ActualizarAvanceDTO,
   RegistrarScrapDTO,
   AgregarObservacionDTO,
+  CompletarAreaRequestDTO,
+  ProyectoAvanceArea,
   MaterialAsignado,
   proyectoToVista,
   mapearEstadoParaBackend
@@ -142,6 +144,19 @@ export class ProyectosService {
    */
   actualizarAvance(id: number, avance: ActualizarAvanceDTO): Observable<any> {
     return this.http.put(`${this.apiUrl}/${id}/avance`, avance).pipe(
+      tap(() => this.obtenerProyectos().subscribe()),
+      catchError(this.handleError)
+    );
+  }
+
+  obtenerAvanceAreas(idProyecto: number): Observable<ProyectoAvanceArea[]> {
+    return this.http.get<ProyectoAvanceArea[]>(`${this.apiUrl}/${idProyecto}/avance-areas`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  completarArea(idProyecto: number, area: string, payload: CompletarAreaRequestDTO): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${idProyecto}/areas/${encodeURIComponent(area)}/completar`, payload).pipe(
       tap(() => this.obtenerProyectos().subscribe()),
       catchError(this.handleError)
     );

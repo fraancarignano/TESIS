@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 import { PrivateLayoutComponent } from './layouts/private-layout/private-layout.component';
 
 export const routes: Routes = [
@@ -13,16 +14,24 @@ export const routes: Routes = [
     loadComponent: () => import('./modules/login/components/login.component').then(m => m.LoginComponent)
   },
   {
+    path: 'sin-acceso',
+    loadComponent: () => import('./core/components/sin-acceso/sin-acceso.component')
+  },
+  {
     path: '',
     component: PrivateLayoutComponent,
     canActivate: [authGuard],
     children: [
       {
         path: 'clientes',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Clientes', accion: 'Ver' } },
         loadComponent: () => import('./modules/clientes/components/clientes.component').then(m => m.ClientesComponent)
       },
       {
         path: 'proyectos',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Proyectos', accion: 'Ver' } },
         loadComponent: () => import('./modules/proyectos/components/proyectos.component').then(m => m.ProyectosComponent)
       },
       {
@@ -35,6 +44,8 @@ export const routes: Routes = [
       },
       {
         path: 'inventario',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Inventario', accion: 'Ver' } },
         loadComponent: () => import('./modules/inventario/components/inventario.component').then(m => m.InventarioComponent)
       },
       {
@@ -51,18 +62,26 @@ export const routes: Routes = [
       },
       {
         path: 'ubicaciones',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Ubicaciones', accion: 'Ver' } },
         loadComponent: () => import('./modules/ubicaciones/components/ubicaciones.component').then(m => m.UbicacionesComponent)
       },
       {
         path: 'reportes/inventario',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Reportes', accion: 'Ver' } },
         loadComponent: () => import('./modules/reportes/Inventario/reporte-inventario-critico.component')
       },
       {
         path: 'reportes/proyectos',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Reportes', accion: 'Ver' } },
         loadComponent: () => import('./modules/reportes/Proyectos/reporte-proyectos.component').then(m => m.ReporteProyectosComponent)
       },
       {
         path: 'reportes/calidad',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Reportes', accion: 'Ver' } },
         loadComponent: () => import('./modules/reportes/Calidad/reporte-calidad.component')
       },
       {
@@ -75,6 +94,8 @@ export const routes: Routes = [
       },
       {
         path: 'ordenes',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'OrdenesCompra', accion: 'Recepcionar' } },
         loadComponent: () => import('./modules/orden-compra/components/orden-compra.component').then(m => m.OrdenCompraComponent)
       },
       {

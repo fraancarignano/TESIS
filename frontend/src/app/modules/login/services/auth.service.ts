@@ -4,6 +4,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { PermissionService } from '../../../core/services/permission.service';
 import { 
   LoginCredentials, 
   LoginResponse, 
@@ -21,7 +22,8 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    public router: Router
+    public router: Router,
+    private permissionService: PermissionService
   ) {
     // Verificar token al iniciar el servicio
     this.verificarSesionAlCargar();
@@ -35,6 +37,11 @@ export class AuthService {
           if (response.token) {
             this.guardarToken(response.token);
             this.guardarUsuario(response);
+            if (response.idUsuario) {
+              this.permissionService.cargarPermisos(response.idUsuario).subscribe({
+                error: (err) => console.error('No se pudieron cargar permisos al login', err)
+              });
+            }
             this.iniciarTemporizadorExpiracion();
           }
         })
@@ -119,6 +126,7 @@ export class AuthService {
     localStorage.removeItem('token');
     localStorage.removeItem('token_expiration');
     localStorage.removeItem('usuario');
+    this.permissionService.limpiar();
     
     if (this.tokenExpirationTimer) {
       clearTimeout(this.tokenExpirationTimer);
@@ -148,6 +156,12 @@ export class AuthService {
     // Al cargar la app, verificar si el token sigue válido
     const token = this.obtenerToken();
     if (token) {
+      const usuario = this.obtenerUsuarioActual();
+      if (usuario?.idUsuario) {
+        this.permissionService.cargarPermisos(usuario.idUsuario).subscribe({
+          error: (err) => console.error('No se pudieron recuperar permisos de sesión', err)
+        });
+      }
       this.iniciarTemporizadorExpiracion();
     }
   }

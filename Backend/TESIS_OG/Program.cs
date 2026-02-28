@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using TESIS_OG.Data;
+using AppAuthorizationService = TESIS_OG.Services.AuthorizationService;
 using TESIS_OG.Services.ClienteService;
 using TESIS_OG.Services.InsumoService;
 using TESIS_OG.Services.OrdenCompraService;
@@ -34,6 +35,7 @@ namespace TESIS_OG
             builder.Services.AddRazorPages();
 
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<AppAuthorizationService.IAuthorizationService, AppAuthorizationService.AuthorizationService>();
             builder.Services.AddScoped<IProyectosService, ProyectoService>();
             builder.Services.AddScoped<IClienteService, ClienteService>();
             builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();

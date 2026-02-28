@@ -96,6 +96,7 @@
 
       <!-- TAB: ÁREAS Y AVANCES -->
       <div class="tab-content" *ngIf="tabActiva === 'areas'">
+        <app-avance-areas *ngIf="proyecto.idProyecto" [idProyecto]="proyecto.idProyecto"></app-avance-areas>
         <div class="areas-layout">
 
           <!-- LISTA DE ÁREAS -->

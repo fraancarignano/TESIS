@@ -1,13 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { HasPermissionDirective } from '../../core/directives/has-permission.directive';
 import { AlertasService } from '../../core/services/alertas';
+import { PermissionService } from '../../core/services/permission.service';
 import { AuthService } from '../../modules/login/services/auth.service';
 
 @Component({
   selector: 'app-private-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, HasPermissionDirective],
   templateUrl: './private-layout.component.html',
   styleUrls: ['./private-layout.component.css']
 })
@@ -19,8 +21,13 @@ export class PrivateLayoutComponent {
 
   constructor(
     private authService: AuthService,
+    public permissionService: PermissionService,
     private alertas: AlertasService
   ) { }
+
+  tienePermiso(modulo: string, accion: string): boolean {
+    return this.permissionService.tienePermiso(modulo, accion);
+  }
 
   obtenerNombreUsuario(): string {
     const usuario = this.authService.obtenerUsuarioActual();

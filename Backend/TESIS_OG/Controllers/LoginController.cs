@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using TESIS_OG.Data;
 using TESIS_OG.DTOs.Login;
+using TESIS_OG.Security;
 using TESIS_OG.Services.UsuariosService;
 
 namespace TESIS_OG.Controllers
@@ -103,6 +104,7 @@ namespace TESIS_OG.Controllers
         /// Obtener todos los usuarios
         /// </summary>
         [HttpGet("usuarios")]
+        [RequiresPermission("Usuarios", "Ver")]
         public async Task<IActionResult> ObtenerUsuarios()
         {
             var usuarios = await _context.Usuarios
@@ -128,6 +130,7 @@ namespace TESIS_OG.Controllers
         /// Obtener un usuario por ID
         /// </summary>
         [HttpGet("usuarios/{id}")]
+        [RequiresPermission("Usuarios", "Ver")]
         public async Task<IActionResult> ObtenerUsuarioPorId(int id)
         {
             var usuario = await _context.Usuarios
@@ -157,6 +160,7 @@ namespace TESIS_OG.Controllers
         /// Crear usuario interno
         /// </summary>
         [HttpPost("usuarios")]
+        [RequiresPermission("Usuarios", "Crear")]
         public async Task<IActionResult> CrearUsuarioInterno([FromBody] UsuarioInternoCreateDTO dto)
         {
             if (string.IsNullOrWhiteSpace(dto.Nombre) ||
@@ -221,6 +225,7 @@ namespace TESIS_OG.Controllers
         /// Actualizar usuario interno
         /// </summary>
         [HttpPut("usuarios/{id}")]
+        [RequiresPermission("Usuarios", "Editar")]
         public async Task<IActionResult> ActualizarUsuarioInterno(int id, [FromBody] UsuarioInternoUpdateDTO dto)
         {
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == id);
@@ -283,6 +288,7 @@ namespace TESIS_OG.Controllers
         /// Baja lógica de usuario interno
         /// </summary>
         [HttpDelete("usuarios/{id}")]
+        [RequiresPermission("Usuarios", "Eliminar")]
         public async Task<IActionResult> BorrarUsuarioInterno(int id)
         {
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == id);
@@ -305,6 +311,7 @@ namespace TESIS_OG.Controllers
         /// Auditoría de usuario interno
         /// </summary>
         [HttpGet("usuarios/{id}/auditoria")]
+        [RequiresPermission("Auditoria", "Ver")]
         public async Task<IActionResult> ObtenerAuditoriaUsuario(int id)
         {
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == id);

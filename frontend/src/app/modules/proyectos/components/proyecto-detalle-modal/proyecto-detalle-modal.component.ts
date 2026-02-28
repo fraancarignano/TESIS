@@ -5,6 +5,7 @@ import { ObservacionProyecto, ProyectoVista } from '../../models/proyecto.model'
 import { ProyectosService } from '../../services/proyecto.service';
 import { AlertasService } from '../../../../core/services/alertas';
 import { environment } from '../../../../../environments/environment';
+import { AvanceAreasComponent } from '../avance-areas/avance-areas.component';
 import {
   AREAS_PRODUCCION,
   AreaProduccion,
@@ -19,7 +20,7 @@ import {
 @Component({
   selector: 'app-proyecto-detalle-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AvanceAreasComponent],
   templateUrl: './proyecto-detalle-modal.component.html',
   styleUrls: ['./proyecto-detalle-modal.component.css']
 })
