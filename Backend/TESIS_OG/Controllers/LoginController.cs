@@ -173,10 +173,10 @@ namespace TESIS_OG.Controllers
             var username = dto.NombreUsuarioIngreso.Trim();
 
             var existeUsername = await _context.Usuarios.AnyAsync(u =>
-                u.UsuarioIngreso == username || u.NombreUsuario == username);
+                u.UsuarioIngreso == username);
             if (existeUsername)
             {
-                return BadRequest(new { message = "El nombre de usuario ya existe." });
+                return BadRequest(new { message = "El usuario de ingreso ya existe." });
             }
 
             var nuevoUsuario = new Models.Usuario
@@ -226,15 +226,22 @@ namespace TESIS_OG.Controllers
             var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.IdUsuario == id);
             if (usuario == null) return NotFound(new { message = "Usuario no encontrado." });
 
+            if (string.IsNullOrWhiteSpace(dto.Nombre) ||
+                string.IsNullOrWhiteSpace(dto.Apellido) ||
+                string.IsNullOrWhiteSpace(dto.NombreUsuarioIngreso))
+            {
+                return BadRequest(new { message = "Nombre, apellido y usuario de ingreso son obligatorios." });
+            }
+
             var rol = await _context.Rols.FirstOrDefaultAsync(r => r.IdRol == dto.IdRol);
             if (rol == null) return BadRequest(new { message = "Rol inválido." });
 
             var username = dto.NombreUsuarioIngreso.Trim();
             var existeUsername = await _context.Usuarios.AnyAsync(u =>
-                u.IdUsuario != id && (u.UsuarioIngreso == username || u.NombreUsuario == username));
+                u.IdUsuario != id && u.UsuarioIngreso == username);
             if (existeUsername)
             {
-                return BadRequest(new { message = "El nombre de usuario ya existe." });
+                return BadRequest(new { message = "El usuario de ingreso ya existe." });
             }
 
             usuario.NombreUsuario = dto.Nombre.Trim();

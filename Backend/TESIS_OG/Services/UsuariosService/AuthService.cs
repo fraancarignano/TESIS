@@ -22,9 +22,9 @@ namespace TESIS_OG.Services.UsuariosService
 
         public async Task<LoginResponseDTO?> LoginAsync(LoginDTO loginDto)
         {
-            // Buscar usuario por nombre de usuario
+            // Buscar usuario por nombre de ingreso (columna nombreIngreso en BD)
             var usuario = await _context.Usuarios
-                .FirstOrDefaultAsync(u => u.NombreUsuario == loginDto.NombreUsuario);
+                .FirstOrDefaultAsync(u => u.UsuarioIngreso == loginDto.NombreUsuario);
 
             if (usuario == null)
                 return null;

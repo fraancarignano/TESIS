@@ -13,7 +13,7 @@
 -- 1. Crear Usuario: Alan Herrera (Admin - Rol 1)
 IF NOT EXISTS (SELECT * FROM Usuario WHERE NombreUsuario = 'alanski')
 BEGIN
-    INSERT INTO Usuario (NombreUsuario, ApellidoUsuario, UsuarioIngreso, Contrasena, id_Rol, estado, fecha_Creacion)
+    INSERT INTO Usuario (NombreUsuario, ApellidoUsuario, nombreIngreso, Contrasena, id_Rol, estado, fecha_Creacion)
     VALUES ('Alan', 'Herrera', 'alan@test.com', '123456', 1, 'Activo', GETDATE());
 END
 ELSE
@@ -25,7 +25,7 @@ GO
 -- 2. Crear Usuario: Franco (Operario - Rol 3)
 IF NOT EXISTS (SELECT * FROM Usuario WHERE NombreUsuario = 'franco')
 BEGIN
-    INSERT INTO Usuario (NombreUsuario, ApellidoUsuario, UsuarioIngreso, Contrasena, id_Rol, estado, fecha_Creacion)
+    INSERT INTO Usuario (NombreUsuario, ApellidoUsuario, nombreIngreso, Contrasena, id_Rol, estado, fecha_Creacion)
     VALUES ('Franco', 'Operario', 'franco@test.com', '123456', 3, 'Activo', GETDATE());
 END
 ELSE
@@ -51,7 +51,7 @@ GO
 -- 3. Crear Usuario: Octa (Deposito - Rol 4)
 IF NOT EXISTS (SELECT * FROM Usuario WHERE NombreUsuario = 'octa')
 BEGIN
-    INSERT INTO Usuario (NombreUsuario, ApellidoUsuario, UsuarioIngreso, Contrasena, id_Rol, estado, fecha_Creacion)
+    INSERT INTO Usuario (NombreUsuario, ApellidoUsuario, nombreIngreso, Contrasena, id_Rol, estado, fecha_Creacion)
     VALUES ('Octa', 'Deposito', 'octa@test.com', '123456', 4, 'Activo', GETDATE());
 END
 ELSE
