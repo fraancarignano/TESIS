@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
-  Permiso,
+  AreaSubrol,
   RolUsuario,
   UsuarioAuditoria,
   UsuarioInterno,
@@ -39,8 +39,8 @@ export class UsuariosService {
     return this.http.get<RolUsuario[]>(`${this.apiUrl}/roles`);
   }
 
-  obtenerPermisos(): Observable<Permiso[]> {
-    return this.http.get<Permiso[]>(`${this.apiUrl}/permisos`);
+  obtenerAreasSubrol(): Observable<AreaSubrol[]> {
+    return this.http.get<AreaSubrol[]>(`${this.apiUrl}/areas`);
   }
 
   obtenerAuditoria(idUsuario: number): Observable<UsuarioAuditoria> {

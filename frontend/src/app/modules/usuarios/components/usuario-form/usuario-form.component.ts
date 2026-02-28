@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Permiso, RolUsuario, UsuarioInterno } from '../../models/usuario.model';
+import { AreaSubrol, RolUsuario, UsuarioInterno } from '../../models/usuario.model';
 
 export interface UsuarioFormSubmit {
   nombre: string;
@@ -23,7 +23,7 @@ export interface UsuarioFormSubmit {
 export class UsuarioFormComponent implements OnInit {
   @Input() usuario: UsuarioInterno | null = null;
   @Input() roles: RolUsuario[] = [];
-  @Input() permisos: Permiso[] = [];
+  @Input() areasSubrol: AreaSubrol[] = [];
   @Input() subRolesSeleccionados: number[] = [];
 
   @Output() cerrar = new EventEmitter<void>();
@@ -56,17 +56,29 @@ export class UsuarioFormComponent implements OnInit {
   get esOperario(): boolean {
     const idRol = Number(this.formulario.get('idRol')?.value);
     const rol = this.roles.find(r => r.idRol === idRol);
-    return !!rol && rol.nombreRol.toLowerCase().includes('operario');
+    if (!rol) {
+      // Fallback por ID historico de Operario cuando el nombre no viene cargado.
+      return idRol === 3;
+    }
+
+    const nombreRol = rol.nombreRol.toLowerCase();
+    return nombreRol.includes('operario') || nombreRol.includes('operador');
   }
 
-  onToggleSubrol(idPermiso: number): void {
-    const existe = this.subRolesSeleccionados.includes(idPermiso);
+  onRolChange(): void {
+    if (!this.esOperario) {
+      this.subRolesSeleccionados = [];
+    }
+  }
+
+  onToggleSubrol(idArea: number): void {
+    const existe = this.subRolesSeleccionados.includes(idArea);
     if (existe) {
-      this.subRolesSeleccionados = this.subRolesSeleccionados.filter(id => id !== idPermiso);
+      this.subRolesSeleccionados = this.subRolesSeleccionados.filter(id => id !== idArea);
       return;
     }
 
-    this.subRolesSeleccionados = [...this.subRolesSeleccionados, idPermiso];
+    this.subRolesSeleccionados = [...this.subRolesSeleccionados, idArea];
   }
 
   guardarFormulario(): void {

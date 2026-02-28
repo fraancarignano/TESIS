@@ -1,4 +1,4 @@
-<div class="usuarios-container">
+ï»¿<div class="usuarios-container">
   <div class="header">
     <div class="breadcrumb">
       <span class="breadcrumb-item">Usuarios</span>
@@ -86,8 +86,8 @@
 
     <div *ngIf="usuariosFiltrados.length === 0" class="sin-resultados">
       <h3>No se encontraron usuarios internos</h3>
-      <p *ngIf="terminoBusqueda">Intenta con otro término de búsqueda</p>
-      <p *ngIf="!terminoBusqueda">Aún no hay usuarios internos registrados</p>
+      <p *ngIf="terminoBusqueda">Intenta con otro tÃ©rmino de bÃºsqueda</p>
+      <p *ngIf="!terminoBusqueda">AÃºn no hay usuarios internos registrados</p>
       <button class="btn btn-primary" (click)="abrirFormularioNuevo()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -107,7 +107,7 @@
   *ngIf="mostrarFormulario"
   [usuario]="usuarioSeleccionado"
   [roles]="roles"
-  [permisos]="permisos"
+  [areasSubrol]="areasSubrol"
   [subRolesSeleccionados]="subRolesSeleccionados"
   (cerrar)="cerrarFormulario()"
   (guardar)="guardarUsuario($event)"

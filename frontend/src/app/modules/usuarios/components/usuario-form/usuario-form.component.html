@@ -52,7 +52,7 @@
 
       <div class="form-group">
         <label>Rol</label>
-        <select formControlName="idRol" [class.error]="tieneError('idRol')">
+        <select formControlName="idRol" [class.error]="tieneError('idRol')" (change)="onRolChange()">
           <option [ngValue]="null">Seleccionar rol</option>
           <option *ngFor="let rol of roles" [ngValue]="rol.idRol">{{ rol.nombreRol }}</option>
         </select>
@@ -68,17 +68,22 @@
       </div>
 
       <div class="form-group full-width" *ngIf="esOperario">
-        <label>Subrol (selección múltiple)</label>
+        <label>Subroles por área (selección múltiple)</label>
+        <small *ngIf="!areasSubrol.length">No hay áreas disponibles para seleccionar.</small>
         <div class="subroles-grid">
-          <label class="subrol-option" *ngFor="let permiso of permisos">
+          <label class="subrol-option" *ngFor="let area of areasSubrol">
             <input
               type="checkbox"
-              [checked]="subRolesSeleccionados.includes(permiso.idPermiso)"
-              (change)="onToggleSubrol(permiso.idPermiso)"
+              [checked]="subRolesSeleccionados.includes(area.idArea)"
+              (change)="onToggleSubrol(area.idArea)"
             />
-            <span>{{ permiso.nombrePermiso }}</span>
+            <span>{{ area.nombreArea }}</span>
           </label>
         </div>
+      </div>
+
+      <div class="form-group full-width" *ngIf="!esOperario && formulario.get('idRol')?.value">
+        <small>Los subroles múltiples solo aplican para el rol Operario/Operador.</small>
       </div>
 
       <div class="modal-actions full-width">

@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+ï»¿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AlertasService } from '../../../core/services/alertas';
 import { UsuariosService } from '../services/usuarios.service';
-import { Permiso, RolUsuario, UsuarioAuditoria, UsuarioInterno } from '../models/usuario.model';
+import { AreaSubrol, RolUsuario, UsuarioAuditoria, UsuarioInterno } from '../models/usuario.model';
 import { UsuarioDetalleModalComponent } from './usuario-detalle-modal/usuario-detalle-modal.component';
 import { UsuarioFormComponent, UsuarioFormSubmit } from './usuario-form/usuario-form.component';
 
@@ -17,7 +17,7 @@ import { UsuarioFormComponent, UsuarioFormSubmit } from './usuario-form/usuario-
 export class UsuariosInternosComponent implements OnInit {
   usuarios: UsuarioInterno[] = [];
   roles: RolUsuario[] = [];
-  permisos: Permiso[] = [];
+  areasSubrol: AreaSubrol[] = [];
 
   terminoBusqueda = '';
   loading = false;
@@ -33,8 +33,6 @@ export class UsuariosInternosComponent implements OnInit {
   loadingAuditoria = false;
 
   subRolesSeleccionados: number[] = [];
-
-  private readonly subRolesStorageKey = 'usuarios_internos_subroles';
 
   constructor(
     private usuariosService: UsuariosService,
@@ -61,7 +59,7 @@ export class UsuariosInternosComponent implements OnInit {
     });
 
     this.usuariosService.obtenerRoles().subscribe({ next: (roles) => (this.roles = roles) });
-    this.usuariosService.obtenerPermisos().subscribe({ next: (permisos) => (this.permisos = permisos) });
+    this.usuariosService.obtenerAreasSubrol().subscribe({ next: (areas) => (this.areasSubrol = areas) });
   }
 
   get usuariosFiltrados(): UsuarioInterno[] {
@@ -85,7 +83,7 @@ export class UsuariosInternosComponent implements OnInit {
   abrirFormularioEditar(usuario: UsuarioInterno, event: Event): void {
     event.stopPropagation();
     this.usuarioSeleccionado = { ...usuario };
-    this.subRolesSeleccionados = this.obtenerSubRolesUsuario(usuario.idUsuario);
+    this.subRolesSeleccionados = usuario.subRolesAreaIds || [];
     this.mostrarFormulario = true;
   }
 
@@ -101,13 +99,13 @@ export class UsuariosInternosComponent implements OnInit {
       nombreUsuarioIngreso: payload.nombreUsuarioIngreso,
       contrasena: payload.contrasena,
       idRol: payload.idRol,
-      estado: payload.estado
+      estado: payload.estado,
+      subRolesAreaIds: payload.subRoles
     };
 
     if (this.usuarioSeleccionado) {
       this.usuariosService.actualizarUsuario(this.usuarioSeleccionado.idUsuario, request).subscribe({
-        next: (usuario) => {
-          this.guardarSubRolesUsuario(usuario.idUsuario, payload.subRoles);
+        next: () => {
           this.alertas.success('Usuario actualizado', 'Se guardaron los cambios');
           this.cerrarFormulario();
           this.cargarDatos();
@@ -122,10 +120,10 @@ export class UsuariosInternosComponent implements OnInit {
       apellido: payload.apellido,
       nombreUsuarioIngreso: payload.nombreUsuarioIngreso,
       contrasena: payload.contrasena || '',
-      idRol: payload.idRol
+      idRol: payload.idRol,
+      subRolesAreaIds: payload.subRoles
     }).subscribe({
-      next: (usuario) => {
-        this.guardarSubRolesUsuario(usuario.idUsuario, payload.subRoles);
+      next: () => {
         this.alertas.success('Usuario creado', 'Alta de usuario interno correcta');
         this.cerrarFormulario();
         this.cargarDatos();
@@ -138,16 +136,16 @@ export class UsuariosInternosComponent implements OnInit {
     event.stopPropagation();
 
     const confirm = await this.alertas.confirmar(
-      '¿Desactivar usuario?',
-      `Se desactivará a ${usuario.nombre} ${usuario.apellido}`,
-      'Sí, desactivar'
+      'Â¿Desactivar usuario?',
+      `Se desactivarÃ¡ a ${usuario.nombre} ${usuario.apellido}`,
+      'SÃ­, desactivar'
     );
 
     if (!confirm) return;
 
     this.usuariosService.borrarUsuario(usuario.idUsuario).subscribe({
       next: () => {
-        this.alertas.success('Usuario desactivado', 'Se realizó la baja lógica');
+        this.alertas.success('Usuario desactivado', 'Se realizÃ³ la baja lÃ³gica');
         this.cargarDatos();
       },
       error: (err) => this.alertas.error('Error', err?.error?.message || 'No se pudo desactivar')
@@ -184,25 +182,5 @@ export class UsuariosInternosComponent implements OnInit {
 
   getEstadoClass(estado: string): string {
     return estado?.toLowerCase() === 'activo' ? 'badge-activo' : 'badge-inactivo';
-  }
-
-  private obtenerSubRolesUsuario(idUsuario: number): number[] {
-    const data = this.obtenerMapaSubRoles();
-    return data[idUsuario] || [];
-  }
-
-  private guardarSubRolesUsuario(idUsuario: number, subRoles: number[]): void {
-    const data = this.obtenerMapaSubRoles();
-    data[idUsuario] = subRoles;
-    localStorage.setItem(this.subRolesStorageKey, JSON.stringify(data));
-  }
-
-  private obtenerMapaSubRoles(): Record<number, number[]> {
-    try {
-      const raw = localStorage.getItem(this.subRolesStorageKey);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
   }
 }

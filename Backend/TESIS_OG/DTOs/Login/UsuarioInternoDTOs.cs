@@ -11,6 +11,7 @@ namespace TESIS_OG.DTOs.Login
         public string Estado { get; set; } = null!;
         public DateOnly FechaCreacion { get; set; }
         public DateOnly? UltimoAcceso { get; set; }
+        public List<int> SubRolesAreaIds { get; set; } = new();
     }
 
     public class UsuarioInternoCreateDTO
@@ -20,6 +21,7 @@ namespace TESIS_OG.DTOs.Login
         public string NombreUsuarioIngreso { get; set; } = null!;
         public string Contrasena { get; set; } = null!;
         public int IdRol { get; set; }
+        public List<int> SubRolesAreaIds { get; set; } = new();
     }
 
     public class UsuarioInternoUpdateDTO
@@ -30,6 +32,7 @@ namespace TESIS_OG.DTOs.Login
         public string? Contrasena { get; set; }
         public int IdRol { get; set; }
         public string Estado { get; set; } = "Activo";
+        public List<int> SubRolesAreaIds { get; set; } = new();
     }
 
     public class UsuarioAuditoriaEventoDTO

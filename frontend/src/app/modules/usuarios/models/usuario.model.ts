@@ -8,6 +8,7 @@ export interface UsuarioInterno {
   estado: string;
   fechaCreacion: string;
   ultimoAcceso?: string | null;
+  subRolesAreaIds?: number[];
 }
 
 export interface RolUsuario {
@@ -15,9 +16,9 @@ export interface RolUsuario {
   nombreRol: string;
 }
 
-export interface Permiso {
-  idPermiso: number;
-  nombrePermiso: string;
+export interface AreaSubrol {
+  idArea: number;
+  nombreArea: string;
 }
 
 export interface UsuarioInternoCreate {
@@ -26,6 +27,7 @@ export interface UsuarioInternoCreate {
   nombreUsuarioIngreso: string;
   contrasena: string;
   idRol: number;
+  subRolesAreaIds?: number[];
 }
 
 export interface UsuarioInternoUpdate {
@@ -35,6 +37,7 @@ export interface UsuarioInternoUpdate {
   contrasena?: string;
   idRol: number;
   estado: string;
+  subRolesAreaIds?: number[];
 }
 
 export interface UsuarioAuditoriaEvento {

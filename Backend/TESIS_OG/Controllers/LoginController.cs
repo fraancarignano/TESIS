@@ -100,6 +100,21 @@ namespace TESIS_OG.Controllers
             return Ok(permisos);
         }
 
+        /// <summary>
+        /// Obtener áreas de producción para subroles de operario
+        /// </summary>
+        [HttpGet("areas")]
+        public async Task<IActionResult> ObtenerAreas()
+        {
+            var areas = await _context.AreaProduccions
+                .Where(a => a.Estado == null || a.Estado == "Activo")
+                .OrderBy(a => a.Orden)
+                .Select(a => new { a.IdArea, a.NombreArea })
+                .ToListAsync();
+
+            return Ok(areas);
+        }
+
         // <summary>
         /// Obtener todos los usuarios
         /// </summary>
@@ -119,7 +134,8 @@ namespace TESIS_OG.Controllers
                     NombreRol = u.IdRolNavigation.NombreRol,
                     Estado = u.Estado,
                     FechaCreacion = u.FechaCreacion,
-                    UltimoAcceso = u.UltimoAcceso
+                    UltimoAcceso = u.UltimoAcceso,
+                    SubRolesAreaIds = u.UsuarioAreas.Select(ua => ua.IdArea).ToList()
                 })
                 .OrderByDescending(u => u.FechaCreacion)
                 .ToListAsync();
@@ -146,7 +162,8 @@ namespace TESIS_OG.Controllers
                     NombreRol = u.IdRolNavigation.NombreRol,
                     Estado = u.Estado,
                     FechaCreacion = u.FechaCreacion,
-                    UltimoAcceso = u.UltimoAcceso
+                    UltimoAcceso = u.UltimoAcceso,
+                    SubRolesAreaIds = u.UsuarioAreas.Select(ua => ua.IdArea).ToList()
                 })
                 .FirstOrDefaultAsync();
 
@@ -198,6 +215,11 @@ namespace TESIS_OG.Controllers
             _context.Usuarios.Add(nuevoUsuario);
             await _context.SaveChangesAsync();
 
+            if (EsRolOperario(rol.NombreRol))
+            {
+                await GuardarAreasOperarioAsync(nuevoUsuario.IdUsuario, dto.SubRolesAreaIds);
+            }
+
             _context.HistorialUsuarios.Add(new Models.HistorialUsuario
             {
                 IdUsuario = nuevoUsuario.IdUsuario,
@@ -217,7 +239,10 @@ namespace TESIS_OG.Controllers
                 NombreRol = rol.NombreRol,
                 Estado = nuevoUsuario.Estado,
                 FechaCreacion = nuevoUsuario.FechaCreacion,
-                UltimoAcceso = nuevoUsuario.UltimoAcceso
+                UltimoAcceso = nuevoUsuario.UltimoAcceso,
+                SubRolesAreaIds = EsRolOperario(rol.NombreRol)
+                    ? dto.SubRolesAreaIds.Distinct().ToList()
+                    : new List<int>()
             });
         }
 
@@ -268,6 +293,11 @@ namespace TESIS_OG.Controllers
                 FechaAccion = DateOnly.FromDateTime(DateTime.Now)
             });
 
+            // Reemplazar subroles por áreas según rol actual.
+            await GuardarAreasOperarioAsync(usuario.IdUsuario, EsRolOperario(rol.NombreRol)
+                ? dto.SubRolesAreaIds
+                : new List<int>());
+
             await _context.SaveChangesAsync();
 
             return Ok(new UsuarioInternoIndexDTO
@@ -280,7 +310,10 @@ namespace TESIS_OG.Controllers
                 NombreRol = rol.NombreRol,
                 Estado = usuario.Estado,
                 FechaCreacion = usuario.FechaCreacion,
-                UltimoAcceso = usuario.UltimoAcceso
+                UltimoAcceso = usuario.UltimoAcceso,
+                SubRolesAreaIds = EsRolOperario(rol.NombreRol)
+                    ? dto.SubRolesAreaIds.Distinct().ToList()
+                    : new List<int>()
             });
         }
 
@@ -337,6 +370,52 @@ namespace TESIS_OG.Controllers
             };
 
             return Ok(auditoria);
+        }
+
+        private static bool EsRolOperario(string nombreRol)
+        {
+            var rol = (nombreRol ?? string.Empty).Trim().ToLowerInvariant();
+            return rol.Contains("operario") || rol.Contains("operador");
+        }
+
+        private async Task GuardarAreasOperarioAsync(int idUsuario, List<int>? idsAreas)
+        {
+            var actuales = await _context.UsuarioAreas
+                .Where(ua => ua.IdUsuario == idUsuario)
+                .ToListAsync();
+
+            if (actuales.Count > 0)
+            {
+                _context.UsuarioAreas.RemoveRange(actuales);
+            }
+
+            var idsLimpios = (idsAreas ?? new List<int>())
+                .Distinct()
+                .Where(id => id > 0)
+                .ToList();
+
+            if (idsLimpios.Count == 0)
+            {
+                return;
+            }
+
+            var idsValidos = await _context.AreaProduccions
+                .Where(a => idsLimpios.Contains(a.IdArea))
+                .Select(a => a.IdArea)
+                .ToListAsync();
+
+            if (idsValidos.Count == 0)
+            {
+                return;
+            }
+
+            var nuevas = idsValidos.Select(idArea => new Models.UsuarioArea
+            {
+                IdUsuario = idUsuario,
+                IdArea = idArea
+            });
+
+            _context.UsuarioAreas.AddRange(nuevas);
         }
 
     }
