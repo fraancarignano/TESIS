@@ -225,9 +225,27 @@ namespace TESIS_OG.Controllers
     {
       try
       {
-        // Ejecutar el stored procedure (ahora devuelve TODOS los insumos)
-        var todosLosInsumos = await _context.Database
-            .SqlQueryRaw<InventarioCriticoDTO>("EXEC sp_ReporteInventarioCritico")
+        // Se calcula desde tabla de insumos para evitar inconsistencias de estados legacy.
+        var todosLosInsumos = await _context.Insumos
+            .Include(i => i.IdTipoInsumoNavigation)
+            .Select(i => new InventarioCriticoDTO
+            {
+              IdInsumo = i.IdInsumo,
+              NombreInsumo = i.NombreInsumo,
+              TipoInsumo = i.IdTipoInsumoNavigation.NombreTipo,
+              StockActual = i.StockActual,
+              StockMinimo = i.StockMinimo ?? 0,
+              UnidadMedida = i.UnidadMedida,
+              UltimaActualizacion = i.FechaActualizacion.ToDateTime(TimeOnly.MinValue),
+              NivelCriticidad =
+                i.StockActual <= 0 ? "Agotado" :
+                (!i.StockMinimo.HasValue || i.StockMinimo <= 0) ? "Normal" :
+                (i.StockActual / i.StockMinimo <= 0.3m) ? "CrÃ­tico" :
+                (i.StockActual / i.StockMinimo <= 0.8m) ? "Bajo" :
+                (i.StockActual / i.StockMinimo <= 1m) ? "Alerta" :
+                "Normal",
+              DiasRestantes = null
+            })
             .ToListAsync();
 
         // Obtener total de insumos monitoreados
@@ -286,7 +304,10 @@ namespace TESIS_OG.Controllers
         {
           // Stock crítico por tipo
           stockPorTipo = await _context.Insumos
-                .Where(i => i.Estado == "Disponible" || i.Estado == "En uso")
+                .Where(i =>
+                  i.Estado == "Disponible" ||
+                  i.Estado == "En uso" ||
+                  (i.Estado != null && i.Estado.ToLower() == "pulenta"))
                 .GroupBy(i => i.IdTipoInsumoNavigation.NombreTipo)
                 .Select(g => new
                 {

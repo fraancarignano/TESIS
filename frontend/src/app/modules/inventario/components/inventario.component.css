@@ -71,29 +71,32 @@
   color: #999;
 }
 
-.btn-nuevo {
-  background-color: #ff5722;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 5px;
+.btn {
+  padding: 0.58rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
   transition: all 0.2s ease;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   white-space: nowrap;
 }
 
-.btn-nuevo:hover {
-  background-color: #e64a19;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(255, 87, 34, 0.3);
+.btn-primary {
+  background: #ff5722;
+  color: white;
 }
 
-.btn-nuevo:active {
+.btn-primary:hover {
+  background: #f4511e;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.25);
+}
+
+.btn-primary:active {
   transform: translateY(0);
 }
 
@@ -152,8 +155,15 @@ td {
 
 .sin-resultados {
   text-align: center;
-  padding: 20px !important;
+  padding: 2rem 0.8rem !important;
   color: #999;
+}
+
+.sin-resultados h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: #666;
+  font-weight: 500;
 }
 
 .nombre-con-alerta {
@@ -224,46 +234,51 @@ td {
   border: 1px solid #66bb6a;
 }
 
+.td-acciones {
+  text-align: right;
+  padding-right: 0.75rem;
+}
+
 .acciones {
   display: flex;
-  gap: 5px;
+  gap: 0.35rem;
   justify-content: flex-end;
+  align-items: center;
 }
 
-.btn-eliminar {
-  background-color: #f44336;
-  color: white;
-  border: none;
-  padding: 6px 10px;
+.btn-icon {
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.btn-eliminar:hover {
-  background-color: #d32f2f;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(244, 67, 54, 0.3);
-}
-
-.btn-modificar {
-  background-color: #c6ff00;
-  color: #333;
   border: none;
-  padding: 6px 10px;
-  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 600;
   transition: all 0.2s ease;
+  background: transparent;
+  padding: 0;
 }
 
-.btn-modificar:hover {
-  background-color: #aeea00;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(198, 255, 0, 0.3);
+.btn-edit {
+  color: #1976d2;
+}
+
+.btn-edit:hover {
+  background: #e3f2fd;
+}
+
+.btn-delete {
+  color: #d32f2f;
+}
+
+.btn-delete:hover {
+  background: #ffebee;
+}
+
+.btn-icon svg {
+  width: 0.76rem;
+  height: 0.76rem;
 }
 
 /* Dropdown de estado */
@@ -521,8 +536,9 @@ td {
     max-width: 100%;
   }
 
-  .acciones {
-    flex-direction: column;
+  .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 

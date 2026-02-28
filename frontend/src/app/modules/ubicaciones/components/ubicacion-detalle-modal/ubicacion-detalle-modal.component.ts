@@ -60,7 +60,7 @@ import { Insumo } from '../../../inventario/models/insumo.model';
                     <td>{{ insumo.stockActual }} {{ insumo.unidadMedida }}</td>
                     <td>
                       <span class="badge-estado" [ngClass]="getEstadoClass(insumo.estado)">
-                        {{ insumo.estado || 'Disponible' }}
+                        {{ getEstadoTexto(insumo.estado) }}
                       </span>
                     </td>
                   </tr>
@@ -270,5 +270,10 @@ export class UbicacionDetalleModalComponent implements OnInit {
       case 'a designar': return 'estado-a-designar';
       default: return 'estado-disponible';
     }
+  }
+
+  getEstadoTexto(estado?: string): string {
+    if (!estado) return 'Disponible';
+    return estado.trim().toLowerCase() === 'pulenta' ? 'Disponible' : estado;
   }
 }
