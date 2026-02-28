@@ -12,9 +12,9 @@ namespace TESIS_OG.DTOs.Login
         [StringLength(50, MinimumLength = 3, ErrorMessage = "El apellido debe tener entre 3 y 50 caracteres")]
         public string ApellidoUsuario { get; set; } = null!;
 
-        [Required(ErrorMessage = "El email es obligatorio")]
-        [EmailAddress(ErrorMessage = "El formato del email no es válido")]
-        public string Email { get; set; } = null!;
+        [Required(ErrorMessage = "El usuario de ingreso es obligatorio")]
+        [StringLength(80, MinimumLength = 3, ErrorMessage = "El usuario de ingreso debe tener entre 3 y 80 caracteres")]
+        public string UsuarioIngreso { get; set; } = null!;
 
         [Required(ErrorMessage = "La contrasena es obligatoria")]
         [StringLength(100, MinimumLength = 4, ErrorMessage = "La contrasena debe tener al menos 4 caracteres")]

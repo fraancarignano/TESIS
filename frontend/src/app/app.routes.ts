@@ -79,8 +79,12 @@ export const routes: Routes = [
       },
       {
         path: 'usuarios',
-        redirectTo: '/usuarios/proveedores',
+        redirectTo: '/usuarios/internos',
         pathMatch: 'full'
+      },
+      {
+        path: 'usuarios/internos',
+        loadComponent: () => import('./modules/usuarios/components/usuarios-internos.component').then(m => m.UsuariosInternosComponent)
       },
       {
         path: 'usuarios/proveedores',

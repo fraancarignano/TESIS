@@ -1124,10 +1124,10 @@ public partial class TamarindoDbContext : DbContext
                 .HasMaxLength(255)
                 .IsUnicode(false)
                 .HasColumnName("contrasena");
-            entity.Property(e => e.Email)
+            entity.Property(e => e.UsuarioIngreso)
                 .HasMaxLength(80)
                 .IsUnicode(false)
-                .HasColumnName("email");
+                .HasColumnName("UsuarioIngreso");
             entity.Property(e => e.Estado)
                 .HasMaxLength(10)
                 .IsUnicode(false)

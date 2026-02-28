@@ -37,6 +37,115 @@ h1, h2, h3, h4, h5, h6 {
   z-index: 100000 !important;
 }
 
+/* Normalizacion global de botones (referencia: modulo clientes) */
+:root {
+  --btn-primary-bg: #ff5722;
+  --btn-primary-bg-hover: #f4511e;
+  --btn-primary-shadow: 0 4px 12px rgba(255, 87, 34, 0.25);
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-border: #e0e0e0;
+  --btn-secondary-text: #666666;
+  --btn-edit-color: #1976d2;
+  --btn-edit-bg-hover: #e3f2fd;
+  --btn-delete-color: #d32f2f;
+  --btn-delete-bg-hover: #ffebee;
+}
+
+button.btn,
+a.btn,
+button.btn-nuevo,
+button.btn-agregar,
+button.btn-primary-sm,
+button.btn-primary-large {
+  padding: 0.58rem 0.9rem !important;
+  border-radius: 6px !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+  transition: all 0.2s ease !important;
+  border: none;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center;
+  gap: 0.3rem !important;
+  white-space: nowrap;
+}
+
+button.btn-primary,
+a.btn-primary,
+button.btn-nuevo,
+button.btn-agregar,
+button.btn-primary-sm,
+button.btn-primary-large {
+  background: var(--btn-primary-bg) !important;
+  color: #fff !important;
+}
+
+button.btn-primary:hover,
+a.btn-primary:hover,
+button.btn-nuevo:hover,
+button.btn-agregar:hover,
+button.btn-primary-sm:hover,
+button.btn-primary-large:hover {
+  background: var(--btn-primary-bg-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--btn-primary-shadow);
+}
+
+button.btn-secondary,
+a.btn-secondary {
+  background: var(--btn-secondary-bg) !important;
+  color: var(--btn-secondary-text) !important;
+  border: 1px solid var(--btn-secondary-border) !important;
+}
+
+button.btn-secondary:hover,
+a.btn-secondary:hover {
+  background: #f5f5f5 !important;
+  border-color: #ccc !important;
+}
+
+button.btn-icon,
+a.btn-icon {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  border-radius: 4px !important;
+  border: none;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  transition: all 0.2s ease !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+button.btn-icon svg,
+a.btn-icon svg {
+  width: 0.76rem !important;
+  height: 0.76rem !important;
+}
+
+button.btn-edit,
+a.btn-edit {
+  color: var(--btn-edit-color) !important;
+}
+
+button.btn-edit:hover,
+a.btn-edit:hover {
+  background: var(--btn-edit-bg-hover) !important;
+}
+
+button.btn-delete,
+a.btn-delete {
+  color: var(--btn-delete-color) !important;
+}
+
+button.btn-delete:hover,
+a.btn-delete:hover {
+  background: var(--btn-delete-bg-hover) !important;
+}
+
 /* Modo compacto para desktop */
 @media (min-width: 1200px) {
   html {
@@ -56,7 +165,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .btn {
-    padding: 8px 14px;
+    padding: 0.58rem 0.9rem;
   }
 
   table th,

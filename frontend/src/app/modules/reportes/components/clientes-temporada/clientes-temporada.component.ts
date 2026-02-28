@@ -42,7 +42,7 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
 
   readonly temporadas = ['Primavera-Verano', 'Otoño-Invierno'];
   readonly aniosDisponibles: number[] = [];
-  private chart?: Chart;
+  private chart?: Chart<'bar', (number | [number, number] | null)[], unknown>;
 
   filtros: ReporteClientesTemporadaRequest = {
     anioInicio: undefined,

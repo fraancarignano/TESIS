@@ -8,7 +8,7 @@ export interface LoginResponse {
   idUsuario: number;
   nombreUsuario: string;
   apellidoUsuario?: string;
-  email: string;
+  usuarioIngreso: string;
   idRol?: number;
   estado?: string;
   fechaCreacion?: string;
@@ -18,7 +18,7 @@ export interface LoginResponse {
 export interface UsuarioCreate {
   nombreUsuario: string;
   apellidoUsuario: string;
-  email: string;
+  usuarioIngreso: string;
   contrasena: string;
   nombreRol: string; // 'Administrador', 'Operador', 'Supervisor'
 }
@@ -27,7 +27,7 @@ export interface Usuario {
   idUsuario: number;
   nombreUsuario: string;
   apellidoUsuario: string;
-  email: string;
+  usuarioIngreso: string;
   nombreRol: string;
   estado: string;
   fechaCreacion: string;
