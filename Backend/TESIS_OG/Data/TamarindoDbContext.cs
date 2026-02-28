@@ -666,6 +666,17 @@ public partial class TamarindoDbContext : DbContext
                 .HasColumnType("decimal(9, 1)")
                 .HasColumnName("total_Orden");
 
+            // Control de Recepción — nuevas columnas
+            entity.Property(e => e.FechaHabilitacionControl)
+                .HasColumnName("FechaHabilitacionControl");
+            entity.Property(e => e.FechaRecepcionControl)
+                .HasColumnName("FechaRecepcionControl");
+            entity.Property(e => e.IdUsuarioControl)
+                .HasColumnName("IdUsuarioControl");
+            entity.Property(e => e.ObservacionControl)
+                .HasMaxLength(500)
+                .HasColumnName("ObservacionControl");
+
             entity.HasOne(d => d.IdProveedorNavigation).WithMany(p => p.OrdenCompras)
                 .HasForeignKey(d => d.IdProveedor)
                 .OnDelete(DeleteBehavior.ClientSetNull)

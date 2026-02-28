@@ -197,6 +197,39 @@
   color: #721c24;
 }
 
+.badge-pendiente-control {
+  background: #fff0d6;
+  color: #7d4d00;
+  border: 1px solid #f5c842;
+}
+
+.btn-warning {
+  background: #ff9800;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 12px;
+}
+
+.btn-warning:hover {
+  background: #e65100;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+.btn-habilitar:hover {
+  background: #e8f5e9;
+}
+
+.btn-recalcular:hover {
+  background: #fff3e0;
+}
+
 .acciones {
   display: flex;
   gap: 0.35rem;

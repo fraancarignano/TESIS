@@ -63,6 +63,10 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/movimientos/components/movimientos.component').then(m => m.MovimientosComponent)
       },
       {
+        path: 'inventario/control-recepcion',
+        loadComponent: () => import('./modules/inventario/components/control-recepcion/control-recepcion.component').then(m => m.ControlRecepcionComponent)
+      },
+      {
         path: 'inventario/catalogo',
         loadComponent: () => import('./modules/inventario/components/insumo-catalog/insumo-catalog.component').then(m => m.InsumoCatalogComponent)
       },

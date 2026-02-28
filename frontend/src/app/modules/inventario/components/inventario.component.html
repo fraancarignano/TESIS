@@ -12,7 +12,8 @@
           (ngModelChange)="aplicarFiltrosAvanzados()">
       </div>
       <button class="btn btn-primary" (click)="abrirFormularioNuevo()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="8" x2="12" y2="16"></line>
           <line x1="8" y1="12" x2="16" y2="12"></line>
@@ -21,7 +22,6 @@
       </button>
     </div>
   </div>
-
   <app-insumo-filtros (filtrosChange)="onFiltrosChange($event)"></app-insumo-filtros>
 
   <div class="tabla-inventario">
@@ -90,7 +90,8 @@
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
               </button>
-              <button class="btn-icon btn-delete" (click)="eliminarInsumo(insumo.idInsumo!, $event)" title="Eliminar insumo">
+              <button class="btn-icon btn-delete" (click)="eliminarInsumo(insumo.idInsumo!, $event)"
+                title="Eliminar insumo">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="3 6 5 6 21 6"></polyline>
                   <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>

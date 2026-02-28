@@ -19,6 +19,12 @@ public partial class OrdenCompra
 
     public decimal? TotalOrden { get; set; }
 
+    // Control de Recepción
+    public DateOnly? FechaHabilitacionControl { get; set; }
+    public DateOnly? FechaRecepcionControl { get; set; }
+    public int? IdUsuarioControl { get; set; }
+    public string? ObservacionControl { get; set; }
+
     public virtual ICollection<DetalleOrdenCompra> DetalleOrdenCompras { get; set; } = new List<DetalleOrdenCompra>();
 
     public virtual Proveedor IdProveedorNavigation { get; set; } = null!;

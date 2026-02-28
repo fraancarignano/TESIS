@@ -21,7 +21,8 @@
         </div>
       </div>
 
-      <a routerLink="/clientes" routerLinkActive="active" class="nav-item" *appHasPermission="{ modulo: 'Clientes', accion: 'Ver' }">
+      <a routerLink="/clientes" routerLinkActive="active" class="nav-item"
+        *appHasPermission="{ modulo: 'Clientes', accion: 'Ver' }">
         <span class="text">Clientes</span>
       </a>
 
@@ -45,10 +46,14 @@
           <a routerLink="/inventario/movimientos" routerLinkActive="active" class="nav-item sub">
             <span class="text">Historial de Movimientos</span>
           </a>
+          <a routerLink="/inventario/control-recepcion" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Control Recepción</span>
+          </a>
         </div>
       </div>
 
-      <a routerLink="/ubicaciones" routerLinkActive="active" class="nav-item" *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Ver' }">
+      <a routerLink="/ubicaciones" routerLinkActive="active" class="nav-item"
+        *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Ver' }">
         <span class="text">Ubicaciones</span>
       </a>
 
@@ -94,7 +99,8 @@
         </div>
       </div>
 
-      <a routerLink="/ordenes" routerLinkActive="active" class="nav-item" *appHasPermission="{ modulo: 'OrdenesCompra', accion: 'Recepcionar' }">
+      <a routerLink="/ordenes" routerLinkActive="active" class="nav-item"
+        *appHasPermission="{ modulo: 'OrdenesCompra', accion: 'Recepcionar' }">
         <span class="text">Ordenes de Compra</span>
       </a>
 

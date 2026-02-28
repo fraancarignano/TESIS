@@ -1,0 +1,121 @@
+<div class="control-recepcion-container">
+    <div class="section-header">
+        <h2>Control de Recepción</h2>
+        <p class="subtitle">Órdenes habilitadas por el administrador para revisión física</p>
+        <button class="btn-refresh" (click)="cargarOrdenes()" title="Actualizar lista">🔄</button>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Cargando órdenes pendientes...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !loading" class="error-container">
+        <p>❌ Error al cargar las órdenes</p>
+        <button class="btn-retry" (click)="cargarOrdenes()">Reintentar</button>
+    </div>
+
+    <!-- Empty -->
+    <div *ngIf="!loading && !error && ordenes.length === 0" class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>Sin órdenes pendientes</h3>
+        <p>No hay órdenes habilitadas para control en este momento. El administrador debe habilitar la recepción de una
+            orden desde el módulo de Órdenes de Compra.</p>
+    </div>
+
+    <!-- Lista de órdenes pendientes -->
+    <div *ngIf="!loading && !error && ordenes.length > 0" class="ordenes-list">
+        <div class="orden-card" *ngFor="let orden of ordenes">
+            <div class="orden-card-header">
+                <div class="orden-info">
+                    <strong class="nro-orden">{{ orden.nroOrden }}</strong>
+                    <span class="proveedor">{{ orden.nombreProveedor }}</span>
+                </div>
+                <div class="orden-meta">
+                    <span class="fecha">Habilitado: {{ formatearFecha(orden.fechaHabilitacionControl || '') }}</span>
+                    <span class="badge-control">⏳ Pendiente Control</span>
+                </div>
+            </div>
+
+            <div class="orden-card-body">
+                <div class="insumos-preview">
+                    <span *ngFor="let d of orden.detalles" class="insumo-chip">
+                        {{ d.nombreInsumo }} ({{ d.cantidad }})
+                    </span>
+                </div>
+            </div>
+
+            <div class="orden-card-footer">
+                <button class="btn-iniciar-control" (click)="abrirControl(orden)">
+                    📋 Iniciar Control
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de control -->
+    <div *ngIf="ordenActiva" class="modal-overlay" (click)="cerrarControl()">
+        <div class="modal-control" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Control de Recepción — {{ ordenActiva.nroOrden }}</h2>
+                <button class="btn-close" (click)="cerrarControl()">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="info-row">
+                    <span><strong>Proveedor:</strong> {{ ordenActiva.nombreProveedor }}</span>
+                    <span><strong>Pedido:</strong> {{ formatearFecha(ordenActiva.fechaSolicitud) }}</span>
+                </div>
+
+                <!-- Fecha de control -->
+                <div class="form-group">
+                    <label>Fecha de control</label>
+                    <input type="date" [(ngModel)]="fechaControl" class="input-fecha" />
+                </div>
+
+                <!-- Tabla de insumos a controlar -->
+                <table class="tabla-control">
+                    <thead>
+                        <tr>
+                            <th>Insumo</th>
+                            <th>Pedido</th>
+                            <th>Recibido ✏️</th>
+                            <th>Observación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let det of detallesControl">
+                            <td>{{ getNombreInsumo(det.idInsumo) }}</td>
+                            <td class="text-center">{{ getCantidadSolicitada(det.idInsumo) }}</td>
+                            <td>
+                                <input type="number" [(ngModel)]="det.cantidadRecibida" min="0.01" step="0.01"
+                                    class="input-cantidad"
+                                    [class.input-diff]="det.cantidadRecibida !== getCantidadSolicitada(det.idInsumo)" />
+                            </td>
+                            <td>
+                                <input type="text" [(ngModel)]="det.observacionDetalle" placeholder="Opcional..."
+                                    class="input-obs" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Observación general -->
+                <div class="form-group">
+                    <label>Observación general (opcional)</label>
+                    <textarea [(ngModel)]="observacion" rows="2"
+                        placeholder="Comentarios generales sobre la recepción..." class="input-obs-general"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" (click)="cerrarControl()">Cancelar</button>
+                <button class="btn-confirmar" (click)="confirmarControl()" [disabled]="guardando">
+                    {{ guardando ? 'Guardando...' : '✅ Confirmar Control' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
