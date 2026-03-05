@@ -1,4 +1,4 @@
-<div class="modal-overlay" (click)="cerrar.emit()">
+ï»¿<div class="modal-overlay" (click)="cerrar.emit()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>Detalle Usuario Interno</h2>
@@ -26,11 +26,11 @@
       </div>
 
       <div class="auditoria-box">
-        <h3>Auditoría</h3>
-        <p><strong>Fecha creación:</strong> {{ formatearFecha(auditoria?.fechaCreacion || usuario.fechaCreacion) }}</p>
-        <p><strong>Última conexión:</strong> {{ formatearFecha(auditoria?.ultimoAcceso || usuario.ultimoAcceso || null) }}</p>
+        <h3>Auditoria</h3>
+        <p><strong>Fecha creacion:</strong> {{ formatearFecha(auditoria?.fechaCreacion || usuario.fechaCreacion) }}</p>
+        <p><strong>Ultima conexion:</strong> {{ formatearFecha(auditoria?.ultimoAcceso || usuario.ultimoAcceso || null) }}</p>
 
-        <div *ngIf="loadingAuditoria" class="loading-text">Cargando auditoría...</div>
+        <div *ngIf="loadingAuditoria" class="loading-text">Cargando auditoria...</div>
 
         <div *ngIf="!loadingAuditoria && auditoria?.eventos?.length" class="eventos-lista">
           <div class="evento" *ngFor="let evento of auditoria?.eventos">
@@ -41,9 +41,37 @@
         </div>
 
         <p *ngIf="!loadingAuditoria && (!auditoria || !auditoria.eventos.length)" class="sin-eventos">
-          Sin eventos de auditoría registrados.
+          Sin eventos de auditoria registrados.
         </p>
       </div>
+
+      <!-- Seccion de Permisos de Usuario -->
+      <div class="permisos-section">
+        <button class="permisos-toggle" (click)="togglePermisos()" type="button">
+          <div class="permisos-toggle-left">
+            <svg class="permisos-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span class="permisos-toggle-label">Permisos de acceso</span>
+          </div>
+          <svg
+            class="permisos-chevron"
+            [class.rotado]="permisosAbiertos"
+            width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          >
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+
+        <div class="permisos-body" [class.abierto]="permisosAbiertos">
+          <app-permisos-usuario
+            [idUsuario]="usuario.idUsuario"
+            [visible]="permisosAbiertos"
+          ></app-permisos-usuario>
+        </div>
+      </div>
+
     </div>
 
     <div class="modal-footer">

@@ -1,0 +1,298 @@
+/* ─── Panel de permisos ─────────────────────────────────────────────────── */
+
+.permisos-panel {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Loading skeletons */
+.permisos-loading {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 0;
+}
+
+.skeleton-row {
+    height: 36px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Estado de error */
+.permisos-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #e05555;
+    font-size: 0.82rem;
+    padding: 8px 0;
+}
+
+.btn-reintentar {
+    background: none;
+    border: 1px solid #e05555;
+    border-radius: 4px;
+    color: #e05555;
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    cursor: pointer;
+    margin-left: auto;
+    transition: background 0.15s;
+}
+
+.btn-reintentar:hover {
+    background: #fff0f0;
+}
+
+/* ─── Lista de módulos ─────────────────────────────────────────────────── */
+
+.modulos-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.modulo-item {
+    border: 1px solid #e8eaf0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+}
+
+.modulo-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Cabecera del módulo */
+.modulo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 12px;
+    cursor: pointer;
+    background: #f7f8fc;
+    user-select: none;
+    transition: background 0.12s;
+}
+
+.modulo-header:hover {
+    background: #eef0f8;
+}
+
+.modulo-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modulo-nombre {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #2d2f40;
+}
+
+.modulo-badge {
+    font-size: 0.7rem;
+    color: #6b7280;
+    background: #e5e7f0;
+    border-radius: 20px;
+    padding: 1px 7px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Chevron */
+.chevron {
+    transition: transform 0.2s ease;
+    color: #9ca3af;
+    flex-shrink: 0;
+}
+
+.chevron.rotado {
+    transform: rotate(180deg);
+}
+
+/* ─── Checkbox de módulo (padre) ─────────────────────────────────────── */
+
+.checkbox-modulo {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 2px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    padding: 0;
+    background: white;
+}
+
+.checkbox-modulo.check-on {
+    background: #5b6ef5;
+    border-color: #5b6ef5;
+}
+
+.checkbox-modulo.check-partial {
+    background: #93a5fb;
+    border-color: #93a5fb;
+}
+
+.checkbox-modulo.check-off:hover {
+    border-color: #5b6ef5;
+}
+
+/* ─── Permisos hijos ─────────────────────────────────────────────────── */
+
+.permisos-hijos {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-height: 600px;
+    transition: max-height 0.25s ease, opacity 0.2s;
+    opacity: 1;
+}
+
+.permisos-hijos.oculto {
+    max-height: 0;
+    opacity: 0;
+}
+
+.permiso-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px 7px 42px;
+    cursor: pointer;
+    border-top: 1px solid #f0f1f7;
+    transition: background 0.1s;
+}
+
+.permiso-row:hover {
+    background: #f9faff;
+}
+
+/* Checkbox de permiso (hijo) */
+.checkbox-permiso {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 2px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    padding: 0;
+    background: white;
+}
+
+.checkbox-permiso.activo {
+    background: #5b6ef5;
+    border-color: #5b6ef5;
+}
+
+.checkbox-permiso:not(.activo):hover {
+    border-color: #5b6ef5;
+}
+
+.permiso-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    min-width: 0;
+}
+
+.permiso-accion {
+    font-size: 0.8rem;
+    color: #374151;
+    font-weight: 500;
+}
+
+.permiso-desc {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Tag "custom" para overrides explícitos */
+.override-tag {
+    font-size: 0.62rem;
+    color: #7c6ef5;
+    background: #ede9fe;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    flex-shrink: 0;
+}
+
+/* ─── Footer guardar ─────────────────────────────────────────────────── */
+
+.permisos-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 10px;
+    margin-top: 4px;
+    border-top: 1px solid #eaedf4;
+}
+
+.btn-guardar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #5b6ef5;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+}
+
+.btn-guardar:hover:not(:disabled) {
+    background: #4a5de4;
+    transform: translateY(-1px);
+}
+
+.btn-guardar:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.spinner-sm {
+    width: 13px;
+    height: 13px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

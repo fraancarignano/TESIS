@@ -129,8 +129,74 @@
 }
 
 @media (max-width: 768px) {
+
   .info-grid,
   .evento {
     grid-template-columns: 1fr;
   }
+}
+
+/* ─── Sección de Permisos de Acceso ──────────────────────────────────── */
+
+.permisos-section {
+  margin-top: 0.8rem;
+  border: 1px solid #e8eaf0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.permisos-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 9px 12px;
+  background: #f7f8fc;
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s;
+  text-align: left;
+}
+
+.permisos-toggle:hover {
+  background: #eef0f8;
+}
+
+.permisos-toggle-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.permisos-icon {
+  color: #5b6ef5;
+  flex-shrink: 0;
+}
+
+.permisos-toggle-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2d2f40;
+}
+
+.permisos-chevron {
+  color: #9ca3af;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.permisos-chevron.rotado {
+  transform: rotate(180deg);
+}
+
+.permisos-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.28s ease, padding 0.2s;
+  padding: 0 12px;
+}
+
+.permisos-body.abierto {
+  max-height: 800px;
+  padding: 12px;
 }

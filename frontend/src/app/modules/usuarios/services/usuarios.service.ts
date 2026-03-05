@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   AreaSubrol,
+  GuardarPermisoItem,
+  PermisoPanelResponse,
   RolUsuario,
   UsuarioAuditoria,
   UsuarioInterno,
@@ -11,13 +13,12 @@ import {
   UsuarioInternoUpdate
 } from '../models/usuario.model';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class UsuariosService {
   private apiUrl = `${environment.apiUrl}/Login`;
+  private apiUrlUsuarios = `${environment.apiUrl}/Usuarios`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   obtenerUsuarios(): Observable<UsuarioInterno[]> {
     return this.http.get<UsuarioInterno[]>(`${this.apiUrl}/usuarios`);
@@ -45,5 +46,13 @@ export class UsuariosService {
 
   obtenerAuditoria(idUsuario: number): Observable<UsuarioAuditoria> {
     return this.http.get<UsuarioAuditoria>(`${this.apiUrl}/usuarios/${idUsuario}/auditoria`);
+  }
+
+  obtenerPermisosPanel(idUsuario: number): Observable<PermisoPanelResponse> {
+    return this.http.get<PermisoPanelResponse>(`${this.apiUrlUsuarios}/${idUsuario}/permisos-panel`);
+  }
+
+  guardarPermisos(idUsuario: number, permisos: GuardarPermisoItem[]): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(`${this.apiUrlUsuarios}/${idUsuario}/permisos`, { permisos });
   }
 }

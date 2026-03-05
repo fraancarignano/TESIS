@@ -52,3 +52,28 @@ export interface UsuarioAuditoria {
   ultimoAcceso?: string | null;
   eventos: UsuarioAuditoriaEvento[];
 }
+
+// ─── Permisos personalizados ────────────────────────────────────────────────
+
+export interface PermisoItem {
+  idPermiso: number;
+  accion: string;
+  descripcion: string;
+  habilitado: boolean;
+  tieneOverride: boolean;
+}
+
+export interface ModuloPermisos {
+  modulo: string;
+  permisos: PermisoItem[];
+}
+
+export interface PermisoPanelResponse {
+  idUsuario: number;
+  modulos: ModuloPermisos[];
+}
+
+export interface GuardarPermisoItem {
+  idPermiso: number;
+  puedeAcceder: boolean;
+}

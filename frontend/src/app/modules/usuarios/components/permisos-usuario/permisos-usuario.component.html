@@ -1,0 +1,95 @@
+<div class="permisos-panel">
+
+    <!-- Estado: cargando -->
+    <div *ngIf="loading" class="permisos-loading">
+        <div class="skeleton-row" *ngFor="let i of [1,2,3]"></div>
+    </div>
+
+    <!-- Estado: error -->
+    <div *ngIf="error && !loading" class="permisos-error">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+        <span>No se pudieron cargar los permisos.</span>
+        <button class="btn-reintentar" (click)="cargarPermisos()">Reintentar</button>
+    </div>
+
+    <!-- Lista de módulos -->
+    <div *ngIf="!loading && !error" class="modulos-lista">
+        <div class="modulo-item" *ngFor="let modulo of modulos">
+
+            <!-- Cabecera del módulo -->
+            <div class="modulo-header" (click)="toggleModulo(modulo)">
+                <div class="modulo-left">
+                    <!-- Checkbox de módulo (padre) -->
+                    <button class="checkbox-modulo" [class]="getCheckboxClass(modulo)"
+                        (click)="toggleTodosPermisos(modulo); $event.stopPropagation()" type="button"
+                        [attr.aria-label]="'Activar todos los permisos de ' + getNombreModulo(modulo.modulo)">
+                        <svg *ngIf="modulo.todosSeleccionados" width="11" height="11" viewBox="0 0 12 12" fill="none"
+                            stroke="white" stroke-width="2.5">
+                            <polyline points="2,6 5,9 10,3"></polyline>
+                        </svg>
+                        <svg *ngIf="modulo.algunoSeleccionado && !modulo.todosSeleccionados" width="11" height="11"
+                            viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5">
+                            <line x1="2" y1="6" x2="10" y2="6"></line>
+                        </svg>
+                    </button>
+
+                    <span class="modulo-nombre">{{ getNombreModulo(modulo.modulo) }}</span>
+
+                    <!-- Conteo -->
+                    <span class="modulo-badge">
+                        {{ contarHabilitados(modulo.permisos) }} / {{ modulo.permisos.length }}
+                    </span>
+                </div>
+
+                <!-- Flecha expand/collapse -->
+                <svg class="chevron" [class.rotado]="!modulo.expandido" width="14" height="14" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+            </div>
+
+            <!-- Permisos hijos -->
+            <div class="permisos-hijos" [class.oculto]="!modulo.expandido">
+                <div class="permiso-row" *ngFor="let permiso of modulo.permisos"
+                    (click)="togglePermiso(modulo, permiso)">
+                    <button class="checkbox-permiso" [class.activo]="permiso.habilitado" type="button"
+                        [attr.aria-label]="getNombreAccion(permiso.accion)">
+                        <svg *ngIf="permiso.habilitado" width="10" height="10" viewBox="0 0 12 12" fill="none"
+                            stroke="white" stroke-width="2.5">
+                            <polyline points="2,6 5,9 10,3"></polyline>
+                        </svg>
+                    </button>
+
+                    <div class="permiso-info">
+                        <span class="permiso-accion">{{ getNombreAccion(permiso.accion) }}</span>
+                        <span class="permiso-desc">{{ permiso.descripcion }}</span>
+                    </div>
+
+                    <span *ngIf="permiso.tieneOverride" class="override-tag" title="Personalizado para este usuario">
+                        custom
+                    </span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer con botón guardar -->
+    <div *ngIf="!loading && !error && modulos.length > 0" class="permisos-footer">
+        <button class="btn-guardar" (click)="guardar()" [disabled]="guardando">
+            <svg *ngIf="!guardando" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            <span *ngIf="guardando" class="spinner-sm"></span>
+            {{ guardando ? 'Guardando...' : 'Guardar permisos' }}
+        </button>
+    </div>
+
+</div>
