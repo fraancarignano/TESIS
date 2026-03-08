@@ -1,0 +1,168 @@
+<div class="reportes-container">
+    <!-- Encabezado y Filtros -->
+    <div class="header-section">
+        <h1>Reporte de Proveedores</h1>
+        <p class="subtitle">Análisis de Desempeño: Tiempos de Entrega y Precisión de Pedidos</p>
+
+        <div class="filters-card">
+            <form [formGroup]="filtroForm" (ngSubmit)="generarReporte()" class="filters-grid">
+                <div class="filter-group">
+                    <label for="fechaInicio">Fecha Inicio</label>
+                    <input type="date" id="fechaInicio" formControlName="fechaInicio" class="form-control">
+                </div>
+
+                <div class="filter-group">
+                    <label for="fechaFin">Fecha Fin</label>
+                    <input type="date" id="fechaFin" formControlName="fechaFin" class="form-control">
+                </div>
+
+                <div class="filter-group">
+                    <label for="idProveedor">Proveedor</label>
+                    <select id="idProveedor" formControlName="idProveedor" class="form-control">
+                        <option value="">Todos los proveedores</option>
+                        <option *ngFor="let prov of proveedores" [value]="prov.idProveedor">
+                            {{prov.nombreProveedor}}
+                        </option>
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn-primary" [disabled]="cargando">
+                        <i class="fas" [ngClass]="{'fa-spinner fa-spin': cargando, 'fa-filter': !cargando}"></i>
+                        {{ cargando ? 'Generando...' : 'Generar Reporte' }}
+                    </button>
+                    <button type="button" class="btn-secondary" (click)="limpiarFiltros()" [disabled]="cargando">
+                        Limpiar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mensajes -->
+    <div *ngIf="error" class="alert alert-danger mt-3">
+        <i class="fas fa-exclamation-circle"></i> {{ error }}
+    </div>
+
+    <!-- Contenido del Reporte -->
+    <div *ngIf="reporteTiempos && reportePrecision && !cargando" class="report-content">
+
+        <!-- Tarjetas de Resumen KPI -->
+        <div class="kpi-grid mb-4">
+            <div class="kpi-card shadow-sm">
+                <div class="kpi-icon total"><i class="fas fa-file-invoice"></i></div>
+                <div class="kpi-info">
+                    <h3>Total Órdenes Evaluadas</h3>
+                    <p class="value">{{ reporteTiempos.totalOrdenes }}</p>
+                </div>
+            </div>
+            <div class="kpi-card shadow-sm success">
+                <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="kpi-info">
+                    <h3>Órdenes A Tiempo</h3>
+                    <p class="value">{{ reporteTiempos.ordenesATiempo + reporteTiempos.ordenesAnticipadas }}</p>
+                </div>
+            </div>
+            <div class="kpi-card shadow-sm danger">
+                <div class="kpi-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="kpi-info">
+                    <h3>Promedio Retraso</h3>
+                    <p class="value">{{ reporteTiempos.promedioDiasRetraso }} <small>días</small></p>
+                </div>
+            </div>
+            <div class="kpi-card shadow-sm info">
+                <div class="kpi-icon"><i class="fas fa-bullseye"></i></div>
+                <div class="kpi-info">
+                    <h3>Cumplimiento Global (Precisión)</h3>
+                    <p class="value">{{ reportePrecision.porcentajeCumplimientoGlobal }}%</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <!-- Gráfico de Tiempos -->
+            <div class="chart-card shadow-sm">
+                <h3 class="chart-title"><i class="fas fa-clock"></i> Tiempos de Entrega</h3>
+                <div class="chart-container">
+                    <canvas baseChart [data]="chartTiemposData" [options]="chartTiemposOptions"
+                        [plugins]="chartTiemposPlugins" [type]="'doughnut'">
+                    </canvas>
+                </div>
+                <div class="text-center mt-2" *ngIf="reporteTiempos.totalOrdenes === 0">
+                    <p class="text-muted">No hay datos para el periodo seleccionado.</p>
+                </div>
+            </div>
+
+            <!-- Gráfico de Precisión -->
+            <div class="chart-card shadow-sm">
+                <h3 class="chart-title"><i class="fas fa-chart-bar"></i> Precisión de Pedidos (Pedida vs Recibida)</h3>
+                <div class="chart-container">
+                    <canvas baseChart [data]="chartPrecisionData" [options]="chartPrecisionOptions"
+                        [plugins]="chartTiemposPlugins" [type]="'bar'">
+                    </canvas>
+                </div>
+                <div class="text-center mt-2" *ngIf="reportePrecision.resumenPorProveedor.length === 0">
+                    <p class="text-muted">No hay datos para el periodo seleccionado.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla Detalle -->
+        <div class="table-card mt-4 shadow-sm">
+            <h3 class="card-title">Detalle de Órdenes</h3>
+            <div class="table-responsive">
+                <table class="table modern-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag"></i> Nro Orden</th>
+                            <th><i class="fas fa-building"></i> Proveedor</th>
+                            <th><i class="fas fa-calendar"></i> Fecha Est.</th>
+                            <th><i class="fas fa-calendar-check"></i> Fecha Reales</th>
+                            <th><i class="fas fa-clock"></i> Diferencia Días</th>
+                            <th><i class="fas fa-star-half-alt"></i> Estado Tiempo</th>
+                            <th><i class="fas fa-box"></i> Pedido (U)</th>
+                            <th><i class="fas fa-boxes"></i> Recibido (U)</th>
+                            <th><i class="fas fa-percentage"></i> % Cumplim.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let orden of reporteTiempos.detalleOrdenes; let i = index">
+                            <td><strong>{{ orden.nroOrden }}</strong></td>
+                            <td>{{ orden.nombreProveedor }}</td>
+                            <td>{{ orden.fechaEntregaEstimada | date:'dd/MM/yyyy' }}</td>
+                            <td>{{ orden.fechaRecepcionControl | date:'dd/MM/yyyy' }}</td>
+                            <td
+                                [ngClass]="{'text-success': orden.diasDiferencia <= 0, 'text-danger fw-bold': orden.diasDiferencia > 0}">
+                                {{ orden.diasDiferencia > 0 ? '+' : '' }}{{ orden.diasDiferencia }}
+                            </td>
+                            <td>
+                                <span class="badge" [ngClass]="{
+                    'bg-success': orden.estadoTiempo === 'A tiempo' || orden.estadoTiempo === 'Anticipado',
+                    'bg-danger': orden.estadoTiempo === 'Con retraso'
+                  }">
+                                    {{ orden.estadoTiempo }}
+                                </span>
+                            </td>
+                            <!-- Relacionar con precisión buscando por index o ID -->
+                            <td>{{ reportePrecision.detalleOrdenes[i]?.cantidadPedida || 0 }}</td>
+                            <td>{{ reportePrecision.detalleOrdenes[i]?.cantidadRecibida || 0 }}</td>
+                            <td>
+                                <span class="precision-badge" [ngClass]="{
+                  'high': (reportePrecision.detalleOrdenes[i]?.porcentajeCumplimiento || 0) >= 95,
+                  'medium': (reportePrecision.detalleOrdenes[i]?.porcentajeCumplimiento || 0) >= 80 && (reportePrecision.detalleOrdenes[i]?.porcentajeCumplimiento || 0) < 95,
+                  'low': (reportePrecision.detalleOrdenes[i]?.porcentajeCumplimiento || 0) < 80
+                }">
+                                    {{ reportePrecision.detalleOrdenes[i]?.porcentajeCumplimiento || 0 }}%
+                                </span>
+                            </td>
+                        </tr>
+                        <tr *ngIf="reporteTiempos.detalleOrdenes.length === 0">
+                            <td colspan="9" class="text-center text-muted py-4">No se encontraron registros de órdenes
+                                recibidas que coincidan con los filtros.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

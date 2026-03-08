@@ -115,6 +115,52 @@ export interface ProyectoCalidad {
   rechazadas: number;
 }
 
+// Interfaces para Reporte de Proveedores
+
+export interface ReporteTiemposEntrega {
+  totalOrdenes: number;
+  ordenesATiempo: number;
+  ordenesConRetraso: number;
+  ordenesAnticipadas: number;
+  promedioDiasRetraso: number;
+  detalleOrdenes: OrdenTiempo[];
+}
+
+export interface OrdenTiempo {
+  idOrdenCompra: number;
+  nroOrden: string;
+  nombreProveedor: string;
+  fechaEntregaEstimada: string;
+  fechaRecepcionControl: string;
+  diasDiferencia: number;
+  estadoTiempo: string;
+}
+
+export interface ReportePrecisionPedidos {
+  totalCantidadPedida: number;
+  totalCantidadRecibida: number;
+  porcentajeCumplimientoGlobal: number;
+  resumenPorProveedor: PrecisionProveedor[];
+  detalleOrdenes: OrdenPrecision[];
+}
+
+export interface PrecisionProveedor {
+  idProveedor: number;
+  nombreProveedor: string;
+  cantidadPedida: number;
+  cantidadRecibida: number;
+  porcentajeCumplimiento: number;
+}
+
+export interface OrdenPrecision {
+  idOrdenCompra: number;
+  nroOrden: string;
+  nombreProveedor: string;
+  cantidadPedida: number;
+  cantidadRecibida: number;
+  porcentajeCumplimiento: number;
+}
+
 
 @Injectable({
   providedIn: 'root'
@@ -233,6 +279,34 @@ export class ReportesService {
     const qs = params.length ? `?${params.join('&')}` : '';
 
     return this.http.get<ReporteClientesTemporadaResponse>(`${this.apiUrl}/clientes-temporada${qs}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Obtener reporte de tiempos de entrega de proveedores
+   */
+  obtenerReporteTiemposEntrega(fechaInicio?: string, fechaFin?: string, idProveedor?: number): Observable<ReporteTiemposEntrega> {
+    const params: string[] = [];
+    if (fechaInicio) params.push(`fechaInicio=${fechaInicio}`);
+    if (fechaFin) params.push(`fechaFin=${fechaFin}`);
+    if (idProveedor) params.push(`idProveedor=${idProveedor}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+
+    return this.http.get<ReporteTiemposEntrega>(`${this.apiUrl}/proveedores/tiempos-entrega${qs}`)
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Obtener reporte de precisión de pedidos de proveedores
+   */
+  obtenerReportePrecisionPedidos(fechaInicio?: string, fechaFin?: string, idProveedor?: number): Observable<ReportePrecisionPedidos> {
+    const params: string[] = [];
+    if (fechaInicio) params.push(`fechaInicio=${fechaInicio}`);
+    if (fechaFin) params.push(`fechaFin=${fechaFin}`);
+    if (idProveedor) params.push(`idProveedor=${idProveedor}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+
+    return this.http.get<ReportePrecisionPedidos>(`${this.apiUrl}/proveedores/precision-pedidos${qs}`)
       .pipe(catchError(this.handleError));
   }
 

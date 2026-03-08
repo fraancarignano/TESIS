@@ -607,5 +607,177 @@ namespace TESIS_OG.Controllers
             return StatusCode(500, new { message = "Error al obtener rotación del insumo", error = ex.Message });
         }
     }
-  }
+        /// <summary>
+        /// Obtener reporte de tiempos de entrega de proveedores
+        /// </summary>
+        [HttpGet("proveedores/tiempos-entrega")]
+        public async Task<ActionResult<TESIS_OG.DTOs.Reportes.Proveedores.ReporteTiemposEntregaDTO>> GetTiemposEntrega(
+            DateOnly? fechaInicio, DateOnly? fechaFin, int? idProveedor)
+        {
+            try
+            {
+                var query = _context.OrdenCompras
+                    .Include(o => o.IdProveedorNavigation)
+                    .Where(o => o.Estado == "Recibida" && o.FechaRecepcionControl != null && o.FechaEntregaEstimada != null);
+
+                if (fechaInicio.HasValue)
+                    query = query.Where(o => o.FechaRecepcionControl >= fechaInicio);
+
+                if (fechaFin.HasValue)
+                    query = query.Where(o => o.FechaRecepcionControl <= fechaFin);
+
+                if (idProveedor.HasValue)
+                    query = query.Where(o => o.IdProveedor == idProveedor.Value);
+
+                var ordenes = await query.ToListAsync();
+
+                var reporte = new TESIS_OG.DTOs.Reportes.Proveedores.ReporteTiemposEntregaDTO
+                {
+                    TotalOrdenes = ordenes.Count,
+                    DetalleOrdenes = new List<TESIS_OG.DTOs.Reportes.Proveedores.OrdenTiempoDTO>()
+                };
+
+                int sumaDiasRetraso = 0;
+
+                foreach (var orden in ordenes)
+                {
+                    var diasDiferencia = orden.FechaRecepcionControl.Value.DayNumber - orden.FechaEntregaEstimada.Value.DayNumber;
+                    
+                    string estadoTiempo = "A tiempo";
+                    if (diasDiferencia > 0)
+                    {
+                        estadoTiempo = "Con retraso";
+                        reporte.OrdenesConRetraso++;
+                        sumaDiasRetraso += diasDiferencia;
+                    }
+                    else if (diasDiferencia < 0)
+                    {
+                        estadoTiempo = "Anticipado";
+                        reporte.OrdenesAnticipadas++;
+                    }
+                    else
+                    {
+                        reporte.OrdenesATiempo++;
+                    }
+
+                    reporte.DetalleOrdenes.Add(new TESIS_OG.DTOs.Reportes.Proveedores.OrdenTiempoDTO
+                    {
+                        IdOrdenCompra = orden.IdOrdenCompra,
+                        NroOrden = orden.NroOrden,
+                        NombreProveedor = orden.IdProveedorNavigation.NombreProveedor,
+                        FechaEntregaEstimada = orden.FechaEntregaEstimada,
+                        FechaRecepcionControl = orden.FechaRecepcionControl,
+                        DiasDiferencia = diasDiferencia,
+                        EstadoTiempo = estadoTiempo
+                    });
+                }
+
+                if (reporte.OrdenesConRetraso > 0)
+                {
+                    reporte.PromedioDiasRetraso = Math.Round((double)sumaDiasRetraso / reporte.OrdenesConRetraso, 2);
+                }
+
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al obtener reporte de tiempos de entrega", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Obtener reporte de precisión de pedidos de proveedores
+        /// </summary>
+        [HttpGet("proveedores/precision-pedidos")]
+        public async Task<ActionResult<TESIS_OG.DTOs.Reportes.Proveedores.ReportePrecisionPedidosDTO>> GetPrecisionPedidos(
+            DateOnly? fechaInicio, DateOnly? fechaFin, int? idProveedor)
+        {
+            try
+            {
+                var query = _context.OrdenCompras
+                    .Include(o => o.IdProveedorNavigation)
+                    .Include(o => o.DetalleOrdenCompras)
+                    // Se consideran las recepciones realizadas correspondientes a la orden
+                    .Where(o => o.Estado == "Recibida" && o.FechaRecepcionControl != null);
+
+                if (fechaInicio.HasValue)
+                    query = query.Where(o => o.FechaRecepcionControl >= fechaInicio);
+
+                if (fechaFin.HasValue)
+                    query = query.Where(o => o.FechaRecepcionControl <= fechaFin);
+
+                if (idProveedor.HasValue)
+                    query = query.Where(o => o.IdProveedor == idProveedor.Value);
+
+                var ordenes = await query.ToListAsync();
+                
+                // Para obtener la cantidad realmente recibida, buscamos los movimientos de inventario asociados.
+                var idsOrdenes = ordenes.Select(o => o.IdOrdenCompra).ToList();
+                
+                var recepciones = await _context.InventarioMovimientos
+                    .Where(m => m.IdOrdenCompra != null && idsOrdenes.Contains(m.IdOrdenCompra.Value) && m.TipoMovimiento == "Entrada" && m.Origen.Contains("Recepción"))
+                    .ToListAsync();
+
+                var reporte = new TESIS_OG.DTOs.Reportes.Proveedores.ReportePrecisionPedidosDTO
+                {
+                    DetalleOrdenes = new List<TESIS_OG.DTOs.Reportes.Proveedores.OrdenPrecisionDTO>()
+                };
+
+                var resumenPorProveedor = new Dictionary<int, TESIS_OG.DTOs.Reportes.Proveedores.PrecisionProveedorDTO>();
+
+                foreach (var orden in ordenes)
+                {
+                    decimal cantPedida = orden.DetalleOrdenCompras.Sum(d => d.Cantidad);
+                    decimal cantRecibida = recepciones.Where(r => r.IdOrdenCompra == orden.IdOrdenCompra).Sum(r => r.Cantidad);
+
+                    reporte.TotalCantidadPedida += cantPedida;
+                    reporte.TotalCantidadRecibida += cantRecibida;
+
+                    double pctCumplimiento = cantPedida > 0 ? (double)(cantRecibida / cantPedida * 100) : 0;
+
+                    reporte.DetalleOrdenes.Add(new TESIS_OG.DTOs.Reportes.Proveedores.OrdenPrecisionDTO
+                    {
+                        IdOrdenCompra = orden.IdOrdenCompra,
+                        NroOrden = orden.NroOrden,
+                        NombreProveedor = orden.IdProveedorNavigation.NombreProveedor,
+                        CantidadPedida = cantPedida,
+                        CantidadRecibida = cantRecibida,
+                        PorcentajeCumplimiento = Math.Round(pctCumplimiento, 2)
+                    });
+
+                    if (!resumenPorProveedor.ContainsKey(orden.IdProveedor))
+                    {
+                        resumenPorProveedor[orden.IdProveedor] = new TESIS_OG.DTOs.Reportes.Proveedores.PrecisionProveedorDTO
+                        {
+                            IdProveedor = orden.IdProveedor,
+                            NombreProveedor = orden.IdProveedorNavigation.NombreProveedor,
+                            CantidadPedida = 0,
+                            CantidadRecibida = 0
+                        };
+                    }
+
+                    resumenPorProveedor[orden.IdProveedor].CantidadPedida += cantPedida;
+                    resumenPorProveedor[orden.IdProveedor].CantidadRecibida += cantRecibida;
+                }
+
+                reporte.PorcentajeCumplimientoGlobal = reporte.TotalCantidadPedida > 0 
+                    ? Math.Round((double)(reporte.TotalCantidadRecibida / reporte.TotalCantidadPedida * 100), 2) 
+                    : 0;
+
+                foreach (var prov in resumenPorProveedor.Values)
+                {
+                    prov.PorcentajeCumplimiento = prov.CantidadPedida > 0 
+                        ? Math.Round((double)(prov.CantidadRecibida / prov.CantidadPedida * 100), 2) 
+                        : 0;
+                    reporte.ResumenPorProveedor.Add(prov);
+                }
+
+                return Ok(reporte);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al obtener reporte de precisión de pedidos", error = ex.Message });
+            }
+        }
+    }
 }

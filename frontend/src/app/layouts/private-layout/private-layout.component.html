@@ -72,8 +72,8 @@
           <a routerLink="/reportes/calidad" routerLinkActive="active" class="nav-item sub">
             <span class="text">Reporte de Calidad</span>
           </a>
-          <a routerLink="/reportes/financiero" routerLinkActive="active" class="nav-item sub">
-            <span class="text">Reporte Financiero</span>
+          <a routerLink="/reportes/proveedores" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Reporte de Proveedores</span>
           </a>
           <a routerLink="/reportes/clientes" routerLinkActive="active" class="nav-item sub">
             <span class="text">Reporte de Clientes</span>
@@ -104,7 +104,8 @@
         <span class="text">Ordenes de Compra</span>
       </a>
 
-      <a routerLink="/notificaciones" routerLinkActive="active" class="nav-item" *appHasPermission="{ modulo: 'Notificaciones', accion: 'Ver' }">
+      <a routerLink="/notificaciones" routerLinkActive="active" class="nav-item"
+        *appHasPermission="{ modulo: 'Notificaciones', accion: 'Ver' }">
         <span class="text">Notificaciones</span>
         <span class="badge-count" *ngIf="notificacionesStockCount > 0">{{ notificacionesStockCount }}</span>
       </a>

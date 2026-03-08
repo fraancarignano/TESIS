@@ -95,6 +95,12 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/reportes/Calidad/reporte-calidad.component')
       },
       {
+        path: 'reportes/proveedores',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Reportes', accion: 'Ver' } },
+        loadComponent: () => import('./modules/reportes/components/proveedores/reporte-proveedores.component').then(m => m.ReporteProveedoresComponent)
+      },
+      {
         path: 'reportes/clientes',
         loadComponent: () => import('./modules/reportes/components/clientes-temporada/clientes-temporada.component')
       },
