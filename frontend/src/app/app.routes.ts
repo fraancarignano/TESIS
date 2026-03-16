@@ -35,7 +35,7 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/proyectos/components/proyectos.component').then(m => m.ProyectosComponent)
       },
       {
-        path: 'proyectos/:id',
+        path: 'proyectos/detalle/:id',
         canActivate: [permissionGuard],
         data: { permission: { modulo: 'Proyectos', accion: 'Ver' } },
         loadComponent: () => import('./modules/proyectos/components/proyecto-detalle-page/proyecto-detalle-page.component').then(m => m.ProyectoDetallePageComponent)
@@ -99,6 +99,12 @@ export const routes: Routes = [
         canActivate: [permissionGuard],
         data: { permission: { modulo: 'Reportes', accion: 'Ver' } },
         loadComponent: () => import('./modules/reportes/components/proveedores/reporte-proveedores.component').then(m => m.ReporteProveedoresComponent)
+      },
+      {
+        path: 'reportes/scrap-material',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Reportes', accion: 'Ver' } },
+        loadComponent: () => import('./modules/reportes/Proyectos/reporte-scrap-material.component').then(m => m.ReporteScrapMaterialComponent)
       },
       {
         path: 'reportes/clientes',

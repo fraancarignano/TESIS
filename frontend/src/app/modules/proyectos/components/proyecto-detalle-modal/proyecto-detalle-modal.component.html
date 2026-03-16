@@ -262,10 +262,111 @@
               </div>
 
               <!-- Aquí irán los campos específicos de cada área en el futuro -->
-              <div *ngIf="!esAreaControlCalidad" class="form-placeholder">
+                            <div *ngIf="esAreaCorte" class="corte-form">
+                <div class="corte-header">
+                  <h4><i class="fas fa-cut"></i> Paso 1 - Requerimiento de corte</h4>
+                  <span class="corte-resumen">Solo lectura</span>
+                </div>
+
+                <div class="corte-kpis">
+                  <span class="kpi kpi-total">Pedido: {{ cortePlan.pedidoTotalPrendas }}</span>
+                  <span class="kpi" [class.kpi-ok]="distribucionCorteValida" [class.kpi-bad]="!distribucionCorteValida">
+                    Distribuido: {{ totalDistribucionCorte }}
+                  </span>
+                  <span class="kpi" [class.kpi-ok]="distribucionCorteValida" [class.kpi-bad]="!distribucionCorteValida">
+                    Diferencia: {{ diferenciaDistribucionCorte }}
+                  </span>
+                </div>
+
+                <div class="corte-grid">
+                  <div class="form-group"><label>Cliente</label><input type="text" [ngModel]="cortePlan.cliente" disabled></div>
+                  <div class="form-group"><label>Prenda</label><input type="text" [ngModel]="cortePlan.prenda" disabled></div>
+                  <div class="form-group"><label>Articulo</label><input type="text" [ngModel]="cortePlan.articulo || '-'" disabled></div>
+                  <div class="form-group"><label>Pedido total</label><input type="number" [ngModel]="cortePlan.pedidoTotalPrendas" disabled></div>
+                  <div class="form-group"><label>Colores</label><input type="text" [ngModel]="cortePlan.colores || '-'" disabled></div>
+                  <div class="form-group"><label>Tela asignada</label><input type="text" [ngModel]="cortePlan.telaAsignada || '-'" disabled></div>
+                  <div class="form-group"><label>Articulo de tela</label><input type="text" [ngModel]="cortePlan.articuloTela || '-'" disabled></div>
+                  <div class="form-group"><label>Taller destino</label><input type="text" [ngModel]="cortePlan.tallerDestino || '-'" disabled></div>
+                </div>
+
+                <div class="corte-distribucion">
+                  <div class="corte-distribucion-header">
+                    <strong>Distribucion por talles</strong>
+                  </div>
+                  <div class="corte-distribucion-row" *ngFor="let item of cortePlan.distribucionTalles; trackBy: trackByDistribucionCorte; let i = index">
+                    <input type="text" [ngModel]="item.talle" disabled>
+                    <input type="number" [ngModel]="item.cantidad" disabled>
+                    <button type="button" class="btn-mini" disabled>#{{ i + 1 }}</button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="esAreaCorte" class="corte-form corte-form-real">
+                <div class="corte-header">
+                  <h4><i class="fas fa-industry"></i> Paso 3 - Parte de corte real</h4>
+                  <span class="corte-resumen">Manual</span>
+                </div>
+
+                <div class="corte-kpis">
+                  <span class="kpi kpi-total">Registros: {{ historialCortesReales.length }}</span>
+                  <span class="kpi kpi-total">Balance tela: {{ balanceTelaCorteReal }} kg</span>
+                  <span class="kpi kpi-total" *ngIf="kgPorPrendaCorteReal !== null">Kg/prenda: {{ kgPorPrendaCorteReal }}</span>
+                  <span class="kpi" [class.kpi-bad]="desvioConsumoCorteReal !== null && desvioConsumoCorteReal > 0" [class.kpi-ok]="desvioConsumoCorteReal !== null && desvioConsumoCorteReal <= 0" *ngIf="desvioConsumoCorteReal !== null">
+                    Desvio consumo: {{ desvioConsumoCorteReal }} kg
+                  </span>
+                </div>
+
+                <div class="corte-grid">
+                  <div class="form-group"><label>Corte N°</label><input type="text" [(ngModel)]="corteReal.corteNumero" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Fecha corte</label><input type="date" [(ngModel)]="corteReal.fechaCorte" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Partida</label><input type="text" [(ngModel)]="corteReal.partidaTela" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Responsable</label><input type="text" [(ngModel)]="corteReal.responsable" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Tela usada (kg)</label><input type="number" min="0" step="0.01" [(ngModel)]="corteReal.telaUsadaKg" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Peso real (kg)</label><input type="number" min="0" step="0.01" [(ngModel)]="corteReal.pesoRealKg" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Peso tiza (kg)</label><input type="number" min="0" step="0.01" [(ngModel)]="corteReal.pesoTizaKg" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Capas</label><input type="number" min="0" step="1" [(ngModel)]="corteReal.capas" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Prendas cortadas</label><input type="number" min="0" step="1" [(ngModel)]="corteReal.prendasCortadas" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Resto (kg)</label><input type="number" min="0" step="0.01" [(ngModel)]="corteReal.restoKg" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Falla (kg)</label><input type="number" min="0" step="0.01" [(ngModel)]="corteReal.fallaKg" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Utilizable (kg)</label><input type="number" min="0" step="0.01" [(ngModel)]="corteReal.utilizableKg" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Estado</label>
+                    <select [(ngModel)]="corteReal.estadoEjecucion" [disabled]="!puedeEditarFormularioCorte">
+                      <option value="PENDIENTE">Pendiente</option>
+                      <option value="EN_EJECUCION">En ejecucion</option>
+                      <option value="CERRADO">Cerrado</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="corte-grid">
+                  <div class="form-group"><label>Consumo teorico (kg)</label><input type="number" min="0" step="0.01" [(ngModel)]="corteReal.consumoTeoricoKg" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Capas teoricas</label><input type="number" min="0" step="1" [(ngModel)]="corteReal.capasTeoricas" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Referencia externa</label><input type="text" [(ngModel)]="corteReal.referenciaExterna" [disabled]="!puedeEditarFormularioCorte"></div>
+                  <div class="form-group"><label>Obs. externa</label><input type="text" [(ngModel)]="corteReal.observacionExterna" [disabled]="!puedeEditarFormularioCorte"></div>
+                </div>
+
+                <div class="form-group">
+                  <label>Observaciones de corte</label>
+                  <textarea rows="3" [(ngModel)]="corteReal.observacionesCorte" [disabled]="!puedeEditarFormularioCorte"></textarea>
+                </div>
+
+                <div class="calidad-alerta" *ngIf="excedeTelaUsadaCorteReal">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  Inconsistencia: resto + falla + utilizable supera la tela usada.
+                </div>
+
+                <div class="calidad-actions">
+                  <button type="button" class="btn-guardar-inspeccion" (click)="guardarCorteReal()" [disabled]="!puedeGuardarCorteReal || guardandoCorteReal">
+                    <i class="fas" [ngClass]="guardandoCorteReal ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                    {{ guardandoCorteReal ? 'Guardando...' : 'Guardar parte de corte' }}
+                  </button>
+                </div>
+              </div>
+
+              <div *ngIf="!esAreaControlCalidad && !esAreaCorte" class="form-placeholder">
                 <i class="fas fa-clipboard-list"></i>
-                <p>Formulario específico del área</p>
-                <small>Los campos personalizados se agregarán aquí</small>
+                <p>Formulario especifico del Area</p>
+                <small>Los campos personalizados se agregaron aqui</small>
               </div>
 
               <!-- OBSERVACIONES DEL ÁREA -->
@@ -401,3 +502,5 @@
     </div>
   </div>
 </div>
+
+

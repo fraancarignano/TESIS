@@ -31,6 +31,9 @@ export class ProyectoListComponent implements OnInit {
   terminoBusqueda = '';
   loading = false;
   error = false;
+  paginaActual = 1;
+  tamanioPagina = 25;
+  readonly tamaniosPagina = [25, 50, 100];
   filtrosActuales: FiltrosProyecto | null = null;
   mostrarMenuExportar = false;
 
@@ -69,10 +72,11 @@ export class ProyectoListComponent implements OnInit {
   cargarProyectos(): void {
     this.loading = true;
     this.error = false;
+    this.paginaActual = 1;
 
     const request = this.filtroTallerId
       ? this.proyectosService.obtenerProyectosPorTaller(this.filtroTallerId)
-      : this.proyectosService.obtenerProyectos();
+      : this.proyectosService.obtenerProyectosConCache();
 
     request.subscribe({
       next: (data) => {
@@ -130,13 +134,41 @@ export class ProyectoListComponent implements OnInit {
     return resultado;
   }
 
+  get totalFiltrados(): number {
+    return this.proyectosFiltrados.length;
+  }
+
+  get totalPaginas(): number {
+    return Math.max(1, Math.ceil(this.totalFiltrados / this.tamanioPagina));
+  }
+
+  get proyectosPaginados(): Proyecto[] {
+    if (this.paginaActual > this.totalPaginas) {
+      this.paginaActual = this.totalPaginas;
+    }
+    const inicio = (this.paginaActual - 1) * this.tamanioPagina;
+    return this.proyectosFiltrados.slice(inicio, inicio + this.tamanioPagina);
+  }
+
+  get desdeRegistro(): number {
+    if (this.totalFiltrados === 0) return 0;
+    return (this.paginaActual - 1) * this.tamanioPagina + 1;
+  }
+
+  get hastaRegistro(): number {
+    if (this.totalFiltrados === 0) return 0;
+    return Math.min(this.paginaActual * this.tamanioPagina, this.totalFiltrados);
+  }
+
   onFiltrosChange(filtros: any): void {
     this.filtrosActuales = filtros;
+    this.paginaActual = 1;
   }
 
   limpiarFiltros(): void {
     this.filtrosActuales = null;
     this.terminoBusqueda = '';
+    this.paginaActual = 1;
   }
 
   limpiarFiltroTaller(): void {
@@ -187,7 +219,30 @@ export class ProyectoListComponent implements OnInit {
 
   abrirDetalle(proyecto: Proyecto): void {
     if (!proyecto.idProyecto) return;
-    this.router.navigate(['/proyectos', proyecto.idProyecto]);
+    this.router.navigate(['/proyectos/detalle', proyecto.idProyecto], {
+      state: { proyecto }
+    });
+  }
+
+  cambiarTamanioPagina(value: number | string): void {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed <= 0) return;
+    this.tamanioPagina = parsed;
+    this.paginaActual = 1;
+  }
+
+  paginaAnterior(): void {
+    if (this.paginaActual <= 1) return;
+    this.paginaActual -= 1;
+  }
+
+  paginaSiguiente(): void {
+    if (this.paginaActual >= this.totalPaginas) return;
+    this.paginaActual += 1;
+  }
+
+  trackByProyecto(index: number, proyecto: Proyecto): number {
+    return proyecto.idProyecto ?? index;
   }
 
   onProyectoActualizado(): void {

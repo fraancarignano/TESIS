@@ -1,0 +1,142 @@
+<div class="reporte-container">
+  <div class="reporte-header">
+    <div>
+      <h2>Reporte de Scrap por Material</h2>
+      <p>Compara tela usada, scrap real y desvio vs consumo teorico por material.</p>
+    </div>
+    <button class="btn-refresh" (click)="cargarDatos()" [disabled]="loading">Actualizar</button>
+  </div>
+
+  <div class="filtros-panel">
+    <div class="filtro-group">
+      <label>Desde</label>
+      <input type="date" [(ngModel)]="filtros.fechaDesde" />
+    </div>
+    <div class="filtro-group">
+      <label>Hasta</label>
+      <input type="date" [(ngModel)]="filtros.fechaHasta" />
+    </div>
+    <div class="filtro-group">
+      <label>Cliente</label>
+      <select [(ngModel)]="filtros.cliente">
+        <option value="">Todos</option>
+        <option *ngFor="let c of clientes" [value]="c">{{ c }}</option>
+      </select>
+    </div>
+    <div class="filtro-group">
+      <label>Material</label>
+      <select [(ngModel)]="filtros.material">
+        <option value="">Todos</option>
+        <option *ngFor="let m of materiales" [value]="m">{{ m }}</option>
+      </select>
+    </div>
+    <div class="filtros-actions">
+      <button class="btn btn-light" (click)="limpiarFiltros()">Limpiar</button>
+      <button class="btn btn-primary" (click)="aplicarFiltros()">Aplicar</button>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="loading">Cargando reporte...</div>
+  <div class="error" *ngIf="error">{{ mensajeError }}</div>
+
+  <ng-container *ngIf="!loading && !error">
+    <div class="kpis">
+      <div class="kpi-card">
+        <span class="label">Tela usada</span>
+        <strong>{{ totalTelaUsadaKg }} kg</strong>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Scrap</span>
+        <strong>{{ totalScrapKg }} kg</strong>
+      </div>
+      <div class="kpi-card">
+        <span class="label">% Scrap general</span>
+        <strong [class]="getClassScrap(scrapPorcentajeGeneral)">{{ scrapPorcentajeGeneral }}%</strong>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Recuperable</span>
+        <strong>{{ totalUtilizableKg }} kg</strong>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Cortes</span>
+        <strong>{{ totalCortes }}</strong>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Promedio kg/prenda</span>
+        <strong>{{ promedioKgPorPrenda }}</strong>
+      </div>
+    </div>
+
+    <div class="tabla-wrapper" *ngIf="resumenPorMaterial.length > 0; else sinDatos">
+      <h3>Resumen por material</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Cortes</th>
+            <th>Proyectos</th>
+            <th>Tela usada (kg)</th>
+            <th>Scrap (kg)</th>
+            <th>% Scrap</th>
+            <th>Recuperable (kg)</th>
+            <th>Desvio consumo (kg)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of resumenPorMaterial">
+            <td>{{ item.material }}</td>
+            <td>{{ item.cortes }}</td>
+            <td>{{ item.proyectos }}</td>
+            <td>{{ item.telaUsadaKg }}</td>
+            <td>{{ item.scrapKg }}</td>
+            <td><span [class]="getClassScrap(item.scrapPorcentaje)">{{ item.scrapPorcentaje }}%</span></td>
+            <td>{{ item.utilizableKg }}</td>
+            <td>{{ item.desvioConsumoKg }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tabla-wrapper" *ngIf="registrosFiltrados.length > 0">
+      <h3>Detalle de cortes</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Proyecto</th>
+            <th>Cliente</th>
+            <th>Material</th>
+            <th>Partida</th>
+            <th>Tela usada</th>
+            <th>Scrap</th>
+            <th>% Scrap</th>
+            <th>Kg/Prenda</th>
+            <th>Teorico</th>
+            <th>Desvio kg</th>
+            <th>Ref. externa</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of registrosFiltrados">
+            <td>{{ formatearFecha(r.fechaCorte) }}</td>
+            <td>{{ r.codigoProyecto }} - {{ r.nombreProyecto }}</td>
+            <td>{{ r.cliente }}</td>
+            <td>{{ r.material }}</td>
+            <td>{{ r.partida || '-' }}</td>
+            <td>{{ r.telaUsadaKg }}</td>
+            <td>{{ r.scrapKg }}</td>
+            <td><span [class]="getClassScrap(r.scrapPorcentaje)">{{ r.scrapPorcentaje }}%</span></td>
+            <td>{{ r.kgPorPrenda ?? '-' }}</td>
+            <td>{{ r.consumoTeoricoKg ?? '-' }}</td>
+            <td>{{ r.desvioConsumoKg ?? '-' }}</td>
+            <td>{{ r.referenciaExterna || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+
+  <ng-template #sinDatos>
+    <div class="sin-datos">No hay registros de corte real para los filtros seleccionados.</div>
+  </ng-template>
+</div>

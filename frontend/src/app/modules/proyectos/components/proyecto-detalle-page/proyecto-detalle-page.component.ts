@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProyectosService } from '../../services/proyecto.service';
-import { ProyectoVista, proyectoToVista } from '../../models/proyecto.model';
+import { Proyecto, ProyectoVista, proyectoToVista } from '../../models/proyecto.model';
 import { ProyectoDetalleModalComponent } from '../proyecto-detalle-modal/proyecto-detalle-modal.component';
 
 @Component({
@@ -55,20 +55,24 @@ export class ProyectoDetallePageComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private proyectosService: ProyectosService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
-    this.recargar();
+    const proyectoState = this.obtenerProyectoDesdeState();
+    if (proyectoState) {
+      this.proyecto = proyectoState;
+    }
+    this.recargar(!!proyectoState);
   }
 
-  recargar(): void {
+  recargar(silencioso = false): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!id) {
-      this.error = 'ID de proyecto inválido.';
+      this.error = 'ID de proyecto invalido.';
       return;
     }
 
-    this.loading = true;
+    this.loading = !silencioso;
     this.error = '';
 
     this.proyectosService.obtenerProyectoPorId(id).subscribe({
@@ -78,12 +82,25 @@ export class ProyectoDetallePageComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.error = err?.message || 'No se pudo cargar el proyecto.';
+        if (!this.proyecto) {
+          this.error = err?.message || 'No se pudo cargar el proyecto.';
+        }
       }
     });
   }
 
   volver(): void {
     this.router.navigate(['/proyectos']);
+  }
+
+  private obtenerProyectoDesdeState(): ProyectoVista | null {
+    const stateProyecto = history.state?.proyecto as ProyectoVista | Proyecto | undefined;
+    if (!stateProyecto) return null;
+
+    if (typeof (stateProyecto as ProyectoVista).progresoGeneral === 'number') {
+      return stateProyecto as ProyectoVista;
+    }
+
+    return proyectoToVista(stateProyecto as Proyecto);
   }
 }

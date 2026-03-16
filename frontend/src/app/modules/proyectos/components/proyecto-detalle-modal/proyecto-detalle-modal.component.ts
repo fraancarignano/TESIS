@@ -44,6 +44,12 @@ export class ProyectoDetalleModalComponent implements OnInit {
   private _historialInspeccionesCalidad: ObservacionProyecto[] = [];
   private _seguimientoTalles: SeguimientoTalle[] = [];
   private _acumuladoGuardadoPorTalle: Record<string, number> = {};
+  guardandoPlanCorte = false;
+  cortePlan: PlanCorteForm = this.crearPlanCorteVacio();
+  private _historialPlanesCorte: ObservacionProyecto[] = [];
+  guardandoCorteReal = false;
+  corteReal: CorteRealForm = this.crearCorteRealVacio();
+  private _historialCortesReales: ObservacionProyecto[] = [];
 
   // Observaciones generales
   nuevaObservacion: string = '';
@@ -64,6 +70,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
     // Seleccionar área actual por defecto
     this.areaSeleccionada = getAreaActual(this.proyecto) || AREAS_PRODUCCION[0];
     this.refrescarHistorialInspeccionesCalidad();
+    this.refrescarHistorialPlanesCorte();
+    this.inicializarFormularioCorte();
+    this.refrescarHistorialCorteReal();
+    this.inicializarFormularioCorteReal();
     this.recalcularSeguimientoTalles();
   }
 
@@ -110,6 +120,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.observacionArea = '';
     this.reiniciarFormularioCalidad();
     this.refrescarHistorialInspeccionesCalidad();
+    this.refrescarHistorialPlanesCorte();
+    this.inicializarFormularioCorte();
+    this.refrescarHistorialCorteReal();
+    this.inicializarFormularioCorteReal();
     this.recalcularSeguimientoTalles();
   }
 
@@ -123,6 +137,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   get esAreaControlCalidad(): boolean {
     return this.areaSeleccionada?.campo === 'avanceCalidadPrenda';
+  }
+
+  get esAreaCorte(): boolean {
+    return this.areaSeleccionada?.campo === 'avanceCorte';
   }
 
   get criteriosEvaluados(): number {
@@ -145,12 +163,104 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return this._historialInspeccionesCalidad;
   }
 
+  get historialPlanesCorte(): ObservacionProyecto[] {
+    return this._historialPlanesCorte;
+  }
+
+  get historialCortesReales(): ObservacionProyecto[] {
+    return this._historialCortesReales;
+  }
+
   get puedeEditarFormularioCalidad(): boolean {
     if (!this.esAreaControlCalidad) return false;
     if (!this.puedeGestionarAvance) return false;
     if (this.areaSeleccionada && this.estaCompleta(this.areaSeleccionada)) return false;
     const anterior = this.areaAnteriorSeleccionada;
     if (anterior && !this.estaCompleta(anterior)) return false;
+    return true;
+  }
+
+  get totalDistribucionCorte(): number {
+    return this.cortePlan.distribucionTalles.reduce((acc, item) => acc + (Number(item.cantidad) || 0), 0);
+  }
+
+  get diferenciaDistribucionCorte(): number {
+    const pedido = Math.max(0, Number(this.cortePlan.pedidoTotalPrendas) || 0);
+    return pedido - this.totalDistribucionCorte;
+  }
+
+  get distribucionCorteValida(): boolean {
+    return this.diferenciaDistribucionCorte === 0;
+  }
+
+  get puedeEditarFormularioCorte(): boolean {
+    if (!this.esAreaCorte) return false;
+    if (!this.puedeGestionarAvance) return false;
+    if (this.areaSeleccionada && this.estaCompleta(this.areaSeleccionada)) return false;
+    return true;
+  }
+
+  get puedeGuardarPlanCorte(): boolean {
+    if (!this.esAreaCorte || !this.puedeEditarFormularioCorte) return false;
+    if (!this.distribucionCorteValida) return false;
+    if (!this.cortePlan.articulo.trim()) return false;
+    if (!this.cortePlan.colores.trim()) return false;
+    if (!this.cortePlan.telaAsignada.trim()) return false;
+    if (!this.cortePlan.articuloTela.trim()) return false;
+    if (!this.cortePlan.tallerDestino.trim()) return false;
+    if (!this.cortePlan.fechaNecesidadCorte.trim()) return false;
+    if (!this.cortePlan.versionPlanificacion.trim()) return false;
+    return true;
+  }
+
+  get estadoPlanCorteLabel(): string {
+    const estado = this.cortePlan.estadoPlanificacion;
+    if (estado === 'BORRADOR') return 'Borrador';
+    if (estado === 'CONFIRMADO') return 'Confirmado';
+    return 'Enviado a diseÃ±o';
+  }
+
+  get sumaMermaCorteReal(): number {
+    return (Number(this.corteReal.restoKg) || 0)
+      + (Number(this.corteReal.fallaKg) || 0)
+      + (Number(this.corteReal.utilizableKg) || 0);
+  }
+
+  get excedeTelaUsadaCorteReal(): boolean {
+    const telaUsada = Number(this.corteReal.telaUsadaKg) || 0;
+    return this.sumaMermaCorteReal > (telaUsada + 0.01);
+  }
+
+  get balanceTelaCorteReal(): number {
+    const telaUsada = Number(this.corteReal.telaUsadaKg) || 0;
+    return Math.round((telaUsada - this.sumaMermaCorteReal) * 100) / 100;
+  }
+
+  get desvioConsumoCorteReal(): number | null {
+    const teorico = Number(this.corteReal.consumoTeoricoKg);
+    const real = Number(this.corteReal.telaUsadaKg);
+    if (!Number.isFinite(teorico) || teorico <= 0 || !Number.isFinite(real)) return null;
+    return Math.round((real - teorico) * 100) / 100;
+  }
+
+  get kgPorPrendaCorteReal(): number | null {
+    const prendas = Number(this.corteReal.prendasCortadas) || 0;
+    const telaUsada = Number(this.corteReal.telaUsadaKg) || 0;
+    if (prendas <= 0 || telaUsada <= 0) return null;
+    return Math.round((telaUsada / prendas) * 1000) / 1000;
+  }
+
+  get puedeGuardarCorteReal(): boolean {
+    if (!this.esAreaCorte || !this.puedeEditarFormularioCorte) return false;
+    if (!this.corteReal.corteNumero.trim()) return false;
+    if (!this.corteReal.fechaCorte.trim()) return false;
+    if (!this.corteReal.partidaTela.trim()) return false;
+    if (!this.corteReal.responsable.trim()) return false;
+    if ((Number(this.corteReal.telaUsadaKg) || 0) <= 0) return false;
+    if ((Number(this.corteReal.pesoRealKg) || 0) <= 0) return false;
+    if ((Number(this.corteReal.capas) || 0) <= 0) return false;
+    if ((Number(this.corteReal.prendasCortadas) || 0) <= 0) return false;
+    if (this.excedeTelaUsadaCorteReal) return false;
     return true;
   }
 
@@ -581,6 +691,108 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return item.id;
   }
 
+  trackByDistribucionCorte(index: number, _: DistribucionTallePlan): number {
+    return index;
+  }
+
+  actualizarCantidadDistribucionCorte(index: number, value: number | string): void {
+    const parsed = typeof value === 'number' ? value : Number(value);
+    this.cortePlan.distribucionTalles[index].cantidad = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+  }
+
+  actualizarTalleDistribucionCorte(index: number, value: string): void {
+    this.cortePlan.distribucionTalles[index].talle = (value || '').trim().toUpperCase();
+  }
+
+  agregarFilaDistribucionCorte(): void {
+    this.cortePlan.distribucionTalles.push({ talle: '', cantidad: 0 });
+  }
+
+  eliminarFilaDistribucionCorte(index: number): void {
+    if (this.cortePlan.distribucionTalles.length <= 1) return;
+    this.cortePlan.distribucionTalles.splice(index, 1);
+  }
+
+  guardarPlanCorte(): void {
+    if (!this.proyecto.idProyecto || !this.puedeGuardarPlanCorte) return;
+
+    if (!this.distribucionCorteValida) {
+      this.alertas.error(
+        'DistribuciÃ³n invÃ¡lida',
+        `La suma de talles debe coincidir con el pedido total. Diferencia actual: ${this.diferenciaDistribucionCorte}.`
+      );
+      return;
+    }
+
+    const descripcion = this.construirResumenPlanCorte();
+    const dto = {
+      idUsuario: 3,
+      descripcion
+    };
+
+    this.guardandoPlanCorte = true;
+    this.proyectosService.agregarObservacion(this.proyecto.idProyecto, dto).subscribe({
+      next: () => {
+        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
+        this.proyecto.observaciones.unshift({
+          idObservacion: Date.now(),
+          idUsuario: 3,
+          nombreUsuario: 'Corte',
+          fecha: new Date().toISOString(),
+          descripcion
+        });
+        this.guardandoPlanCorte = false;
+        this.refrescarHistorialPlanesCorte();
+        this.alertas.success('Plan guardado', 'Se registrÃ³ el requerimiento de corte.');
+      },
+      error: (err) => {
+        console.error('Error al guardar plan de corte:', err);
+        this.guardandoPlanCorte = false;
+        this.alertas.error('Error', 'No se pudo guardar el requerimiento de corte');
+      }
+    });
+  }
+
+  guardarCorteReal(): void {
+    if (!this.proyecto.idProyecto || !this.puedeGuardarCorteReal) return;
+
+    if (this.excedeTelaUsadaCorteReal) {
+      this.alertas.error(
+        'Datos inconsistentes',
+        'La suma de resto + falla + utilizable supera la tela usada.'
+      );
+      return;
+    }
+
+    const descripcion = this.construirResumenCorteReal();
+    const dto = {
+      idUsuario: 3,
+      descripcion
+    };
+
+    this.guardandoCorteReal = true;
+    this.proyectosService.agregarObservacion(this.proyecto.idProyecto, dto).subscribe({
+      next: () => {
+        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
+        this.proyecto.observaciones.unshift({
+          idObservacion: Date.now(),
+          idUsuario: 3,
+          nombreUsuario: 'Corte',
+          fecha: new Date().toISOString(),
+          descripcion
+        });
+        this.guardandoCorteReal = false;
+        this.refrescarHistorialCorteReal();
+        this.alertas.success('Corte registrado', 'Se guardÃ³ el parte de corte real.');
+      },
+      error: (err) => {
+        console.error('Error al guardar corte real:', err);
+        this.guardandoCorteReal = false;
+        this.alertas.error('Error', 'No se pudo guardar el parte de corte real');
+      }
+    });
+  }
+
   guardarInspeccionCalidad(): void {
     if (!this.proyecto.idProyecto || !this.puedeGuardarInspeccionCalidad) return;
 
@@ -654,6 +866,246 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return this.limitarLongitudObservacion(resumenBase, 200);
   }
 
+  private crearPlanCorteVacio(): PlanCorteForm {
+    return {
+      cliente: '',
+      prenda: '',
+      articulo: '',
+      pedidoTotalPrendas: 0,
+      distribucionTalles: [{ talle: 'GENERAL', cantidad: 0 }],
+      colores: '',
+      telaAsignada: '',
+      articuloTela: '',
+      tallerDestino: '',
+      fechaNecesidadCorte: '',
+      versionPlanificacion: 'v1',
+      estadoPlanificacion: 'BORRADOR',
+      observacionesPlan: ''
+    };
+  }
+
+  private inicializarFormularioCorte(): void {
+    const base = this.crearPlanCorteVacio();
+    base.cliente = this.proyecto.clienteNombre ?? '';
+    base.prenda = this.proyecto.tipoPrenda ?? '';
+    base.pedidoTotalPrendas = Math.max(0, Number(this.proyecto.cantidadTotal ?? 0));
+    base.distribucionTalles = this.obtenerObjetivoPorTalleArray();
+
+    const ultimoPlan = this.obtenerUltimoPlanCorte();
+    if (!ultimoPlan) {
+      this.cortePlan = base;
+      return;
+    }
+
+    this.cortePlan = {
+      ...base,
+      ...ultimoPlan,
+      distribucionTalles: ultimoPlan.distribucionTalles.length > 0
+        ? ultimoPlan.distribucionTalles
+        : base.distribucionTalles
+    };
+  }
+
+  private construirResumenPlanCorte(): string {
+    const distribucion = this.cortePlan.distribucionTalles
+      .filter(t => t.talle.trim().length > 0 && t.cantidad > 0)
+      .map(t => `${this.codificarToken(t.talle)}:${t.cantidad}`)
+      .join('|');
+
+    const resumen = [
+      '[CORTE_PLAN]',
+      `est=${this.cortePlan.estadoPlanificacion}`,
+      `ver=${this.codificarToken(this.cortePlan.versionPlanificacion)}`,
+      `fec=${this.cortePlan.fechaNecesidadCorte || '-'}`,
+      `ped=${Math.max(0, Number(this.cortePlan.pedidoTotalPrendas) || 0)}`,
+      `cli=${this.codificarToken(this.cortePlan.cliente)}`,
+      `prd=${this.codificarToken(this.cortePlan.prenda)}`,
+      `art=${this.codificarToken(this.cortePlan.articulo)}`,
+      `col=${this.codificarToken(this.cortePlan.colores)}`,
+      `tel=${this.codificarToken(this.cortePlan.telaAsignada)}`,
+      `atl=${this.codificarToken(this.cortePlan.articuloTela)}`,
+      `tal=${this.codificarToken(this.cortePlan.tallerDestino)}`,
+      `dt=${distribucion || '-'}`,
+      `obs=${this.codificarToken(this.cortePlan.observacionesPlan || '-')}`
+    ].join(' ');
+
+    return this.limitarLongitudObservacion(resumen, 200);
+  }
+
+  private refrescarHistorialPlanesCorte(): void {
+    this._historialPlanesCorte = (this.proyecto.observaciones ?? []).filter(
+      o => (o.descripcion ?? '').includes('[CORTE_PLAN]')
+    );
+  }
+
+  private obtenerUltimoPlanCorte(): PlanCorteForm | null {
+    if (!this._historialPlanesCorte.length) return null;
+    return this.extraerPlanCorteDeObservacion(this._historialPlanesCorte[0].descripcion ?? '');
+  }
+
+  private extraerPlanCorteDeObservacion(texto: string): PlanCorteForm | null {
+    if (!texto.includes('[CORTE_PLAN]')) return null;
+
+    const tokens = texto.split(' ').slice(1);
+    const map = new Map<string, string>();
+    tokens.forEach(token => {
+      const idx = token.indexOf('=');
+      if (idx <= 0) return;
+      map.set(token.substring(0, idx), token.substring(idx + 1));
+    });
+
+    const estadoRaw = map.get('est') ?? 'BORRADOR';
+    const estado: EstadoPlanCorte =
+      estadoRaw === 'CONFIRMADO' || estadoRaw === 'ENVIADO_DISENIO' ? estadoRaw : 'BORRADOR';
+
+    const dtRaw = map.get('dt') ?? '-';
+    const distribucionTalles: DistribucionTallePlan[] = dtRaw === '-'
+      ? []
+      : dtRaw
+        .split('|')
+        .map(pair => pair.split(':'))
+        .filter(parts => parts.length === 2)
+        .map(parts => ({
+          talle: this.decodificarToken(parts[0]),
+          cantidad: Math.max(0, Number(parts[1]) || 0)
+        }))
+        .filter(item => item.talle.length > 0);
+
+    return {
+      cliente: this.decodificarToken(map.get('cli') ?? ''),
+      prenda: this.decodificarToken(map.get('prd') ?? ''),
+      articulo: this.decodificarToken(map.get('art') ?? ''),
+      pedidoTotalPrendas: Math.max(0, Number(map.get('ped') ?? 0)),
+      distribucionTalles,
+      colores: this.decodificarToken(map.get('col') ?? ''),
+      telaAsignada: this.decodificarToken(map.get('tel') ?? ''),
+      articuloTela: this.decodificarToken(map.get('atl') ?? ''),
+      tallerDestino: this.decodificarToken(map.get('tal') ?? ''),
+      fechaNecesidadCorte: (map.get('fec') ?? '-') === '-' ? '' : (map.get('fec') ?? ''),
+      versionPlanificacion: this.decodificarToken(map.get('ver') ?? 'v1'),
+      estadoPlanificacion: estado,
+      observacionesPlan: this.decodificarToken(map.get('obs') ?? '')
+    };
+  }
+
+  private crearCorteRealVacio(): CorteRealForm {
+    return {
+      corteNumero: '',
+      fechaCorte: '',
+      partidaTela: '',
+      telaUsadaKg: 0,
+      pesoRealKg: 0,
+      pesoTizaKg: 0,
+      capas: 0,
+      restoKg: 0,
+      fallaKg: 0,
+      utilizableKg: 0,
+      prendasCortadas: 0,
+      responsable: '',
+      estadoEjecucion: 'PENDIENTE',
+      consumoTeoricoKg: null,
+      capasTeoricas: null,
+      referenciaExterna: '',
+      observacionExterna: '',
+      observacionesCorte: ''
+    };
+  }
+
+  private inicializarFormularioCorteReal(): void {
+    const base = this.crearCorteRealVacio();
+    const ultimo = this.obtenerUltimoCorteReal();
+    this.corteReal = ultimo ? { ...base, ...ultimo } : base;
+  }
+
+  private construirResumenCorteReal(): string {
+    const resumen = [
+      '[CORTE_REAL]',
+      `cn=${this.codificarToken(this.corteReal.corteNumero)}`,
+      `fc=${this.corteReal.fechaCorte || '-'}`,
+      `pt=${this.codificarToken(this.corteReal.partidaTela)}`,
+      `tu=${Number(this.corteReal.telaUsadaKg) || 0}`,
+      `pr=${Number(this.corteReal.pesoRealKg) || 0}`,
+      `pz=${Number(this.corteReal.pesoTizaKg) || 0}`,
+      `ca=${Number(this.corteReal.capas) || 0}`,
+      `re=${Number(this.corteReal.restoKg) || 0}`,
+      `fa=${Number(this.corteReal.fallaKg) || 0}`,
+      `ut=${Number(this.corteReal.utilizableKg) || 0}`,
+      `pc=${Number(this.corteReal.prendasCortadas) || 0}`,
+      `rs=${this.codificarToken(this.corteReal.responsable)}`,
+      `es=${this.corteReal.estadoEjecucion}`,
+      `ct=${this.corteReal.consumoTeoricoKg ?? '-'}`,
+      `cpt=${this.corteReal.capasTeoricas ?? '-'}`,
+      `rf=${this.codificarToken(this.corteReal.referenciaExterna || '-')}`,
+      `oe=${this.codificarToken(this.corteReal.observacionExterna || '-')}`,
+      `ob=${this.codificarToken(this.corteReal.observacionesCorte || '-')}`
+    ].join(' ');
+
+    return this.limitarLongitudObservacion(resumen, 200);
+  }
+
+  private refrescarHistorialCorteReal(): void {
+    this._historialCortesReales = (this.proyecto.observaciones ?? []).filter(
+      o => (o.descripcion ?? '').includes('[CORTE_REAL]')
+    );
+  }
+
+  private obtenerUltimoCorteReal(): CorteRealForm | null {
+    if (!this._historialCortesReales.length) return null;
+    return this.extraerCorteRealDeObservacion(this._historialCortesReales[0].descripcion ?? '');
+  }
+
+  private extraerCorteRealDeObservacion(texto: string): CorteRealForm | null {
+    if (!texto.includes('[CORTE_REAL]')) return null;
+
+    const tokens = texto.split(' ').slice(1);
+    const map = new Map<string, string>();
+    tokens.forEach(token => {
+      const idx = token.indexOf('=');
+      if (idx <= 0) return;
+      map.set(token.substring(0, idx), token.substring(idx + 1));
+    });
+
+    const estadoRaw = map.get('es') ?? 'PENDIENTE';
+    const estado: EstadoCorteReal =
+      estadoRaw === 'EN_EJECUCION' || estadoRaw === 'CERRADO' ? estadoRaw : 'PENDIENTE';
+
+    return {
+      corteNumero: this.decodificarToken(map.get('cn') ?? ''),
+      fechaCorte: (map.get('fc') ?? '-') === '-' ? '' : (map.get('fc') ?? ''),
+      partidaTela: this.decodificarToken(map.get('pt') ?? ''),
+      telaUsadaKg: Number(map.get('tu') ?? 0) || 0,
+      pesoRealKg: Number(map.get('pr') ?? 0) || 0,
+      pesoTizaKg: Number(map.get('pz') ?? 0) || 0,
+      capas: Number(map.get('ca') ?? 0) || 0,
+      restoKg: Number(map.get('re') ?? 0) || 0,
+      fallaKg: Number(map.get('fa') ?? 0) || 0,
+      utilizableKg: Number(map.get('ut') ?? 0) || 0,
+      prendasCortadas: Number(map.get('pc') ?? 0) || 0,
+      responsable: this.decodificarToken(map.get('rs') ?? ''),
+      estadoEjecucion: estado,
+      consumoTeoricoKg: (map.get('ct') ?? '-') === '-' ? null : Number(map.get('ct')),
+      capasTeoricas: (map.get('cpt') ?? '-') === '-' ? null : Number(map.get('cpt')),
+      referenciaExterna: this.decodificarToken(map.get('rf') ?? ''),
+      observacionExterna: this.decodificarToken(map.get('oe') ?? ''),
+      observacionesCorte: this.decodificarToken(map.get('ob') ?? '')
+    };
+  }
+
+  private codificarToken(value: string): string {
+    const clean = (value || '').trim();
+    if (!clean) return '-';
+    return encodeURIComponent(clean);
+  }
+
+  private decodificarToken(value: string): string {
+    if (!value || value === '-') return '';
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+
   private obtenerTextoResultadoCriterio(resultado: ResultadoCriterio): string {
     if (resultado === 'cumple') return 'Cumple';
     if (resultado === 'no_cumple') return 'No cumple';
@@ -683,6 +1135,16 @@ export class ProyectoDetalleModalComponent implements OnInit {
     }
 
     return map;
+  }
+
+  private obtenerObjetivoPorTalleArray(): DistribucionTallePlan[] {
+    const mapa = this.obtenerObjetivoPorTalle();
+    return Object.entries(mapa)
+      .map(([talle, cantidad]) => ({
+        talle: (talle || '').trim().toUpperCase(),
+        cantidad: Math.max(0, Number(cantidad) || 0)
+      }))
+      .sort((a, b) => a.talle.localeCompare(b.talle));
   }
 
   private obtenerInspeccionadoGuardadoPorTalle(): Record<string, number> {
@@ -792,6 +1254,52 @@ interface SeguimientoTalle {
   guardado: number;
   actual: number;
   restante: number;
+}
+
+type EstadoPlanCorte = 'BORRADOR' | 'CONFIRMADO' | 'ENVIADO_DISENIO';
+
+interface DistribucionTallePlan {
+  talle: string;
+  cantidad: number;
+}
+
+interface PlanCorteForm {
+  cliente: string;
+  prenda: string;
+  articulo: string;
+  pedidoTotalPrendas: number;
+  distribucionTalles: DistribucionTallePlan[];
+  colores: string;
+  telaAsignada: string;
+  articuloTela: string;
+  tallerDestino: string;
+  fechaNecesidadCorte: string;
+  versionPlanificacion: string;
+  estadoPlanificacion: EstadoPlanCorte;
+  observacionesPlan: string;
+}
+
+type EstadoCorteReal = 'PENDIENTE' | 'EN_EJECUCION' | 'CERRADO';
+
+interface CorteRealForm {
+  corteNumero: string;
+  fechaCorte: string;
+  partidaTela: string;
+  telaUsadaKg: number;
+  pesoRealKg: number;
+  pesoTizaKg: number;
+  capas: number;
+  restoKg: number;
+  fallaKg: number;
+  utilizableKg: number;
+  prendasCortadas: number;
+  responsable: string;
+  estadoEjecucion: EstadoCorteReal;
+  consumoTeoricoKg: number | null;
+  capasTeoricas: number | null;
+  referenciaExterna: string;
+  observacionExterna: string;
+  observacionesCorte: string;
 }
 
 const CRITERIOS_CALIDAD_INICIALES: CriterioCalidadUI[] = [

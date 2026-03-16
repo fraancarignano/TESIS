@@ -36,7 +36,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let proyecto of proyectosFiltrados" class="fila-proyecto" (click)="abrirDetalle(proyecto)">
+        <tr *ngFor="let proyecto of proyectosPaginados; trackBy: trackByProyecto" class="fila-proyecto" (click)="abrirDetalle(proyecto)">
           <!-- Identificador -->
           <td>{{ proyecto.codigoProyecto }}</td>
 
@@ -90,8 +90,27 @@
       </tbody>
     </table>
 
+    <div class="paginacion" *ngIf="totalFiltrados > 0">
+      <div class="paginacion-info">
+        Mostrando {{ desdeRegistro }}-{{ hastaRegistro }} de {{ totalFiltrados }}
+      </div>
+      <div class="paginacion-controles">
+        <label for="tam-pagina">Por página</label>
+        <select id="tam-pagina" [ngModel]="tamanioPagina" (ngModelChange)="cambiarTamanioPagina($event)">
+          <option *ngFor="let opt of tamaniosPagina" [ngValue]="opt">{{ opt }}</option>
+        </select>
+        <button type="button" class="btn-page" (click)="paginaAnterior()" [disabled]="paginaActual === 1">
+          Anterior
+        </button>
+        <span class="pagina-actual">Página {{ paginaActual }} de {{ totalPaginas }}</span>
+        <button type="button" class="btn-page" (click)="paginaSiguiente()" [disabled]="paginaActual === totalPaginas">
+          Siguiente
+        </button>
+      </div>
+    </div>
+
     <!-- Sin resultados -->
-    <div *ngIf="proyectosFiltrados.length === 0 && !loading" class="sin-resultados">
+    <div *ngIf="totalFiltrados === 0 && !loading" class="sin-resultados">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
         <circle cx="12" cy="12" r="10"></circle>
         <path d="M12 8v4"></path>

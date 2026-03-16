@@ -11,9 +11,7 @@ import { ProyectoCardComponent } from './proyecto-card/proyecto-card.component';
 import {
   Proyecto,
   ProyectoVista,
-  EstadoProyecto,
-  proyectoToVista,
-  calcularProgresoGeneral
+  proyectoToVista
 } from '../models/proyecto.model';
 
 @Component({
@@ -36,6 +34,9 @@ export class ProyectosComponent implements OnInit {
   proyectosPendientes: ProyectoVista[] = [];
   proyectosEnProceso: ProyectoVista[] = [];
   proyectosFinalizados: ProyectoVista[] = [];
+  proyectosPendientesFiltrados: ProyectoVista[] = [];
+  proyectosEnProcesoFiltrados: ProyectoVista[] = [];
+  proyectosFinalizadosFiltrados: ProyectoVista[] = [];
 
   // Todos los proyectos (para filtrado)
   todosLosProyectos: Proyecto[] = [];
@@ -84,7 +85,7 @@ export class ProyectosComponent implements OnInit {
     this.loading = true;
     this.error = false;
 
-    this.proyectosService.obtenerProyectos().subscribe({
+    this.proyectosService.obtenerProyectosConCache().subscribe({
       next: (proyectos: Proyecto[]) => {
         this.todosLosProyectos = proyectos;
         this.organizarProyectosPorEstado(proyectos);
@@ -97,6 +98,8 @@ export class ProyectosComponent implements OnInit {
         this.loading = false;
       }
     });
+
+    this.aplicarFiltros();
   }
 
   /**
@@ -191,7 +194,7 @@ export class ProyectosComponent implements OnInit {
    * Abrir modal para nuevo proyecto
    */
   abrirModalNuevoProyecto(): void {
-    this.mostrarModalNuevoProyecto = true;
+    this.router.navigate(['/proyectos/crear'])
   }
 
   /**
@@ -207,7 +210,9 @@ export class ProyectosComponent implements OnInit {
    */
   verDetalleProyecto(proyecto: ProyectoVista): void {
     if (!proyecto.idProyecto) return;
-    this.router.navigate(['/proyectos', proyecto.idProyecto]);
+    this.router.navigate(['/proyectos/detalle', proyecto.idProyecto], {
+      state: { proyecto }
+    });
   }
 
   /**
@@ -227,15 +232,10 @@ export class ProyectosComponent implements OnInit {
     );
   }
 
-  /**
-   * Obtener proyectos filtrados para cada columna
-   */
-  get proyectosFiltrados() {
-    return {
-      pendientes: this.filtrarProyectos(this.proyectosPendientes),
-      enProceso: this.filtrarProyectos(this.proyectosEnProceso),
-      finalizados: this.filtrarProyectos(this.proyectosFinalizados)
-    };
+  aplicarFiltros(): void {
+    this.proyectosPendientesFiltrados = this.filtrarProyectos(this.proyectosPendientes);
+    this.proyectosEnProcesoFiltrados = this.filtrarProyectos(this.proyectosEnProceso);
+    this.proyectosFinalizadosFiltrados = this.filtrarProyectos(this.proyectosFinalizados);
   }
 
   /**

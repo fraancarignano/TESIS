@@ -116,6 +116,66 @@
   border-collapse: collapse;
 }
 
+.paginacion {
+  padding: 0.6rem 0.8rem;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.paginacion-info {
+  font-size: 0.76rem;
+  color: #666;
+  font-weight: 600;
+}
+
+.paginacion-controles {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.paginacion-controles label {
+  font-size: 0.74rem;
+  color: #666;
+}
+
+.paginacion-controles select {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.74rem;
+}
+
+.btn-page {
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  color: #344054;
+  border-radius: 6px;
+  padding: 0.25rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-page:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.btn-page:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagina-actual {
+  font-size: 0.74rem;
+  color: #444;
+  font-weight: 700;
+}
+
 .tabla-proyectos thead {
   background: #ff5722;
 }

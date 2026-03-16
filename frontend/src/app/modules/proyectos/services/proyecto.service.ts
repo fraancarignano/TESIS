@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { tap, catchError, map } from 'rxjs/operators';
+import { Observable, throwError, BehaviorSubject, of, concat } from 'rxjs';
+import { tap, catchError, map, finalize, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { 
   Proyecto, 
@@ -25,9 +25,13 @@ import {
 })
 export class ProyectosService {
   private apiUrl = `${environment.apiUrl}/Proyecto`;
+  private readonly cacheKey = 'proyectos_cache_v1';
+  private readonly cacheTimestampKey = 'proyectos_cache_v1_ts';
+  private readonly cacheTtlMs = 5 * 60 * 1000; // 5 minutos
   
   private proyectosSubject = new BehaviorSubject<Proyecto[]>([]);
   public proyectos$ = this.proyectosSubject.asObservable();
+  private fetchEnCurso$?: Observable<Proyecto[]>;
 
   constructor(private http: HttpClient) {}
 
@@ -35,9 +39,25 @@ export class ProyectosService {
    * Obtener todos los proyectos
    */
   obtenerProyectos(): Observable<Proyecto[]> {
-    return this.http.get<Proyecto[]>(this.apiUrl).pipe(
-      tap(proyectos => this.proyectosSubject.next(proyectos)),
-      catchError(this.handleError)
+    return this.obtenerProyectosDesdeApi();
+  }
+
+  /**
+   * Carga rápida con cache local y actualización asíncrona.
+   * Emite primero cache (si existe y no expiró) y luego el fetch real.
+   */
+  obtenerProyectosConCache(): Observable<Proyecto[]> {
+    const cache = this.obtenerCacheValido();
+    if (!cache) {
+      return this.obtenerProyectosDesdeApi();
+    }
+
+    this.proyectosSubject.next(cache);
+    return concat(
+      of(cache),
+      this.obtenerProyectosDesdeApi().pipe(
+        catchError(() => of(cache))
+      )
     );
   }
 
@@ -187,6 +207,53 @@ export class ProyectosService {
       tap(() => this.obtenerProyectos().subscribe()),
       catchError(this.handleError)
     );
+  }
+
+  private obtenerProyectosDesdeApi(): Observable<Proyecto[]> {
+    if (this.fetchEnCurso$) {
+      return this.fetchEnCurso$;
+    }
+
+    this.fetchEnCurso$ = this.http.get<Proyecto[]>(this.apiUrl).pipe(
+      tap(proyectos => {
+        this.proyectosSubject.next(proyectos);
+        this.guardarCache(proyectos);
+      }),
+      catchError(this.handleError),
+      finalize(() => {
+        this.fetchEnCurso$ = undefined;
+      }),
+      shareReplay(1)
+    );
+
+    return this.fetchEnCurso$;
+  }
+
+  private obtenerCacheValido(): Proyecto[] | null {
+    try {
+      const cacheRaw = localStorage.getItem(this.cacheKey);
+      const tsRaw = localStorage.getItem(this.cacheTimestampKey);
+      if (!cacheRaw || !tsRaw) return null;
+
+      const ageMs = Date.now() - Number(tsRaw);
+      if (Number.isNaN(ageMs) || ageMs > this.cacheTtlMs) {
+        return null;
+      }
+
+      const proyectos = JSON.parse(cacheRaw) as Proyecto[];
+      return Array.isArray(proyectos) ? proyectos : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private guardarCache(proyectos: Proyecto[]): void {
+    try {
+      localStorage.setItem(this.cacheKey, JSON.stringify(proyectos));
+      localStorage.setItem(this.cacheTimestampKey, Date.now().toString());
+    } catch {
+      // Ignorar errores de almacenamiento local.
+    }
   }
 
   /**
