@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProyectosService } from '../../services/proyecto.service';
+import { ProyectosServiceNuevo } from '../../services/proyectos-nuevo.service';
 import { Proyecto, ProyectoVista, proyectoToVista } from '../../models/proyecto.model';
 import { ProyectoDetalleModalComponent } from '../proyecto-detalle-modal/proyecto-detalle-modal.component';
 
@@ -54,7 +55,8 @@ export class ProyectoDetallePageComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private proyectosService: ProyectosService
+    private proyectosService: ProyectosService,
+    private proyectosServiceNuevo: ProyectosServiceNuevo
   ) { }
 
   ngOnInit(): void {
@@ -75,8 +77,9 @@ export class ProyectoDetallePageComponent implements OnInit {
     this.loading = !silencioso;
     this.error = '';
 
-    this.proyectosService.obtenerProyectoPorId(id).subscribe({
-      next: (proyecto) => {
+    this.proyectosServiceNuevo.obtenerProyectoPorId(id).subscribe({
+      next: (detalle) => {
+        const proyecto = this.mapearDetalleAProyecto(detalle);
         this.proyecto = proyectoToVista(proyecto);
         this.loading = false;
       },
@@ -102,5 +105,18 @@ export class ProyectoDetallePageComponent implements OnInit {
     }
 
     return proyectoToVista(stateProyecto as Proyecto);
+  }
+
+  private mapearDetalleAProyecto(detalle: any): Proyecto {
+    if (!detalle) return {} as Proyecto;
+
+    const clienteNombre = detalle.clienteNombre ?? detalle.nombreCliente ?? '';
+    const nombreEncargado = detalle.nombreEncargado ?? detalle.nombreUsuarioEncargado ?? null;
+
+    return {
+      ...detalle,
+      clienteNombre,
+      nombreEncargado
+    } as Proyecto;
   }
 }

@@ -1,11 +1,15 @@
-import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ObservacionProyecto, ProyectoVista } from '../../models/proyecto.model';
+import { MaterialProyecto, ObservacionProyecto, ProyectoVista } from '../../models/proyecto.model';
 import { ProyectosService } from '../../services/proyecto.service';
 import { AlertasService } from '../../../../core/services/alertas';
 import { PermissionService } from '../../../../core/services/permission.service';
+import { ExportService, PlanillaConfeccionExport } from '../../../../core/services/export.service';
+import { AuthService } from '../../../login/services/auth.service';
 import { environment } from '../../../../../environments/environment';
+import { TalleresService } from '../../../talleres/services/talleres.service';
+import { Taller } from '../../../talleres/models/taller.model';
 import {
   AREAS_PRODUCCION,
   AreaProduccion,
@@ -50,6 +54,18 @@ export class ProyectoDetalleModalComponent implements OnInit {
   guardandoCorteReal = false;
   corteReal: CorteRealForm = this.crearCorteRealVacio();
   private _historialCortesReales: ObservacionProyecto[] = [];
+  confeccion: ConfeccionForm = this.crearConfeccionVacio();
+  guardandoConfeccion = false;
+  planillaConfeccionGuardada = false;
+  private _historialConfeccion: ObservacionProyecto[] = [];
+  private _historialRecepcionesConfeccion: ObservacionProyecto[] = [];
+  private _recepcionesConfeccion: RecepcionConfeccionRegistro[] = [];
+  recepcionActual: RecepcionConfeccionForm = { fechaRecepcion: '', responsableRecepcion: '', recibidoPorTalle: {} };
+  guardandoRecepcion = false;
+  mostrarModalRecepcion = false;
+  talleres: Taller[] = [];
+  tallerSeleccionado: Taller | null = null;
+  cargandoTalleres = false;
 
   // Observaciones generales
   nuevaObservacion: string = '';
@@ -63,7 +79,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
     private proyectosService: ProyectosService,
     private alertas: AlertasService,
     private permissionService: PermissionService,
-    private cdr: ChangeDetectorRef
+    private exportService: ExportService,
+    private authService: AuthService,
+    private cdr: ChangeDetectorRef,
+    private talleresService: TalleresService
   ) { }
 
   ngOnInit(): void {
@@ -75,6 +94,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.refrescarHistorialCorteReal();
     this.inicializarFormularioCorteReal();
     this.recalcularSeguimientoTalles();
+    this.refrescarHistorialConfeccion();
+    this.inicializarFormularioConfeccion();
+    this.refrescarHistorialRecepcionesConfeccion();
+    this.recalcularRecepcionesConfeccion();
+    this.cargarTalleres();
   }
 
   // ==================== GETTERS ====================
@@ -125,6 +149,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.refrescarHistorialCorteReal();
     this.inicializarFormularioCorteReal();
     this.recalcularSeguimientoTalles();
+    this.refrescarHistorialConfeccion();
+    this.inicializarFormularioConfeccion();
+    this.refrescarHistorialRecepcionesConfeccion();
+    this.recalcularRecepcionesConfeccion();
   }
 
   puedeRetrocederArea(): boolean {
@@ -141,6 +169,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   get esAreaCorte(): boolean {
     return this.areaSeleccionada?.campo === 'avanceCorte';
+  }
+
+  get esAreaConfeccion(): boolean {
+    return this.areaSeleccionada?.campo === 'avanceConfeccion';
   }
 
   get criteriosEvaluados(): number {
@@ -200,14 +232,136 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return true;
   }
 
+  get puedeEditarFormularioConfeccion(): boolean {
+    if (!this.esAreaConfeccion) return false;
+    if (!this.puedeGestionarAvance) return false;
+    if (this.areaSeleccionada && this.estaCompleta(this.areaSeleccionada)) return false;
+    return true;
+  }
+
+  get historialConfeccion(): ObservacionProyecto[] {
+    return this._historialConfeccion;
+  }
+
+  get planillaConfeccionLista(): boolean {
+    return this.planillaConfeccionGuardada || this._historialConfeccion.length > 0;
+  }
+
+  get recepcionesConfeccion(): RecepcionConfeccionRegistro[] {
+    return this._recepcionesConfeccion;
+  }
+
+  get totalRecibidoConfeccion(): number {
+    return this.redondearNumero(
+      Object.values(this.confeccion.recibidoPorTalle).reduce((acc, val) => acc + (Number(val) || 0), 0)
+    );
+  }
+
+  get totalObjetivoConfeccion(): number {
+    return this.confeccion.tallesObjetivo.reduce((acc, t) => acc + (Number(t.cantidad) || 0), 0);
+  }
+
+  get pendienteConfeccion(): number {
+    return Math.max(0, this.totalObjetivoConfeccion - this.totalRecibidoConfeccion);
+  }
+
+  get estadoRecepcionConfeccion(): EstadoRecepcionConfeccion {
+    if (this.totalRecibidoConfeccion <= 0) return 'PENDIENTE';
+    if (this.totalRecibidoConfeccion >= this.totalObjetivoConfeccion) return 'COMPLETA';
+    return 'PARCIAL';
+  }
+
+  get puedeGuardarConfeccion(): boolean {
+    if (!this.esAreaConfeccion || !this.puedeEditarFormularioConfeccion) return false;
+    if (!this.confeccion.idTaller) return false;
+    if (!this.confeccion.fechaInicio.trim()) return false;
+    if (!this.confeccion.fechaLimite.trim()) return false;
+    if (!this.esRangoFechaConfeccionValido()) return false;
+    return true;
+  }
+
+  get resumenCortePorTela(): { etiqueta: string; prendas: number }[] {
+    const mapa = new Map<string, number>();
+    (this.corteReal.detalleTelas || []).forEach(t => {
+      const nombre = (t.nombreInsumo || 'Tela').trim();
+      const codigo = (t.codigoTela || '').trim();
+      const etiqueta = codigo ? `${nombre} (${codigo})` : nombre;
+      const actual = mapa.get(etiqueta) ?? 0;
+      mapa.set(etiqueta, actual + (Number(t.prendasCortadas) || 0));
+    });
+    return Array.from(mapa.entries()).map(([etiqueta, prendas]) => ({ etiqueta, prendas }));
+  }
+
+  abrirModalRecepcion(): void {
+    if (!this.puedeEditarFormularioConfeccion) return;
+    if (!this.planillaConfeccionLista) {
+      this.alertas.warning('Planilla pendiente', 'Primero guardá la planilla de confección.');
+      return;
+    }
+    this.recepcionActual = this.crearRecepcionVacia();
+    this.mostrarModalRecepcion = true;
+  }
+
+  imprimirPlanillaConfeccion(): void {
+    if (!this.planillaConfeccionLista) return;
+
+    const telas = this.obtenerTelasProyecto()
+      .map(t => t.codigoTela ? `${t.nombreInsumo} (${t.codigoTela})` : t.nombreInsumo)
+      .filter(t => (t || '').trim().length > 0);
+
+    const materiales = (this.proyecto.materiales ?? []).map(m => ({
+      nombre: (m.nombreInsumo || 'Material').trim(),
+      cantidad: Number(m.cantidadAsignada) || 0,
+      unidad: (m.unidadMedida || '').trim()
+    }));
+
+    const datos: PlanillaConfeccionExport = {
+      titulo: `Planilla Confeccion - ${this.proyecto.nombreProyecto || 'Proyecto'}`,
+      proyecto: {
+        codigo: (this.proyecto.codigoProyecto ?? this.proyecto.idProyecto ?? '').toString(),
+        nombre: this.proyecto.nombreProyecto || '',
+        cliente: this.cortePlan.cliente || (this.proyecto as any)?.clienteNombre || 'Sin definir',
+        pedidoTotal: Number(this.cortePlan.pedidoTotalPrendas || this.proyecto.cantidadTotal || 0),
+        prendas: this.obtenerPrendasProyecto(),
+        colores: this.obtenerColoresProyecto(),
+        telas
+      },
+      taller: {
+        nombre: this.confeccion.nombreTaller || this.tallerSeleccionado?.nombreTaller || '',
+        responsable: this.confeccion.responsableTaller || this.tallerSeleccionado?.responsable || '',
+        telefono: this.confeccion.telefonoTaller || this.tallerSeleccionado?.telefono || '',
+        email: this.confeccion.emailTaller || this.tallerSeleccionado?.email || '',
+        direccion: this.confeccion.direccionTaller || this.tallerSeleccionado?.direccion || '',
+        ciudad: this.confeccion.ciudadTaller || this.tallerSeleccionado?.nombreCiudad || '',
+        provincia: this.confeccion.provinciaTaller || this.tallerSeleccionado?.nombreProvincia || ''
+      },
+      fechas: {
+        inicio: this.confeccion.fechaInicio || '',
+        limite: this.confeccion.fechaLimite || ''
+      },
+      corteResumen: this.resumenCortePorTela,
+      materiales,
+      instrucciones: this.confeccion.instrucciones || '',
+      observaciones: this.confeccion.observaciones || '',
+      disenoNotas: 'Archivos de diseno: pendiente de integracion'
+    };
+
+    try {
+      this.exportService.exportarPlanillaConfeccionPDF(datos);
+      this.alertas.success('Planilla exportada', 'Se genero el PDF de la planilla.');
+    } catch (error) {
+      console.error('Error al exportar planilla:', error);
+      this.alertas.error('Error', 'No se pudo generar el PDF de la planilla.');
+    }
+  }
+
+  cerrarModalRecepcion(): void {
+    this.mostrarModalRecepcion = false;
+  }
+
   get puedeGuardarPlanCorte(): boolean {
     if (!this.esAreaCorte || !this.puedeEditarFormularioCorte) return false;
     if (!this.distribucionCorteValida) return false;
-    if (!this.cortePlan.articulo.trim()) return false;
-    if (!this.cortePlan.colores.trim()) return false;
-    if (!this.cortePlan.telaAsignada.trim()) return false;
-    if (!this.cortePlan.articuloTela.trim()) return false;
-    if (!this.cortePlan.tallerDestino.trim()) return false;
     if (!this.cortePlan.fechaNecesidadCorte.trim()) return false;
     if (!this.cortePlan.versionPlanificacion.trim()) return false;
     return true;
@@ -220,47 +374,44 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return 'Enviado a diseÃ±o';
   }
 
-  get sumaMermaCorteReal(): number {
-    return (Number(this.corteReal.restoKg) || 0)
-      + (Number(this.corteReal.fallaKg) || 0)
-      + (Number(this.corteReal.utilizableKg) || 0);
+  get totalTelaUsadaCorteReal(): number {
+    return this.redondearNumero(
+      this.corteReal.detalleTelas.reduce((acc, t) => acc + (Number(t.telaUsadaKg) || 0), 0)
+    );
   }
 
-  get excedeTelaUsadaCorteReal(): boolean {
-    const telaUsada = Number(this.corteReal.telaUsadaKg) || 0;
-    return this.sumaMermaCorteReal > (telaUsada + 0.01);
+  get totalScrapCorteReal(): number {
+    return this.redondearNumero(
+      this.corteReal.detalleTelas.reduce((acc, t) => acc + (Number(t.scrapKg) || 0), 0)
+    );
   }
 
-  get balanceTelaCorteReal(): number {
-    const telaUsada = Number(this.corteReal.telaUsadaKg) || 0;
-    return Math.round((telaUsada - this.sumaMermaCorteReal) * 100) / 100;
-  }
-
-  get desvioConsumoCorteReal(): number | null {
-    const teorico = Number(this.corteReal.consumoTeoricoKg);
-    const real = Number(this.corteReal.telaUsadaKg);
-    if (!Number.isFinite(teorico) || teorico <= 0 || !Number.isFinite(real)) return null;
-    return Math.round((real - teorico) * 100) / 100;
+  get totalPrendasCorteReal(): number {
+    return this.corteReal.detalleTelas.reduce((acc, t) => acc + (Number(t.prendasCortadas) || 0), 0);
   }
 
   get kgPorPrendaCorteReal(): number | null {
-    const prendas = Number(this.corteReal.prendasCortadas) || 0;
-    const telaUsada = Number(this.corteReal.telaUsadaKg) || 0;
+    const prendas = this.totalPrendasCorteReal;
+    const telaUsada = this.totalTelaUsadaCorteReal;
     if (prendas <= 0 || telaUsada <= 0) return null;
-    return Math.round((telaUsada / prendas) * 1000) / 1000;
+    return this.redondearNumero(telaUsada / prendas, 3);
   }
 
   get puedeGuardarCorteReal(): boolean {
     if (!this.esAreaCorte || !this.puedeEditarFormularioCorte) return false;
     if (!this.corteReal.corteNumero.trim()) return false;
     if (!this.corteReal.fechaCorte.trim()) return false;
-    if (!this.corteReal.partidaTela.trim()) return false;
     if (!this.corteReal.responsable.trim()) return false;
-    if ((Number(this.corteReal.telaUsadaKg) || 0) <= 0) return false;
-    if ((Number(this.corteReal.pesoRealKg) || 0) <= 0) return false;
-    if ((Number(this.corteReal.capas) || 0) <= 0) return false;
-    if ((Number(this.corteReal.prendasCortadas) || 0) <= 0) return false;
-    if (this.excedeTelaUsadaCorteReal) return false;
+    const tieneTelaConUso = this.corteReal.detalleTelas.some(
+      t => (Number(t.telaUsadaKg) || 0) > 0
+    );
+    if (!tieneTelaConUso) return false;
+    const tienePrendasInvalidas = this.corteReal.detalleTelas.some(t => {
+      const kg = Number(t.telaUsadaKg) || 0;
+      const prendas = Number(t.prendasCortadas) || 0;
+      return kg > 0 && prendas <= 0;
+    });
+    if (tienePrendasInvalidas) return false;
     return true;
   }
 
@@ -330,7 +481,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
     const anterior = this.areaAnteriorSeleccionada;
     if (!anterior) return true;
 
-    return this.estaCompleta(anterior);
+    if (!this.estaCompleta(anterior)) return false;
+    if (this.esAreaConfeccion) {
+      return this.totalRecibidoConfeccion >= this.totalObjetivoConfeccion;
+    }
+    return true;
   }
 
   tienePermisoAreaSeleccionada(): boolean {
@@ -609,11 +764,16 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   agregarObservacion(): void {
     if (!this.nuevaObservacion.trim() || !this.proyecto.idProyecto) return;
+    const idUsuario = this.obtenerIdUsuarioActual();
+    if (!idUsuario) {
+      this.alertas.error('Usuario requerido', 'No se pudo identificar el usuario actual.');
+      return;
+    }
 
     this.guardandoObservacion = true;
 
     const dto = {
-      idUsuario: 3, // TODO: Obtener del servicio de auth
+      idUsuario,
       descripcion: this.nuevaObservacion.trim()
     };
 
@@ -715,6 +875,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   guardarPlanCorte(): void {
     if (!this.proyecto.idProyecto || !this.puedeGuardarPlanCorte) return;
+    const idUsuario = this.obtenerIdUsuarioActual();
+    if (!idUsuario) {
+      this.alertas.error('Usuario requerido', 'No se pudo identificar el usuario actual.');
+      return;
+    }
 
     if (!this.distribucionCorteValida) {
       this.alertas.error(
@@ -726,7 +891,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
     const descripcion = this.construirResumenPlanCorte();
     const dto = {
-      idUsuario: 3,
+      idUsuario,
       descripcion
     };
 
@@ -736,8 +901,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
         if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
         this.proyecto.observaciones.unshift({
           idObservacion: Date.now(),
-          idUsuario: 3,
-          nombreUsuario: 'Corte',
+          idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Corte',
           fecha: new Date().toISOString(),
           descripcion
         });
@@ -755,18 +920,15 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   guardarCorteReal(): void {
     if (!this.proyecto.idProyecto || !this.puedeGuardarCorteReal) return;
-
-    if (this.excedeTelaUsadaCorteReal) {
-      this.alertas.error(
-        'Datos inconsistentes',
-        'La suma de resto + falla + utilizable supera la tela usada.'
-      );
+    const idUsuario = this.obtenerIdUsuarioActual();
+    if (!idUsuario) {
+      this.alertas.error('Usuario requerido', 'No se pudo identificar el usuario actual.');
       return;
     }
 
     const descripcion = this.construirResumenCorteReal();
     const dto = {
-      idUsuario: 3,
+      idUsuario,
       descripcion
     };
 
@@ -776,8 +938,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
         if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
         this.proyecto.observaciones.unshift({
           idObservacion: Date.now(),
-          idUsuario: 3,
-          nombreUsuario: 'Corte',
+          idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Corte',
           fecha: new Date().toISOString(),
           descripcion
         });
@@ -793,8 +955,127 @@ export class ProyectoDetalleModalComponent implements OnInit {
     });
   }
 
+  guardarConfeccion(): void {
+    if (!this.proyecto.idProyecto || !this.puedeGuardarConfeccion) return;
+    const idUsuario = this.obtenerIdUsuarioActual();
+    if (!idUsuario) {
+      this.alertas.error('Usuario requerido', 'No se pudo identificar el usuario actual.');
+      return;
+    }
+
+    const descripcion = this.construirResumenConfeccion();
+    const dto = {
+      idUsuario,
+      descripcion
+    };
+
+    this.guardandoConfeccion = true;
+    this.proyectosService.agregarObservacion(this.proyecto.idProyecto, dto).subscribe({
+      next: () => {
+        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
+        this.proyecto.observaciones.unshift({
+          idObservacion: Date.now(),
+          idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Confeccion',
+          fecha: new Date().toISOString(),
+          descripcion
+        });
+        this.guardandoConfeccion = false;
+        this.refrescarHistorialConfeccion();
+        this.planillaConfeccionGuardada = true;
+        this.alertas.success('Confeccion guardada', 'Se registraron los datos del taller y la recepcion.');
+      },
+      error: (err) => {
+        console.error('Error al guardar confeccion:', err);
+        this.guardandoConfeccion = false;
+        this.alertas.error('Error', 'No se pudo guardar la confeccion.');
+      }
+    });
+  }
+
+  marcarRecepcionCompleta(): void {
+    if (!this.puedeEditarFormularioConfeccion) return;
+    this.confeccion.tallesObjetivo.forEach(t => {
+      this.recepcionActual.recibidoPorTalle[t.talle] = Math.max(0, Number(t.cantidad) || 0);
+    });
+    if (!this.recepcionActual.fechaRecepcion) {
+      this.recepcionActual.fechaRecepcion = this.obtenerFechaHoy();
+    }
+  }
+
+  limpiarRecepcion(): void {
+    if (!this.puedeEditarFormularioConfeccion) return;
+    Object.keys(this.recepcionActual.recibidoPorTalle).forEach(key => {
+      this.recepcionActual.recibidoPorTalle[key] = 0;
+    });
+    this.recepcionActual.fechaRecepcion = '';
+  }
+
+  actualizarRecibidoTalle(talle: string, value: number | string): void {
+    if (!this.puedeEditarFormularioConfeccion) return;
+    const parsed = typeof value === 'number' ? value : Number(value);
+    this.recepcionActual.recibidoPorTalle[talle] = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+    if (this.totalRecibidoActual() > 0 && !this.recepcionActual.fechaRecepcion) {
+      this.recepcionActual.fechaRecepcion = this.obtenerFechaHoy();
+    }
+  }
+
+  guardarRecepcionConfeccion(): void {
+    if (!this.proyecto.idProyecto || !this.puedeEditarFormularioConfeccion) return;
+    const idUsuario = this.obtenerIdUsuarioActual();
+    if (!idUsuario) {
+      this.alertas.error('Usuario requerido', 'No se pudo identificar el usuario actual.');
+      return;
+    }
+
+    const totalActual = this.totalRecibidoActual();
+    if (totalActual <= 0) {
+      this.alertas.error('Recepción vacía', 'Ingresá al menos una prenda recibida.');
+      return;
+    }
+    if (!this.recepcionActual.fechaRecepcion.trim()) {
+      this.alertas.error('Fecha requerida', 'Indicá la fecha de recepción.');
+      return;
+    }
+
+    const descripcion = this.construirResumenRecepcionConfeccion();
+    const dto = { idUsuario, descripcion };
+
+    this.guardandoRecepcion = true;
+    this.proyectosService.agregarObservacion(this.proyecto.idProyecto, dto).subscribe({
+      next: () => {
+        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
+        this.proyecto.observaciones.unshift({
+          idObservacion: Date.now(),
+          idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Recepcion',
+          fecha: new Date().toISOString(),
+          descripcion
+        });
+        this.guardandoRecepcion = false;
+        this.refrescarHistorialRecepcionesConfeccion();
+        this.recalcularRecepcionesConfeccion();
+        this.mostrarModalRecepcion = false;
+
+        if (this.totalRecibidoConfeccion >= this.totalObjetivoConfeccion && this.puedeContinuarAreaSeleccionada()) {
+          this.continuarSiguienteArea();
+        }
+      },
+      error: (err) => {
+        console.error('Error al guardar recepcion:', err);
+        this.guardandoRecepcion = false;
+        this.alertas.error('Error', 'No se pudo guardar la recepción.');
+      }
+    });
+  }
+
   guardarInspeccionCalidad(): void {
     if (!this.proyecto.idProyecto || !this.puedeGuardarInspeccionCalidad) return;
+    const idUsuario = this.obtenerIdUsuarioActual();
+    if (!idUsuario) {
+      this.alertas.error('Usuario requerido', 'No se pudo identificar el usuario actual.');
+      return;
+    }
 
     const cantidadesTalle = this.obtenerCantidadesActualesFiltradas();
     if (Object.keys(cantidadesTalle).length === 0) {
@@ -804,7 +1085,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
     const descripcion = this.construirResumenControlCalidad(cantidadesTalle);
     const dto = {
-      idUsuario: 3,
+      idUsuario,
       descripcion
     };
 
@@ -814,8 +1095,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
         if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
         this.proyecto.observaciones.unshift({
           idObservacion: Date.now(),
-          idUsuario: 3,
-          nombreUsuario: 'Inspector',
+          idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Inspector',
           fecha: new Date().toISOString(),
           descripcion
         });
@@ -869,14 +1150,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
   private crearPlanCorteVacio(): PlanCorteForm {
     return {
       cliente: '',
-      prenda: '',
-      articulo: '',
+      prendas: [],
       pedidoTotalPrendas: 0,
       distribucionTalles: [{ talle: 'GENERAL', cantidad: 0 }],
-      colores: '',
-      telaAsignada: '',
-      articuloTela: '',
-      tallerDestino: '',
+      colores: [],
+      telasAsignadas: [],
       fechaNecesidadCorte: '',
       versionPlanificacion: 'v1',
       estadoPlanificacion: 'BORRADOR',
@@ -886,10 +1164,13 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   private inicializarFormularioCorte(): void {
     const base = this.crearPlanCorteVacio();
-    base.cliente = this.proyecto.clienteNombre ?? '';
-    base.prenda = this.proyecto.tipoPrenda ?? '';
+    base.cliente = this.proyecto.clienteNombre ?? (this.proyecto as any)?.nombreCliente ?? '';
+    base.prendas = this.obtenerPrendasProyecto();
     base.pedidoTotalPrendas = Math.max(0, Number(this.proyecto.cantidadTotal ?? 0));
     base.distribucionTalles = this.obtenerObjetivoPorTalleArray();
+    base.colores = this.obtenerColoresProyecto();
+    base.telasAsignadas = this.obtenerTelasProyecto().map(t => t.nombreInsumo).filter(Boolean);
+    base.fechaNecesidadCorte = (this.proyecto.fechaInicio ?? '').toString();
 
     const ultimoPlan = this.obtenerUltimoPlanCorte();
     if (!ultimoPlan) {
@@ -900,6 +1181,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.cortePlan = {
       ...base,
       ...ultimoPlan,
+      colores: ultimoPlan.colores.length ? ultimoPlan.colores : base.colores,
+      telasAsignadas: ultimoPlan.telasAsignadas.length ? ultimoPlan.telasAsignadas : base.telasAsignadas,
       distribucionTalles: ultimoPlan.distribucionTalles.length > 0
         ? ultimoPlan.distribucionTalles
         : base.distribucionTalles
@@ -919,12 +1202,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
       `fec=${this.cortePlan.fechaNecesidadCorte || '-'}`,
       `ped=${Math.max(0, Number(this.cortePlan.pedidoTotalPrendas) || 0)}`,
       `cli=${this.codificarToken(this.cortePlan.cliente)}`,
-      `prd=${this.codificarToken(this.cortePlan.prenda)}`,
-      `art=${this.codificarToken(this.cortePlan.articulo)}`,
-      `col=${this.codificarToken(this.cortePlan.colores)}`,
-      `tel=${this.codificarToken(this.cortePlan.telaAsignada)}`,
-      `atl=${this.codificarToken(this.cortePlan.articuloTela)}`,
-      `tal=${this.codificarToken(this.cortePlan.tallerDestino)}`,
+      `prd=${this.codificarToken(this.cortePlan.prendas.join(', ') || '-')}`,
+      `col=${this.codificarToken(this.cortePlan.colores.join(', ') || '-')}`,
+      `tel=${this.codificarToken(this.cortePlan.telasAsignadas.join(', ') || '-')}`,
+      `cls=${this.codificarToken(this.cortePlan.colores.join('|') || '-')}`,
+      `tls=${this.codificarToken(this.cortePlan.telasAsignadas.join('|') || '-')}`,
       `dt=${distribucion || '-'}`,
       `obs=${this.codificarToken(this.cortePlan.observacionesPlan || '-')}`
     ].join(' ');
@@ -971,16 +1253,25 @@ export class ProyectoDetalleModalComponent implements OnInit {
         }))
         .filter(item => item.talle.length > 0);
 
+    const coloresRaw = this.decodificarToken(map.get('cls') ?? map.get('col') ?? '');
+    const telasRaw = this.decodificarToken(map.get('tls') ?? map.get('tel') ?? '');
+    const colores = coloresRaw
+      ? coloresRaw.split('|').map(c => c.trim()).filter(Boolean)
+      : [];
+    const telasAsignadas = telasRaw
+      ? telasRaw.split('|').map(t => t.trim()).filter(Boolean)
+      : [];
+
     return {
       cliente: this.decodificarToken(map.get('cli') ?? ''),
-      prenda: this.decodificarToken(map.get('prd') ?? ''),
-      articulo: this.decodificarToken(map.get('art') ?? ''),
+      prendas: this.decodificarToken(map.get('prd') ?? '')
+        .split(',')
+        .map(p => p.trim())
+        .filter(Boolean),
       pedidoTotalPrendas: Math.max(0, Number(map.get('ped') ?? 0)),
       distribucionTalles,
-      colores: this.decodificarToken(map.get('col') ?? ''),
-      telaAsignada: this.decodificarToken(map.get('tel') ?? ''),
-      articuloTela: this.decodificarToken(map.get('atl') ?? ''),
-      tallerDestino: this.decodificarToken(map.get('tal') ?? ''),
+      colores,
+      telasAsignadas,
       fechaNecesidadCorte: (map.get('fec') ?? '-') === '-' ? '' : (map.get('fec') ?? ''),
       versionPlanificacion: this.decodificarToken(map.get('ver') ?? 'v1'),
       estadoPlanificacion: estado,
@@ -992,51 +1283,334 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return {
       corteNumero: '',
       fechaCorte: '',
-      partidaTela: '',
-      telaUsadaKg: 0,
-      pesoRealKg: 0,
-      pesoTizaKg: 0,
-      capas: 0,
-      restoKg: 0,
-      fallaKg: 0,
-      utilizableKg: 0,
-      prendasCortadas: 0,
       responsable: '',
       estadoEjecucion: 'PENDIENTE',
-      consumoTeoricoKg: null,
-      capasTeoricas: null,
-      referenciaExterna: '',
-      observacionExterna: '',
+      detalleTelas: [],
       observacionesCorte: ''
     };
   }
 
   private inicializarFormularioCorteReal(): void {
     const base = this.crearCorteRealVacio();
+    base.detalleTelas = this.obtenerTelasProyecto().map(t => ({
+      idInsumo: t.idInsumo,
+      nombreInsumo: t.nombreInsumo,
+      codigoTela: t.codigoTela,
+      telaUsadaKg: 0,
+      prendasCortadas: 0,
+      scrapKg: 0
+    }));
+    base.fechaCorte = this.obtenerFechaHoy();
+    base.corteNumero = this.generarCorteNumero();
+    base.responsable = this.obtenerNombreUsuarioActual();
+
     const ultimo = this.obtenerUltimoCorteReal();
-    this.corteReal = ultimo ? { ...base, ...ultimo } : base;
+    if (ultimo) {
+      const detalle = ultimo.detalleTelas.length > 0 ? ultimo.detalleTelas : base.detalleTelas;
+      this.corteReal = { ...base, ...ultimo, detalleTelas: detalle };
+      if (!this.corteReal.corteNumero.trim()) {
+        this.corteReal.corteNumero = this.generarCorteNumero();
+      }
+      if (!this.corteReal.fechaCorte.trim()) {
+        this.corteReal.fechaCorte = this.obtenerFechaHoy();
+      }
+      if (!this.corteReal.responsable.trim()) {
+        this.corteReal.responsable = this.obtenerNombreUsuarioActual();
+      }
+      return;
+    }
+
+    this.corteReal = base;
+  }
+
+  private crearConfeccionVacio(): ConfeccionForm {
+    return {
+      idTaller: null,
+      nombreTaller: '',
+      responsableTaller: '',
+      telefonoTaller: '',
+      emailTaller: '',
+      direccionTaller: '',
+      ciudadTaller: '',
+      provinciaTaller: '',
+      fechaInicio: '',
+      fechaLimite: '',
+      fechaRecepcion: '',
+      responsableRecepcion: '',
+      instrucciones: '',
+      observaciones: '',
+      tallesObjetivo: [],
+      recibidoPorTalle: {}
+    };
+  }
+
+  private inicializarFormularioConfeccion(): void {
+    const base = this.crearConfeccionVacio();
+    base.tallesObjetivo = this.obtenerObjetivoPorTalleArray();
+    base.tallesObjetivo.forEach(t => {
+      base.recibidoPorTalle[t.talle] = 0;
+    });
+    base.fechaInicio = this.obtenerFechaHoy();
+    base.responsableRecepcion = this.obtenerNombreUsuarioActual();
+
+    const ultimo = this.obtenerUltimoConfeccion();
+    if (ultimo) {
+      const recibido = { ...base.recibidoPorTalle, ...ultimo.recibidoPorTalle };
+      this.confeccion = {
+        ...base,
+        ...ultimo,
+        tallesObjetivo: base.tallesObjetivo,
+        recibidoPorTalle: recibido
+      };
+      if (!this.confeccion.responsableRecepcion.trim()) {
+        this.confeccion.responsableRecepcion = this.obtenerNombreUsuarioActual();
+      }
+    } else {
+      this.confeccion = base;
+    }
+
+    this.planillaConfeccionGuardada = this._historialConfeccion.length > 0;
+    this.sincronizarTallerSeleccionado();
+  }
+
+  private crearRecepcionVacia(): RecepcionConfeccionForm {
+    const recibidoPorTalle: Record<string, number> = {};
+    this.obtenerObjetivoPorTalleArray().forEach(t => {
+      recibidoPorTalle[t.talle] = 0;
+    });
+    return {
+      fechaRecepcion: this.obtenerFechaHoy(),
+      responsableRecepcion: this.obtenerNombreUsuarioActual(),
+      recibidoPorTalle
+    };
+  }
+
+  private sincronizarTallerSeleccionado(): void {
+    if (!this.confeccion.idTaller) {
+      this.tallerSeleccionado = null;
+      return;
+    }
+    const encontrado = this.talleres.find(t => t.idTaller === this.confeccion.idTaller);
+    if (encontrado) {
+      this.tallerSeleccionado = encontrado;
+      this.cargarDatosTallerEnConfeccion(encontrado);
+    }
+  }
+
+  seleccionarTallerConfeccion(idTaller: number | null): void {
+    if (!idTaller) {
+      this.confeccion.idTaller = null;
+      this.tallerSeleccionado = null;
+      this.cargarDatosTallerEnConfeccion(null);
+      return;
+    }
+
+    const taller = this.talleres.find(t => t.idTaller === Number(idTaller)) || null;
+    this.confeccion.idTaller = taller?.idTaller ?? null;
+    this.tallerSeleccionado = taller;
+    this.cargarDatosTallerEnConfeccion(taller);
+  }
+
+  private cargarDatosTallerEnConfeccion(taller: Taller | null): void {
+    if (!taller) {
+      this.confeccion.nombreTaller = '';
+      this.confeccion.responsableTaller = '';
+      this.confeccion.telefonoTaller = '';
+      this.confeccion.emailTaller = '';
+      this.confeccion.direccionTaller = '';
+      this.confeccion.ciudadTaller = '';
+      this.confeccion.provinciaTaller = '';
+      return;
+    }
+
+    this.confeccion.nombreTaller = taller.nombreTaller ?? '';
+    this.confeccion.responsableTaller = taller.responsable ?? '';
+    this.confeccion.telefonoTaller = taller.telefono ?? '';
+    this.confeccion.emailTaller = taller.email ?? '';
+    this.confeccion.direccionTaller = taller.direccion ?? '';
+    this.confeccion.ciudadTaller = taller.nombreCiudad ?? '';
+    this.confeccion.provinciaTaller = taller.nombreProvincia ?? '';
+  }
+
+  private construirResumenConfeccion(): string {
+    const resumen = [
+      '[CONFECCION]',
+      `ti=${this.confeccion.idTaller ?? '-'}`,
+      `tn=${this.codificarToken(this.confeccion.nombreTaller)}`,
+      `tr=${this.codificarToken(this.confeccion.responsableTaller)}`,
+      `te=${this.codificarToken(this.confeccion.telefonoTaller)}`,
+      `em=${this.codificarToken(this.confeccion.emailTaller)}`,
+      `di=${this.codificarToken(this.confeccion.direccionTaller)}`,
+      `ci=${this.codificarToken(this.confeccion.ciudadTaller)}`,
+      `pr=${this.codificarToken(this.confeccion.provinciaTaller)}`,
+      `fi=${this.confeccion.fechaInicio || '-'}`,
+      `fl=${this.confeccion.fechaLimite || '-'}`,
+      `ins=${this.codificarToken(this.confeccion.instrucciones || '-')}`,
+      `obs=${this.codificarToken(this.confeccion.observaciones || '-')}`
+    ].join(' ');
+
+    return this.limitarLongitudObservacion(resumen, 200);
+  }
+
+  private refrescarHistorialConfeccion(): void {
+    this._historialConfeccion = (this.proyecto.observaciones ?? []).filter(
+      o => (o.descripcion ?? '').includes('[CONFECCION]')
+    );
+  }
+
+  private refrescarHistorialRecepcionesConfeccion(): void {
+    this._historialRecepcionesConfeccion = (this.proyecto.observaciones ?? []).filter(
+      o => (o.descripcion ?? '').includes('[CONFECCION_REC]')
+    );
+  }
+
+  private recalcularRecepcionesConfeccion(): void {
+    const recepciones = this._historialRecepcionesConfeccion
+      .map(o => this.extraerRecepcionConfeccionDeObservacion(o.descripcion ?? ''))
+      .filter((r): r is RecepcionConfeccionRegistro => !!r);
+
+    const acumulado: Record<string, number> = {};
+    recepciones.forEach(r => {
+      Object.entries(r.recibidoPorTalle).forEach(([talle, cantidad]) => {
+        if (!acumulado[talle]) acumulado[talle] = 0;
+        acumulado[talle] += Math.max(0, Number(cantidad) || 0);
+      });
+    });
+
+    this._recepcionesConfeccion = recepciones;
+    this.confeccion.recibidoPorTalle = acumulado;
+  }
+
+  private obtenerUltimoConfeccion(): ConfeccionForm | null {
+    if (!this._historialConfeccion.length) return null;
+    return this.extraerConfeccionDeObservacion(this._historialConfeccion[0].descripcion ?? '');
+  }
+
+  private extraerConfeccionDeObservacion(texto: string): ConfeccionForm | null {
+    if (!texto.includes('[CONFECCION]')) return null;
+    const tokens = texto.split(' ').slice(1);
+    const map = new Map<string, string>();
+    tokens.forEach(token => {
+      const idx = token.indexOf('=');
+      if (idx <= 0) return;
+      map.set(token.substring(0, idx), token.substring(idx + 1));
+    });
+
+    return {
+      idTaller: map.get('ti') ? Number(map.get('ti')) : null,
+      nombreTaller: this.decodificarToken(map.get('tn') ?? ''),
+      responsableTaller: this.decodificarToken(map.get('tr') ?? ''),
+      telefonoTaller: this.decodificarToken(map.get('te') ?? ''),
+      emailTaller: this.decodificarToken(map.get('em') ?? ''),
+      direccionTaller: this.decodificarToken(map.get('di') ?? ''),
+      ciudadTaller: this.decodificarToken(map.get('ci') ?? ''),
+      provinciaTaller: this.decodificarToken(map.get('pr') ?? ''),
+      fechaInicio: (map.get('fi') ?? '-') === '-' ? '' : (map.get('fi') ?? ''),
+      fechaLimite: (map.get('fl') ?? '-') === '-' ? '' : (map.get('fl') ?? ''),
+      fechaRecepcion: '',
+      responsableRecepcion: '',
+      instrucciones: this.decodificarToken(map.get('ins') ?? ''),
+      observaciones: this.decodificarToken(map.get('obs') ?? ''),
+      tallesObjetivo: [],
+      recibidoPorTalle: {}
+    };
+  }
+
+  private construirResumenRecepcionConfeccion(): string {
+    const recepcionTalles = this.serializarRecepcionTalles(this.recepcionActual.recibidoPorTalle);
+    const resumen = [
+      '[CONFECCION_REC]',
+      `fr=${this.recepcionActual.fechaRecepcion || '-'}`,
+      `rr=${this.codificarToken(this.recepcionActual.responsableRecepcion || '-')}`,
+      `rt=${this.totalRecibidoActual()}`,
+      `rcp=${this.codificarToken(recepcionTalles || '-')}`
+    ].join(' ');
+
+    return this.limitarLongitudObservacion(resumen, 200);
+  }
+
+  private serializarRecepcionTalles(source: Record<string, number>): string {
+    const entries = Object.entries(source)
+      .filter(([talle, cantidad]) => talle.trim().length > 0 && Number(cantidad) > 0)
+      .map(([talle, cantidad]) => `${this.codificarToken(talle)}:${Math.max(0, Number(cantidad) || 0)}`);
+    return entries.join('|');
+  }
+
+  private deserializarRecepcionTalles(raw: string): Record<string, number> {
+    const resultado: Record<string, number> = {};
+    if (!raw) return resultado;
+    raw.split('|').forEach(item => {
+      const [talleRaw, cantidadRaw] = item.split(':');
+      if (!talleRaw) return;
+      const talle = this.decodificarToken(talleRaw);
+      const cantidad = Math.max(0, Number(cantidadRaw) || 0);
+      if (talle.trim()) {
+        resultado[talle.trim()] = cantidad;
+      }
+    });
+    return resultado;
+  }
+
+  private extraerRecepcionConfeccionDeObservacion(texto: string): RecepcionConfeccionRegistro | null {
+    if (!texto.includes('[CONFECCION_REC]')) return null;
+    const tokens = texto.split(' ').slice(1);
+    const map = new Map<string, string>();
+    tokens.forEach(token => {
+      const idx = token.indexOf('=');
+      if (idx <= 0) return;
+      map.set(token.substring(0, idx), token.substring(idx + 1));
+    });
+
+    const recibidoRaw = this.decodificarToken(map.get('rcp') ?? '');
+    return {
+      fechaRecepcion: (map.get('fr') ?? '-') === '-' ? '' : (map.get('fr') ?? ''),
+      responsableRecepcion: this.decodificarToken(map.get('rr') ?? ''),
+      recibidoPorTalle: this.deserializarRecepcionTalles(recibidoRaw)
+    };
+  }
+
+  private totalRecibidoActual(): number {
+    return Object.values(this.recepcionActual.recibidoPorTalle).reduce((acc, val) => acc + (Number(val) || 0), 0);
+  }
+
+  private esRangoFechaConfeccionValido(): boolean {
+    if (!this.confeccion.fechaInicio || !this.confeccion.fechaLimite) return true;
+    return this.confeccion.fechaInicio <= this.confeccion.fechaLimite;
+  }
+
+  private cargarTalleres(): void {
+    if (this.cargandoTalleres) return;
+    this.cargandoTalleres = true;
+    this.talleresService.obtenerTalleres().subscribe({
+      next: (data) => {
+        this.talleres = data || [];
+        this.cargandoTalleres = false;
+        this.sincronizarTallerSeleccionado();
+      },
+      error: (err) => {
+        console.error('Error al cargar talleres:', err);
+        this.cargandoTalleres = false;
+        this.alertas.error('Error', 'No se pudieron cargar los talleres.');
+      }
+    });
   }
 
   private construirResumenCorteReal(): string {
+    const detalleTelas = this.serializarDetalleTelas();
+    const totalTela = this.totalTelaUsadaCorteReal;
+    const totalScrap = this.totalScrapCorteReal;
+    const totalPrendas = this.totalPrendasCorteReal;
+
     const resumen = [
       '[CORTE_REAL]',
       `cn=${this.codificarToken(this.corteReal.corteNumero)}`,
       `fc=${this.corteReal.fechaCorte || '-'}`,
-      `pt=${this.codificarToken(this.corteReal.partidaTela)}`,
-      `tu=${Number(this.corteReal.telaUsadaKg) || 0}`,
-      `pr=${Number(this.corteReal.pesoRealKg) || 0}`,
-      `pz=${Number(this.corteReal.pesoTizaKg) || 0}`,
-      `ca=${Number(this.corteReal.capas) || 0}`,
-      `re=${Number(this.corteReal.restoKg) || 0}`,
-      `fa=${Number(this.corteReal.fallaKg) || 0}`,
-      `ut=${Number(this.corteReal.utilizableKg) || 0}`,
-      `pc=${Number(this.corteReal.prendasCortadas) || 0}`,
+      `tu=${totalTela}`,
+      `sc=${totalScrap}`,
+      `pc=${totalPrendas}`,
       `rs=${this.codificarToken(this.corteReal.responsable)}`,
       `es=${this.corteReal.estadoEjecucion}`,
-      `ct=${this.corteReal.consumoTeoricoKg ?? '-'}`,
-      `cpt=${this.corteReal.capasTeoricas ?? '-'}`,
-      `rf=${this.codificarToken(this.corteReal.referenciaExterna || '-')}`,
-      `oe=${this.codificarToken(this.corteReal.observacionExterna || '-')}`,
+      `tl=${this.codificarToken(detalleTelas || '-')}`,
       `ob=${this.codificarToken(this.corteReal.observacionesCorte || '-')}`
     ].join(' ');
 
@@ -1069,24 +1643,15 @@ export class ProyectoDetalleModalComponent implements OnInit {
     const estado: EstadoCorteReal =
       estadoRaw === 'EN_EJECUCION' || estadoRaw === 'CERRADO' ? estadoRaw : 'PENDIENTE';
 
+    const detalleRaw = this.decodificarToken(map.get('tl') ?? '');
+    const detalleTelas = this.deserializarDetalleTelas(detalleRaw);
+
     return {
       corteNumero: this.decodificarToken(map.get('cn') ?? ''),
       fechaCorte: (map.get('fc') ?? '-') === '-' ? '' : (map.get('fc') ?? ''),
-      partidaTela: this.decodificarToken(map.get('pt') ?? ''),
-      telaUsadaKg: Number(map.get('tu') ?? 0) || 0,
-      pesoRealKg: Number(map.get('pr') ?? 0) || 0,
-      pesoTizaKg: Number(map.get('pz') ?? 0) || 0,
-      capas: Number(map.get('ca') ?? 0) || 0,
-      restoKg: Number(map.get('re') ?? 0) || 0,
-      fallaKg: Number(map.get('fa') ?? 0) || 0,
-      utilizableKg: Number(map.get('ut') ?? 0) || 0,
-      prendasCortadas: Number(map.get('pc') ?? 0) || 0,
       responsable: this.decodificarToken(map.get('rs') ?? ''),
       estadoEjecucion: estado,
-      consumoTeoricoKg: (map.get('ct') ?? '-') === '-' ? null : Number(map.get('ct')),
-      capasTeoricas: (map.get('cpt') ?? '-') === '-' ? null : Number(map.get('cpt')),
-      referenciaExterna: this.decodificarToken(map.get('rf') ?? ''),
-      observacionExterna: this.decodificarToken(map.get('oe') ?? ''),
+      detalleTelas,
       observacionesCorte: this.decodificarToken(map.get('ob') ?? '')
     };
   }
@@ -1114,6 +1679,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
   }
 
   private obtenerObjetivoPorTalle(): Record<string, number> {
+    if (!this.proyecto) {
+      return { General: 0 };
+    }
     const map: Record<string, number> = {};
     const prendas = (this.proyecto as any).prendas as any[] | undefined;
 
@@ -1149,6 +1717,66 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   private obtenerInspeccionadoGuardadoPorTalle(): Record<string, number> {
     return { ...this._acumuladoGuardadoPorTalle };
+  }
+
+  private obtenerPrendasProyecto(): string[] {
+    const prendas = (this.proyecto as any)?.prendas;
+    if (Array.isArray(prendas)) {
+      const nombres = prendas
+        .map((p: any) => (p?.nombrePrenda ?? p?.nombreTipoPrenda ?? p?.nombreTipo ?? '').trim())
+        .filter((p: string) => p.length > 0);
+      if (nombres.length > 0) {
+        return Array.from(new Set(nombres));
+      }
+    }
+
+    const fallback = (this.proyecto.tipoPrenda ?? '').trim();
+    return fallback ? [fallback] : [];
+  }
+
+  private obtenerColoresProyecto(): string[] {
+    const colores = new Set<string>();
+    const prendas = (this.proyecto as any)?.prendas;
+    if (Array.isArray(prendas)) {
+      prendas.forEach((p: any) => {
+        const color = (p?.colorTela ?? p?.color ?? p?.nombreMaterial ?? p?.nombreInsumo ?? '').toString().trim();
+        if (color) colores.add(color);
+      });
+    }
+
+    if (colores.size === 0) {
+      const materiales = this.obtenerTelasProyecto();
+      materiales.forEach(m => {
+        const nombre = (m.nombreInsumo ?? '').trim();
+        const color = (m as any)?.color ? String((m as any).color).trim() : '';
+        if (color) colores.add(color);
+        else if (nombre) colores.add(nombre);
+      });
+    }
+
+    return Array.from(colores);
+  }
+
+  private obtenerTelasProyecto(): CorteTelaResumen[] {
+    const materiales = this.proyecto.materiales ?? [];
+    let telas = materiales.filter(m => (m.nombreInsumo ?? '').toLowerCase().includes('tela'));
+    if (telas.length === 0) {
+      telas = materiales;
+    }
+
+    const map = new Map<number, CorteTelaResumen>();
+    telas.forEach((m: MaterialProyecto) => {
+      if (!m?.idInsumo) return;
+      if (map.has(m.idInsumo)) return;
+      const nombre = (m.nombreInsumo ?? `Tela ${m.idInsumo}`).trim();
+      map.set(m.idInsumo, {
+        idInsumo: m.idInsumo,
+        nombreInsumo: nombre,
+        codigoTela: String(m.idInsumo)
+      });
+    });
+
+    return Array.from(map.values());
   }
 
   private extraerCantidadesTalleDeObservacion(texto: string): Record<string, number> {
@@ -1196,6 +1824,71 @@ export class ProyectoDetalleModalComponent implements OnInit {
   private limitarLongitudObservacion(texto: string, maxLength: number): string {
     if (texto.length <= maxLength) return texto;
     return texto.substring(0, Math.max(0, maxLength - 3)) + '...';
+  }
+
+  private obtenerFechaHoy(): string {
+    const fecha = new Date();
+    const y = fecha.getFullYear();
+    const m = String(fecha.getMonth() + 1).padStart(2, '0');
+    const d = String(fecha.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  private generarCorteNumero(): string {
+    const codigo = (this.proyecto.codigoProyecto ?? this.proyecto.idProyecto ?? 'PROY').toString();
+    const fecha = this.obtenerFechaHoy().replaceAll('-', '');
+    const secuencia = this._historialCortesReales.length + 1;
+    return `COR-${codigo}-${fecha}-${secuencia}`;
+  }
+
+  private obtenerNombreUsuarioActual(): string {
+    const usuario = this.authService.obtenerUsuarioActual();
+    if (!usuario) return '';
+    const nombre = usuario.nombreUsuario ?? '';
+    const apellido = usuario.apellidoUsuario ?? '';
+    return `${nombre} ${apellido}`.trim();
+  }
+
+  private obtenerIdUsuarioActual(): number | null {
+    const usuario = this.authService.obtenerUsuarioActual();
+    return usuario?.idUsuario ?? null;
+  }
+
+  private serializarDetalleTelas(): string {
+    if (!this.corteReal.detalleTelas.length) return '';
+    return this.corteReal.detalleTelas
+      .map(t => {
+        const id = Number(t.idInsumo) || 0;
+        const codigo = this.codificarToken(t.codigoTela || '');
+        const nombre = this.codificarToken(t.nombreInsumo || '');
+        const kg = Number(t.telaUsadaKg) || 0;
+        const prendas = Number(t.prendasCortadas) || 0;
+        const scrap = Number(t.scrapKg) || 0;
+        return `${id},${codigo},${nombre},${kg},${prendas},${scrap}`;
+      })
+      .join('|');
+  }
+
+  private deserializarDetalleTelas(raw: string): CorteRealTela[] {
+    if (!raw) return [];
+    return raw
+      .split('|')
+      .map(item => item.split(','))
+      .filter(parts => parts.length >= 6)
+      .map(parts => ({
+        idInsumo: Number(parts[0]) || 0,
+        codigoTela: this.decodificarToken(parts[1] ?? ''),
+        nombreInsumo: this.decodificarToken(parts[2] ?? ''),
+        telaUsadaKg: Number(parts[3]) || 0,
+        prendasCortadas: Number(parts[4]) || 0,
+        scrapKg: Number(parts[5]) || 0
+      }))
+      .filter(t => t.idInsumo > 0 || t.nombreInsumo.length > 0);
+  }
+
+  private redondearNumero(value: number, precision = 2): number {
+    const factor = Math.pow(10, precision);
+    return Math.round((value + Number.EPSILON) * factor) / factor;
   }
 
   private normalizarTexto(valor: string): string {
@@ -1265,42 +1958,70 @@ interface DistribucionTallePlan {
 
 interface PlanCorteForm {
   cliente: string;
-  prenda: string;
-  articulo: string;
+  prendas: string[];
   pedidoTotalPrendas: number;
   distribucionTalles: DistribucionTallePlan[];
-  colores: string;
-  telaAsignada: string;
-  articuloTela: string;
-  tallerDestino: string;
+  colores: string[];
+  telasAsignadas: string[];
   fechaNecesidadCorte: string;
   versionPlanificacion: string;
   estadoPlanificacion: EstadoPlanCorte;
   observacionesPlan: string;
 }
 
+interface CorteTelaResumen {
+  idInsumo: number;
+  nombreInsumo: string;
+  codigoTela: string;
+}
+
 type EstadoCorteReal = 'PENDIENTE' | 'EN_EJECUCION' | 'CERRADO';
+type EstadoRecepcionConfeccion = 'PENDIENTE' | 'PARCIAL' | 'COMPLETA';
 
 interface CorteRealForm {
   corteNumero: string;
   fechaCorte: string;
-  partidaTela: string;
-  telaUsadaKg: number;
-  pesoRealKg: number;
-  pesoTizaKg: number;
-  capas: number;
-  restoKg: number;
-  fallaKg: number;
-  utilizableKg: number;
-  prendasCortadas: number;
   responsable: string;
   estadoEjecucion: EstadoCorteReal;
-  consumoTeoricoKg: number | null;
-  capasTeoricas: number | null;
-  referenciaExterna: string;
-  observacionExterna: string;
+  detalleTelas: CorteRealTela[];
   observacionesCorte: string;
 }
+
+interface CorteRealTela {
+  idInsumo: number;
+  nombreInsumo: string;
+  codigoTela: string;
+  telaUsadaKg: number;
+  prendasCortadas: number;
+  scrapKg: number;
+}
+
+interface ConfeccionForm {
+  idTaller: number | null;
+  nombreTaller: string;
+  responsableTaller: string;
+  telefonoTaller: string;
+  emailTaller: string;
+  direccionTaller: string;
+  ciudadTaller: string;
+  provinciaTaller: string;
+  fechaInicio: string;
+  fechaLimite: string;
+  fechaRecepcion: string;
+  responsableRecepcion: string;
+  instrucciones: string;
+  observaciones: string;
+  tallesObjetivo: DistribucionTallePlan[];
+  recibidoPorTalle: Record<string, number>;
+}
+
+interface RecepcionConfeccionForm {
+  fechaRecepcion: string;
+  responsableRecepcion: string;
+  recibidoPorTalle: Record<string, number>;
+}
+
+interface RecepcionConfeccionRegistro extends RecepcionConfeccionForm {}
 
 const CRITERIOS_CALIDAD_INICIALES: CriterioCalidadUI[] = [
   {
@@ -1368,3 +2089,4 @@ const CRITERIOS_CALIDAD_INICIALES: CriterioCalidadUI[] = [
     observacion: ''
   }
 ];
+

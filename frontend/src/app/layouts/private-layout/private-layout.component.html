@@ -1,10 +1,11 @@
 <div class="app-layout">
-  <aside class="sidebar">
+  <aside class="sidebar" *ngIf="mostrarSidebar">
     <div class="logo">
       TAMARINDO
     </div>
 
     <nav class="nav-menu">
+      
       <div class="nav-item-container" *appHasPermission="{ modulo: 'Proyectos', accion: 'Ver' }">
         <a routerLink="/proyectos" routerLinkActive="active" class="nav-item parent" [class.active]="proyectoAbierto"
           (click)="toggleProyectos()">
@@ -14,6 +15,9 @@
         <div class="submenu" [class.open]="proyectoAbierto">
           <a routerLink="/proyectos/crear" routerLinkActive="active" class="nav-item sub">
             <span class="text">Crear Proyecto</span>
+          </a>
+          <a routerLink="/proyectos/explorar" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Explorar Proyectos</span>
           </a>
           <a routerLink="/proyectos/lista" routerLinkActive="active" class="nav-item sub">
             <span class="text">Consultar Lista de Proyectos</span>
@@ -63,6 +67,9 @@
         </div>
 
         <div class="submenu" [class.open]="reportesAbierto">
+          <a routerLink="/reportes/scrap-material" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Reporte de Scrap</span>
+          </a>
           <a routerLink="/reportes/proyectos" routerLinkActive="active" class="nav-item sub">
             <span class="text">Reporte de Proyectos</span>
           </a>
@@ -74,12 +81,6 @@
           </a>
           <a routerLink="/reportes/proveedores" routerLinkActive="active" class="nav-item sub">
             <span class="text">Reporte de Proveedores</span>
-          </a>
-          <a routerLink="/reportes/scrap-material" routerLinkActive="active" class="nav-item sub">
-            <span class="text">Scrap por Material</span>
-          </a>
-          <a routerLink="/reportes/financiero" routerLinkActive="active" class="nav-item sub">
-            <span class="text">Reporte Financiero</span>
           </a>
           <a routerLink="/reportes/clientes" routerLinkActive="active" class="nav-item sub">
             <span class="text">Reporte de Clientes</span>
@@ -138,7 +139,7 @@
     </div>
   </aside>
 
-  <main class="main-content">
+  <main class="main-content" [class.full-width]="!mostrarSidebar">
     <router-outlet></router-outlet>
   </main>
 </div>

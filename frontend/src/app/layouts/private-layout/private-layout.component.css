@@ -19,6 +19,10 @@
   transition: margin-left 0.3s ease;
 }
 
+.main-content.full-width {
+  width: 100%;
+}
+
 .logo {
   padding: 1rem;
   font-size: 1.28rem;
