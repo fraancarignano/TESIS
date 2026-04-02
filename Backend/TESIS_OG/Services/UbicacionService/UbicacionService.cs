@@ -140,6 +140,21 @@ namespace TESIS_OG.Services.UbicacionService
                 .ToListAsync();
         }
 
+        public async Task<List<ProyectoUbicacionDTO>> ObtenerProyectosPorUbicacionAsync(int idUbicacion)
+        {
+            return await _context.Despachos
+                .Include(d => d.IdProyectoNavigation)
+                .Where(d => d.IdUbicacion == idUbicacion && d.Estado != "Despachado")
+                .Select(d => new ProyectoUbicacionDTO
+                {
+                    IdProyecto = d.IdProyecto,
+                    NombreProyecto = d.IdProyectoNavigation != null ? d.IdProyectoNavigation.NombreProyecto : "Sin nombre",
+                    CodigoProyecto = d.IdProyectoNavigation != null ? d.IdProyectoNavigation.CodigoProyecto : "S/C",
+                    FechaIngreso = d.FechaCreacion
+                })
+                .ToListAsync();
+        }
+
         public async Task<bool> TransferirInsumosAsync(InsumoTransferDTO transferDto)
         {
             var ubicacionDestino = await _context.Ubicacions.FindAsync(transferDto.IdUbicacionDestino);

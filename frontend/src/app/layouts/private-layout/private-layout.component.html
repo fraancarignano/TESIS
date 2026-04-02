@@ -110,6 +110,11 @@
         <span class="text">Ordenes de Compra</span>
       </a>
 
+      <a routerLink="/despacho" routerLinkActive="active" class="nav-item"
+        *appHasPermission="{ modulo: 'Despachos', accion: 'Ver' }">
+        <span class="text">Módulo de Despacho</span>
+      </a>
+
       <a routerLink="/notificaciones" routerLinkActive="active" class="nav-item"
         *appHasPermission="{ modulo: 'Notificaciones', accion: 'Ver' }">
         <span class="text">Notificaciones</span>

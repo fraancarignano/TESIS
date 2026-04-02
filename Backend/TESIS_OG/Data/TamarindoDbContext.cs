@@ -84,6 +84,7 @@ public partial class TamarindoDbContext : DbContext
     public virtual DbSet<ReporteClientesTemporadaItemDTO> ReporteClientesTemporadaItems { get; set; }
     public virtual DbSet<UsuarioArea> UsuarioAreas { get; set; }
     public virtual DbSet<UsuarioPermiso> UsuarioPermisos { get; set; }
+    public virtual DbSet<Despacho> Despachos { get; set; }
 
     public virtual DbSet<VwMaterialesProyecto> VwMaterialesProyectos { get; set; }
 
@@ -1315,6 +1316,53 @@ public partial class TamarindoDbContext : DbContext
                 .HasForeignKey(d => d.IdUsuario)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_UsuarioPermiso_Usuario");
+        });
+
+        modelBuilder.Entity<Despacho>(entity =>
+        {
+            entity.HasKey(e => e.IdDespacho).HasName("PK_Despacho_Tracking");
+
+            entity.ToTable("Despacho");
+
+            entity.Property(e => e.IdDespacho).HasColumnName("id_Despacho");
+            
+            entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            
+            entity.Property(e => e.CodigoDespacho)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("codigo_Despacho");
+
+            entity.Property(e => e.IdUbicacion).HasColumnName("id_Ubicacion");
+
+            entity.Property(e => e.Estado)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasDefaultValueSql("'Pendiente'")
+                .HasColumnName("estado");
+
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("observaciones");
+
+            entity.Property(e => e.FechaCreacion)
+                .HasDefaultValueSql("GETDATE()")
+                .HasColumnType("datetime")
+                .HasColumnName("fecha_Creacion");
+
+            entity.Property(e => e.FechaDespacho)
+                .HasColumnType("datetime")
+                .HasColumnName("fecha_Despacho");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Despachos)
+                .HasForeignKey(d => d.IdProyecto)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Despacho_Proyecto_Unique");
+
+            entity.HasOne(d => d.IdUbicacionNavigation).WithMany(p => p.Despachos)
+                .HasForeignKey(d => d.IdUbicacion)
+                .HasConstraintName("FK_Despacho_Ubicacion_Unique");
         });
 
         OnModelCreatingPartial(modelBuilder);

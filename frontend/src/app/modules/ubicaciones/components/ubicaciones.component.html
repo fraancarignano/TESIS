@@ -78,8 +78,15 @@
     </div>
 </div>
 
-<app-ubicacion-detalle-modal *ngIf="mostrarDetalle" [ubicacion]="ubicacionDetalle!" (cerrar)="cerrarDetalle()">
+<app-ubicacion-detalle-modal *ngIf="mostrarDetalle" [ubicacion]="ubicacionDetalle!" (cerrar)="cerrarDetalle()"
+    (abrirProyecto)="abrirDetalleProyecto($event)">
 </app-ubicacion-detalle-modal>
+
+<!-- Modal de Detalle de Proyecto (se abre desde la ubicación) -->
+<app-proyecto-detalle-modal *ngIf="mostrarProyecto && proyectoSeleccionado" 
+    [proyecto]="proyectoSeleccionado" 
+    (cerrar)="cerrarProyecto()">
+</app-proyecto-detalle-modal>
 
 <!-- Modal Formulario -->
 <div class="modal-overlay" *ngIf="mostrarFormulario" (click)="cerrarFormulario()">

@@ -45,6 +45,10 @@ export class UbicacionesService {
         return this.http.get<Insumo[]>(`${this.apiUrl}/${id}/insumos`);
     }
 
+    getProyectosPorUbicacion(id: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/${id}/proyectos`);
+    }
+
     transferirDesdeOrden(transferDto: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/transfer`, transferDto);
     }

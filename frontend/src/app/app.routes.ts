@@ -18,6 +18,10 @@ export const routes: Routes = [
     loadComponent: () => import('./core/components/sin-acceso/sin-acceso.component')
   },
   {
+    path: 'despachos/qr/:codigo',
+    loadComponent: () => import('./modules/despachos/components/despacho-qr-visor/despacho-qr-visor.component').then(m => m.DespachoQrVisorComponent)
+  },
+  {
     path: '',
     component: PrivateLayoutComponent,
     canActivate: [authGuard],
@@ -113,6 +117,12 @@ export const routes: Routes = [
       {
         path: 'reportes/clientes-temporada',
         loadComponent: () => import('./modules/reportes/components/clientes-temporada/clientes-temporada.component')
+      },
+      {
+        path: 'despacho',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Despachos', accion: 'Ver' } },
+        loadComponent: () => import('./modules/despachos/components/despachos-lista/despachos-lista.component').then(m => m.DespachosListaComponent)
       },
       {
         path: 'ordenes',

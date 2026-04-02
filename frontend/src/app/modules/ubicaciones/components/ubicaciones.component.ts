@@ -3,11 +3,15 @@ import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UbicacionesService, Ubicacion } from '../services/ubicaciones.service';
 import { UbicacionDetalleModalComponent } from './ubicacion-detalle-modal/ubicacion-detalle-modal.component';
+import { ProyectoDetalleModalComponent } from '../../proyectos/components/proyecto-detalle-modal/proyecto-detalle-modal.component';
+import { ProyectosService } from '../../proyectos/services/proyecto.service';
+import { ProyectoVista, proyectoToVista } from '../../proyectos/models/proyecto.model';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'app-ubicaciones',
     standalone: true,
-    imports: [CommonModule, FormsModule, UbicacionDetalleModalComponent, NgIf, NgFor],
+    imports: [CommonModule, FormsModule, UbicacionDetalleModalComponent, ProyectoDetalleModalComponent, NgIf, NgFor],
     templateUrl: './ubicaciones.component.html',
     styleUrls: ['./ubicaciones.component.css']
 })
@@ -27,7 +31,14 @@ export class UbicacionesComponent implements OnInit {
         descripcion: ''
     };
 
-    constructor(private ubicacionesService: UbicacionesService) { }
+    // Detalle Proyecto
+    mostrarProyecto = false;
+    proyectoSeleccionado: ProyectoVista | null = null;
+
+    constructor(
+        private ubicacionesService: UbicacionesService,
+        private proyectosService: ProyectosService
+    ) { }
 
     ngOnInit(): void {
         this.cargarUbicaciones();
@@ -111,6 +122,22 @@ export class UbicacionesComponent implements OnInit {
         const divStr = this.nuevaUbicacion.division?.toString().padStart(2, '0');
         const espStr = this.nuevaUbicacion.espacio?.toString().padStart(2, '0');
         this.nuevaUbicacion.codigo = `RCK-${divStr}-${espStr}`;
-        // Assumption: the user wants RCK-DIVISION-ESPACIO based on his example RCK-01-01
+    }
+
+    abrirDetalleProyecto(idProyecto: number): void {
+        this.proyectosService.obtenerProyectoPorId(idProyecto).pipe(
+            map(p => proyectoToVista(p))
+        ).subscribe({
+            next: (proy: ProyectoVista) => {
+                this.proyectoSeleccionado = proy;
+                this.mostrarProyecto = true;
+            },
+            error: (err: any) => console.error('Error al cargar proyecto:', err)
+        });
+    }
+
+    cerrarProyecto(): void {
+        this.mostrarProyecto = false;
+        this.proyectoSeleccionado = null;
     }
 }

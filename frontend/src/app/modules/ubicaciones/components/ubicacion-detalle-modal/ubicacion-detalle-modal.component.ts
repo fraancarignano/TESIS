@@ -31,7 +31,7 @@ import { Insumo } from '../../../inventario/models/insumo.model';
             <strong>Descripción:</strong> {{ ubicacion.descripcion }}
           </div>
 
-          <div class="insumos-seccion">
+          <div class="insumos-seccion" *ngIf="!esUbicacionDespacho">
             <h3>Insumos en esta ubicación ({{ insumos.length }})</h3>
             
             <div class="loading-spinner" *ngIf="cargando">
@@ -70,6 +70,44 @@ import { Insumo } from '../../../inventario/models/insumo.model';
 
             <div class="sin-resultados" *ngIf="!cargando && insumos.length === 0">
               No hay insumos asignados a esta ubicación.
+            </div>
+          </div>
+
+          <!-- SECCIÓN DE PROYECTOS (Para ubicaciones DES) -->
+          <div class="insumos-seccion proyectos-seccion" *ngIf="esUbicacionDespacho">
+            <h3>Proyectos en esta ubicación ({{ proyectos.length }})</h3>
+            
+            <div class="loading-spinner" *ngIf="cargando">
+              Cargando proyectos...
+            </div>
+
+            <div class="tabla-container" *ngIf="!cargando && proyectos.length > 0">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nombre Proyecto</th>
+                    <th>Ingreso a Despacho</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let proy of proyectos">
+                    <td class="font-bold">#{{ proy.codigoProyecto }}</td>
+                    <td>{{ proy.nombreProyecto }}</td>
+                    <td>{{ proy.fechaIngreso | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>
+                      <button class="btn-ver-detalle" (click)="verDetalleProyecto(proy.idProyecto)">
+                        <i class="fas fa-external-link-alt"></i> Ver Detalle
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="sin-resultados" *ngIf="!cargando && proyectos.length === 0">
+              No hay proyectos asignados a esta ubicación de despacho.
             </div>
           </div>
         </div>
@@ -236,30 +274,86 @@ import { Insumo } from '../../../inventario/models/insumo.model';
       cursor: pointer;
       font-weight: 600;
     }
+
+    .btn-ver-detalle {
+      background: #e3f2fd;
+      color: #1976d2;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    .btn-ver-detalle:hover {
+      background: #bbdefb;
+      transform: scale(1.05);
+    }
+
+    .font-bold {
+      font-weight: 700;
+      color: #263238;
+    }
   `]
 })
 export class UbicacionDetalleModalComponent implements OnInit {
   @Input() ubicacion!: Ubicacion;
   @Output() cerrar = new EventEmitter<void>();
+  @Output() abrirProyecto = new EventEmitter<number>();
 
   insumos: Insumo[] = [];
+  proyectos: any[] = [];
   cargando = true;
+
+  get esUbicacionDespacho(): boolean {
+    return this.ubicacion.codigo.startsWith('DES');
+  }
 
   constructor(private ubicacionesService: UbicacionesService) { }
 
   ngOnInit(): void {
     if (this.ubicacion.idUbicacion) {
-      this.ubicacionesService.getInsumosPorUbicacion(this.ubicacion.idUbicacion).subscribe({
-        next: (res) => {
-          this.insumos = res;
-          this.cargando = false;
-        },
-        error: (err: any) => {
-          console.error('Error al cargar insumos de la ubicación:', err);
-          this.cargando = false;
-        }
-      });
+      if (this.esUbicacionDespacho) {
+        this.cargarProyectos();
+      } else {
+        this.cargarInsumos();
+      }
     }
+  }
+
+  cargarInsumos(): void {
+    this.ubicacionesService.getInsumosPorUbicacion(this.ubicacion.idUbicacion!).subscribe({
+      next: (res) => {
+        this.insumos = res;
+        this.cargando = false;
+      },
+      error: (err: any) => {
+        console.error('Error al cargar insumos de la ubicación:', err);
+        this.cargando = false;
+      }
+    });
+  }
+
+  cargarProyectos(): void {
+    this.ubicacionesService.getProyectosPorUbicacion(this.ubicacion.idUbicacion!).subscribe({
+      next: (res) => {
+        this.proyectos = res;
+        this.cargando = false;
+      },
+      error: (err: any) => {
+        console.error('Error al cargar proyectos de la ubicación:', err);
+        this.cargando = false;
+      }
+    });
+  }
+
+  verDetalleProyecto(idProyecto: number): void {
+    this.abrirProyecto.emit(idProyecto);
   }
 
   getEstadoClass(estado?: string): string {

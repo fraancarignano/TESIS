@@ -1,0 +1,164 @@
+<!-- Contenedor Principal con Estética Tamarindo -->
+<div class="pantalla-normal module-container">
+  
+  <!-- Encabezado de Módulo -->
+  <header class="module-header mb-4">
+    <div class="header-info">
+      <div class="header-icon">
+        <i class="fas fa-truck-loading"></i>
+      </div>
+      <div class="header-text">
+        <h1 class="module-title">Despachos</h1>
+        <p class="module-subtitle">Gestión de salida y logística de proyectos finalizados</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-refresh" (click)="cargarDespachos()" [disabled]="loading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> 
+        <span>Sincronizar</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Tarjeta Principal de Tabla -->
+  <div class="premium-card main-card">
+    <div class="card-header-fancy">
+      <div class="d-flex align-items-center gap-2">
+        <i class="fas fa-list-ul"></i>
+        <span>Cola de Despacho</span>
+      </div>
+      <div class="items-count" *ngIf="!loading">
+        {{ despachos.length }} proyectos pendientes
+      </div>
+    </div>
+
+    <div class="card-body p-0">
+      <div *ngIf="loading" class="loader-container">
+        <div class="loader-tamarindo"></div>
+        <p>Actualizando lista de despachos...</p>
+      </div>
+
+      <div class="table-container" *ngIf="!loading">
+        <table class="tamarindo-table">
+          <thead>
+            <tr>
+              <th>ID Despacho</th>
+              <th>Proyecto</th>
+              <th>Cliente</th>
+              <th>Ubicación Fija</th>
+              <th>Estado Logístico</th>
+              <th>Fecha Ingreso</th>
+              <th class="text-end">Operaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of despachos" [class.row-finalized]="d.estado === 'Despachado'">
+              <td class="col-code">
+                <span class="code-badge">{{ d.codigoDespacho }}</span>
+              </td>
+              <td class="col-project">
+                <div class="project-info">
+                  <span class="project-name">{{ d.nombreProyecto }}</span>
+                  <span class="project-id">#ID-{{ d.idProyecto }}</span>
+                </div>
+              </td>
+              <td class="col-client">{{ d.cliente }}</td>
+              <td class="col-location">
+                <div class="location-wrapper" [class.location-unassigned]="!d.idUbicacion">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <select 
+                    class="minimal-select" 
+                    [ngModel]="d.idUbicacion" 
+                    (change)="asignarUbicacion(d.idDespacho, $event)"
+                    [disabled]="d.estado === 'Despachado' || !permissionService.tienePermiso('Despachos', 'Gestionar')"
+                  >
+                    <option [ngValue]="null">Seleccionar DES...</option>
+                    <option *ngFor="let ubi of ubicaciones" [value]="ubi.idUbicacion">
+                      {{ ubi.codigo }}
+                    </option>
+                  </select>
+                </div>
+              </td>
+              <td class="col-status">
+                <span class="status-pill" [ngClass]="d.estado === 'Despachado' ? 'pill-success' : 'pill-pending'">
+                  <i class="fas" [ngClass]="d.estado === 'Despachado' ? 'fa-check-circle' : 'fa-clock'"></i>
+                  {{ d.estado }}
+                </span>
+              </td>
+              <td class="col-date">{{ d.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+              <td class="col-actions text-end">
+                <div class="actions-group">
+                  <button 
+                    class="btn-action btn-print"
+                    title="Imprimir Etiqueta"
+                    (click)="prepararImpresion(d)">
+                    <i class="fas fa-print"></i>
+                  </button>
+                  <button 
+                    class="btn btn-dispatch"
+                    *ngIf="d.estado !== 'Despachado' && permissionService.tienePermiso('Despachos', 'Gestionar')"
+                    (click)="marcarDespachado(d)">
+                    <span>Despachar</span>
+                    <i class="fas fa-truck"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="despachos.length === 0" class="row-empty">
+              <td colspan="7">
+                <div class="empty-state">
+                  <i class="fas fa-inbox"></i>
+                  <p>Bandeja de entrada vacía. No hay proyectos listos para despachar.</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Zona de Impresión (Oculto en pantalla, se activa con @media print) -->
+<div class="zona-impresion" *ngIf="despachoImprimir">
+  <div class="etiqueta-despacho">
+    <div class="etiqueta-header">
+      <img src="assets/images/logo.png" alt="Tamarindo" class="logo-impresion" *ngIf="false" /> <!-- Configurar src real si hay logo -->
+      <h1>Tamarindo</h1>
+      <h2>Pase de Despacho</h2>
+    </div>
+    
+    <div class="etiqueta-body">
+      <div class="info-bloque">
+        <label>Código:</label>
+        <span class="fw-bold fs-4">{{ despachoImprimir.codigoDespacho }}</span>
+      </div>
+      <div class="info-bloque">
+        <label>Proyecto:</label>
+        <span>{{ despachoImprimir.nombreProyecto }}</span>
+      </div>
+      <div class="info-bloque">
+        <label>Cliente:</label>
+        <span>{{ despachoImprimir.cliente }}</span>
+      </div>
+      <div class="info-bloque">
+        <label>Fecha Emisión:</label>
+        <span>{{ despachoImprimir.fechaCreacion | date:'dd/MM/yyyy' }}</span>
+      </div>
+      <div class="info-bloque mt-2" *ngIf="despachoImprimir.codigoUbicacion">
+        <label>Ubicación:</label>
+        <span class="fs-5 fw-bold">{{ despachoImprimir.codigoUbicacion }}</span>
+      </div>
+
+      <!-- Generación del QR dentro del body para ahorrar espacio -->
+      <div class="etiqueta-qr-mini">
+        <qrcode 
+          [qrdata]="qrUrl" 
+          [width]="160" 
+          [errorCorrectionLevel]="'M'">
+        </qrcode>
+        <p class="qr-text">Escanea etiqueta digital (Sin Internet)</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -69,6 +69,13 @@ namespace TESIS_OG.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{id}/proyectos")]
+        public async Task<IActionResult> ObtenerProyectosPorUbicacion(int id)
+        {
+            var result = await _ubicacionService.ObtenerProyectosPorUbicacionAsync(id);
+            return Ok(result);
+        }
+
         [HttpPost("transfer")]
         public async Task<IActionResult> TransferirInsumos([FromBody] InsumoTransferDTO transferDto)
         {

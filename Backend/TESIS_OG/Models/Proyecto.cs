@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace TESIS_OG.Models;
@@ -70,4 +70,5 @@ public partial class Proyecto
     public virtual ICollection<ProyectoPrendum> ProyectoPrenda { get; set; } = new List<ProyectoPrendum>();
     public virtual ICollection<InsumoStock> InsumoStocks { get; set; } = new List<InsumoStock>();
     public virtual ICollection<Scrap> Scraps { get; set; } = new List<Scrap>();
+    public virtual ICollection<Despacho> Despachos { get; set; } = new List<Despacho>();
 }

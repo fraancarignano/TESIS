@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ObservacionProyecto, ProyectoVista } from '../../models/proyecto.model';
 import { ProyectosService } from '../../services/proyecto.service';
+import { DespachoService } from '../../../despachos/services/despacho.service';
 import { AlertasService } from '../../../../core/services/alertas';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { environment } from '../../../../../environments/environment';
@@ -61,6 +62,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   constructor(
     private proyectosService: ProyectosService,
+    private despachoService: DespachoService,
     private alertas: AlertasService,
     private permissionService: PermissionService,
     private cdr: ChangeDetectorRef
@@ -427,11 +429,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
         console.log(mensajeExito);
 
-        // Si es la última área, marcar finalizado en UI (el backend lo persiste)
+        // Si es la última área, marcar finalizado en UI y enviar a despacho
         if (this.esUltimaArea) {
           this.proyecto.estado = 'Finalizado';
-          this.alertas.success('Proyecto finalizado', '¡El proyecto se finalizó exitosamente!');
-          this.cerrarModal();
+          this.mandarADespachoInterno();
         } else if (siguienteDeCompletada) {
           // Pasar a la siguiente área
           this.seleccionarArea(siguienteDeCompletada);
@@ -493,18 +494,34 @@ export class ProyectoDetalleModalComponent implements OnInit {
   finalizarProyecto(): void {
     if (!this.proyecto.idProyecto) return;
 
-    const dto = { estado: 'Finalizado' };
-
     this.proyectosService.cambiarEstado(this.proyecto.idProyecto, 'Finalizado').subscribe({
       next: () => {
         this.proyecto.estado = 'Finalizado';
         this.actualizado.emit();
         this.alertas.success('Proyecto finalizado', '¡El proyecto se finalizó exitosamente!');
-        this.cerrarModal();
+        this.mandarADespachoInterno();
       },
       error: (err) => {
         console.error('Error al finalizar proyecto:', err);
         this.alertas.error('Error', 'No se pudo finalizar el proyecto');
+      }
+    });
+  }
+
+  mandarADespachoInterno(): void {
+    if (!this.proyecto.idProyecto) return;
+    
+    this.despachoService.crearDespacho({
+      idProyecto: this.proyecto.idProyecto,
+      observaciones: this.observacionArea?.trim() || undefined
+    }).subscribe({
+      next: () => {
+        this.alertas.success('¡Enviado a Despacho!', 'El proyecto ya está disponible en el módulo de despacho.');
+        this.cerrarModal();
+      },
+      error: (err) => {
+        this.alertas.error('Error al despachar', err?.message || 'El proyecto se finalizó pero no se pudo generar el despacho.');
+        this.cerrarModal();
       }
     });
   }

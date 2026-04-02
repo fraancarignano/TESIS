@@ -424,6 +424,12 @@
               <div class="area-completada-msg" *ngIf="estaCompleta(areaSeleccionada)">
                 <i class="fas fa-check-circle"></i>
                 <span>Esta área ya ha sido completada</span>
+                
+                <!-- Botón manual para enviar a despacho si es la última área y ya terminó -->
+                <button *ngIf="esUltimaArea" class="btn-mandar-despacho-manual" (click)="mandarADespachoInterno()" [disabled]="procesandoArea">
+                  <i class="fas fa-truck-loading"></i>
+                  Mandar a Despacho
+                </button>
               </div>
             </div>
           </div>

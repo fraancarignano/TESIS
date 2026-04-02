@@ -19,4 +19,5 @@ public partial class Ubicacion
 
     public virtual ICollection<Insumo> Insumos { get; set; } = new List<Insumo>();
     public virtual ICollection<InsumoStock> InsumoStocks { get; set; } = new List<InsumoStock>();
+    public virtual ICollection<Despacho> Despachos { get; set; } = new List<Despacho>();
 }

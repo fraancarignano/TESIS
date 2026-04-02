@@ -33,7 +33,7 @@
       placeholder="Observaciones (opcional)"
     ></textarea>
     <button type="button" class="btn-completar" (click)="completarSeleccionada()" [disabled]="guardando">
-      {{ guardando ? 'Guardando...' : 'Marcar como completado' }}
+      {{ guardando ? 'Guardando...' : (esUltimaArea(areaSeleccionada) ? 'Mandar a Despacho' : 'Marcar como completado') }}
     </button>
   </div>
 </section>

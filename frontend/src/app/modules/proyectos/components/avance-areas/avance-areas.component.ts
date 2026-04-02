@@ -8,6 +8,7 @@ import {
   ProyectoAvanceArea
 } from '../../models/proyecto.model';
 import { ProyectosService } from '../../services/proyecto.service';
+import { DespachoService } from '../../../despachos/services/despacho.service';
 
 @Component({
   selector: 'app-avance-areas',
@@ -28,6 +29,7 @@ export class AvanceAreasComponent implements OnChanges {
 
   constructor(
     private proyectosService: ProyectosService,
+    private despachoService: DespachoService,
     private permissionService: PermissionService,
     private alertas: AlertasService
   ) {}
@@ -73,6 +75,7 @@ export class AvanceAreasComponent implements OnChanges {
     if (!this.idProyecto || !this.areaSeleccionada) return;
     if (!this.puedeCompletar(this.areaSeleccionada)) return;
 
+    const esUltimaArea = this.esUltimaArea(this.areaSeleccionada);
     const payload: CompletarAreaRequestDTO = {
       observaciones: this.observaciones?.trim() || undefined
     };
@@ -80,17 +83,51 @@ export class AvanceAreasComponent implements OnChanges {
     this.guardando = true;
     this.proyectosService.completarArea(this.idProyecto, this.areaSeleccionada.area, payload).subscribe({
       next: () => {
-        this.guardando = false;
-        this.areaSeleccionada = undefined;
-        this.observaciones = '';
-        this.alertas.success('Área completada', 'Se registró correctamente el avance');
-        this.cargarAvance();
+        if (esUltimaArea) {
+          this.mandarADespachoInterno();
+        } else {
+          this.finalizarAccion(true);
+        }
       },
       error: (err) => {
         this.guardando = false;
         this.alertas.error('Error', err?.message || 'No se pudo completar el área');
       }
     });
+  }
+
+  esUltimaArea(area: ProyectoAvanceArea): boolean {
+    return area.area.toLowerCase().includes('etiquetado') || area.area.toLowerCase().includes('empaquetado');
+  }
+
+  private mandarADespachoInterno(): void {
+    if (!this.idProyecto) return;
+    
+    this.despachoService.crearDespacho({
+      idProyecto: this.idProyecto,
+      observaciones: this.observaciones?.trim() || undefined
+    }).subscribe({
+      next: () => {
+        this.alertas.success('¡Enviado a Despacho!', 'El proyecto ya está disponible en el módulo de despacho.');
+        this.finalizarAccion(true);
+      },
+      error: (err) => {
+        this.finalizarAccion(false);
+        this.alertas.error('Error al despachar', err?.message || 'Se completó el área pero no se pudo generar el despacho.');
+      }
+    });
+  }
+
+  private finalizarAccion(exito: boolean): void {
+    this.guardando = false;
+    if (exito) {
+      this.areaSeleccionada = undefined;
+      this.observaciones = '';
+      if (!this.esUltimaArea({ area: '' } as any)) { // Evitar doble alerta si ya se mostro la de despacho
+         this.alertas.success('Área completada', 'Se registró correctamente el avance');
+      }
+      this.cargarAvance();
+    }
   }
 
   estadoClass(area: ProyectoAvanceArea): string {

@@ -1,0 +1,425 @@
+/* Variables de Diseño Tamarindo */
+:host {
+  --primary-color: #2c3e50;
+  --accent-color: #3498db;
+  --success-color: #27ae60;
+  --warning-color: #f39c12;
+  --text-main: #2c3e50;
+  --text-muted: #7f8c8d;
+  --bg-light: #f4f7f6;
+  --card-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+.module-container {
+  padding: 1.5rem;
+  background-color: var(--bg-light);
+  min-height: calc(100vh - 60px);
+}
+
+/* Encabezado */
+.module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.header-icon {
+  width: 50px;
+  height: 50px;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--accent-color);
+  box-shadow: var(--card-shadow);
+}
+
+.module-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+}
+
+.module-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.btn-refresh {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: all 0.2s;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background: #f8f9fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* Tarjeta Premium */
+.premium-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(0,0,0,0.03);
+  overflow: hidden;
+}
+
+.card-header-fancy {
+  padding: 1.25rem 1.5rem;
+  background: #fafbfc;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.items-count {
+  font-size: 0.8rem;
+  background: #ebf5fb;
+  color: #2980b9;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+}
+
+/* Tabla Tamarindo */
+.tamarindo-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tamarindo-table th {
+  padding: 1rem 1.5rem;
+  background: #fcfcfc;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #95a5a6;
+  letter-spacing: 1px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.tamarindo-table td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f7f7f7;
+  font-size: 0.92rem;
+  color: var(--text-main);
+}
+
+.tamarindo-table tr:hover:not(.row-empty) {
+  background-color: #fafbfd;
+}
+
+/* Columnas Especiales */
+.code-badge {
+  background: #f1f4f6;
+  color: #34495e;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.project-name {
+  display: block;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.project-id {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.location-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #f9f9f9;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  width: fit-content;
+}
+
+.location-wrapper i {
+  color: var(--accent-color);
+  font-size: 0.9rem;
+}
+
+.location-unassigned {
+  background: #fff5f5;
+  border-color: #fed7d7;
+}
+
+.location-unassigned i {
+  color: #e53e3e;
+}
+
+.minimal-select {
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  color: #2d3748;
+  outline: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pill-pending {
+  background: #fff8e1;
+  color: #f57f17;
+}
+
+.pill-success {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* Acciones */
+.actions-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.btn-action {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #eee;
+  background: white;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.btn-action:hover {
+  background: var(--bg-light);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+}
+
+.btn-print {
+  background-color: #fff;
+  border: 1.5px solid #f39c12;
+  color: #f39c12;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-print:hover {
+  background-color: #f39c12;
+  color: #fff;
+  border-color: #f39c12;
+  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.25);
+  transform: translateY(-3px) scale(1.05);
+}
+
+.btn-print i {
+  font-size: 1.1rem;
+}
+
+.btn-dispatch {
+  background: var(--success-color);
+  color: white;
+  border: none;
+  padding: 0 1.25rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.btn-dispatch:hover {
+  background: #219150;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+/* Estados Vacíos / Carga */
+.loader-container {
+  padding: 4rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.loader-tamarindo {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-state {
+  padding: 5rem;
+  text-align: center;
+  color: #bdc3c7;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.5;
+}
+
+.row-finalized {
+  opacity: 0.7;
+}
+
+.row-finalized .col-code .code-badge {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* Ocultar sección de impresión por defecto */
+.zona-impresion {
+  display: none;
+}
+
+/* --- ESTILOS DE IMPRESIÓN --- */
+@media print {
+  @page {
+    size: 10cm 15cm; 
+    margin: 0;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .pantalla-normal, .sidebar, .navbar, nav {
+    display: none !important;
+  }
+
+  .zona-impresion, .zona-impresion * {
+    visibility: visible;
+  }
+  
+  .zona-impresion {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: white;
+  }
+
+  .etiqueta-despacho {
+    width: 9.5cm;
+    height: 14.5cm;
+    padding: 20px;
+    border: 2px solid #000;
+    background: #fff;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-family: Arial, sans-serif;
+  }
+
+  .etiqueta-header {
+    text-align: center;
+    border-bottom: 2px dashed #000;
+    padding-bottom: 10px;
+  }
+
+  .etiqueta-header h1 {
+    font-size: 24px;
+    margin: 0;
+    font-weight: 900;
+  }
+  .etiqueta-header h2 {
+    font-size: 16px;
+    margin: 5px 0 0 0;
+    color: #333;
+  }
+
+  .etiqueta-body {
+    flex-grow: 1;
+    margin-top: 15px;
+  }
+
+  .info-bloque {
+    margin-bottom: 10px;
+  }
+
+  .info-bloque label {
+    font-size: 11px;
+    color: #666;
+    display: block;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+  }
+
+  .info-bloque span {
+    font-size: 14px;
+    color: #000;
+  }
+
+  .etiqueta-qr-mini {
+    text-align: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px dashed #eee;
+  }
+
+  .qr-text {
+    font-size: 10px;
+    margin-top: 5px;
+    color: #666;
+    font-style: italic;
+  }
+}

@@ -1,0 +1,87 @@
+<div class="qr-visor-container">
+  <header class="qr-header">
+    <div class="logo">TAMARINDO</div>
+    <div class="subtitle">Detalles de Despacho</div>
+  </header>
+
+  <main class="qr-content">
+    <div *ngIf="loading" class="state-info">
+      <div class="spinner"></div>
+      <p>Cargando información del despacho...</p>
+    </div>
+
+    <div *ngIf="error" class="state-info error">
+      <div class="icon-error">!</div>
+      <p>{{ error }}</p>
+      <button routerLink="/login" class="btn-home">Volver al Inicio</button>
+    </div>
+
+    <div *ngIf="datos && !loading" class="dispatch-details fade-in">
+      <div class="badge-status" [ngClass]="datos.estado">{{ datos.estado }}</div>
+      
+      <section class="section">
+        <h3>Información General</h3>
+        <div class="detail-row">
+          <span class="label">Código Despacho</span>
+          <span class="value highlight">{{ datos.codigoDespacho }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Proyecto</span>
+          <span class="value">{{ datos.proyecto.nombreProyecto }}</span>
+        </div>
+        <div class="detail-row" *ngIf="datos.ubicacion">
+          <span class="label">Ubicación Actual</span>
+          <span class="value location-tag">{{ datos.ubicacion }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Fecha Salida</span>
+          <span class="value">{{ datos.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>Cliente</h3>
+        <div class="detail-row">
+          <span class="label">Nombre / Razón Social</span>
+          <span class="value">{{ datos.cliente.nombre }}</span>
+        </div>
+        <div class="detail-row" *ngIf="datos.cliente.email">
+          <span class="label">Email</span>
+          <span class="value">{{ datos.cliente.email }}</span>
+        </div>
+        <div class="detail-row" *ngIf="datos.cliente.telefono">
+          <span class="label">Teléfono</span>
+          <span class="value">{{ datos.cliente.telefono }}</span>
+        </div>
+      </section>
+
+      <section class="section">
+        <h3>Contenido del Paquete</h3>
+        <div class="items-list">
+          <div class="item-card" *ngFor="let p of datos.prendas">
+            <div class="item-info">
+              <span class="item-name">{{ p.tipo || 'Sin Tipo' }}</span>
+            </div>
+            <div class="item-qty">
+              <span class="qty-num">{{ p.cantidad }}</span>
+              <span class="qty-unit">Unid.</span>
+            </div>
+          </div>
+        </div>
+        <div class="total-summary">
+          <span>Total de Prendas:</span>
+          <strong>{{ datos.proyecto.cantidadTotal }}</strong>
+        </div>
+      </section>
+
+      <div class="footer-note" *ngIf="datos.observaciones">
+        <strong>Notas:</strong>
+        <p>{{ datos.observaciones }}</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="qr-footer">
+    <p>&copy; {{ 2024 }} Tamarindo - Sistema de Gestión de Producción</p>
+  </footer>
+</div>
