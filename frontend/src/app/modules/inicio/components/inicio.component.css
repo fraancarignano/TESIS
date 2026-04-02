@@ -1,0 +1,114 @@
+.home {
+  min-height: 100%;
+  padding: 2.5rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  background: radial-gradient(circle at top, rgba(79, 172, 254, 0.12), transparent 55%),
+    linear-gradient(180deg, #f7f8fc 0%, #eef2f7 100%);
+}
+
+.welcome {
+  text-align: center;
+}
+
+.user-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2b3a67;
+  text-transform: uppercase;
+  letter-spacing: 0.08rem;
+  margin-bottom: 0.6rem;
+}
+
+.welcome h1 {
+  font-size: 2.4rem;
+  margin: 0 0 0.6rem;
+  color: #1a1a2e;
+}
+
+.welcome p {
+  margin: 0;
+  color: #5a6280;
+  font-size: 1rem;
+}
+
+.cards {
+  width: min(1100px, 100%);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 0.9rem;
+  padding: 1.25rem;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 12px 28px rgba(26, 26, 46, 0.08);
+  border: 1px solid rgba(26, 26, 46, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 32px rgba(26, 26, 46, 0.12);
+  border-color: rgba(79, 172, 254, 0.5);
+}
+
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 0.35rem;
+}
+
+.card-desc {
+  font-size: 0.92rem;
+  color: #5a6280;
+  line-height: 1.35;
+}
+
+.logout {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+
+.logout-btn {
+  background: #ff3b30;
+  color: #fff;
+  border: none;
+  padding: 0.7rem 1.8rem;
+  border-radius: 0.6rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 20px rgba(255, 59, 48, 0.25);
+}
+
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 24px rgba(255, 59, 48, 0.35);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .home {
+    padding: 2rem 1.2rem;
+  }
+
+  .welcome h1 {
+    font-size: 2rem;
+  }
+}

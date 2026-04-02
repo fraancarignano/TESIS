@@ -52,7 +52,7 @@ export class LoginComponent {
           'Inicio de sesión exitoso'
         );
         
-        this.authService.navegarAClientes();
+        this.authService.navegarAInicio();
       },
       error: (error) => {
         this.cargando = false;

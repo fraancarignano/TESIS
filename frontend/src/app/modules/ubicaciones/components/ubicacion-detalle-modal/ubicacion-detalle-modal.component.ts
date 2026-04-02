@@ -31,8 +31,11 @@ import { Insumo } from '../../../inventario/models/insumo.model';
             <strong>Descripción:</strong> {{ ubicacion.descripcion }}
           </div>
 
+          <!-- SECCIÓN DE INSUMOS -->
           <div class="insumos-seccion" *ngIf="!esUbicacionDespacho">
-            <h3>Insumos en esta ubicación ({{ insumos.length }})</h3>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h3>Insumos en esta ubicación ({{ insumos.length }})</h3>
+            </div>
             
             <div class="loading-spinner" *ngIf="cargando">
               Cargando insumos...
@@ -44,16 +47,16 @@ import { Insumo } from '../../../inventario/models/insumo.model';
                   <tr>
                     <th>Nombre</th>
                     <th>Proyecto</th>
-                    <th>Stock</th>
+                    <th>Stock Actual</th>
                     <th>Estado</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let insumo of insumos">
-                    <td>{{ insumo.nombreInsumo }}</td>
+                    <td class="fw-bold">{{ insumo.nombreInsumo }}</td>
                     <td>
-                      <span *ngIf="insumo.detalleStock && insumo.detalleStock.length > 0">
-                        {{ insumo.detalleStock[0].nombreProyecto || 'General' }}
+                      <span *ngIf="insumo.detalleStock && insumo.detalleStock.length > 0" class="text-muted">
+                        {{ insumo.detalleStock[0].nombreProyecto || 'Stock General' }}
                       </span>
                       <span *ngIf="!insumo.detalleStock || insumo.detalleStock.length === 0">-</span>
                     </td>
@@ -69,16 +72,19 @@ import { Insumo } from '../../../inventario/models/insumo.model';
             </div>
 
             <div class="sin-resultados" *ngIf="!cargando && insumos.length === 0">
-              No hay insumos asignados a esta ubicación.
+              No hay insumos almacenados en esta ubicación.
             </div>
           </div>
 
           <!-- SECCIÓN DE PROYECTOS (Para ubicaciones DES) -->
           <div class="insumos-seccion proyectos-seccion" *ngIf="esUbicacionDespacho">
-            <h3>Proyectos en esta ubicación ({{ proyectos.length }})</h3>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h3>Logística de Despacho ({{ proyectos.length }})</h3>
+              <span class="badge-despacho">ZONA DES</span>
+            </div>
             
             <div class="loading-spinner" *ngIf="cargando">
-              Cargando proyectos...
+              Validando proyectos en espera...
             </div>
 
             <div class="tabla-container" *ngIf="!cargando && proyectos.length > 0">
@@ -94,11 +100,16 @@ import { Insumo } from '../../../inventario/models/insumo.model';
                 <tbody>
                   <tr *ngFor="let proy of proyectos">
                     <td class="font-bold">#{{ proy.codigoProyecto }}</td>
-                    <td>{{ proy.nombreProyecto }}</td>
+                    <td>
+                       <div class="d-flex flex-column">
+                          <span class="fw-bold">{{ proy.nombreProyecto }}</span>
+                          <span class="text-muted" style="font-size: 11px;">ID: {{ proy.idProyecto }}</span>
+                       </div>
+                    </td>
                     <td>{{ proy.fechaIngreso | date:'dd/MM/yyyy HH:mm' }}</td>
                     <td>
                       <button class="btn-ver-detalle" (click)="verDetalleProyecto(proy.idProyecto)">
-                        <i class="fas fa-external-link-alt"></i> Ver Detalle
+                        <i class="fas fa-external-link-alt"></i> Ver Control
                       </button>
                     </td>
                   </tr>
@@ -107,7 +118,9 @@ import { Insumo } from '../../../inventario/models/insumo.model';
             </div>
 
             <div class="sin-resultados" *ngIf="!cargando && proyectos.length === 0">
-              No hay proyectos asignados a esta ubicación de despacho.
+              <div class="alert alert-info">
+                 Esta ubicación de despacho está vacía. No tiene proyectos asignados actualmente.
+              </div>
             </div>
           </div>
         </div>
@@ -136,7 +149,7 @@ import { Insumo } from '../../../inventario/models/insumo.model';
       background: white;
       border-radius: 12px;
       width: 90%;
-      max-width: 650px;
+      max-width: 700px;
       max-height: 85vh;
       display: flex;
       flex-direction: column;
@@ -295,10 +308,30 @@ import { Insumo } from '../../../inventario/models/insumo.model';
       transform: scale(1.05);
     }
 
+    .badge-despacho {
+      background: #fff3e0;
+      color: #ef6c00;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 800;
+      border: 1px solid #ffe0b2;
+    }
+
     .font-bold {
       font-weight: 700;
       color: #263238;
     }
+
+    .fw-bold { font-weight: 700; }
+    .text-muted { color: #6c757d; }
+    .d-flex { display: flex; }
+    .flex-column { flex-direction: column; }
+    .justify-content-between { justify-content: space-between; }
+    .align-items-center { align-items: center; }
+    .mb-3 { margin-bottom: 1rem; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mt-3 { margin-top: 1rem; }
   `]
 })
 export class UbicacionDetalleModalComponent implements OnInit {
@@ -306,12 +339,15 @@ export class UbicacionDetalleModalComponent implements OnInit {
   @Output() cerrar = new EventEmitter<void>();
   @Output() abrirProyecto = new EventEmitter<number>();
 
-  insumos: Insumo[] = [];
+  insumos: any[] = [];
   proyectos: any[] = [];
   cargando = true;
 
   get esUbicacionDespacho(): boolean {
-    return this.ubicacion.codigo.startsWith('DES');
+    // Más robusto: case-insensitive y soporta variaciones del código
+    if (!this.ubicacion.codigo) return false;
+    const code = this.ubicacion.codigo.toUpperCase();
+    return code.startsWith('DES') || code.includes('-DES');
   }
 
   constructor(private ubicacionesService: UbicacionesService) { }
@@ -327,6 +363,7 @@ export class UbicacionDetalleModalComponent implements OnInit {
   }
 
   cargarInsumos(): void {
+    this.cargando = true;
     this.ubicacionesService.getInsumosPorUbicacion(this.ubicacion.idUbicacion!).subscribe({
       next: (res) => {
         this.insumos = res;
@@ -340,6 +377,7 @@ export class UbicacionDetalleModalComponent implements OnInit {
   }
 
   cargarProyectos(): void {
+    this.cargando = true;
     this.ubicacionesService.getProyectosPorUbicacion(this.ubicacion.idUbicacion!).subscribe({
       next: (res) => {
         this.proyectos = res;
@@ -362,12 +400,15 @@ export class UbicacionDetalleModalComponent implements OnInit {
       case 'en uso': return 'estado-en-uso';
       case 'agotado': return 'estado-agotado';
       case 'a designar': return 'estado-a-designar';
+      case 'activo': return 'estado-disponible';
       default: return 'estado-disponible';
     }
   }
 
   getEstadoTexto(estado?: string): string {
     if (!estado) return 'Disponible';
-    return estado.trim().toLowerCase() === 'pulenta' ? 'Disponible' : estado;
+    const e = estado.trim().toLowerCase();
+    if (e === 'pulenta' || e === 'activo') return 'Disponible';
+    return estado;
   }
 }

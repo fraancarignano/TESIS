@@ -5,25 +5,29 @@ import { Proyecto, ObservacionProyecto, MaterialProyecto } from '../../proyectos
 import { ProyectosService } from '../../proyectos/services/proyecto.service';
 
 interface CortePlanData {
-  telaAsignada: string;
-  articuloTela: string;
+  telasAsignadas: string[];
+  colores: string[];
 }
 
 interface CorteRealData {
   corteNumero: string;
   fechaCorte: string;
-  partidaTela: string;
   telaUsadaKg: number;
-  pesoRealKg: number;
-  pesoTizaKg: number;
-  capas: number;
-  restoKg: number;
-  fallaKg: number;
-  utilizableKg: number;
   prendasCortadas: number;
   responsable: string;
   consumoTeoricoKg: number | null;
   referenciaExterna: string;
+  scrapKg: number;
+  detalleTelas: CorteRealTela[];
+}
+
+interface CorteRealTela {
+  idInsumo: number;
+  codigoTela: string;
+  nombreInsumo: string;
+  telaUsadaKg: number;
+  prendasCortadas: number;
+  scrapKg: number;
 }
 
 interface ScrapRegistro {
@@ -189,7 +193,7 @@ export class ReporteScrapMaterialComponent implements OnInit {
 
     const observaciones: ObservacionProyecto[] = proyecto.observaciones ?? [];
     const plan = this.extraerUltimoPlanCorte(observaciones.map((o: ObservacionProyecto) => o.descripcion ?? ''));
-    const material = this.resolverMaterial(proyecto, plan);
+    const materialFallback = this.resolverMaterial(proyecto, plan);
 
     return observaciones
       .filter((o: ObservacionProyecto) => (o.descripcion ?? '').includes('[CORTE_REAL]'))
@@ -198,42 +202,55 @@ export class ReporteScrapMaterialComponent implements OnInit {
         if (!data) return null;
 
         const fecha = data.fechaCorte || this.obtenerFechaISO(o.fecha);
-        const telaUsada = Math.max(0, data.telaUsadaKg);
-        const scrapKg = Math.max(0, data.restoKg) + Math.max(0, data.fallaKg);
-        const utilizableKg = Math.max(0, data.utilizableKg);
-        const scrapPorcentaje = telaUsada > 0 ? (scrapKg / telaUsada) * 100 : 0;
-        const kgPorPrenda = data.prendasCortadas > 0 && telaUsada > 0
-          ? telaUsada / data.prendasCortadas
-          : null;
+        const detalle = data.detalleTelas.length > 0
+          ? data.detalleTelas
+          : [{
+            idInsumo: 0,
+            codigoTela: '',
+            nombreInsumo: materialFallback,
+            telaUsadaKg: data.telaUsadaKg,
+            prendasCortadas: data.prendasCortadas,
+            scrapKg: data.scrapKg
+          }];
 
-        let desvioKg: number | null = null;
-        let desvioPct: number | null = null;
+        return detalle.map(tela => {
+          const telaUsada = Math.max(0, tela.telaUsadaKg);
+          const scrapKg = Math.max(0, tela.scrapKg);
+          const scrapPorcentaje = telaUsada > 0 ? (scrapKg / telaUsada) * 100 : 0;
+          const kgPorPrenda = tela.prendasCortadas > 0 && telaUsada > 0
+            ? telaUsada / tela.prendasCortadas
+            : null;
 
-        if (data.consumoTeoricoKg !== null && data.consumoTeoricoKg > 0) {
-          desvioKg = telaUsada - data.consumoTeoricoKg;
-          desvioPct = (desvioKg / data.consumoTeoricoKg) * 100;
-        }
+          let desvioKg: number | null = null;
+          let desvioPct: number | null = null;
 
-        return {
-          idProyecto,
-          codigoProyecto: (proyecto.codigoProyecto ?? '').trim() || `P-${idProyecto}`,
-          nombreProyecto: (proyecto.nombreProyecto ?? '').trim() || `Proyecto ${idProyecto}`,
-          cliente: (proyecto.clienteNombre ?? '').trim() || 'Sin cliente',
-          fechaCorte: fecha,
-          material,
-          partida: data.partidaTela,
-          telaUsadaKg: this.redondear(telaUsada),
-          scrapKg: this.redondear(scrapKg),
-          utilizableKg: this.redondear(utilizableKg),
-          scrapPorcentaje: this.redondear(scrapPorcentaje),
-          prendasCortadas: Math.max(0, data.prendasCortadas),
-          kgPorPrenda: kgPorPrenda !== null ? this.redondear(kgPorPrenda, 3) : null,
-          consumoTeoricoKg: data.consumoTeoricoKg !== null ? this.redondear(data.consumoTeoricoKg) : null,
-          desvioConsumoKg: desvioKg !== null ? this.redondear(desvioKg) : null,
-          desvioConsumoPorcentaje: desvioPct !== null ? this.redondear(desvioPct) : null,
-          referenciaExterna: data.referenciaExterna
-        } as ScrapRegistro;
+          if (data.consumoTeoricoKg !== null && data.consumoTeoricoKg > 0) {
+            desvioKg = telaUsada - data.consumoTeoricoKg;
+            desvioPct = (desvioKg / data.consumoTeoricoKg) * 100;
+          }
+
+          return {
+            idProyecto,
+            codigoProyecto: (proyecto.codigoProyecto ?? '').trim() || `P-${idProyecto}`,
+            nombreProyecto: (proyecto.nombreProyecto ?? '').trim() || `Proyecto ${idProyecto}`,
+            cliente: (proyecto.clienteNombre ?? '').trim() || 'Sin cliente',
+            fechaCorte: fecha,
+            material: tela.nombreInsumo || materialFallback || 'Sin material',
+            partida: tela.codigoTela || '-',
+            telaUsadaKg: this.redondear(telaUsada),
+            scrapKg: this.redondear(scrapKg),
+            utilizableKg: 0,
+            scrapPorcentaje: this.redondear(scrapPorcentaje),
+            prendasCortadas: Math.max(0, tela.prendasCortadas),
+            kgPorPrenda: kgPorPrenda !== null ? this.redondear(kgPorPrenda, 3) : null,
+            consumoTeoricoKg: data.consumoTeoricoKg !== null ? this.redondear(data.consumoTeoricoKg) : null,
+            desvioConsumoKg: desvioKg !== null ? this.redondear(desvioKg) : null,
+            desvioConsumoPorcentaje: desvioPct !== null ? this.redondear(desvioPct) : null,
+            referenciaExterna: data.referenciaExterna
+          } as ScrapRegistro;
+        });
       })
+      .flat()
       .filter((x: ScrapRegistro | null): x is ScrapRegistro => x !== null);
   }
 
@@ -296,8 +313,7 @@ export class ReporteScrapMaterialComponent implements OnInit {
   }
 
   private resolverMaterial(proyecto: Proyecto, plan: CortePlanData | null): string {
-    if (plan?.articuloTela) return plan.articuloTela;
-    if (plan?.telaAsignada) return plan.telaAsignada;
+    if (plan?.telasAsignadas?.length) return plan.telasAsignadas[0];
 
     const telas = (proyecto.materiales ?? [])
       .filter((m: MaterialProyecto) => (m.nombreInsumo ?? '').toLowerCase().includes('tela'))
@@ -314,8 +330,8 @@ export class ReporteScrapMaterialComponent implements OnInit {
 
     const map = this.extraerMapaTokens(planText);
     return {
-      telaAsignada: this.decodificarToken(map.get('tel') ?? ''),
-      articuloTela: this.decodificarToken(map.get('atl') ?? '')
+      telasAsignadas: this.separarLista(this.decodificarToken(map.get('tls') ?? map.get('tel') ?? '')),
+      colores: this.separarLista(this.decodificarToken(map.get('cls') ?? map.get('col') ?? ''))
     };
   }
 
@@ -323,23 +339,45 @@ export class ReporteScrapMaterialComponent implements OnInit {
     if (!texto.includes('[CORTE_REAL]')) return null;
 
     const map = this.extraerMapaTokens(texto);
+    const detalleRaw = this.decodificarToken(map.get('tl') ?? '');
+    const detalleTelas = this.parsearDetalleTelas(detalleRaw);
 
     return {
       corteNumero: this.decodificarToken(map.get('cn') ?? ''),
       fechaCorte: (map.get('fc') ?? '-') === '-' ? '' : (map.get('fc') ?? ''),
-      partidaTela: this.decodificarToken(map.get('pt') ?? ''),
       telaUsadaKg: Number(map.get('tu') ?? 0) || 0,
-      pesoRealKg: Number(map.get('pr') ?? 0) || 0,
-      pesoTizaKg: Number(map.get('pz') ?? 0) || 0,
-      capas: Number(map.get('ca') ?? 0) || 0,
-      restoKg: Number(map.get('re') ?? 0) || 0,
-      fallaKg: Number(map.get('fa') ?? 0) || 0,
-      utilizableKg: Number(map.get('ut') ?? 0) || 0,
       prendasCortadas: Number(map.get('pc') ?? 0) || 0,
       responsable: this.decodificarToken(map.get('rs') ?? ''),
       consumoTeoricoKg: (map.get('ct') ?? '-') === '-' ? null : Number(map.get('ct') ?? 0),
-      referenciaExterna: this.decodificarToken(map.get('rf') ?? '')
+      referenciaExterna: this.decodificarToken(map.get('rf') ?? ''),
+      scrapKg: Number(map.get('sc') ?? 0) || 0,
+      detalleTelas
     };
+  }
+
+  private separarLista(raw: string): string[] {
+    if (!raw) return [];
+    return raw
+      .split('|')
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
+  private parsearDetalleTelas(raw: string): CorteRealTela[] {
+    if (!raw) return [];
+    return raw
+      .split('|')
+      .map(item => item.split(','))
+      .filter(parts => parts.length >= 6)
+      .map(parts => ({
+        idInsumo: Number(parts[0]) || 0,
+        codigoTela: this.decodificarToken(parts[1] ?? ''),
+        nombreInsumo: this.decodificarToken(parts[2] ?? ''),
+        telaUsadaKg: Number(parts[3]) || 0,
+        prendasCortadas: Number(parts[4]) || 0,
+        scrapKg: Number(parts[5]) || 0
+      }))
+      .filter(t => t.idInsumo > 0 || t.nombreInsumo.length > 0);
   }
 
   private extraerMapaTokens(texto: string): Map<string, string> {

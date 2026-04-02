@@ -1,0 +1,55 @@
+<section class="home">
+  <header class="welcome">
+    <div class="user-name">{{ obtenerNombreUsuario() }}</div>
+    <h1>Bienvenido al sistema</h1>
+    <p>Accesos directos a tus modulos principales</p>
+  </header>
+
+  <div class="cards">
+    <a class="card" routerLink="/proyectos" *appHasPermission="{ modulo: 'Proyectos', accion: 'Ver' }">
+      <div class="card-title">Proyectos</div>
+      <div class="card-desc">Gestiona y explora proyectos activos</div>
+    </a>
+
+    <a class="card" routerLink="/clientes" *appHasPermission="{ modulo: 'Clientes', accion: 'Ver' }">
+      <div class="card-title">Clientes</div>
+      <div class="card-desc">Consulta y administra clientes</div>
+    </a>
+
+    <a class="card" routerLink="/inventario" *appHasPermission="{ modulo: 'Inventario', accion: 'Ver' }">
+      <div class="card-title">Inventario</div>
+      <div class="card-desc">Stock, recepcion y movimientos</div>
+    </a>
+
+    <a class="card" routerLink="/ubicaciones" *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Ver' }">
+      <div class="card-title">Ubicaciones</div>
+      <div class="card-desc">Gestion de ubicaciones y almacenes</div>
+    </a>
+
+    <a class="card" routerLink="/reportes/proyectos" *appHasPermission="{ modulo: 'Reportes', accion: 'Ver' }">
+      <div class="card-title">Reportes</div>
+      <div class="card-desc">Indicadores y reportes clave</div>
+    </a>
+
+    <a class="card" routerLink="/ordenes" *appHasPermission="{ modulo: 'OrdenesCompra', accion: 'Recepcionar' }">
+      <div class="card-title">Ordenes de compra</div>
+      <div class="card-desc">Recepcion y seguimiento de ordenes</div>
+    </a>
+
+    <a class="card" routerLink="/notificaciones" *appHasPermission="{ modulo: 'Notificaciones', accion: 'Ver' }">
+      <div class="card-title">Notificaciones</div>
+      <div class="card-desc">Alertas de stock y novedades</div>
+    </a>
+
+    <a class="card" routerLink="/usuarios/internos" *ngIf="permissionService.esAdmin()">
+      <div class="card-title">Usuarios</div>
+      <div class="card-desc">Gestion de usuarios del sistema</div>
+    </a>
+  </div>
+
+  <div class="logout">
+    <button class="logout-btn" (click)="cerrarSesion()">
+      Cerrar sesion
+    </button>
+  </div>
+</section>

@@ -66,6 +66,7 @@ export interface Proyecto {
   // Relaciones
   materiales?: MaterialProyecto[];
   observaciones?: ObservacionProyecto[];
+  prendas?: any[]; // Añadido para compatibilidad con el nuevo sistema de prendas de tu compañero
 }
 
 // ============================================
@@ -100,6 +101,7 @@ export interface MaterialProyecto {
   idDetalle: number;
   idInsumo: number;
   nombreInsumo?: string;
+  color?: string; // Añadido para seguimiento de telas con color
   idUnidad: number;
   unidadMedida?: string;
   cantidadAsignada: number;

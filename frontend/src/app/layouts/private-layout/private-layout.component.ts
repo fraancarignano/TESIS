@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { HasPermissionDirective } from '../../core/directives/has-permission.directive';
 import { AlertasService } from '../../core/services/alertas';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
@@ -21,14 +22,17 @@ export class PrivateLayoutComponent implements OnInit, OnDestroy {
   usuariosAbierto = false;
   inventarioAbierto = false;
   notificacionesStockCount = 0;
+  public mostrarSidebar = true;
   private timer?: any;
   private cambiosNotificacionesSub?: Subscription;
+  private routerSub?: Subscription;
 
   constructor(
     private authService: AuthService,
     public permissionService: PermissionService,
     private alertas: AlertasService,
-    private notificacionesService: NotificacionesService
+    private notificacionesService: NotificacionesService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -37,11 +41,19 @@ export class PrivateLayoutComponent implements OnInit, OnDestroy {
     this.cambiosNotificacionesSub = this.notificacionesService.cambios$.subscribe(() => {
       this.cargarCountNotificaciones();
     });
+    this.actualizarSidebar(this.router.url);
+    this.routerSub = this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        const navigation = event as NavigationEnd;
+        this.actualizarSidebar(navigation.urlAfterRedirects);
+      });
   }
 
   ngOnDestroy(): void {
     if (this.timer) clearInterval(this.timer);
     this.cambiosNotificacionesSub?.unsubscribe();
+    this.routerSub?.unsubscribe();
   }
 
   tienePermiso(modulo: string, accion: string): boolean {
@@ -95,6 +107,10 @@ export class PrivateLayoutComponent implements OnInit, OnDestroy {
 
   toggleInventario(): void {
     this.inventarioAbierto = !this.inventarioAbierto;
+  }
+
+  private actualizarSidebar(url: string): void {
+    this.mostrarSidebar = !url.startsWith('/inicio');
   }
 
   private cargarCountNotificaciones(): void {

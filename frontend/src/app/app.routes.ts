@@ -27,6 +27,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: 'inicio',
+        loadComponent: () => import('./modules/inicio/components/inicio.component').then(m => m.InicioComponent)
+      },
+      {
         path: 'clientes',
         canActivate: [permissionGuard],
         data: { permission: { modulo: 'Clientes', accion: 'Ver' } },
@@ -51,6 +55,12 @@ export const routes: Routes = [
       {
         path: 'proyectos/lista',
         loadComponent: () => import('./modules/proyectos/components/proyecto-lista/proyecto-list.component').then(m => m.ProyectoListComponent)
+      },
+      {
+        path: 'proyectos/explorar',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Proyectos', accion: 'Ver' } },
+        loadComponent: () => import('./modules/proyectos/components/proyecto-explorar/proyecto-explorar.component').then(m => m.ProyectoExplorarComponent)
       },
       {
         path: 'inventario',
@@ -155,7 +165,7 @@ export const routes: Routes = [
       },
       {
         path: '**',
-        redirectTo: '/proyectos'
+        redirectTo: '/inicio'
       }
     ]
   }

@@ -1,0 +1,159 @@
+<div class="explorar-container">
+  <div class="header">
+    <div class="breadcrumb">
+      <span class="breadcrumb-item">Proyectos</span>
+      <span class="breadcrumb-separator">></span>
+      <span class="breadcrumb-item active">Explorar</span>
+    </div>
+
+    <div class="header-actions">
+      <div class="busqueda">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input
+          type="text"
+          class="input-busqueda"
+          placeholder="Buscar proyectos..."
+          [(ngModel)]="terminoBusqueda"
+        >
+      </div>
+
+      <div class="toggle-group" role="group" aria-label="Vista">
+        <button
+          class="toggle-btn"
+          [class.active]="vistaActual === 'lista'"
+          (click)="setVista('lista')"
+          type="button"
+        >
+          Lista
+        </button>
+        <button
+          class="toggle-btn"
+          [class.active]="vistaActual === 'mosaico'"
+          (click)="setVista('mosaico')"
+          type="button"
+        >
+          Mosaico
+        </button>
+      </div>
+
+      <div class="select-group">
+        <label for="agrupacion" class="select-label">Agrupar por</label>
+        <select id="agrupacion" [(ngModel)]="agrupacionActual">
+          <option *ngFor="let opcion of agrupaciones" [ngValue]="opcion.key">
+            {{ opcion.label }}
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="estado-carga" *ngIf="loading">
+    Cargando proyectos...
+  </div>
+
+  <div class="estado-error" *ngIf="error">
+    No se pudieron cargar los proyectos. Intenta nuevamente.
+  </div>
+
+  <ng-container *ngIf="!loading && !error">
+    <div *ngIf="proyectosFiltrados.length === 0" class="sin-resultados">
+      <h3>No hay proyectos para mostrar</h3>
+      <p>Prueba ajustar la busqueda o la agrupacion.</p>
+    </div>
+
+    <ng-container *ngIf="proyectosFiltrados.length > 0">
+      <ng-container *ngIf="vistaActual === 'lista'">
+        <section class="grupo" *ngFor="let grupo of gruposLista; trackBy: trackByGrupo">
+          <div class="grupo-header">
+            <div class="grupo-title">{{ grupo.label }}</div>
+            <span class="grupo-count">{{ grupo.proyectos.length }} proyectos</span>
+          </div>
+
+          <div class="tabla-wrapper">
+            <table class="tabla-proyectos">
+              <thead>
+                <tr>
+                  <th>
+                    <button class="th-sort" type="button" (click)="setOrdenCampo('nombre')">
+                      Nombre <span class="th-sort-icon">{{ getOrdenIcono('nombre') }}</span>
+                    </button>
+                  </th>
+                  <th>
+                    <button class="th-sort" type="button" (click)="setOrdenCampo('cliente')">
+                      Cliente <span class="th-sort-icon">{{ getOrdenIcono('cliente') }}</span>
+                    </button>
+                  </th>
+                  <th>
+                    <button class="th-sort" type="button" (click)="setOrdenCampo('prenda')">
+                      Prenda <span class="th-sort-icon">{{ getOrdenIcono('prenda') }}</span>
+                    </button>
+                  </th>
+                  <th>
+                    <button class="th-sort" type="button" (click)="setOrdenCampo('estado')">
+                      Estado <span class="th-sort-icon">{{ getOrdenIcono('estado') }}</span>
+                    </button>
+                  </th>
+                  <th>
+                    <button class="th-sort" type="button" (click)="setOrdenCampo('fechaInicio')">
+                      Fecha inicio <span class="th-sort-icon">{{ getOrdenIcono('fechaInicio') }}</span>
+                    </button>
+                  </th>
+                  <th>
+                    <button class="th-sort" type="button" (click)="setOrdenCampo('fechaFin')">
+                      Fecha fin <span class="th-sort-icon">{{ getOrdenIcono('fechaFin') }}</span>
+                    </button>
+                  </th>
+                  <th>
+                    <button class="th-sort" type="button" (click)="setOrdenCampo('areaActual')">
+                      Area actual <span class="th-sort-icon">{{ getOrdenIcono('areaActual') }}</span>
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="let proyecto of grupo.proyectos; trackBy: trackByProyecto"
+                  class="fila-proyecto"
+                  (click)="abrirDetalle(proyecto)"
+                >
+                  <td class="td-nombre">{{ proyecto.nombreProyecto }}</td>
+                  <td>{{ getClienteNombre(proyecto) || '-' }}</td>
+                  <td>{{ getTipoPrendaNombre(proyecto) || '-' }}</td>
+                  <td>
+                    <span class="badge" [ngClass]="getEstadoClass(proyecto.estado)">
+                      {{ proyecto.estado }}
+                    </span>
+                  </td>
+                  <td>{{ formatearFecha(proyecto.fechaInicio) }}</td>
+                  <td>{{ formatearFecha(proyecto.fechaFin || undefined) }}</td>
+                  <td>{{ getAreaActualNombre(proyecto) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </ng-container>
+
+      <ng-container *ngIf="vistaActual === 'mosaico'">
+        <section class="grupo" *ngFor="let grupo of gruposMosaico; trackBy: trackByGrupo">
+          <div class="grupo-header">
+            <div class="grupo-title">{{ grupo.label }}</div>
+            <span class="grupo-count">{{ grupo.proyectos.length }} proyectos</span>
+          </div>
+
+          <div class="mosaico-grid">
+            <app-proyecto-card
+              *ngFor="let proyecto of grupo.proyectos; trackBy: trackByProyecto"
+              [proyecto]="proyecto"
+              (verDetalle)="verDetalleProyecto($event)"
+            ></app-proyecto-card>
+          </div>
+        </section>
+      </ng-container>
+    </ng-container>
+  </ng-container>
+</div>

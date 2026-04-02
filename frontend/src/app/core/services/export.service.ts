@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -6,6 +6,38 @@ import { saveAs } from 'file-saver';
 import { Cliente } from '../../modules/clientes/models/cliente.model';
 import { Proyecto } from '../../modules/proyectos/models/proyecto.model';
 import { Proveedor } from '../../modules/proveedores/models/proveedor.model';
+
+export interface PlanillaConfeccionExport {
+  titulo?: string;
+  fechaGeneracion?: Date;
+  proyecto: {
+    codigo?: string;
+    nombre?: string;
+    cliente?: string;
+    pedidoTotal?: number;
+    prendas?: string[];
+    colores?: string[];
+    telas?: string[];
+  };
+  taller: {
+    nombre?: string;
+    responsable?: string;
+    telefono?: string;
+    email?: string;
+    direccion?: string;
+    ciudad?: string;
+    provincia?: string;
+  };
+  fechas: {
+    inicio?: string;
+    limite?: string;
+  };
+  corteResumen: { etiqueta: string; prendas: number }[];
+  materiales: { nombre: string; cantidad: number; unidad: string }[];
+  instrucciones?: string;
+  observaciones?: string;
+  disenoNotas?: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -572,6 +604,183 @@ export class ExportService {
     saveAs(blob, nombreArchivo);
   }
 
+  
+  // ==================== PLANILLA DE CONFECCION ====================
+
+  exportarPlanillaConfeccionPDF(data: PlanillaConfeccionExport): void {
+    const doc = new jsPDF('p');
+    const marginX = 14;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const contentWidth = pageWidth - marginX * 2;
+    let y = 12;
+
+    const titulo = data.titulo || 'Planilla Confeccion';
+    const proyecto = data.proyecto ?? {};
+    const taller = data.taller ?? {};
+    const fechas = data.fechas ?? {};
+
+    const fechaGeneracion = (data.fechaGeneracion ?? new Date()).toLocaleDateString('es-AR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    doc.setFillColor(255, 87, 34);
+    doc.rect(marginX, y, contentWidth, 12, 'F');
+    doc.setFontSize(14);
+    doc.setTextColor(255, 255, 255);
+    doc.text(titulo, marginX + 3, y + 8);
+    doc.setFontSize(9);
+    doc.text(`Proyecto: ${proyecto.codigo || '-'}`, marginX + contentWidth - 3, y + 8, { align: 'right' });
+
+    y += 16;
+    doc.setTextColor(80);
+    doc.setFontSize(9);
+    doc.text(`Generado: ${fechaGeneracion}`, marginX, y);
+    doc.text(`Cliente: ${proyecto.cliente || '-'}`, marginX + contentWidth / 2, y);
+    y += 6;
+
+    const addSectionTitle = (tituloSeccion: string) => {
+      doc.setFontSize(10);
+      doc.setTextColor(60);
+      doc.text(tituloSeccion.toUpperCase(), marginX, y);
+      doc.setDrawColor(220);
+      doc.line(marginX, y + 1.5, marginX + contentWidth, y + 1.5);
+      y += 4;
+    };
+
+    const addTableAt = (head: string[][], body: string[][], x: number, startY: number, width: number) => {
+      autoTable(doc, {
+        head,
+        body,
+        startY,
+        margin: { left: x, right: marginX },
+        tableWidth: width,
+        theme: 'grid',
+        styles: {
+          fontSize: 8,
+          cellPadding: 2
+        },
+        headStyles: {
+          fillColor: [245, 245, 245],
+          textColor: [40, 40, 40],
+          fontStyle: 'bold',
+          halign: 'left'
+        },
+        alternateRowStyles: {
+          fillColor: [250, 250, 250]
+        }
+      });
+      const finalY = (doc as any).lastAutoTable?.finalY;
+      return (finalY ?? startY);
+    };
+
+    addSectionTitle('Datos del proyecto y del taller');
+    const colWidth = (contentWidth - 6) / 2;
+    const leftX = marginX;
+    const rightX = marginX + colWidth + 6;
+
+    const yLeft = addTableAt(
+      [['Dato', 'Valor']],
+      [
+        ['Proyecto', proyecto.nombre || '-'],
+        ['Codigo', proyecto.codigo || '-'],
+        ['Pedido total', (proyecto.pedidoTotal ?? 0) > 0 ? String(proyecto.pedidoTotal) : '-'],
+        ['Prendas', (proyecto.prendas && proyecto.prendas.length) ? proyecto.prendas.join(', ') : '-'],
+        ['Colores', (proyecto.colores && proyecto.colores.length) ? proyecto.colores.join(', ') : '-'],
+        ['Telas asignadas', (proyecto.telas && proyecto.telas.length) ? proyecto.telas.join(', ') : '-'],
+        ['Fecha inicio', fechas.inicio || '-'],
+        ['Fecha limite', fechas.limite || '-']
+      ],
+      leftX,
+      y,
+      colWidth
+    );
+
+    const yRight = addTableAt(
+      [['Dato', 'Valor']],
+      [
+        ['Taller', taller.nombre || '-'],
+        ['Responsable', taller.responsable || '-'],
+        ['Telefono', taller.telefono || '-'],
+        ['Email', taller.email || '-'],
+        ['Direccion', taller.direccion || '-'],
+        ['Ciudad', taller.ciudad || '-'],
+        ['Provincia', taller.provincia || '-']
+      ],
+      rightX,
+      y,
+      colWidth
+    );
+
+    y = Math.max(yLeft, yRight) + 6;
+
+    addSectionTitle('Diseno (referencias)');
+    const disenoTexto = data.disenoNotas || 'Pendiente de integracion';
+    const disenoLines = doc.splitTextToSize(disenoTexto, contentWidth - 4);
+    doc.setFontSize(9);
+    doc.setTextColor(70);
+    doc.text(disenoLines, marginX + 2, y + 2);
+    y += 6 + disenoLines.length * 4;
+
+    addSectionTitle('Corte (prendas cortadas)');
+    const corteBody = data.corteResumen.length
+      ? data.corteResumen.map(item => [item.etiqueta || 'Tela', String(item.prendas ?? 0)])
+      : [['Sin datos', '-']];
+    y = addTableAt([['Tela / Color', 'Prendas']], corteBody, marginX, y, contentWidth) + 6;
+
+    addSectionTitle('Materiales enviados al taller');
+    const materialesBody = data.materiales.length
+      ? data.materiales.map(m => [
+        m.nombre || 'Material',
+        m.cantidad !== undefined ? String(m.cantidad) : '-',
+        m.unidad || '-'
+      ])
+      : [['Sin materiales', '-', '-']];
+    y = addTableAt([['Material', 'Cantidad', 'Unidad']], materialesBody, marginX, y, contentWidth) + 6;
+
+    addSectionTitle('Instrucciones al taller');
+    const instrucciones = data.instrucciones?.trim() || '-';
+    const instruccionesLines = doc.splitTextToSize(instrucciones, contentWidth - 4);
+    doc.setFontSize(9);
+    doc.setTextColor(70);
+    doc.text(instruccionesLines, marginX + 2, y + 2);
+    y += 6 + instruccionesLines.length * 4;
+
+    addSectionTitle('Observaciones');
+    const observaciones = data.observaciones?.trim() || '-';
+    const observacionesLines = doc.splitTextToSize(observaciones, contentWidth - 4);
+    doc.setFontSize(9);
+    doc.setTextColor(70);
+    doc.text(observacionesLines, marginX + 2, y + 2);
+    y += 8 + observacionesLines.length * 4;
+
+    doc.setFontSize(9);
+    doc.setTextColor(60);
+    doc.text('Firma responsable taller: __________________________', marginX, y);
+    doc.text('Firma responsable planta: __________________________', marginX + contentWidth / 2, y);
+    y += 6;
+    doc.text('Fecha de recepcion: ____ / ____ / ______', marginX, y);
+
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Pagina ${i} de ${pageCount}`,
+        doc.internal.pageSize.getWidth() / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: 'center' }
+      );
+    }
+
+    const nombreArchivo = `planilla_confeccion_${this.getFechaParaArchivo()}.pdf`;
+    doc.save(nombreArchivo);
+  }
+
   // ==================== MÉTODOS AUXILIARES - CLIENTES ====================
 
   private obtenerNombreCompleto(cliente: Cliente): string {
@@ -668,3 +877,8 @@ export class ExportService {
     return `${year}${month}${day}_${hours}${minutes}`;
   }
 }
+
+
+
+
+

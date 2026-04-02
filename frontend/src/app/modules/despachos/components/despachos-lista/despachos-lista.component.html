@@ -92,7 +92,7 @@
                     class="btn-action btn-print"
                     title="Imprimir Etiqueta"
                     (click)="prepararImpresion(d)">
-                    <i class="fas fa-print"></i>
+                    <i class="fas fa-print" style="color: #ff9800 !important;"></i>
                   </button>
                   <button 
                     class="btn btn-dispatch"
@@ -128,14 +128,24 @@
       <h2>Pase de Despacho</h2>
     </div>
     
-    <div class="etiqueta-body">
+    <div class="etiqueta-body position-relative">
+      <!-- QR en la parte superior derecha para asegurar 1ra página -->
+      <div class="etiqueta-qr-mini" style="float: right; margin-left: 15px; border: none; padding: 0;">
+        <qrcode 
+          [qrdata]="qrUrl" 
+          [width]="140" 
+          [errorCorrectionLevel]="'M'">
+        </qrcode>
+        <p class="qr-text" style="font-size: 8px; margin-top: 2px;">Detalle Offline (Escanea con Cámara)</p>
+      </div>
+
       <div class="info-bloque">
         <label>Código:</label>
         <span class="fw-bold fs-4">{{ despachoImprimir.codigoDespacho }}</span>
       </div>
       <div class="info-bloque">
         <label>Proyecto:</label>
-        <span>{{ despachoImprimir.nombreProyecto }}</span>
+        <span class="fw-bold">{{ despachoImprimir.nombreProyecto }}</span>
       </div>
       <div class="info-bloque">
         <label>Cliente:</label>
@@ -146,19 +156,19 @@
         <span>{{ despachoImprimir.fechaCreacion | date:'dd/MM/yyyy' }}</span>
       </div>
       <div class="info-bloque mt-2" *ngIf="despachoImprimir.codigoUbicacion">
-        <label>Ubicación:</label>
-        <span class="fs-5 fw-bold">{{ despachoImprimir.codigoUbicacion }}</span>
+        <label>Ubicación Asignada:</label>
+        <span class="fs-5 fw-bold" style="color: #2c3e50;">{{ despachoImprimir.codigoUbicacion }}</span>
       </div>
 
-      <!-- Generación del QR dentro del body para ahorrar espacio -->
-      <div class="etiqueta-qr-mini">
-        <qrcode 
-          [qrdata]="qrUrl" 
-          [width]="160" 
-          [errorCorrectionLevel]="'M'">
-        </qrcode>
-        <p class="qr-text">Escanea etiqueta digital (Sin Internet)</p>
+      <div class="info-bloque mt-3" style="border-top: 1px solid #eee; padding-top: 10px;">
+        <p style="font-size: 10px; color: #666; font-style: italic;">
+          * Este pase autoriza la salida del material desde el centro logístico.
+        </p>
       </div>
+    </div>
+
+    <div class="etiqueta-footer" style="text-align: center; border-top: 2px dashed #000; padding-top: 5px;">
+       <p style="font-size: 9px; margin: 0;">SISTEMA DE GESTIÓN PROPIA - TAMARINDO</p>
     </div>
   </div>
 </div>
