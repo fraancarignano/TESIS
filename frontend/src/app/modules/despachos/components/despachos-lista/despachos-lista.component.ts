@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { QRCodeModule } from 'angularx-qrcode';
+import { QRCodeComponent } from 'angularx-qrcode';
 import { AlertasService } from '../../../../core/services/alertas';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { UbicacionesService, Ubicacion } from '../../../ubicaciones/services/ubicaciones.service';
@@ -12,7 +12,7 @@ import { DespachoService } from '../../services/despacho.service';
 @Component({
   selector: 'app-despachos-lista',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, QRCodeModule],
+  imports: [CommonModule, FormsModule, RouterModule, QRCodeComponent],
   templateUrl: './despachos-lista.component.html',
   styleUrls: ['./despachos-lista.component.css']
 })
