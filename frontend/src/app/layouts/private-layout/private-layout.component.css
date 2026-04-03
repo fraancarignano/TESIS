@@ -32,6 +32,20 @@
   letter-spacing: 0.04rem;
 }
 
+.logo-link {
+  color: inherit;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.logo-link:hover,
+.logo-link:focus,
+.logo-link:active,
+.logo-link:visited {
+  color: inherit;
+  text-decoration: none;
+}
+
 .nav-menu {
   flex: 1;
   padding: 0.75rem 0;

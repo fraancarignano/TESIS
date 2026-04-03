@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialProyecto, ObservacionProyecto, ProyectoVista } from '../../models/proyecto.model';
@@ -378,6 +378,25 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return this.redondearNumero(
       this.corteReal.detalleTelas.reduce((acc, t) => acc + (Number(t.telaUsadaKg) || 0), 0)
     );
+  }
+
+  get balanceTelaCorteReal(): number {
+    const telaUsada = this.totalTelaUsadaCorteReal;
+    if (telaUsada <= 0) return 0;
+    return this.redondearNumero(telaUsada - this.totalScrapCorteReal);
+  }
+
+  get desvioConsumoCorteReal(): number | null {
+    const consumoTeorico = Number(this.corteReal.consumoTeoricoKg) || 0;
+    const telaUsada = this.totalTelaUsadaCorteReal;
+    if (consumoTeorico <= 0 || telaUsada <= 0) return null;
+    return this.redondearNumero(telaUsada - consumoTeorico);
+  }
+
+  get excedeTelaUsadaCorteReal(): boolean {
+    const telaUsada = this.totalTelaUsadaCorteReal;
+    if (telaUsada <= 0) return false;
+    return this.totalScrapCorteReal > telaUsada;
   }
 
   get totalScrapCorteReal(): number {
@@ -855,6 +874,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return index;
   }
 
+  trackByDetalleTela(index: number, item: CorteRealTela): number {
+    return item.idInsumo || index;
+  }
+
   actualizarCantidadDistribucionCorte(index: number, value: number | string): void {
     const parsed = typeof value === 'number' ? value : Number(value);
     this.cortePlan.distribucionTalles[index].cantidad = Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
@@ -1150,11 +1173,16 @@ export class ProyectoDetalleModalComponent implements OnInit {
   private crearPlanCorteVacio(): PlanCorteForm {
     return {
       cliente: '',
+      prenda: '',
+      articulo: '',
       prendas: [],
       pedidoTotalPrendas: 0,
       distribucionTalles: [{ talle: 'GENERAL', cantidad: 0 }],
       colores: [],
       telasAsignadas: [],
+      telaAsignada: '',
+      articuloTela: '',
+      tallerDestino: '',
       fechaNecesidadCorte: '',
       versionPlanificacion: 'v1',
       estadoPlanificacion: 'BORRADOR',
@@ -1166,10 +1194,12 @@ export class ProyectoDetalleModalComponent implements OnInit {
     const base = this.crearPlanCorteVacio();
     base.cliente = this.proyecto.clienteNombre ?? (this.proyecto as any)?.nombreCliente ?? '';
     base.prendas = this.obtenerPrendasProyecto();
+    base.prenda = base.prendas.join(', ');
     base.pedidoTotalPrendas = Math.max(0, Number(this.proyecto.cantidadTotal ?? 0));
     base.distribucionTalles = this.obtenerObjetivoPorTalleArray();
     base.colores = this.obtenerColoresProyecto();
     base.telasAsignadas = this.obtenerTelasProyecto().map(t => t.nombreInsumo).filter(Boolean);
+    base.telaAsignada = base.telasAsignadas.join(', ');
     base.fechaNecesidadCorte = (this.proyecto.fechaInicio ?? '').toString();
 
     const ultimoPlan = this.obtenerUltimoPlanCorte();
@@ -1262,16 +1292,23 @@ export class ProyectoDetalleModalComponent implements OnInit {
       ? telasRaw.split('|').map(t => t.trim()).filter(Boolean)
       : [];
 
+    const prendas = this.decodificarToken(map.get('prd') ?? '')
+      .split(',')
+      .map(p => p.trim())
+      .filter(Boolean);
+
     return {
       cliente: this.decodificarToken(map.get('cli') ?? ''),
-      prendas: this.decodificarToken(map.get('prd') ?? '')
-        .split(',')
-        .map(p => p.trim())
-        .filter(Boolean),
+      prenda: prendas.join(', '),
+      articulo: '',
+      prendas,
       pedidoTotalPrendas: Math.max(0, Number(map.get('ped') ?? 0)),
       distribucionTalles,
       colores,
       telasAsignadas,
+      telaAsignada: telasAsignadas.join(', '),
+      articuloTela: '',
+      tallerDestino: '',
       fechaNecesidadCorte: (map.get('fec') ?? '-') === '-' ? '' : (map.get('fec') ?? ''),
       versionPlanificacion: this.decodificarToken(map.get('ver') ?? 'v1'),
       estadoPlanificacion: estado,
@@ -1283,7 +1320,20 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return {
       corteNumero: '',
       fechaCorte: '',
+      partidaTela: '',
       responsable: '',
+      telaUsadaKg: 0,
+      pesoRealKg: 0,
+      pesoTizaKg: 0,
+      capas: 0,
+      prendasCortadas: 0,
+      restoKg: 0,
+      fallaKg: 0,
+      utilizableKg: 0,
+      consumoTeoricoKg: 0,
+      capasTeoricas: 0,
+      referenciaExterna: '',
+      observacionExterna: '',
       estadoEjecucion: 'PENDIENTE',
       detalleTelas: [],
       observacionesCorte: ''
@@ -1295,7 +1345,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
     base.detalleTelas = this.obtenerTelasProyecto().map(t => ({
       idInsumo: t.idInsumo,
       nombreInsumo: t.nombreInsumo,
-      codigoTela: t.codigoTela,
+      codigoTela: t.codigoTela || String(t.idInsumo),
       telaUsadaKg: 0,
       prendasCortadas: 0,
       scrapKg: 0
@@ -1649,7 +1699,20 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return {
       corteNumero: this.decodificarToken(map.get('cn') ?? ''),
       fechaCorte: (map.get('fc') ?? '-') === '-' ? '' : (map.get('fc') ?? ''),
+      partidaTela: '',
       responsable: this.decodificarToken(map.get('rs') ?? ''),
+      telaUsadaKg: 0,
+      pesoRealKg: 0,
+      pesoTizaKg: 0,
+      capas: 0,
+      prendasCortadas: 0,
+      restoKg: 0,
+      fallaKg: 0,
+      utilizableKg: 0,
+      consumoTeoricoKg: 0,
+      capasTeoricas: 0,
+      referenciaExterna: '',
+      observacionExterna: '',
       estadoEjecucion: estado,
       detalleTelas,
       observacionesCorte: this.decodificarToken(map.get('ob') ?? '')
@@ -1958,11 +2021,16 @@ interface DistribucionTallePlan {
 
 interface PlanCorteForm {
   cliente: string;
+  prenda: string;
+  articulo: string;
   prendas: string[];
   pedidoTotalPrendas: number;
   distribucionTalles: DistribucionTallePlan[];
   colores: string[];
   telasAsignadas: string[];
+  telaAsignada: string;
+  articuloTela: string;
+  tallerDestino: string;
   fechaNecesidadCorte: string;
   versionPlanificacion: string;
   estadoPlanificacion: EstadoPlanCorte;
@@ -1981,7 +2049,20 @@ type EstadoRecepcionConfeccion = 'PENDIENTE' | 'PARCIAL' | 'COMPLETA';
 interface CorteRealForm {
   corteNumero: string;
   fechaCorte: string;
+  partidaTela: string;
   responsable: string;
+  telaUsadaKg: number;
+  pesoRealKg: number;
+  pesoTizaKg: number;
+  capas: number;
+  prendasCortadas: number;
+  restoKg: number;
+  fallaKg: number;
+  utilizableKg: number;
+  consumoTeoricoKg: number;
+  capasTeoricas: number;
+  referenciaExterna: string;
+  observacionExterna: string;
   estadoEjecucion: EstadoCorteReal;
   detalleTelas: CorteRealTela[];
   observacionesCorte: string;

@@ -1088,6 +1088,22 @@
   gap: 0.35rem;
 }
 
+.corte-real .corte-distribucion-row {
+  grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr;
+}
+
+.corte-detalle-header {
+  font-size: 0.72rem;
+  color: #475569;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.corte-totales input {
+  font-weight: 700;
+  background: #f1f5f9;
+}
+
 .btn-mini {
   border: 1px solid #d0d5dd;
   border-radius: 8px;
