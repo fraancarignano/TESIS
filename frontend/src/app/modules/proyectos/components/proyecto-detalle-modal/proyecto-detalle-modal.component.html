@@ -512,7 +512,145 @@
                 </div>
               </div>
 
-<div *ngIf="!esAreaControlCalidad && !esAreaCorte && !esAreaDiseno" class="form-placeholder">
+              <div *ngIf="esAreaConfeccion" class="confeccion-form">
+                <div class="confeccion-header">
+                  <h4><i class="fas fa-tshirt"></i> Confección - Taller externo</h4>
+                  <span class="corte-resumen">Planilla</span>
+                </div>
+
+                <div class="confeccion-grid">
+                  <div class="form-group">
+                    <label>Taller externo</label>
+                    <select [(ngModel)]="confeccion.idTaller" (ngModelChange)="seleccionarTallerConfeccion($event)" [disabled]="!puedeEditarFormularioConfeccion">
+                      <option [ngValue]="null">Seleccionar taller</option>
+                      <option *ngFor="let t of talleres" [ngValue]="t.idTaller">{{ t.nombreTaller }} - {{ t.nombreCiudad || '-' }}</option>
+                    </select>
+                  </div>
+                  <div class="form-group"><label>Fecha inicio</label><input type="date" [(ngModel)]="confeccion.fechaInicio" [disabled]="!puedeEditarFormularioConfeccion"></div>
+                  <div class="form-group"><label>Fecha limite</label><input type="date" [(ngModel)]="confeccion.fechaLimite" [disabled]="!puedeEditarFormularioConfeccion"></div>
+                </div>
+
+                <div class="confeccion-taller" *ngIf="tallerSeleccionado">
+                  <div class="taller-item"><span class="taller-label">Responsable</span><strong>{{ tallerSeleccionado.responsable || '-' }}</strong></div>
+                  <div class="taller-item"><span class="taller-label">Telefono</span><strong>{{ tallerSeleccionado.telefono || '-' }}</strong></div>
+                  <div class="taller-item"><span class="taller-label">Email</span><strong>{{ tallerSeleccionado.email || '-' }}</strong></div>
+                  <div class="taller-item"><span class="taller-label">Direccion</span><strong>{{ tallerSeleccionado.direccion || '-' }}</strong></div>
+                  <div class="taller-item"><span class="taller-label">Ciudad</span><strong>{{ tallerSeleccionado.nombreCiudad || '-' }}</strong></div>
+                  <div class="taller-item"><span class="taller-label">Provincia</span><strong>{{ tallerSeleccionado.nombreProvincia || '-' }}</strong></div>
+                </div>
+
+                <div class="confeccion-bloque">
+                  <h5>Datos generales del proyecto</h5>
+                  <div class="bloque-lista">
+                    <span>Cliente: {{ cortePlan.cliente || 'Sin definir' }}</span>
+                    <span>Proyecto: {{ proyecto.nombreProyecto }}</span>
+                    <span>Pedido total: {{ cortePlan.pedidoTotalPrendas || proyecto.cantidadTotal }}</span>
+                  </div>
+                </div>
+
+                <div class="confeccion-bloque">
+                  <h5>Diseño (referencias)</h5>
+                  <div class="bloque-lista">
+                    <span>Archivos de diseño: pendiente de integración</span>
+                  </div>
+                </div>
+
+                <div class="confeccion-bloque">
+                  <h5>Corte (prendas cortadas)</h5>
+                  <div class="bloque-lista" *ngIf="resumenCortePorTela.length; else sinCorteResumen">
+                    <div *ngFor="let item of resumenCortePorTela">
+                      {{ item.etiqueta }}: <strong>{{ item.prendas }}</strong>
+                    </div>
+                  </div>
+                  <ng-template #sinCorteResumen><span>Sin datos de corte cargados.</span></ng-template>
+                </div>
+
+                <div class="confeccion-bloque">
+                  <h5>Materiales del proyecto</h5>
+                  <div class="bloque-lista" *ngIf="proyecto.materiales?.length; else sinMaterialesProyecto">
+                    <div *ngFor="let mat of proyecto.materiales">
+                      {{ mat.nombreInsumo }}: {{ mat.cantidadAsignada }} {{ mat.unidadMedida }}
+                    </div>
+                  </div>
+                  <ng-template #sinMaterialesProyecto><span>No hay materiales cargados.</span></ng-template>
+                </div>
+
+                <div class="form-group">
+                  <label>Instrucciones al taller</label>
+                  <textarea rows="3" [(ngModel)]="confeccion.instrucciones" [disabled]="!puedeEditarFormularioConfeccion" placeholder="Especificaciones de costura, terminaciones, avios, etc..."></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label>Observaciones</label>
+                  <textarea rows="3" [(ngModel)]="confeccion.observaciones" [disabled]="!puedeEditarFormularioConfeccion"></textarea>
+                </div>
+
+                <div class="calidad-actions">
+                  <button type="button" class="btn-guardar-inspeccion" (click)="guardarConfeccion()" [disabled]="!puedeGuardarConfeccion || guardandoConfeccion">
+                    <i class="fas" [ngClass]="guardandoConfeccion ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                    {{ guardandoConfeccion ? 'Guardando...' : 'Guardar planilla' }}
+                  </button>
+                  <button type="button" class="btn-mini" (click)="imprimirPlanillaConfeccion()" [disabled]="!planillaConfeccionLista">Exportar PDF</button>
+                </div>
+
+                <div class="confeccion-bloque">
+                  <h5>Recepción de prendas</h5>
+                  <div class="bloque-lista">
+                    <span *ngIf="!planillaConfeccionLista">Guardá la planilla para habilitar la recepción.</span>
+                    <span *ngIf="planillaConfeccionLista">Pendiente: <strong>{{ pendienteConfeccion }}</strong></span>
+                  </div>
+                  <div class="calidad-actions">
+                    <button type="button" class="btn-recibir btn-recibir-grande" (click)="abrirModalRecepcion()" [disabled]="!planillaConfeccionLista || !puedeEditarFormularioConfeccion">Recibir prendas</button>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="mostrarModalRecepcion" class="recepcion-modal-overlay" (click)="cerrarModalRecepcion()">
+                <div class="recepcion-modal" (click)="$event.stopPropagation()">
+                  <div class="recepcion-modal-header">
+                    <h4>Recepción de prendas</h4>
+                    <button type="button" class="btn-mini" (click)="cerrarModalRecepcion()">Cerrar</button>
+                  </div>
+
+                  <div class="confeccion-kpis">
+                    <span class="pendiente-grande">Pendiente: {{ pendienteConfeccion }}</span>
+                    <span class="kpi kpi-total">Recibidas acumuladas: {{ totalRecibidoConfeccion }}/{{ totalObjetivoConfeccion }}</span>
+                    <span class="kpi" [class.kpi-ok]="estadoRecepcionConfeccion === 'COMPLETA'" [class.kpi-bad]="estadoRecepcionConfeccion === 'PENDIENTE'">
+                      Estado: {{ estadoRecepcionConfeccion }}
+                    </span>
+                  </div>
+
+                  <div class="confeccion-grid">
+                    <div class="form-group"><label>Responsable recepción</label><input type="text" [(ngModel)]="recepcionActual.responsableRecepcion" [disabled]="!puedeEditarFormularioConfeccion"></div>
+                    <div class="form-group"><label>Fecha recepción</label><input type="date" [(ngModel)]="recepcionActual.fechaRecepcion" [disabled]="!puedeEditarFormularioConfeccion"></div>
+                  </div>
+
+                  <div class="confeccion-recibos">
+                    <div class="confeccion-recibos-header">
+                      <strong>Recepción por talle</strong>
+                      <div class="confeccion-recibos-actions">
+                        <button type="button" class="btn-mini" (click)="marcarRecepcionCompleta()" [disabled]="!puedeEditarFormularioConfeccion">Recibí todas</button>
+                        <button type="button" class="btn-mini danger" (click)="limpiarRecepcion()" [disabled]="!puedeEditarFormularioConfeccion">Limpiar</button>
+                      </div>
+                    </div>
+
+                    <div class="corte-distribucion-row" *ngFor="let item of confeccion.tallesObjetivo">
+                      <input type="text" [ngModel]="item.talle" disabled>
+                      <input type="number" min="0" step="1" [ngModel]="recepcionActual.recibidoPorTalle[item.talle]" (ngModelChange)="actualizarRecibidoTalle(item.talle, $event)" [disabled]="!puedeEditarFormularioConfeccion">
+                      <button type="button" class="btn-mini" disabled>{{ item.cantidad }}</button>
+                    </div>
+                  </div>
+
+                  <div class="recepcion-modal-actions">
+                    <button type="button" class="btn-guardar-inspeccion" (click)="guardarRecepcionConfeccion()" [disabled]="guardandoRecepcion || !puedeEditarFormularioConfeccion">
+                      <i class="fas" [ngClass]="guardandoRecepcion ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                      {{ guardandoRecepcion ? 'Guardando...' : 'Guardar recepción' }}
+                    </button>
+                    <button type="button" class="btn-mini" (click)="cerrarModalRecepcion()">Cerrar</button>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="!esAreaControlCalidad && !esAreaCorte && !esAreaConfeccion && !esAreaDiseno" class="form-placeholder">
                 <i class="fas fa-clipboard-list"></i>
                 <p>Formulario especifico del Area</p>
                 <small>Los campos personalizados se agregaron aqui</small>
