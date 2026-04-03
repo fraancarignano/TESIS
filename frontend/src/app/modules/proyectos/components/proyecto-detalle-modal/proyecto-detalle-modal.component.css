@@ -1620,6 +1620,39 @@ select:disabled {
   font-size: 0.76rem;
 }
 
+.diseno-form,
+.diseno-prendas {
+  display: grid;
+  gap: 16px;
+}
+
+.diseno-prenda-card {
+  border: 1px solid #eceff3;
+  border-radius: 14px;
+  padding: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #fcfcfd 100%);
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.diseno-preview {
+  margin-top: 8px;
+  display: grid;
+  gap: 10px;
+}
+
+.diseno-preview img {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 12px;
+  border: 1px solid #eaecf0;
+  object-fit: cover;
+}
+
 
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 1024px) {

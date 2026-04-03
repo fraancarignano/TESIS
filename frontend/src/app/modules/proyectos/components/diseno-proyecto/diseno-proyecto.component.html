@@ -1,0 +1,146 @@
+<section class="diseno-page">
+  <header class="page-header">
+    <div>
+      <button type="button" class="btn-link" (click)="volver()">Volver al proyecto</button>
+      <h1>Diseño del proyecto</h1>
+      <p *ngIf="resumen">{{ resumen.nombreProyecto }} · {{ resumen.cliente }}</p>
+    </div>
+    <span class="estado-badge" [class.completado]="readonlyMode">
+      {{ readonlyMode ? 'Completado' : 'Pendiente de completar' }}
+    </span>
+  </header>
+
+  <div class="estado" *ngIf="loading">Cargando información del área de Diseño...</div>
+  <div class="estado error" *ngIf="!loading && error">{{ error }}</div>
+
+  <ng-container *ngIf="!loading && resumen">
+    <article class="card">
+      <div class="card-header">
+        <h2>Resumen del proyecto</h2>
+        <span>{{ resumen.prendas.length }} prenda(s)</span>
+      </div>
+
+      <div class="resumen-grid">
+        <div class="dato">
+          <span class="label">Cliente</span>
+          <strong>{{ resumen.cliente }}</strong>
+        </div>
+        <div class="dato">
+          <span class="label">Proyecto</span>
+          <strong>{{ resumen.nombreProyecto }}</strong>
+        </div>
+        <div class="dato">
+          <span class="label">Prioridad</span>
+          <strong>{{ resumen.prioridad || '-' }}</strong>
+        </div>
+        <div class="dato">
+          <span class="label">Inicio</span>
+          <strong>{{ resumen.fechaInicio ? (resumen.fechaInicio | date:'dd/MM/yyyy') : '-' }}</strong>
+        </div>
+        <div class="dato">
+          <span class="label">Fin</span>
+          <strong>{{ resumen.fechaFin ? (resumen.fechaFin | date:'dd/MM/yyyy') : '-' }}</strong>
+        </div>
+        <div class="dato">
+          <span class="label">Estado del área</span>
+          <strong>{{ resumen.estadoArea }}</strong>
+        </div>
+      </div>
+
+      <div class="prendas-lista">
+        <div class="prenda-resumen" *ngFor="let prenda of resumen.prendas">
+          <div class="prenda-top">
+            <div>
+              <h3>{{ prenda.tipoPrenda }}</h3>
+              <p>{{ prenda.materialBase || 'Material sin definir' }}</p>
+            </div>
+            <div class="chips">
+              <span class="chip" [class.activo]="prenda.tieneBordado">Bordado</span>
+              <span class="chip" [class.activo]="prenda.tieneEstampado">Estampado</span>
+            </div>
+          </div>
+
+          <div class="prenda-meta">
+            <span><strong>Cantidad:</strong> {{ prenda.cantidadTotal }}</span>
+            <span><strong>Talles:</strong> {{ getTallesTexto(prenda) }}</span>
+          </div>
+
+          <p class="diseno-base" *ngIf="prenda.descripcionDiseno">{{ prenda.descripcionDiseno }}</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-header">
+        <h2>Diseño y desarrollo</h2>
+        <span *ngIf="readonlyMode">Modo solo lectura</span>
+      </div>
+
+      <div class="prenda-editor" *ngFor="let prenda of resumen.prendas">
+        <div class="editor-header">
+          <div>
+            <h3>{{ prenda.tipoPrenda }}</h3>
+            <p>{{ prenda.materialBase || 'Material sin definir' }}</p>
+          </div>
+          <span class="chip activo" *ngIf="necesitaLogo(prenda)">Logo obligatorio</span>
+        </div>
+
+        <div class="editor-grid" *ngIf="necesitaLogo(prenda)">
+          <div class="campo">
+            <label>Imagen del logo</label>
+            <input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" [disabled]="readonlyMode"
+              (change)="onArchivoSeleccionado($event, prenda, 'logo')">
+            <small>JPG o PNG, hasta 5 MB.</small>
+            <div class="preview" *ngIf="formByPrenda[prenda.idProyectoPrenda]?.imagenLogo">
+              <img [src]="formByPrenda[prenda.idProyectoPrenda].imagenLogo" alt="Preview logo">
+              <button type="button" class="btn-clear" *ngIf="!readonlyMode" (click)="limpiarImagen(prenda.idProyectoPrenda, 'logo')">Quitar</button>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label>Descripción del logo</label>
+            <textarea rows="4" maxlength="500" [readOnly]="readonlyMode"
+              [(ngModel)]="formByPrenda[prenda.idProyectoPrenda].descripcionLogo"
+              placeholder="Ej: Logo en pecho izquierdo, 8x8 cm"></textarea>
+          </div>
+        </div>
+
+        <div class="editor-grid">
+          <div class="campo">
+            <label>Imagen del mockup</label>
+            <input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" [disabled]="readonlyMode"
+              (change)="onArchivoSeleccionado($event, prenda, 'mockup')">
+            <small>Obligatorio para todas las prendas.</small>
+            <div class="preview" *ngIf="formByPrenda[prenda.idProyectoPrenda]?.imagenMockup">
+              <img [src]="formByPrenda[prenda.idProyectoPrenda].imagenMockup" alt="Preview mockup">
+              <button type="button" class="btn-clear" *ngIf="!readonlyMode" (click)="limpiarImagen(prenda.idProyectoPrenda, 'mockup')">Quitar</button>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label>Descripción del mockup</label>
+            <textarea rows="4" maxlength="500" [readOnly]="readonlyMode"
+              [(ngModel)]="formByPrenda[prenda.idProyectoPrenda].descripcionMockup"
+              placeholder="Ej: Vista frontal y trasera con logos posicionados"></textarea>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-header">
+        <h2>Observaciones generales</h2>
+      </div>
+
+      <textarea class="observaciones" rows="5" maxlength="1000" [readOnly]="readonlyMode"
+        [(ngModel)]="observacionesGenerales"
+        placeholder="Notas adicionales para el área de Diseño"></textarea>
+    </article>
+
+    <div class="acciones" *ngIf="!readonlyMode">
+      <button type="button" class="btn-primary" [disabled]="saving" (click)="completarDiseno()">
+        {{ saving ? 'Guardando...' : 'Completar Diseño' }}
+      </button>
+    </div>
+  </ng-container>
+</section>

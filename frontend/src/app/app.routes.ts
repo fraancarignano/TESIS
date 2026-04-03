@@ -49,6 +49,18 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/proyectos/components/proyecto-detalle-page/proyecto-detalle-page.component').then(m => m.ProyectoDetallePageComponent)
       },
       {
+        path: 'proyectos/:id/diseno',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Proyectos', accion: 'Ver' } },
+        loadComponent: () => import('./modules/proyectos/components/diseno-proyecto/diseno-proyecto.component').then(m => m.DisenoProyectoComponent)
+      },
+      {
+        path: 'proyectos/:id/diseño',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Proyectos', accion: 'Ver' } },
+        loadComponent: () => import('./modules/proyectos/components/diseno-proyecto/diseno-proyecto.component').then(m => m.DisenoProyectoComponent)
+      },
+      {
         path: 'proyectos/crear',
         loadComponent: () => import('./modules/proyectos/components/nuevo-proyecto-modal/proyecto-form.component').then(m => m.ProyectoFormNuevoComponent)
       },

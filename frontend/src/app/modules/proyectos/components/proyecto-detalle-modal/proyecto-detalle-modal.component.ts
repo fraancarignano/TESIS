@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialProyecto, ObservacionProyecto, ProyectoVista } from '../../models/proyecto.model';
 import { ProyectosService } from '../../services/proyecto.service';
+import { DisenoService } from '../../services/diseno.service';
 import { AlertasService } from '../../../../core/services/alertas';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { ExportService, PlanillaConfeccionExport } from '../../../../core/services/export.service';
@@ -20,6 +21,7 @@ import {
   areaEnProgreso,
   areaPendiente
 } from '../../constants/areas.constants';
+import { ProyectoDisenoDetalle, ProyectoDisenoPayload } from '../../models/diseno.model';
 
 @Component({
   selector: 'app-proyecto-detalle-modal',
@@ -66,6 +68,13 @@ export class ProyectoDetalleModalComponent implements OnInit {
   talleres: Taller[] = [];
   tallerSeleccionado: Taller | null = null;
   cargandoTalleres = false;
+  guardandoDiseno = false;
+  cargandoDiseno = false;
+  disenoDetalle: ProyectoDisenoDetalle | null = null;
+  disenoObservacionesGenerales = '';
+  disenoPrendas: DisenoPrendaForm[] = [];
+  disenoPrendasMap: Record<number, DisenoPrendaForm> = {};
+  disenoResumenPrendas: DisenoResumenPrenda[] = [];
 
   // Observaciones generales
   nuevaObservacion: string = '';
@@ -77,6 +86,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   constructor(
     private proyectosService: ProyectosService,
+    private disenoService: DisenoService,
     private alertas: AlertasService,
     private permissionService: PermissionService,
     private exportService: ExportService,
@@ -98,7 +108,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.inicializarFormularioConfeccion();
     this.refrescarHistorialRecepcionesConfeccion();
     this.recalcularRecepcionesConfeccion();
+    this.inicializarResumenDisenoPrendas();
     this.cargarTalleres();
+    this.cargarDisenoArea();
   }
 
   // ==================== GETTERS ====================
@@ -153,6 +165,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.inicializarFormularioConfeccion();
     this.refrescarHistorialRecepcionesConfeccion();
     this.recalcularRecepcionesConfeccion();
+    if (area.campo === 'avanceDiseno' && !this.disenoPrendas.length) {
+      this.cargarDisenoArea();
+    }
   }
 
   puedeRetrocederArea(): boolean {
@@ -173,6 +188,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   get esAreaConfeccion(): boolean {
     return this.areaSeleccionada?.campo === 'avanceConfeccion';
+  }
+
+  get esAreaDiseno(): boolean {
+    return this.areaSeleccionada?.campo === 'avanceDiseno';
   }
 
   get criteriosEvaluados(): number {
@@ -237,6 +256,51 @@ export class ProyectoDetalleModalComponent implements OnInit {
     if (!this.puedeGestionarAvance) return false;
     if (this.areaSeleccionada && this.estaCompleta(this.areaSeleccionada)) return false;
     return true;
+  }
+
+  get puedeEditarFormularioDiseno(): boolean {
+    if (!this.esAreaDiseno) return false;
+    if (this.areaSeleccionada && this.estaCompleta(this.areaSeleccionada)) return false;
+    const estado = (this.proyecto?.estado || '').trim();
+    if (estado !== 'Pendiente' && estado !== 'En Proceso') return false;
+    return true;
+  }
+
+  private construirResumenDisenoPrendas(): DisenoResumenPrenda[] {
+    const prendas = (this.proyecto as any)?.prendas;
+    if (Array.isArray(prendas) && prendas.length > 0) {
+      return prendas.map((prenda: any, index: number) => {
+        const idProyectoPrenda = Number(prenda?.idProyectoPrenda ?? prenda?.idPrenda ?? index + 1);
+        const talles = Array.isArray(prenda?.talles)
+          ? prenda.talles.map((t: any) => ({
+              nombreTalle: String(t?.nombreTalle ?? t?.idTalle ?? 'General').trim() || 'General',
+              cantidad: Math.max(0, Number(t?.cantidad ?? 0))
+            }))
+          : [];
+
+        return {
+          idProyectoPrenda,
+          nombrePrenda: String(prenda?.nombrePrenda ?? prenda?.nombreTipoPrenda ?? prenda?.nombreTipo ?? `Prenda ${index + 1}`),
+          materialBase: String(prenda?.nombreMaterial ?? prenda?.colorTela ?? prenda?.materialBase ?? '').trim(),
+          cantidadTotal: Math.max(0, Number(prenda?.cantidadTotal ?? 0)),
+          tieneBordado: !!prenda?.tieneBordado,
+          tieneEstampado: !!prenda?.tieneEstampado,
+          descripcionDiseno: String(prenda?.descripcionDiseno ?? prenda?.descripcionDiseño ?? '').trim(),
+          talles
+        };
+      });
+    }
+
+    return [{
+      idProyectoPrenda: Number(this.proyecto.idProyecto ?? 1),
+      nombrePrenda: this.proyecto.tipoPrenda || 'Prenda',
+      materialBase: '',
+      cantidadTotal: Math.max(0, Number(this.proyecto.cantidadTotal ?? 0)),
+      tieneBordado: false,
+      tieneEstampado: false,
+      descripcionDiseno: (this.proyecto.descripcion ?? '').trim(),
+      talles: []
+    }];
   }
 
   get historialConfeccion(): ObservacionProyecto[] {
@@ -501,6 +565,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
     if (!anterior) return true;
 
     if (!this.estaCompleta(anterior)) return false;
+    if (this.esAreaDiseno) {
+      return !this.validarFormularioDiseno();
+    }
     if (this.esAreaConfeccion) {
       return this.totalRecibidoConfeccion >= this.totalObjetivoConfeccion;
     }
@@ -521,6 +588,189 @@ export class ProyectoDetalleModalComponent implements OnInit {
     });
   }
 
+  getDisenoForm(idProyectoPrenda: number): DisenoPrendaForm {
+    return this.disenoPrendasMap[idProyectoPrenda] ?? {
+      idProyectoPrenda,
+      imagenLogo: '',
+      descripcionLogo: '',
+      imagenMockup: '',
+      descripcionMockup: ''
+    };
+  }
+
+  getTallesDisenoTexto(prenda: DisenoResumenPrenda): string {
+    if (!prenda.talles.length) return 'Sin distribución';
+    return prenda.talles.map(t => `${t.nombreTalle} (${t.cantidad})`).join(', ');
+  }
+
+  necesitaLogoDiseno(prenda: DisenoResumenPrenda): boolean {
+    return prenda.tieneBordado || prenda.tieneEstampado;
+  }
+
+  trackByDisenoPrenda(_: number, item: DisenoResumenPrenda): number {
+    return item.idProyectoPrenda;
+  }
+
+  async onArchivoDisenoSeleccionado(event: Event, prenda: DisenoResumenPrenda, tipo: 'logo' | 'mockup'): Promise<void> {
+    if (!this.puedeEditarFormularioDiseno) return;
+
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const formatos = ['image/png', 'image/jpeg', 'image/jpg'];
+    const maxBytes = 5 * 1024 * 1024;
+
+    if (!formatos.includes(file.type)) {
+      this.alertas.warning('Formato no válido', 'Solo se permiten imágenes JPG, JPEG o PNG.');
+      input.value = '';
+      return;
+    }
+
+    if (file.size > maxBytes) {
+      this.alertas.warning('Archivo demasiado grande', 'La imagen no puede superar los 5 MB.');
+      input.value = '';
+      return;
+    }
+
+    const base64 = await this.archivoABase64(file);
+    const form = this.getDisenoForm(prenda.idProyectoPrenda);
+
+    if (tipo === 'logo') {
+      form.imagenLogo = base64;
+    } else {
+      form.imagenMockup = base64;
+    }
+
+    input.value = '';
+  }
+
+  limpiarImagenDiseno(idProyectoPrenda: number, tipo: 'logo' | 'mockup'): void {
+    if (!this.puedeEditarFormularioDiseno) return;
+    const form = this.getDisenoForm(idProyectoPrenda);
+    if (tipo === 'logo') {
+      form.imagenLogo = '';
+      form.descripcionLogo = '';
+      return;
+    }
+
+    form.imagenMockup = '';
+    form.descripcionMockup = '';
+  }
+
+  guardarDiseno(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!this.proyecto.idProyecto) {
+        resolve(false);
+        return;
+      }
+
+      const error = this.validarFormularioDiseno();
+      if (error) {
+        this.alertas.warning('Diseño incompleto', error);
+        resolve(false);
+        return;
+      }
+
+      const payload: ProyectoDisenoPayload = {
+        observacionesGenerales: this.observacionArea?.trim() || this.disenoObservacionesGenerales?.trim() || undefined,
+        prendas: this.disenoResumenPrendas.map(prenda => {
+          const form = this.getDisenoForm(prenda.idProyectoPrenda);
+          return {
+            idPrenda: prenda.idProyectoPrenda,
+            imagenLogo: form.imagenLogo?.trim() || undefined,
+            descripcionLogo: form.descripcionLogo?.trim() || undefined,
+            imagenMockup: form.imagenMockup.trim(),
+            descripcionMockup: form.descripcionMockup?.trim() || undefined
+          };
+        })
+      };
+
+      this.guardandoDiseno = true;
+      this.disenoService.guardarDiseno(this.proyecto.idProyecto, payload).subscribe({
+        next: (detalle) => {
+          this.guardandoDiseno = false;
+          this.disenoDetalle = detalle;
+          this.disenoObservacionesGenerales = detalle.observacionesGenerales ?? this.disenoObservacionesGenerales;
+          this.alertas.success('Diseño guardado', 'Se registraron las imágenes y descripciones del área.');
+          resolve(true);
+        },
+        error: (err) => {
+          this.guardandoDiseno = false;
+          this.alertas.error('Error', err?.message || 'No se pudo guardar el diseño.');
+          resolve(false);
+        }
+      });
+    });
+  }
+
+  private cargarDisenoArea(): void {
+    if (!this.proyecto.idProyecto) return;
+
+    this.disenoPrendas = this.disenoResumenPrendas.map(prenda => ({
+      idProyectoPrenda: prenda.idProyectoPrenda,
+      imagenLogo: '',
+      descripcionLogo: '',
+      imagenMockup: '',
+      descripcionMockup: ''
+    }));
+    this.disenoPrendasMap = this.disenoPrendas.reduce((acc, item) => {
+      acc[item.idProyectoPrenda] = item;
+      return acc;
+    }, {} as Record<number, DisenoPrendaForm>);
+
+    this.cargandoDiseno = true;
+    this.disenoService.obtenerDiseno(this.proyecto.idProyecto).subscribe({
+      next: (detalle) => {
+        this.disenoDetalle = detalle;
+        this.disenoObservacionesGenerales = detalle.observacionesGenerales ?? '';
+        detalle.prendas.forEach(item => {
+          const form = this.getDisenoForm(item.idPrenda);
+          form.imagenLogo = item.imagenLogo ?? '';
+          form.descripcionLogo = item.descripcionLogo ?? '';
+          form.imagenMockup = item.imagenMockup ?? '';
+          form.descripcionMockup = item.descripcionMockup ?? '';
+        });
+        this.cargandoDiseno = false;
+      },
+      error: (err) => {
+        if (err?.status !== 404) {
+          console.error('Error al cargar diseño:', err);
+        }
+        this.disenoDetalle = null;
+        this.cargandoDiseno = false;
+      }
+    });
+  }
+
+  private validarFormularioDiseno(): string | null {
+    for (const prenda of this.disenoResumenPrendas) {
+      const form = this.getDisenoForm(prenda.idProyectoPrenda);
+      if (!form.imagenMockup?.trim()) {
+        return `La prenda "${prenda.nombrePrenda}" necesita un mockup.`;
+      }
+
+      if (this.necesitaLogoDiseno(prenda) && !form.imagenLogo?.trim()) {
+        return `La prenda "${prenda.nombrePrenda}" necesita imagen de logo porque tiene bordado o estampado.`;
+      }
+    }
+
+    return null;
+  }
+
+  private archivoABase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  private inicializarResumenDisenoPrendas(): void {
+    this.disenoResumenPrendas = this.construirResumenDisenoPrendas();
+  }
+
   async continuarSiguienteArea(): Promise<void> {
     if (!this.areaSeleccionada || !this.proyecto.idProyecto) {
       console.warn('⚠️ No se puede continuar: área o proyecto no seleccionado');
@@ -536,6 +786,13 @@ export class ProyectoDetalleModalComponent implements OnInit {
         'Para avanzar, completá el 100% de cantidades por talle, guardá las inspecciones y no dejes cambios pendientes.'
       );
       return;
+    }
+
+    if (this.esAreaDiseno) {
+      const guardadoOk = await this.guardarDiseno();
+      if (!guardadoOk) {
+        return;
+      }
     }
 
     const mensaje = this.esUltimaArea
@@ -2103,6 +2360,30 @@ interface RecepcionConfeccionForm {
 }
 
 interface RecepcionConfeccionRegistro extends RecepcionConfeccionForm {}
+
+interface DisenoTalleResumen {
+  nombreTalle: string;
+  cantidad: number;
+}
+
+interface DisenoResumenPrenda {
+  idProyectoPrenda: number;
+  nombrePrenda: string;
+  materialBase: string;
+  cantidadTotal: number;
+  tieneBordado: boolean;
+  tieneEstampado: boolean;
+  descripcionDiseno: string;
+  talles: DisenoTalleResumen[];
+}
+
+interface DisenoPrendaForm {
+  idProyectoPrenda: number;
+  imagenLogo: string;
+  descripcionLogo: string;
+  imagenMockup: string;
+  descripcionMockup: string;
+}
 
 const CRITERIOS_CALIDAD_INICIALES: CriterioCalidadUI[] = [
   {

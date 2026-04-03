@@ -406,7 +406,113 @@
                   </button>
                 </div>
               </div>
-<div *ngIf="!esAreaControlCalidad && !esAreaCorte" class="form-placeholder">
+              <div *ngIf="esAreaDiseno" class="diseno-form">
+                <div class="corte-header">
+                  <h4><i class="fas fa-pencil-ruler"></i> Resumen de diseño y desarrollo</h4>
+                  <span class="corte-resumen">{{ cargandoDiseno ? 'Cargando...' : 'Operativo' }}</span>
+                </div>
+
+                <div class="corte-plan-grid">
+                  <div class="plan-card">
+                    <span class="plan-label">Cliente</span>
+                    <strong>{{ proyecto.clienteNombre || 'Sin definir' }}</strong>
+                  </div>
+                  <div class="plan-card">
+                    <span class="plan-label">Proyecto</span>
+                    <strong>{{ proyecto.nombreProyecto || 'Sin definir' }}</strong>
+                  </div>
+                  <div class="plan-card">
+                    <span class="plan-label">Dueño / Encargado</span>
+                    <strong>{{ proyecto.nombreEncargado || 'Sin asignar' }}</strong>
+                  </div>
+                  <div class="plan-card">
+                    <span class="plan-label">Qué hay que hacer</span>
+                    <strong>{{ proyecto.descripcion || 'Sin descripción general' }}</strong>
+                  </div>
+                </div>
+
+                <div class="diseno-prendas">
+                  <div class="diseno-prenda-card" *ngFor="let prenda of disenoResumenPrendas; trackBy: trackByDisenoPrenda">
+                    <div class="editor-header">
+                      <div>
+                        <h4>{{ prenda.nombrePrenda }}</h4>
+                        <p>{{ prenda.materialBase || 'Material sin definir' }}</p>
+                      </div>
+                      <div class="plan-tags-list">
+                        <span class="plan-tag" [class.plan-tag-empty]="!prenda.tieneBordado">Bordado: {{ prenda.tieneBordado ? 'Sí' : 'No' }}</span>
+                        <span class="plan-tag" [class.plan-tag-empty]="!prenda.tieneEstampado">Estampado: {{ prenda.tieneEstampado ? 'Sí' : 'No' }}</span>
+                      </div>
+                    </div>
+
+                    <div class="corte-kpis">
+                      <span class="kpi kpi-total">Cantidad: {{ prenda.cantidadTotal }}</span>
+                      <span class="kpi kpi-total">Talles: {{ getTallesDisenoTexto(prenda) }}</span>
+                    </div>
+
+                    <div class="form-group" *ngIf="prenda.descripcionDiseno">
+                      <label>Qué hay que hacer en esta prenda</label>
+                      <textarea [ngModel]="prenda.descripcionDiseno" rows="2" disabled></textarea>
+                    </div>
+
+                    <div class="editor-grid" *ngIf="necesitaLogoDiseno(prenda)">
+                      <div class="form-group">
+                        <label>Imagen del logo</label>
+                        <input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" [disabled]="!puedeEditarFormularioDiseno"
+                          (change)="onArchivoDisenoSeleccionado($event, prenda, 'logo')">
+                        <small>JPG o PNG, hasta 5 MB.</small>
+                        <div class="diseno-preview" *ngIf="disenoPrendasMap[prenda.idProyectoPrenda]?.imagenLogo">
+                          <img [src]="disenoPrendasMap[prenda.idProyectoPrenda].imagenLogo" alt="Logo diseño">
+                          <button type="button" class="btn-limpiar-inspeccion" *ngIf="puedeEditarFormularioDiseno"
+                            (click)="limpiarImagenDiseno(prenda.idProyectoPrenda, 'logo')">
+                            Quitar logo
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label>Descripción del logo</label>
+                        <textarea [ngModel]="disenoPrendasMap[prenda.idProyectoPrenda]?.descripcionLogo || ''"
+                          (ngModelChange)="disenoPrendasMap[prenda.idProyectoPrenda].descripcionLogo = $event" rows="3"
+                          placeholder="Ej: Logo en pecho izquierdo, 8x8 cm"
+                          [disabled]="!puedeEditarFormularioDiseno"></textarea>
+                      </div>
+                    </div>
+
+                    <div class="editor-grid">
+                      <div class="form-group">
+                        <label>Imagen del mockup completo</label>
+                        <input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" [disabled]="!puedeEditarFormularioDiseno"
+                          (change)="onArchivoDisenoSeleccionado($event, prenda, 'mockup')">
+                        <small>Obligatorio para cada prenda.</small>
+                        <div class="diseno-preview" *ngIf="disenoPrendasMap[prenda.idProyectoPrenda]?.imagenMockup">
+                          <img [src]="disenoPrendasMap[prenda.idProyectoPrenda].imagenMockup" alt="Mockup diseño">
+                          <button type="button" class="btn-limpiar-inspeccion" *ngIf="puedeEditarFormularioDiseno"
+                            (click)="limpiarImagenDiseno(prenda.idProyectoPrenda, 'mockup')">
+                            Quitar mockup
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label>Descripción del mockup</label>
+                        <textarea [ngModel]="disenoPrendasMap[prenda.idProyectoPrenda]?.descripcionMockup || ''"
+                          (ngModelChange)="disenoPrendasMap[prenda.idProyectoPrenda].descripcionMockup = $event" rows="3"
+                          placeholder="Ej: Vista frontal y trasera con logos posicionados"
+                          [disabled]="!puedeEditarFormularioDiseno"></textarea>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="calidad-actions" *ngIf="puedeEditarFormularioDiseno">
+                  <button type="button" class="btn-guardar-inspeccion" (click)="guardarDiseno()" [disabled]="guardandoDiseno">
+                    <i class="fas" [ngClass]="guardandoDiseno ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                    {{ guardandoDiseno ? 'Guardando...' : 'Guardar diseño' }}
+                  </button>
+                </div>
+              </div>
+
+<div *ngIf="!esAreaControlCalidad && !esAreaCorte && !esAreaDiseno" class="form-placeholder">
                 <i class="fas fa-clipboard-list"></i>
                 <p>Formulario especifico del Area</p>
                 <small>Los campos personalizados se agregaron aqui</small>
@@ -418,7 +524,8 @@
                   <i class="fas fa-comment"></i>
                   Observaciones (opcional)
                 </label>
-                <textarea [(ngModel)]="observacionArea" rows="4"
+                <textarea [ngModel]="esAreaDiseno ? disenoObservacionesGenerales : observacionArea"
+                  (ngModelChange)="esAreaDiseno ? disenoObservacionesGenerales = $event : observacionArea = $event" rows="4"
                   placeholder="Agrega detalles o notas sobre el trabajo realizado en esta área..."
                   [disabled]="estaCompleta(areaSeleccionada)">
                 </textarea>
