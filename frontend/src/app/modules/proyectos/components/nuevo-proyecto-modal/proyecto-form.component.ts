@@ -72,11 +72,21 @@ export class ProyectoFormNuevoComponent implements OnInit {
   prendasProyecto: PrendaFormulario[] = [];
   prendaEditando?: PrendaFormulario;
   indexPrendaEditando: number = -1;
+  private prendaEditandoSnapshot?: PrendaFormulario;
 
   // Modal de talles
   mostrarModalTalles = false;
   tallesDistribuyendo: TalleDistribuido[] = [];
   cantidadTotalTalles = 0;
+
+  // Modal nuevo tipo de prenda
+  mostrarModalTipoPrenda = false;
+  nuevoTipoPrenda = {
+    nombrePrenda: '',
+    descripcion: '',
+    longitudCosturaMetros: null as number | null
+  };
+  private idTipoPrendaTemporal = -1;
 
   // Materiales manuales (hilos, accesorios)
   materialesManuales: MaterialManualFormulario[] = [];
@@ -210,11 +220,13 @@ export class ProyectoFormNuevoComponent implements OnInit {
     this.prendaEditando = nuevaPrenda;
     this.indexPrendaEditando = -1;
     this.insumosTelasFiltrados = [];
+    this.prendaEditandoSnapshot = this.clonarPrenda(this.prendaEditando);
   }
 
   editarPrenda(prenda: PrendaFormulario, index: number): void {
     this.prendaEditando = { ...prenda };
     this.indexPrendaEditando = index;
+    this.prendaEditandoSnapshot = this.clonarPrenda(this.prendaEditando);
     
     if (this.prendaEditando.idTipoInsumoMaterial) {
       this.insumosTelasFiltrados = this.insumosTelas.filter(
@@ -262,6 +274,106 @@ export class ProyectoFormNuevoComponent implements OnInit {
   cancelarEditarPrenda(): void {
     this.prendaEditando = undefined;
     this.indexPrendaEditando = -1;
+    this.prendaEditandoSnapshot = undefined;
+  }
+
+  confirmarCerrarModalPrenda(): void {
+    if (this.prendaEditando && this.tieneCambiosEnPrenda()) {
+      const confirmar = window.confirm('Tienes cambios sin guardar. ¿Deseas cerrar la prenda sin guardar?');
+      if (!confirmar) return;
+    }
+
+    this.cancelarEditarPrenda();
+  }
+
+  private tieneCambiosEnPrenda(): boolean {
+    if (!this.prendaEditando || !this.prendaEditandoSnapshot) return false;
+    return !this.compararPrendas(this.prendaEditando, this.prendaEditandoSnapshot);
+  }
+
+  private compararPrendas(a: PrendaFormulario, b: PrendaFormulario): boolean {
+    if (
+      a.idTipoPrenda !== b.idTipoPrenda ||
+      a.idTipoInsumoMaterial !== b.idTipoInsumoMaterial ||
+      a.idInsumo !== b.idInsumo ||
+      a.cantidadTotal !== b.cantidadTotal ||
+      a.tieneBordado !== b.tieneBordado ||
+      a.tieneEstampado !== b.tieneEstampado ||
+      (a.descripcionDiseno || '').trim() !== (b.descripcionDiseno || '').trim()
+    ) {
+      return false;
+    }
+
+    const ta = (a.tallesDistribuidos || []).map(t => ({ idTalle: t.idTalle, cantidad: t.cantidad })).sort((x, y) => x.idTalle - y.idTalle);
+    const tb = (b.tallesDistribuidos || []).map(t => ({ idTalle: t.idTalle, cantidad: t.cantidad })).sort((x, y) => x.idTalle - y.idTalle);
+    if (ta.length !== tb.length) return false;
+    for (let i = 0; i < ta.length; i++) {
+      if (ta[i].idTalle !== tb[i].idTalle || ta[i].cantidad !== tb[i].cantidad) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private clonarPrenda(prenda?: PrendaFormulario): PrendaFormulario | undefined {
+    if (!prenda) return undefined;
+    return {
+      ...prenda,
+      tallesDistribuidos: (prenda.tallesDistribuidos || []).map(t => ({ ...t }))
+    };
+  }
+
+  // ========================================
+  // NUEVO TIPO DE PRENDA
+  // ========================================
+
+  abrirModalTipoPrenda(): void {
+    this.nuevoTipoPrenda = {
+      nombrePrenda: '',
+      descripcion: '',
+      longitudCosturaMetros: null
+    };
+    this.mostrarModalTipoPrenda = true;
+  }
+
+  cancelarModalTipoPrenda(): void {
+    this.mostrarModalTipoPrenda = false;
+  }
+
+  guardarTipoPrenda(): void {
+    const nombre = this.nuevoTipoPrenda.nombrePrenda.trim();
+    if (!nombre) {
+      this.errorMensaje = 'Ingresa un nombre para el tipo de prenda';
+      return;
+    }
+
+    const existe = this.tiposPrenda.some(tp => tp.nombrePrenda.trim().toLowerCase() === nombre.toLowerCase());
+    if (existe) {
+      this.errorMensaje = 'Ese tipo de prenda ya existe';
+      return;
+    }
+
+    const longitud = this.nuevoTipoPrenda.longitudCosturaMetros ?? undefined;
+    if (longitud !== undefined && longitud <= 0) {
+      this.errorMensaje = 'La longitud de costura debe ser mayor a 0';
+      return;
+    }
+
+    const nuevoTipo: TipoPrenda = {
+      idTipoPrenda: this.idTipoPrendaTemporal--,
+      nombrePrenda: nombre,
+      descripcion: this.nuevoTipoPrenda.descripcion.trim() || undefined,
+      longitudCosturaMetros: longitud
+    };
+
+    this.tiposPrenda = [nuevoTipo, ...this.tiposPrenda];
+    if (this.prendaEditando) {
+      this.prendaEditando.idTipoPrenda = nuevoTipo.idTipoPrenda;
+    }
+
+    this.mostrarModalTipoPrenda = false;
+    this.errorMensaje = '';
   }
 
   eliminarPrenda(index: number): void {
@@ -394,7 +506,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
 
     this.proyectosService.calcularMateriales(request).subscribe({
       next: (response) => {
-        this.materialesCalculados = response;
+        this.materialesCalculados = this.normalizarStockCalculado(response);
         this.cargando = false;
       },
       error: (err) => {
@@ -416,6 +528,43 @@ export class ProyectoFormNuevoComponent implements OnInit {
   getMaterialesSinStock(): number {
     if (!this.materialesCalculados) return 0;
     return this.materialesCalculados.materialesCalculados.filter(m => !m.tieneStockSuficiente).length;
+  }
+
+  private normalizarStockCalculado(response: CalculoMaterialesResponse): CalculoMaterialesResponse {
+    const epsilon = 0.0001;
+    let puedeCrearse = true;
+
+    const materialesNormalizados = response.materialesCalculados.map(m => {
+      const stockActual = Number(m.stockActual);
+      const cantidadNecesaria = Number(m.cantidadNecesaria);
+      const tieneStockSuficiente = stockActual + epsilon >= cantidadNecesaria;
+      const faltante = tieneStockSuficiente ? undefined : Math.max(0, cantidadNecesaria - stockActual);
+
+      if (!tieneStockSuficiente) {
+        puedeCrearse = false;
+      }
+
+      return {
+        ...m,
+        tieneStockSuficiente,
+        faltante
+      };
+    });
+
+    const alertasFiltradas = response.alertas.filter(a => {
+      if (!a.idInsumo) return true;
+      const idInsumo = Number(a.idInsumo);
+      const mat = materialesNormalizados.find(m => m.idInsumo === idInsumo);
+      if (!mat) return true;
+      return !mat.tieneStockSuficiente;
+    });
+
+    return {
+      ...response,
+      materialesCalculados: materialesNormalizados,
+      alertas: alertasFiltradas,
+      puedeCrearse
+    };
   }
 
   // ========================================

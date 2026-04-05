@@ -395,6 +395,57 @@ small {
   transition: all 0.2s;
 }
 
+.prenda-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.prenda-titulo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.btn-edit-mini,
+.btn-delete-mini {
+  height: 2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 0.6rem;
+  min-width: 2rem;
+  transition: all 0.2s;
+  background: #f5f5f5;
+}
+
+.btn-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.btn-edit-mini {
+  color: #1976d2;
+}
+
+.btn-edit-mini:hover {
+  background: #e3f2fd;
+}
+
+.btn-delete-mini {
+  color: #d32f2f;
+}
+
+.btn-delete-mini:hover {
+  background: #ffebee;
+}
+
 .prenda-card:hover {
   border-color: #ff5722;
   box-shadow: 0 4px 12px rgba(255, 87, 34, 0.15);

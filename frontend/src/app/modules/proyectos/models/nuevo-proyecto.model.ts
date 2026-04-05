@@ -317,7 +317,21 @@ export function filtrarInsumosPorCategoria(
   insumos: InsumoFormulario[], 
   categoria: 'Tela' | 'Hilo' | 'Accesorio'
 ): InsumoFormulario[] {
-  return insumos.filter(i => i.categoria === categoria);
+  const categoriaNorm = categoria.toLowerCase();
+  return insumos.filter(i => {
+    const cat = (i.categoria || '').trim().toLowerCase();
+    const tipo = (i.nombreTipoInsumo || '').trim().toLowerCase();
+    if (categoriaNorm === 'tela') {
+      return cat.includes('tela') || tipo.includes('tela');
+    }
+    if (categoriaNorm === 'hilo') {
+      return cat.includes('hilo') || tipo.includes('hilo');
+    }
+    if (categoriaNorm === 'accesorio') {
+      return cat.includes('accesorio') || tipo.includes('accesorio');
+    }
+    return false;
+  });
 }
 
 /**

@@ -660,7 +660,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   guardarDiseno(): Promise<boolean> {
     return new Promise((resolve) => {
-      if (!this.proyecto.idProyecto) {
+      const idProyecto = Number(this.proyecto?.idProyecto);
+      if (!idProyecto || Number.isNaN(idProyecto)) {
+        this.alertas.error('Error', 'No se encontró el proyecto solicitado.');
         resolve(false);
         return;
       }
@@ -687,7 +689,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
       };
 
       this.guardandoDiseno = true;
-      this.disenoService.guardarDiseno(this.proyecto.idProyecto, payload).subscribe({
+      this.disenoService.guardarDiseno(idProyecto, payload).subscribe({
         next: (detalle) => {
           this.guardandoDiseno = false;
           this.disenoDetalle = detalle;
@@ -705,40 +707,98 @@ export class ProyectoDetalleModalComponent implements OnInit {
   }
 
   private cargarDisenoArea(): void {
-    if (!this.proyecto.idProyecto) return;
-
-    this.disenoPrendas = this.disenoResumenPrendas.map(prenda => ({
-      idProyectoPrenda: prenda.idProyectoPrenda,
-      imagenLogo: '',
-      descripcionLogo: '',
-      imagenMockup: '',
-      descripcionMockup: ''
-    }));
-    this.disenoPrendasMap = this.disenoPrendas.reduce((acc, item) => {
-      acc[item.idProyectoPrenda] = item;
-      return acc;
-    }, {} as Record<number, DisenoPrendaForm>);
+    const idProyecto = Number(this.proyecto?.idProyecto);
+    if (!idProyecto || Number.isNaN(idProyecto)) return;
 
     this.cargandoDiseno = true;
-    this.disenoService.obtenerDiseno(this.proyecto.idProyecto).subscribe({
-      next: (detalle) => {
-        this.disenoDetalle = detalle;
-        this.disenoObservacionesGenerales = detalle.observacionesGenerales ?? '';
-        detalle.prendas.forEach(item => {
-          const form = this.getDisenoForm(item.idPrenda);
-          form.imagenLogo = item.imagenLogo ?? '';
-          form.descripcionLogo = item.descripcionLogo ?? '';
-          form.imagenMockup = item.imagenMockup ?? '';
-          form.descripcionMockup = item.descripcionMockup ?? '';
+
+    this.disenoService.obtenerResumenProyecto(idProyecto).subscribe({
+      next: (resumen) => {
+        this.disenoResumenPrendas = resumen.prendas.map(prenda => ({
+          idProyectoPrenda: Number(prenda.idProyectoPrenda),
+          nombrePrenda: String(prenda.tipoPrenda || '').trim() || 'Prenda',
+          materialBase: String(prenda.materialBase ?? '').trim(),
+          cantidadTotal: Math.max(0, Number(prenda.cantidadTotal ?? 0)),
+          tieneBordado: !!prenda.tieneBordado,
+          tieneEstampado: !!prenda.tieneEstampado,
+          descripcionDiseno: String(prenda.descripcionDiseno ?? '').trim(),
+          talles: (prenda.talles || []).map(t => ({
+            nombreTalle: String(t.nombreTalle ?? '').trim() || 'General',
+            cantidad: Math.max(0, Number(t.cantidad ?? 0))
+          }))
+        }));
+
+        this.disenoPrendas = this.disenoResumenPrendas.map(prenda => ({
+          idProyectoPrenda: prenda.idProyectoPrenda,
+          imagenLogo: '',
+          descripcionLogo: '',
+          imagenMockup: '',
+          descripcionMockup: ''
+        }));
+        this.disenoPrendasMap = this.disenoPrendas.reduce((acc, item) => {
+          acc[item.idProyectoPrenda] = item;
+          return acc;
+        }, {} as Record<number, DisenoPrendaForm>);
+
+        this.disenoService.obtenerDiseno(idProyecto).subscribe({
+          next: (detalle) => {
+            this.disenoDetalle = detalle;
+            this.disenoObservacionesGenerales = detalle.observacionesGenerales ?? '';
+            detalle.prendas.forEach(item => {
+              const form = this.getDisenoForm(item.idPrenda);
+              form.imagenLogo = item.imagenLogo ?? '';
+              form.descripcionLogo = item.descripcionLogo ?? '';
+              form.imagenMockup = item.imagenMockup ?? '';
+              form.descripcionMockup = item.descripcionMockup ?? '';
+            });
+            this.cargandoDiseno = false;
+          },
+          error: (err) => {
+            if (err?.status !== 404) {
+              console.error('Error al cargar diseño:', err);
+            }
+            this.disenoDetalle = null;
+            this.cargandoDiseno = false;
+          }
         });
-        this.cargandoDiseno = false;
       },
       error: (err) => {
-        if (err?.status !== 404) {
-          console.error('Error al cargar diseño:', err);
-        }
-        this.disenoDetalle = null;
-        this.cargandoDiseno = false;
+        console.error('Error al cargar resumen de diseño:', err);
+        this.disenoResumenPrendas = this.construirResumenDisenoPrendas();
+
+        this.disenoPrendas = this.disenoResumenPrendas.map(prenda => ({
+          idProyectoPrenda: prenda.idProyectoPrenda,
+          imagenLogo: '',
+          descripcionLogo: '',
+          imagenMockup: '',
+          descripcionMockup: ''
+        }));
+        this.disenoPrendasMap = this.disenoPrendas.reduce((acc, item) => {
+          acc[item.idProyectoPrenda] = item;
+          return acc;
+        }, {} as Record<number, DisenoPrendaForm>);
+
+        this.disenoService.obtenerDiseno(idProyecto).subscribe({
+          next: (detalle) => {
+            this.disenoDetalle = detalle;
+            this.disenoObservacionesGenerales = detalle.observacionesGenerales ?? '';
+            detalle.prendas.forEach(item => {
+              const form = this.getDisenoForm(item.idPrenda);
+              form.imagenLogo = item.imagenLogo ?? '';
+              form.descripcionLogo = item.descripcionLogo ?? '';
+              form.imagenMockup = item.imagenMockup ?? '';
+              form.descripcionMockup = item.descripcionMockup ?? '';
+            });
+            this.cargandoDiseno = false;
+          },
+          error: (err2) => {
+            if (err2?.status !== 404) {
+              console.error('Error al cargar diseño:', err2);
+            }
+            this.disenoDetalle = null;
+            this.cargandoDiseno = false;
+          }
+        });
       }
     });
   }

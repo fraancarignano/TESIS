@@ -135,6 +135,7 @@
                 title="Editar"
               >
                 <i class="fas fa-edit"></i>
+                <span class="btn-text">Editar</span>
               </button>
               <button 
                 type="button" 
@@ -143,6 +144,7 @@
                 title="Eliminar"
               >
                 <i class="fas fa-trash"></i>
+                <span class="btn-text">Eliminar</span>
               </button>
             </div>
           </div>
@@ -185,25 +187,40 @@
     <!-- ============================================ -->
     <!-- MODAL: EDITAR/AGREGAR PRENDA -->
     <!-- ============================================ -->
-    <div class="modal-overlay-inner" *ngIf="prendaEditando" (click)="cancelarEditarPrenda()">
+    <div class="modal-overlay-inner" *ngIf="prendaEditando" (click)="confirmarCerrarModalPrenda()">
       <div class="modal-prenda" (click)="$event.stopPropagation()">
         <div class="modal-prenda-header">
           <h3>
             {{ indexPrendaEditando === -1 ? ' Agregar Prenda' : ' Editar Prenda' }}
           </h3>
-          <button type="button" class="btn-close-sm" (click)="cancelarEditarPrenda()">×</button>
+          <button type="button" class="btn-close-sm" (click)="confirmarCerrarModalPrenda()">×</button>
         </div>
 
         <div class="modal-prenda-body">
           <!-- Tipo de Prenda -->
           <div class="field">
             <label>Tipo de Prenda *</label>
-            <select [(ngModel)]="prendaEditando.idTipoPrenda" [ngModelOptions]="{standalone: true}">
-              <option [value]="undefined">Seleccionar...</option>
-              <option *ngFor="let tipo of tiposPrenda" [value]="tipo.idTipoPrenda">
-                {{ tipo.nombrePrenda }}
-              </option>
-            </select>
+            <div class="input-row">
+              <select [(ngModel)]="prendaEditando.idTipoPrenda" [ngModelOptions]="{standalone: true}" class="flex-2">
+                <option [value]="undefined">Seleccionar...</option>
+                <option *ngFor="let tipo of tiposPrenda" [value]="tipo.idTipoPrenda">
+                  {{ tipo.nombrePrenda }}
+                </option>
+              </select>
+              <button
+                type="button"
+                class="btn-add-mini"
+                (click)="abrirModalTipoPrenda()"
+                title="Agregar tipo de prenda"
+                aria-label="Agregar tipo de prenda"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
+            <small>Si no aparece, agrega uno nuevo.</small>
           </div>
 
           <!-- Tipo de Material (Tipo de Tela) -->
@@ -318,7 +335,7 @@
         </div>
 
         <div class="modal-prenda-footer">
-          <button type="button" class="btn-secondary" (click)="cancelarEditarPrenda()">
+          <button type="button" class="btn-secondary" (click)="confirmarCerrarModalPrenda()">
             Cancelar
           </button>
           <button type="button" class="btn-primary" (click)="guardarPrenda(prendaEditando)">
@@ -328,6 +345,61 @@
       </div>
     </div>
 
+    <!-- ============================================ -->
+    <!-- MODAL: NUEVO TIPO DE PRENDA -->
+    <!-- ============================================ -->
+    <div class="modal-overlay-inner" *ngIf="mostrarModalTipoPrenda" (click)="cancelarModalTipoPrenda()">
+      <div class="modal-prenda" (click)="$event.stopPropagation()">
+        <div class="modal-prenda-header">
+          <h3>Nuevo Tipo de Prenda</h3>
+          <button type="button" class="btn-close-sm" (click)="cancelarModalTipoPrenda()">×</button>
+        </div>
+
+        <div class="modal-prenda-body">
+          <div class="field">
+            <label>Nombre *</label>
+            <input
+              type="text"
+              [(ngModel)]="nuevoTipoPrenda.nombrePrenda"
+              [ngModelOptions]="{standalone: true}"
+              placeholder="Ej: Campera, Buzo, Polo"
+            >
+          </div>
+
+          <div class="field">
+            <label>Descripcion</label>
+            <textarea
+              [(ngModel)]="nuevoTipoPrenda.descripcion"
+              [ngModelOptions]="{standalone: true}"
+              rows="2"
+              placeholder="Detalles del tipo de prenda..."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>Longitud de costura (m)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="nuevoTipoPrenda.longitudCosturaMetros"
+              [ngModelOptions]="{standalone: true}"
+              placeholder="Ej: 1.5"
+            >
+            <small>Opcional. Si no sabes, puedes dejarlo vacio.</small>
+          </div>
+        </div>
+
+        <div class="modal-prenda-footer">
+          <button type="button" class="btn-secondary" (click)="cancelarModalTipoPrenda()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-primary" (click)="guardarTipoPrenda()">
+            Guardar Tipo
+          </button>
+        </div>
+      </div>
+    </div>
     <!-- ============================================ -->
     <!-- MODAL: DISTRIBUCIÓN DE TALLES -->
     <!-- ============================================ -->
@@ -983,3 +1055,4 @@
   }
 }
 </style>
+
