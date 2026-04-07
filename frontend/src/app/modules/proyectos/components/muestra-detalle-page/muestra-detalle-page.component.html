@@ -1,0 +1,130 @@
+<div class="detalle-container">
+  <div class="detalle-header">
+    <div>
+      <h2>Detalle de Muestra</h2>
+      <p *ngIf="muestra">Código {{ muestra.codigoMuestra || '-' }} · Estado {{ muestra.estado }}</p>
+    </div>
+    <button class="btn-volver" (click)="router.navigate(['/proyectos/muestras'])">Volver</button>
+  </div>
+
+  <div *ngIf="loading" class="estado">Cargando muestra...</div>
+  <div *ngIf="error" class="estado error">{{ error }}</div>
+
+  <form *ngIf="muestra" [formGroup]="form" class="detalle-form">
+    <div class="grid">
+      <div class="campo">
+        <label>Nombre de la muestra *</label>
+        <input type="text" formControlName="nombreMuestra">
+      </div>
+      <div class="campo">
+        <label>Prioridad</label>
+        <input type="text" formControlName="prioridad" placeholder="Alta / Media / Baja">
+      </div>
+      <div class="campo">
+        <label>Fecha entrega</label>
+        <input type="date" formControlName="fechaEntrega">
+      </div>
+      <div class="campo">
+        <label>Encargado (ID)</label>
+        <input type="number" formControlName="idUsuarioEncargado">
+      </div>
+    </div>
+
+    <div class="campo">
+      <label>Descripción</label>
+      <textarea rows="3" formControlName="descripcion"></textarea>
+    </div>
+
+    <div class="seccion">
+      <h3>Referencia visual</h3>
+      <div class="grid">
+        <div class="campo">
+          <label>Mockup *</label>
+          <input type="text" formControlName="mockupUrl">
+        </div>
+        <div class="campo">
+          <label>Paleta RGB</label>
+          <input type="text" formControlName="paletaRgb" placeholder="#000000,#FFFFFF">
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="campo">
+          <label>
+            <input type="checkbox" formControlName="bordadoRequerido">
+            Bordado requerido
+          </label>
+          <textarea rows="2" formControlName="bordadoDescripcion" placeholder="Descripción bordado"></textarea>
+          <input type="text" formControlName="bordadoReferencia" placeholder="Referencia bordado">
+        </div>
+        <div class="campo">
+          <label>
+            <input type="checkbox" formControlName="estampadoRequerido">
+            Estampado requerido
+          </label>
+          <textarea rows="2" formControlName="estampadoDescripcion" placeholder="Descripción estampado"></textarea>
+          <input type="text" formControlName="estampadoReferencia" placeholder="Referencia estampado">
+        </div>
+      </div>
+
+      <div class="campo">
+        <label>Otros detalles</label>
+        <textarea rows="2" formControlName="otrosDetalle"></textarea>
+      </div>
+    </div>
+  </form>
+
+  <div *ngIf="muestra?.prendas?.length" class="seccion">
+    <h3>Prendas</h3>
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Prenda</th>
+          <th>Material</th>
+          <th>Color</th>
+          <th>Bordado</th>
+          <th>Estampado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of muestra?.prendas">
+          <td>{{ p.nombrePrenda || p.idTipoPrenda }}</td>
+          <td>{{ p.nombreMaterial || p.idTipoInsumoMaterial }}</td>
+          <td>{{ p.colorTela || '-' }}</td>
+          <td>{{ p.tieneBordado ? 'Sí' : 'No' }}</td>
+          <td>{{ p.tieneEstampado ? 'Sí' : 'No' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer-botones" *ngIf="muestra">
+    <button class="btn-primario" *ngIf="!editando" (click)="iniciarEdicion()">
+      Agregar actualización
+    </button>
+    <button class="btn-primario" *ngIf="editando" (click)="solicitarComentario('actualizacion')">
+      Guardar cambios
+    </button>
+    <button class="btn-secundario" *ngIf="editando" (click)="cancelarEdicion()">
+      Cancelar edición
+    </button>
+    <button class="btn-danger" (click)="solicitarComentario('rechazo')" [disabled]="editando || !puedeRechazar">
+      Rechazar muestra
+    </button>
+    <button class="btn-aceptar" (click)="solicitarComentario('aceptacion')" [disabled]="editando || !puedeAceptar">
+      Aceptar muestra
+    </button>
+  </div>
+
+  <div class="modal-overlay" *ngIf="mostrarModalComentario">
+    <div class="modal">
+      <h4>Comentario</h4>
+      <p *ngIf="comentarioObligatorio">El comentario es obligatorio.</p>
+      <textarea rows="4" [(ngModel)]="comentario" placeholder="Escribe el comentario"></textarea>
+      <div class="modal-actions">
+        <button class="btn-secundario" (click)="cerrarModalComentario()">Cancelar</button>
+        <button class="btn-primario" (click)="confirmarComentario()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>

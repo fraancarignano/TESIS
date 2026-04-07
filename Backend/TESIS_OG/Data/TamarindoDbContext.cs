@@ -43,6 +43,12 @@ public partial class TamarindoDbContext : DbContext
 
     public virtual DbSet<MaterialCalculado> MaterialCalculados { get; set; }
 
+    public virtual DbSet<Muestra> Muestras { get; set; }
+
+    public virtual DbSet<MuestraPrenda> MuestraPrendas { get; set; }
+
+    public virtual DbSet<MuestraHistorial> MuestraHistorials { get; set; }
+
     public virtual DbSet<ObservacionProyecto> ObservacionProyectos { get; set; }
 
     public virtual DbSet<OrdenCompra> OrdenCompras { get; set; }
@@ -615,6 +621,159 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdProyectoPrendaNavigation).WithMany(p => p.MaterialCalculados)
                 .HasForeignKey(d => d.IdProyectoPrenda)
                 .HasConstraintName("FK__MaterialC__id_Pr__0B5CAFEA");
+        });
+
+        modelBuilder.Entity<Muestra>(entity =>
+        {
+            entity.HasKey(e => e.IdMuestra).HasName("PK__Muestra__AC3EE15D");
+
+            entity.ToTable("Muestra");
+
+            entity.HasIndex(e => e.CodigoMuestra, "UQ_CodigoMuestra").IsUnique();
+
+            entity.Property(e => e.IdMuestra).HasColumnName("id_Muestra");
+            entity.Property(e => e.IdCliente).HasColumnName("id_Cliente");
+            entity.Property(e => e.NombreMuestra)
+                .HasMaxLength(80)
+                .IsUnicode(false)
+                .HasColumnName("nombre_Muestra");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(300)
+                .IsUnicode(false)
+                .HasColumnName("descripcion");
+            entity.Property(e => e.Prioridad)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("prioridad");
+            entity.Property(e => e.Estado)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("estado");
+            entity.Property(e => e.FechaCreacion).HasColumnName("fecha_Creacion");
+            entity.Property(e => e.FechaEntrega).HasColumnName("fecha_Entrega");
+            entity.Property(e => e.IdUsuarioEncargado).HasColumnName("id_UsuarioEncargado");
+            entity.Property(e => e.CodigoMuestra)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("codigo_Muestra");
+            entity.Property(e => e.IdProyectoAsignado).HasColumnName("id_Proyecto");
+            entity.Property(e => e.MockupUrl)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("mockup_url");
+            entity.Property(e => e.BordadoRequerido)
+                .HasDefaultValue(false)
+                .HasColumnName("bordado_requerido");
+            entity.Property(e => e.BordadoDescripcion)
+                .HasMaxLength(400)
+                .IsUnicode(false)
+                .HasColumnName("bordado_descripcion");
+            entity.Property(e => e.BordadoReferencia)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("bordado_referencia");
+            entity.Property(e => e.EstampadoRequerido)
+                .HasDefaultValue(false)
+                .HasColumnName("estampado_requerido");
+            entity.Property(e => e.EstampadoDescripcion)
+                .HasMaxLength(400)
+                .IsUnicode(false)
+                .HasColumnName("estampado_descripcion");
+            entity.Property(e => e.EstampadoReferencia)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("estampado_referencia");
+            entity.Property(e => e.OtrosDetalle)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("otros_detalle");
+            entity.Property(e => e.PaletaRgb)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("paleta_rgb");
+
+            entity.HasOne(d => d.IdClienteNavigation).WithMany(p => p.Muestras)
+                .HasForeignKey(d => d.IdCliente)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Muestra_Cliente");
+
+            entity.HasOne(d => d.IdUsuarioEncargadoNavigation).WithMany(p => p.Muestras)
+                .HasForeignKey(d => d.IdUsuarioEncargado)
+                .HasConstraintName("FK_Muestra_UsuarioEncargado");
+
+            entity.HasOne(d => d.IdProyectoAsignadoNavigation).WithMany(p => p.Muestras)
+                .HasForeignKey(d => d.IdProyectoAsignado)
+                .HasConstraintName("FK_Muestra_Proyecto");
+        });
+
+        modelBuilder.Entity<MuestraPrenda>(entity =>
+        {
+            entity.HasKey(e => e.IdMuestraPrenda).HasName("PK__MuestraPrenda__C9DD66");
+
+            entity.ToTable("MuestraPrenda");
+
+            entity.Property(e => e.IdMuestraPrenda).HasColumnName("id_MuestraPrenda");
+            entity.Property(e => e.IdMuestra).HasColumnName("id_Muestra");
+            entity.Property(e => e.IdTipoPrenda).HasColumnName("id_TipoPrenda");
+            entity.Property(e => e.IdTipoInsumoMaterial).HasColumnName("id_TipoInsumo_Material");
+            entity.Property(e => e.ColorTela)
+                .HasMaxLength(80)
+                .IsUnicode(false)
+                .HasColumnName("color_tela");
+            entity.Property(e => e.TieneBordado)
+                .HasDefaultValue(false)
+                .HasColumnName("tiene_bordado");
+            entity.Property(e => e.TieneEstampado)
+                .HasDefaultValue(false)
+                .HasColumnName("tiene_estampado");
+            entity.Property(e => e.DescripcionDiseno)
+                .HasMaxLength(400)
+                .IsUnicode(false)
+                .HasColumnName("descripcion_diseno");
+
+            entity.HasOne(d => d.IdMuestraNavigation).WithMany(p => p.MuestraPrendas)
+                .HasForeignKey(d => d.IdMuestra)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_MuestraPrenda_Muestra");
+
+            entity.HasOne(d => d.IdTipoPrendaNavigation).WithMany(p => p.MuestraPrendas)
+                .HasForeignKey(d => d.IdTipoPrenda)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_MuestraPrenda_TipoPrenda");
+
+            entity.HasOne(d => d.IdTipoInsumoMaterialNavigation).WithMany(p => p.MuestraPrendas)
+                .HasForeignKey(d => d.IdTipoInsumoMaterial)
+                .HasConstraintName("FK_MuestraPrenda_TipoInsumo");
+        });
+
+        modelBuilder.Entity<MuestraHistorial>(entity =>
+        {
+            entity.HasKey(e => e.IdMuestraHistorial).HasName("PK__MuestraHistorial__3A5B9C2F");
+
+            entity.ToTable("MuestraHistorial");
+
+            entity.Property(e => e.IdMuestraHistorial).HasColumnName("id_MuestraHistorial");
+            entity.Property(e => e.IdMuestra).HasColumnName("id_Muestra");
+            entity.Property(e => e.IdUsuario).HasColumnName("id_Usuario");
+            entity.Property(e => e.Fecha)
+                .HasColumnType("datetime")
+                .HasColumnName("fecha");
+            entity.Property(e => e.Tipo)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasColumnName("tipo");
+            entity.Property(e => e.Comentario)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("comentario");
+
+            entity.HasOne(d => d.IdMuestraNavigation).WithMany(p => p.MuestraHistorials)
+                .HasForeignKey(d => d.IdMuestra)
+                .HasConstraintName("FK_MuestraHistorial_Muestra");
+
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.MuestraHistorials)
+                .HasForeignKey(d => d.IdUsuario)
+                .HasConstraintName("FK_MuestraHistorial_Usuario");
         });
 
         modelBuilder.Entity<ObservacionProyecto>(entity =>

@@ -71,4 +71,6 @@ public partial class Proyecto
     public virtual ICollection<InsumoStock> InsumoStocks { get; set; } = new List<InsumoStock>();
     public virtual ICollection<Scrap> Scraps { get; set; } = new List<Scrap>();
     public virtual ICollection<Despacho> Despachos { get; set; } = new List<Despacho>();
+
+    public virtual ICollection<Muestra> Muestras { get; set; } = new List<Muestra>();
 }

@@ -18,4 +18,6 @@ public partial class TipoPrendum
     public virtual ICollection<ConfiguracionMaterial> ConfiguracionMaterials { get; set; } = new List<ConfiguracionMaterial>();
 
     public virtual ICollection<ProyectoPrendum> ProyectoPrenda { get; set; } = new List<ProyectoPrendum>();
+
+    public virtual ICollection<MuestraPrenda> MuestraPrendas { get; set; } = new List<MuestraPrenda>();
 }

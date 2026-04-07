@@ -65,6 +65,22 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/proyectos/components/nuevo-proyecto-modal/proyecto-form.component').then(m => m.ProyectoFormNuevoComponent)
       },
       {
+        path: 'proyectos/crear-muestra',
+        loadComponent: () => import('./modules/proyectos/components/nuevo-muestra-modal/muestra-form.component').then(m => m.MuestraFormNuevoComponent)
+      },
+      {
+        path: 'proyectos/muestras',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Proyectos', accion: 'Ver' } },
+        loadComponent: () => import('./modules/proyectos/components/muestra-lista/muestra-list.component').then(m => m.MuestraListComponent)
+      },
+      {
+        path: 'proyectos/muestras/:id',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Proyectos', accion: 'Ver' } },
+        loadComponent: () => import('./modules/proyectos/components/muestra-detalle-page/muestra-detalle-page.component').then(m => m.MuestraDetallePageComponent)
+      },
+      {
         path: 'proyectos/lista',
         loadComponent: () => import('./modules/proyectos/components/proyecto-lista/proyecto-list.component').then(m => m.ProyectoListComponent)
       },

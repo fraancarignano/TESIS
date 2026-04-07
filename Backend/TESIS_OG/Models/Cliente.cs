@@ -48,4 +48,6 @@ public partial class Cliente
     public virtual Provincium? IdProvinciaNavigation { get; set; }
 
     public virtual ICollection<Proyecto> Proyectos { get; set; } = new List<Proyecto>();
+
+    public virtual ICollection<Muestra> Muestras { get; set; } = new List<Muestra>();
 }

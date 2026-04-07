@@ -1,0 +1,55 @@
+@import url('../proyecto-lista/proyecto-list.component.css');
+
+.muestras-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.muestras-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.muestras-header p {
+  margin: 0.2rem 0 0;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.btn-crear {
+  background: linear-gradient(135deg, #ff5722, #f4511e);
+  color: #fff;
+  border: none;
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
+}
+
+.btn-crear:hover {
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.4);
+  transform: translateY(-1px);
+}
+
+.buscador {
+  margin-bottom: 1rem;
+}
+
+.buscador input {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.subtitulo {
+  display: block;
+  margin-top: 0.2rem;
+  color: #7a7a7a;
+  font-size: 0.8rem;
+}

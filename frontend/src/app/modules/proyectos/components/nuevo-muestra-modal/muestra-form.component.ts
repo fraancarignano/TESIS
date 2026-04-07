@@ -1,11 +1,9 @@
-import { Component, Output, EventEmitter, OnInit, Input } from '@angular/core';
+﻿import { Component, Output, EventEmitter, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProyectosServiceNuevo } from '../../services/proyectos-nuevo.service';
-import { MuestrasService } from '../../services/muestra.service';
-import { MuestraDetalle } from '../../models/muestra.model';
 import {
   ProyectoCrearNuevo,
   FormularioProyectoInicializacion,
@@ -30,13 +28,13 @@ import {
 import { Cliente } from '../../../clientes/models/cliente.model';
 
 @Component({
-  selector: 'app-proyecto-form-nuevo',
+  selector: 'app-muestra-form-nuevo',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  templateUrl: './proyecto-form.component.html',
-  styleUrls: ['./proyecto-form.component.css']
+  templateUrl: './muestra-form.component.html',
+  styleUrls: ['./muestra-form.component.css']
 })
-export class ProyectoFormNuevoComponent implements OnInit {
+export class MuestraFormNuevoComponent implements OnInit {
   @Input() esModal: boolean = false;
   @Input() modoEdicion: boolean = false;
   @Input() proyectoAEditar?: any;
@@ -48,13 +46,13 @@ export class ProyectoFormNuevoComponent implements OnInit {
   errorMensaje = '';
   fechaMinima!: string;
 
-  // Estado y validación para edición
+  // Estado y validaciÃ³n para ediciÃ³n
   estadoProyecto: string = 'Pendiente';
   permitirEdicionCompleta: boolean = true;
   permitirEdicionPrendas: boolean = true;
   mensajeRestriccion: string = '';
 
-  // Datos del formulario (catálogos)
+  // Datos del formulario (catÃ¡logos)
   datosFormulario?: FormularioProyectoInicializacion;
   clientes: Cliente[] = [];
   tiposPrenda: TipoPrenda[] = [];
@@ -70,7 +68,6 @@ export class ProyectoFormNuevoComponent implements OnInit {
   usuarios: UsuarioSimple[] = [];
   prioridades: string[] = ['baja', 'media', 'alta'];
   insumosTelasFiltrados: InsumoFormulario[] = [];
-  muestrasAprobadas: MuestraDetalle[] = [];
 
   // Prendas del proyecto
   prendasProyecto: PrendaFormulario[] = [];
@@ -99,10 +96,18 @@ export class ProyectoFormNuevoComponent implements OnInit {
   materialesCalculados?: CalculoMaterialesResponse;
   mostrarPreviewMateriales = false;
 
+  // Referencia visual de la muestra
+  referenciaVisual = {
+    bordado: { requerido: false, descripcion: '', imagen: '' as string | null },
+    estampado: { requerido: false, descripcion: '', imagen: '' as string | null },
+    otrosDetalle: '',
+    mockup: '' as string | null
+  };
+  paletaRgb = { r: 0, g: 0, b: 0 };
+
   constructor(
     private fb: FormBuilder,
     private proyectosService: ProyectosServiceNuevo,
-    private muestrasService: MuestrasService,
     private router: Router
   ) {
     this.crearFormulario();
@@ -110,9 +115,8 @@ export class ProyectoFormNuevoComponent implements OnInit {
 
   ngOnInit(): void {
   this.cargarDatosFormulario();
-  this.cargarMuestrasAprobadas();
   
-  // ========== NUEVO: Detectar modo edición ==========
+  // ========== NUEVO: Detectar modo ediciÃ³n ==========
   if (this.modoEdicion && this.proyectoAEditar) {
     this.estadoProyecto = this.proyectoAEditar.estado;
     // Esperamos a que se carguen los datos del formulario para precargar
@@ -120,13 +124,13 @@ export class ProyectoFormNuevoComponent implements OnInit {
     this.setearFechaInicioPorDefecto();
   }
   
-  const mañana = new Date();
-  mañana.setDate(mañana.getDate() + 1);
-  this.fechaMinima = mañana.toISOString().split('T')[0];
+  const manana = new Date();
+  manana.setDate(manana.getDate() + 1);
+  this.fechaMinima = manana.toISOString().split('T')[0];
 }
 
   // ========================================
-  // INICIALIZACIÓN
+  // INICIALIZACIÃ“N
   // ========================================
 
   private crearFormulario(): void {
@@ -137,74 +141,8 @@ export class ProyectoFormNuevoComponent implements OnInit {
       prioridad: ['media', Validators.required],
       fechaInicio: ['', Validators.required],
       fechaFin: [''],
-      idUsuarioEncargado: [''],
-      idMuestraAprobada: ['']
+      idUsuarioEncargado: ['']
     });
-  }
-
-  private cargarMuestrasAprobadas(): void {
-    this.muestrasService.obtenerMuestras().subscribe({
-      next: (data) => {
-        this.muestrasAprobadas = (data || []).filter(m => (m.estado || '').toLowerCase() === 'aprobada');
-      },
-      error: () => {
-        this.muestrasAprobadas = [];
-      }
-    });
-  }
-
-  onMuestraSeleccionada(): void {
-    const id = Number(this.formulario.get('idMuestraAprobada')?.value);
-    if (!id) return;
-
-    if (this.prendasProyecto.length > 0) {
-      const confirmar = window.confirm('Esto reemplazarÃ¡ las prendas actuales. Â¿Deseas continuar?');
-      if (!confirmar) {
-        this.formulario.patchValue({ idMuestraAprobada: '' });
-        return;
-      }
-    }
-
-    const muestraLocal = this.muestrasAprobadas.find(m => m.idMuestra === id);
-    if (muestraLocal?.prendas?.length) {
-      this.aplicarMuestraAFormulario(muestraLocal);
-      return;
-    }
-
-    this.muestrasService.obtenerMuestraPorId(id).subscribe({
-      next: (muestra) => this.aplicarMuestraAFormulario(muestra),
-      error: () => {
-        this.errorMensaje = 'No se pudo cargar la muestra seleccionada';
-      }
-    });
-  }
-
-  private aplicarMuestraAFormulario(muestra: MuestraDetalle): void {
-    const prendas = (muestra.prendas || []).map(p => {
-      const color = (p.colorTela || '').trim();
-      const insumoMatch = this.insumos.find(i =>
-        i.idTipoInsumo === p.idTipoInsumoMaterial &&
-        (!!color ? (i.color || '').trim().toLowerCase() === color.toLowerCase() : true)
-      );
-
-      return {
-        id: generarIdTemporal(),
-        idTipoPrenda: p.idTipoPrenda,
-        idTipoInsumoMaterial: p.idTipoInsumoMaterial,
-        idInsumo: insumoMatch?.idInsumo,
-        colorTela: color || insumoMatch?.color,
-        cantidadTotal: 1,
-        tieneBordado: p.tieneBordado,
-        tieneEstampado: p.tieneEstampado,
-        descripcionDiseno: p.descripcionDiseno || undefined,
-        tallesDistribuidos: []
-      } as PrendaFormulario;
-    });
-
-    this.prendasProyecto = prendas;
-    this.materialesManuales = [];
-    this.materialesCalculados = undefined;
-    this.mostrarPreviewMateriales = false;
   }
 
   private setearFechaInicioPorDefecto(): void {
@@ -228,7 +166,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
         this.usuarios = datos.usuarios;
         this.prioridades = datos.prioridades;
 
-        // Filtrar por categorías
+        // Filtrar por categorÃ­as
         this.tiposInsumoTelas = filtrarTiposInsumoPorCategoria(datos.tiposInsumo, 'Tela');
         this.tiposInsumoHilos = filtrarTiposInsumoPorCategoria(datos.tiposInsumo, 'Hilo');
         this.tiposInsumoAccesorios = filtrarTiposInsumoPorCategoria(datos.tiposInsumo, 'Accesorio');
@@ -239,7 +177,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
 
         this.cargando = false;
 
-        // ========== NUEVO: Si es modo edición, precargar datos ==========
+        // ========== NUEVO: Si es modo ediciÃ³n, precargar datos ==========
           if (this.modoEdicion && this.proyectoAEditar) {
           this.precargarDatos();
           this.configurarEdicionSegunEstado();
@@ -266,28 +204,26 @@ export class ProyectoFormNuevoComponent implements OnInit {
       return;
     }
 
-    this.insumosTelasFiltrados = this.insumosTelas.filter(
-      insumo => insumo.idTipoInsumo === Number(this.prendaEditando!.idTipoInsumoMaterial)
-    );
-
-
-    this.prendaEditando!.idInsumo = undefined;
-    this.prendaEditando!.colorTela = undefined;
+    // Solo informativo, no usamos stock. Asignamos un id ficticio basado en el tipo.
+    this.insumosTelasFiltrados = [];
+    this.prendaEditando!.idInsumo = Number(this.prendaEditando!.idTipoInsumoMaterial);
   }
 
   // ========================================
-  // GESTIÓN DE PRENDAS
+  // GESTIÃ“N DE PRENDAS
   // ========================================
 
   agregarPrenda(): void {
     const nuevaPrenda: PrendaFormulario = {
       id: generarIdTemporal(),
-      cantidadTotal: 0,
+      cantidadTotal: 1,
       tieneBordado: false,
       tieneEstampado: false,
       tallesDistribuidos: [],
       mostrarModalTalles: false
     };
+
+    this.aplicarTalleDefecto(nuevaPrenda);
 
     this.prendaEditando = nuevaPrenda;
     this.indexPrendaEditando = -1;
@@ -308,9 +244,15 @@ export class ProyectoFormNuevoComponent implements OnInit {
   }
 
   guardarPrenda(prenda: PrendaFormulario): void {
-    if (!prenda.idTipoPrenda || !prenda.idTipoInsumoMaterial || !prenda.idInsumo || prenda.cantidadTotal <= 0) {
-      this.errorMensaje = 'Completa todos los campos de la prenda';
+    this.aplicarTalleDefecto(prenda);
+
+    if (!prenda.idTipoPrenda || !prenda.idTipoInsumoMaterial || prenda.cantidadTotal <= 0) {
+      this.errorMensaje = 'Completa todos los campos obligatorios de la prenda';
       return;
+    }
+
+    if (!prenda.idInsumo) {
+      prenda.idInsumo = Number(prenda.idTipoInsumoMaterial);
     }
 
     if (prenda.tallesDistribuidos.length === 0) {
@@ -353,7 +295,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
 
   confirmarCerrarModalPrenda(): void {
     if (this.prendaEditando && this.tieneCambiosEnPrenda()) {
-      const confirmar = window.confirm('Tienes cambios sin guardar. ¿Deseas cerrar la prenda sin guardar?');
+      const confirmar = window.confirm('Tienes cambios sin guardar. Â¿Deseas cerrar la prenda sin guardar?');
       if (!confirmar) return;
     }
 
@@ -456,7 +398,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
   }
 
   // ========================================
-  // DISTRIBUCIÓN DE TALLES
+  // DISTRIBUCIÃ“N DE TALLES
   // ========================================
 
   abrirModalTalles(): void {
@@ -525,7 +467,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
     const cantidad = Number(cantidadStr);
 
     if (!idInsumo || cantidad <= 0) {
-      this.errorMensaje = 'Selecciona un insumo válido y cantidad > 0';
+      this.errorMensaje = 'Selecciona un insumo vÃ¡lido y cantidad > 0';
       setTimeout(() => (this.errorMensaje = ''), 3000);
       return;
     }
@@ -653,6 +595,21 @@ export class ProyectoFormNuevoComponent implements OnInit {
   // ========================================
 
   guardar(): void {
+  if (!this.referenciaVisual.mockup) {
+    this.errorMensaje = 'El mockup es obligatorio';
+    return;
+  }
+
+  if (this.referenciaVisual.bordado.requerido && !this.referenciaVisual.bordado.descripcion.trim()) {
+    this.errorMensaje = 'Ingresa la descripciÃ³n del bordado';
+    return;
+  }
+
+  if (this.referenciaVisual.estampado.requerido && !this.referenciaVisual.estampado.descripcion.trim()) {
+    this.errorMensaje = 'Ingresa la descripciÃ³n del estampado';
+    return;
+  }
+
   if (this.formulario.invalid) {
     this.marcarCamposComoTocados();
     this.errorMensaje = 'Completa los campos obligatorios (*)';
@@ -660,15 +617,16 @@ export class ProyectoFormNuevoComponent implements OnInit {
   }
 
   if (this.prendasProyecto.length === 0) {
-    this.errorMensaje = 'Agrega al menos una prenda al proyecto';
+    this.errorMensaje = 'Agrega al menos una prenda a la muestra';
     return;
   }
 
   for (let i = 0; i < this.prendasProyecto.length; i++) {
     const prenda = this.prendasProyecto[i];
+    this.aplicarTalleDefecto(prenda);
 
     if (!validarSumaTalles(prenda.tallesDistribuidos, prenda.cantidadTotal)) {
-      this.errorMensaje = `Prenda ${i + 1}: La distribución de talles no coincide con la cantidad total`;
+      this.errorMensaje = `Prenda ${i + 1}: La distribuciÃ³n de talles no coincide con la cantidad total`;
       return;
     }
   }
@@ -678,7 +636,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
 
   const formValue = this.formulario.getRawValue(); // getRawValue incluye campos deshabilitados
 
-  // ========== MODO EDICIÓN ==========
+  // ========== MODO EDICIÃ“N ==========
   if (this.modoEdicion && this.proyectoAEditar) {
     const dtoActualizacion = {
       idProyecto: this.proyectoAEditar.idProyecto,
@@ -728,10 +686,10 @@ export class ProyectoFormNuevoComponent implements OnInit {
       }
     });
     
-    return; // Salir después de actualizar
+    return; // Salir despuÃ©s de actualizar
   }
 
-  // ========== MODO CREACIÓN (código original) ==========
+  // ========== MODO CREACIÃ“N (cÃ³digo original) ==========
   const dto: ProyectoCrearNuevo = {
     idCliente: Number(formValue.idCliente),
     nombreProyecto: formValue.nombreProyecto.trim(),
@@ -776,25 +734,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
   }
 
   this.proyectosService.crearProyecto(dto).subscribe({
-    next: (proyectoCreado) => {
-      const muestraId = Number(formValue.idMuestraAprobada);
-      if (muestraId) {
-        this.muestrasService.asignarMuestraAProyecto(muestraId, proyectoCreado.idProyecto).subscribe({
-          next: () => {
-            if (this.esModal) {
-              this.cerrar.emit();
-            } else {
-              this.router.navigate(['/proyectos/explorar']);
-            }
-          },
-          error: (err) => {
-            this.errorMensaje = err.message || 'Proyecto creado, pero no se pudo asignar la muestra';
-            this.cargando = false;
-          }
-        });
-        return;
-      }
-
+    next: () => {
       if (this.esModal) {
         this.cerrar.emit();
       } else {
@@ -821,7 +761,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
         return errores.join(', ');
       }
     }
-    return err.message || 'Error al crear el proyecto';
+    return err.message || 'Error al crear la muestra';
   }
 
   private marcarCamposComoTocados(): void {
@@ -881,15 +821,81 @@ export class ProyectoFormNuevoComponent implements OnInit {
     const disenos = [];
     if (prenda.tieneBordado) disenos.push('Bordado');
     if (prenda.tieneEstampado) disenos.push('Estampado');
-    return disenos.length > 0 ? disenos.join(' + ') : 'Sin diseño';
+    return disenos.length > 0 ? disenos.join(' + ') : 'Sin diseÃ±o';
+  }
+
+  get clienteSeleccionado(): Cliente | undefined {
+    const idCliente = this.formulario.get('idCliente')?.value;
+    if (!idCliente) return undefined;
+    return this.clientes.find(c => c.idCliente === Number(idCliente));
+  }
+
+  get paletaHex(): string {
+    const toHex = (value: number) => Math.max(0, Math.min(255, value)).toString(16).padStart(2, '0');
+    return `#${toHex(this.paletaRgb.r)}${toHex(this.paletaRgb.g)}${toHex(this.paletaRgb.b)}`.toUpperCase();
+  }
+
+  get paletaRgbTexto(): string {
+    const r = Math.max(0, Math.min(255, this.paletaRgb.r));
+    const g = Math.max(0, Math.min(255, this.paletaRgb.g));
+    const b = Math.max(0, Math.min(255, this.paletaRgb.b));
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+
+  normalizarPaletaRgb(): void {
+    this.paletaRgb = {
+      r: Math.max(0, Math.min(255, Number(this.paletaRgb.r) || 0)),
+      g: Math.max(0, Math.min(255, Number(this.paletaRgb.g) || 0)),
+      b: Math.max(0, Math.min(255, Number(this.paletaRgb.b) || 0))
+    };
+  }
+
+  onReferenciaImagenChange(event: Event, tipo: 'bordado' | 'estampado'): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.referenciaVisual[tipo].imagen = String(reader.result || '');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  onMockupChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.referenciaVisual.mockup = String(reader.result || '');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  private aplicarTalleDefecto(prenda: PrendaFormulario): void {
+    prenda.cantidadTotal = 1;
+    if (prenda.tallesDistribuidos && prenda.tallesDistribuidos.length > 0) return;
+    if (!this.talles || this.talles.length === 0) return;
+
+    const talleM = this.talles.find(t => (t.nombreTalle || '').trim().toLowerCase() === 'm')
+      || this.talles.find(t => (t.nombreTalle || '').toLowerCase().includes('med'))
+      || this.talles[0];
+
+    if (talleM) {
+      prenda.tallesDistribuidos = [{
+        idTalle: talleM.idTalle,
+        nombreTalle: talleM.nombreTalle,
+        cantidad: 1
+      }];
+    }
   }
 
   /**
-   * Configurar qué campos se pueden editar según el estado
+   * Configurar quÃ© campos se pueden editar segÃºn el estado
    */
   private configurarEdicionSegunEstado(): void {
     if (this.estadoProyecto === 'Finalizado' || this.estadoProyecto === 'Archivado') {
-      this.errorMensaje = 'No se puede editar un proyecto ' + this.estadoProyecto;
+      this.errorMensaje = 'No se puede editar una muestra ' + this.estadoProyecto;
       this.cerrar.emit();
       return;
     }
@@ -897,7 +903,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
     if (this.estadoProyecto === 'En Proceso' || this.estadoProyecto === 'Pausado') {
       this.permitirEdicionCompleta = false;
       this.permitirEdicionPrendas = true;
-      this.mensajeRestriccion = '⚠️ El proyecto está en producción. Puedes editar: nombre, descripción, prioridad, fecha fin, encargado, cantidades de prendas y materiales manuales.';
+      this.mensajeRestriccion = 'âš ï¸ La muestra estÃ¡ en producciÃ³n. Puedes editar: nombre, descripciÃ³n, prioridad, fecha fin, encargado, cantidades de prendas y materiales manuales.';
       
       // Deshabilitar campos que no se pueden editar
       this.formulario.get('idCliente')?.disable();
@@ -905,7 +911,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
     } else if (this.estadoProyecto === 'Pendiente') {
       this.permitirEdicionCompleta = true;
       this.permitirEdicionPrendas = true;
-      this.mensajeRestriccion = 'ℹ️ Puedes editar todos los campos mientras el proyecto no haya iniciado.';
+      this.mensajeRestriccion = 'â„¹ï¸ Puedes editar todos los campos mientras la muestra no haya iniciado.';
     }
   }
 
@@ -915,7 +921,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
   private precargarDatos(): void {
     if (!this.proyectoAEditar) return;
     
-    // Precargar datos básicos del formulario
+    // Precargar datos bÃ¡sicos del formulario
     this.formulario.patchValue({
       idCliente: this.proyectoAEditar.idCliente,
       nombreProyecto: this.proyectoAEditar.nombreProyecto,
@@ -926,7 +932,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
       idUsuarioEncargado: this.proyectoAEditar.idUsuarioEncargado
     });
     
-    // Precargar prendas solo si permite edición completa
+    // Precargar prendas solo si permite ediciÃ³n completa
     if (this.permitirEdicionPrendas && this.proyectoAEditar.prendas) {
       this.prendasProyecto = this.proyectoAEditar.prendas.map((p: any) => ({
         id: generarIdTemporal(),
@@ -965,3 +971,4 @@ export class ProyectoFormNuevoComponent implements OnInit {
     }
   }
 }
+

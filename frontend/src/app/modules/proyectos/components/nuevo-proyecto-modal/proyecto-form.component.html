@@ -1,11 +1,11 @@
-<!-- ============================================ -->
+﻿<!-- ============================================ -->
 <!-- MODO MODAL -->
 <!-- ============================================ -->
 <div class="modal-overlay" *ngIf="esModal" (click)="cancelar()">
   <div class="modal-container-large" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2><i class="fas fa-folder-plus"></i> Nuevo Proyecto</h2>
-      <button class="btn-close" (click)="cancelar()">×</button>
+      <button class="btn-close" (click)="cancelar()">Ã—</button>
     </div>
 
     <div class="modal-body-scroll">
@@ -34,7 +34,7 @@
   <form [formGroup]="formulario" (ngSubmit)="guardar()">
     
     <!-- ============================================ -->
-    <!-- SECCIÓN 1: DATOS GENERALES -->
+    <!-- SECCIÃ“N 1: DATOS GENERALES -->
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
@@ -52,7 +52,7 @@
             </option>
           </select>
           <span class="cliente-selected" *ngIf="nombreCliente">
-            ✓ {{ nombreCliente }}
+            âœ“ {{ nombreCliente }}
           </span>
         </div>
 
@@ -84,28 +84,40 @@
           <input type="date" formControlName="fechaInicio">
         </div>
 
-        <!-- Fecha Límite -->
+        <!-- Fecha LÃ­mite -->
         <div class="field">
-          <label>Fecha Límite</label>
+          <label>Fecha LÃ­mite</label>
           <input type="date"
             formControlName="fechaFin"
             [min]="fechaMinima">
         </div>
       </div>
 
-      <!-- Descripción -->
+      <!-- DescripciÃ³n -->
+      <!-- Muestra Aprobada -->
       <div class="field">
-        <label>Descripción del Proyecto</label>
+        <label>Muestra aprobada (opcional)</label>
+        <select formControlName="idMuestraAprobada" (change)="onMuestraSeleccionada()">
+          <option value="">Sin muestra</option>
+          <option *ngFor="let m of muestrasAprobadas" [value]="m.idMuestra">
+            {{ m.nombreMuestra }} ({{ m.codigoMuestra || 'Sin codigo' }})
+          </option>
+        </select>
+      </div>
+
+
+      <div class="field">
+        <label>DescripciÃ³n del Proyecto</label>
         <textarea 
           formControlName="descripcion" 
           rows="2" 
-          placeholder="Descripción general del proyecto..."
+          placeholder="DescripciÃ³n general del proyecto..."
         ></textarea>
       </div>
     </div>
 
     <!-- ============================================ -->
-    <!-- SECCIÓN 2: PRENDAS DEL PROYECTO -->
+    <!-- SECCIÃ“N 2: PRENDAS DEL PROYECTO -->
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
@@ -193,7 +205,7 @@
           <h3>
             {{ indexPrendaEditando === -1 ? ' Agregar Prenda' : ' Editar Prenda' }}
           </h3>
-          <button type="button" class="btn-close-sm" (click)="confirmarCerrarModalPrenda()">×</button>
+          <button type="button" class="btn-close-sm" (click)="confirmarCerrarModalPrenda()">Ã—</button>
         </div>
 
         <div class="modal-prenda-body">
@@ -236,7 +248,7 @@
                 {{ tipoInsumo.nombreTipo }}
               </option>
             </select>
-            <small>Ej: Algodón, Lycra, Polyester, etc.</small>
+            <small>Ej: AlgodÃ³n, Lycra, Polyester, etc.</small>
           </div>
 
           <!-- Color/Variante de Tela -->
@@ -249,7 +261,7 @@
                 - Stock: {{ insumo.stockActual }} {{ insumo.unidadMedida }}
               </option>
             </select>
-            <small>Selecciona el color específico de {{ getNombreTipoInsumo(prendaEditando.idTipoInsumoMaterial) }}</small>
+            <small>Selecciona el color especÃ­fico de {{ getNombreTipoInsumo(prendaEditando.idTipoInsumoMaterial) }}</small>
           </div>
 
           <!-- Mensaje si no hay colores disponibles -->
@@ -276,7 +288,7 @@
             >
           </div>
 
-          <!-- Botón Distribuir Talles -->
+          <!-- BotÃ³n Distribuir Talles -->
           <div class="field">
             <button 
               type="button" 
@@ -295,13 +307,13 @@
               </span>
             </button>
             <small *ngIf="prendaEditando.tallesDistribuidos.length > 0" class="text-success">
-              ✓ Talles distribuidos: {{ getTallesSeparados(prendaEditando.tallesDistribuidos) }}
+              âœ“ Talles distribuidos: {{ getTallesSeparados(prendaEditando.tallesDistribuidos) }}
             </small>
           </div>
 
-          <!-- Diseño -->
+          <!-- DiseÃ±o -->
           <div class="field">
-            <label>Diseño</label>
+            <label>DiseÃ±o</label>
             <div class="checkbox-group">
               <label class="checkbox-label">
                 <input 
@@ -322,14 +334,14 @@
             </div>
           </div>
 
-          <!-- Descripción del Diseño -->
+          <!-- DescripciÃ³n del DiseÃ±o -->
           <div class="field" *ngIf="prendaEditando.tieneBordado || prendaEditando.tieneEstampado">
-            <label>Descripción del Diseño</label>
+            <label>DescripciÃ³n del DiseÃ±o</label>
             <textarea 
               [(ngModel)]="prendaEditando.descripcionDiseno"
               [ngModelOptions]="{standalone: true}"
               rows="2" 
-              placeholder="Describe el diseño, colores, posición, etc..."
+              placeholder="Describe el diseÃ±o, colores, posiciÃ³n, etc..."
             ></textarea>
           </div>
         </div>
@@ -352,7 +364,7 @@
       <div class="modal-prenda" (click)="$event.stopPropagation()">
         <div class="modal-prenda-header">
           <h3>Nuevo Tipo de Prenda</h3>
-          <button type="button" class="btn-close-sm" (click)="cancelarModalTipoPrenda()">×</button>
+          <button type="button" class="btn-close-sm" (click)="cancelarModalTipoPrenda()">Ã—</button>
         </div>
 
         <div class="modal-prenda-body">
@@ -401,13 +413,13 @@
       </div>
     </div>
     <!-- ============================================ -->
-    <!-- MODAL: DISTRIBUCIÓN DE TALLES -->
+    <!-- MODAL: DISTRIBUCIÃ“N DE TALLES -->
     <!-- ============================================ -->
     <div class="modal-overlay-inner" *ngIf="mostrarModalTalles" (click)="cerrarModalTalles()">
       <div class="modal-talles" (click)="$event.stopPropagation()">
         <div class="modal-talles-header">
           <h3>Distribuir por Talles</h3>
-          <button type="button" class="btn-close-sm" (click)="cerrarModalTalles()">×</button>
+          <button type="button" class="btn-close-sm" (click)="cerrarModalTalles()">Ã—</button>
         </div>
 
         <div class="modal-talles-info">
@@ -458,14 +470,14 @@
             (click)="guardarDistribucionTalles()"
             [disabled]="obtenerSumaTallesActual() !== cantidadTotalTalles"
           >
-            Confirmar Distribución
+            Confirmar DistribuciÃ³n
           </button>
         </div>
       </div>
     </div>
 
     <!-- ============================================ -->
-    <!-- SECCIÓN 3: MATERIALES ADICIONALES -->
+    <!-- SECCIÃ“N 3: MATERIALES ADICIONALES -->
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
@@ -473,8 +485,8 @@
       </div>
 
       <p class="seccion-descripcion">
-        Los materiales de tela se calculan automáticamente según las prendas. 
-        Aquí puedes agregar hilos y accesorios manualmente.
+        Los materiales de tela se calculan automÃ¡ticamente segÃºn las prendas. 
+        AquÃ­ puedes agregar hilos y accesorios manualmente.
       </p>
 
       <!-- Agregar Hilos -->
@@ -565,7 +577,7 @@
             (click)="eliminarMaterialManual(i)"
             title="Eliminar"
           >
-            ×
+            Ã—
           </button>
         </div>
       </div>
@@ -598,7 +610,7 @@
         <p>Haz clic en "Calcular Materiales" para ver un preview de todos los materiales necesarios y verificar el stock disponible antes de crear el proyecto.</p>
       </div>
 
-      <!-- Resultado del cálculo -->
+      <!-- Resultado del cÃ¡lculo -->
       <div class="preview-content" *ngIf="materialesCalculados">
         
         <!-- Alertas -->
@@ -727,7 +739,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- FOOTER: BOTONES DE ACCIÓN -->
+    <!-- FOOTER: BOTONES DE ACCIÃ“N -->
     <!-- ============================================ -->
     <div class="form-footer">
       <button 
@@ -1063,4 +1075,6 @@
   }
 }
 </style>
+
+
 

@@ -16,4 +16,6 @@ public partial class TipoInsumo
     public virtual ICollection<Insumo> Insumos { get; set; } = new List<Insumo>();
 
     public virtual ICollection<ProyectoPrendum> ProyectoPrenda { get; set; } = new List<ProyectoPrendum>();
+
+    public virtual ICollection<MuestraPrenda> MuestraPrendas { get; set; } = new List<MuestraPrenda>();
 }

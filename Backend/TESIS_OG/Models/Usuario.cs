@@ -35,6 +35,10 @@ public partial class Usuario
 
     public virtual ICollection<Proyecto> Proyectos { get; set; } = new List<Proyecto>();
 
+    public virtual ICollection<Muestra> Muestras { get; set; } = new List<Muestra>();
+
+    public virtual ICollection<MuestraHistorial> MuestraHistorials { get; set; } = new List<MuestraHistorial>();
+
     public virtual ICollection<UsuarioArea> UsuarioAreas { get; set; } = new List<UsuarioArea>();
 
     public virtual ICollection<UsuarioPermiso> UsuarioPermisos { get; set; } = new List<UsuarioPermiso>();

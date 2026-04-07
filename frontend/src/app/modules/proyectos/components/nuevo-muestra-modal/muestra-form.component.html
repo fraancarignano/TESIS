@@ -1,0 +1,762 @@
+﻿<!-- ============================================ -->
+<!-- MODO MODAL -->
+<!-- ============================================ -->
+<div class="modal-overlay" *ngIf="esModal" (click)="cancelar()">
+  <div class="modal-container-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-folder-plus"></i> Nueva Muestra</h2>
+      <button class="btn-close" (click)="cancelar()">Ã—</button>
+    </div>
+
+    <div class="modal-body-scroll">
+      <ng-container *ngTemplateOutlet="formularioContent"></ng-container>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- MODO PANTALLA COMPLETA -->
+<!-- ============================================ -->
+<div class="fullscreen-container" *ngIf="!esModal">
+  <div class="fullscreen-header">
+    <h1><i class="fas fa-folder-plus"></i> Nueva Muestra</h1>
+  </div>
+
+  <div class="fullscreen-body">
+    <ng-container *ngTemplateOutlet="formularioContent"></ng-container>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- TEMPLATE DEL FORMULARIO (COMPARTIDO) -->
+<!-- ============================================ -->
+<ng-template #formularioContent>
+  <form [formGroup]="formulario" (ngSubmit)="guardar()">
+    
+    <!-- ============================================ -->
+    <!-- SECCIÃ“N 1: DATOS GENERALES -->
+    <!-- ============================================ -->
+    <div class="seccion">
+      <div class="seccion-header">
+        <h3>Datos Generales de la Muestra</h3>
+      </div>
+
+      <div class="grid-3">
+        <!-- Cliente -->
+        <div class="field">
+          <label>Cliente *</label>
+          <select formControlName="idCliente">
+            <option value="">Seleccionar cliente</option>
+            <option *ngFor="let c of clientes" [value]="c.idCliente">
+              {{ c.nombreCompleto }}
+            </option>
+          </select>
+          <span class="cliente-selected" *ngIf="nombreCliente">
+            âœ“ {{ nombreCliente }}
+          </span>
+        </div>
+
+        <!-- Nombre Proyecto -->
+        <div class="field">
+          <label>Nombre de la Muestra *</label>
+          <input 
+            type="text" 
+            formControlName="nombreProyecto" 
+            placeholder="Ej: Remeras Verano 2025"
+          >
+        </div>
+
+        <!-- Prioridad -->
+        <div class="field">
+          <label>Prioridad</label>
+          <select formControlName="prioridad">
+            <option *ngFor="let p of prioridades" [value]="p">
+              {{ p | titlecase }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-3" *ngIf="clienteSeleccionado">
+        <div class="field">
+          <label>TelÃƒÂ©fono</label>
+          <input type="text" [value]="clienteSeleccionado.telefono" disabled>
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="text" [value]="clienteSeleccionado.email" disabled>
+        </div>
+        <div class="field">
+          <label>DirecciÃƒÂ³n</label>
+          <input type="text" [value]="clienteSeleccionado.direccion || '-'" disabled>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Fecha Inicio -->
+        <div class="field">
+          <label>Fecha de Inicio *</label>
+          <input type="date" formControlName="fechaInicio">
+        </div>
+
+        <!-- Fecha LÃ­mite -->
+        <div class="field">
+          <label>Fecha LÃ­mite</label>
+          <input type="date"
+            formControlName="fechaFin"
+            [min]="fechaMinima">
+        </div>
+      </div>
+
+      <!-- DescripciÃ³n -->
+      <div class="field">
+        <label>DescripciÃ³n de la Muestra</label>
+        <textarea 
+          formControlName="descripcion" 
+          rows="2" 
+          placeholder="DescripciÃ³n general de la muestra..."
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SECCIÃ“N 2: PRENDAS DEL PROYECTO -->
+    <!-- ============================================ -->
+    <div class="seccion">
+      <div class="seccion-header">
+        <h3>Prendas de la Muestra</h3>
+        <button 
+          type="button" 
+          class="btn-primary" 
+          (click)="agregarPrenda()"
+        >
+          <i class="fas fa-plus"></i> Agregar Prenda
+        </button>
+      </div>
+
+      <!-- LISTA DE PRENDAS AGREGADAS -->
+      <div class="prendas-list" *ngIf="prendasProyecto.length > 0">
+        <div class="prenda-card" *ngFor="let prenda of prendasProyecto; let i = index">
+          <div class="prenda-header">
+            <div class="prenda-titulo">
+              <strong>{{ getNombreTipoPrenda(prenda.idTipoPrenda) }}</strong>
+            </div>
+            <div class="prenda-acciones">
+              <button 
+                type="button" 
+                class="btn-edit-mini" 
+                (click)="editarPrenda(prenda, i)"
+                title="Editar"
+              >
+                <i class="fas fa-edit"></i>
+                <span class="btn-text">Editar</span>
+              </button>
+              <button 
+                type="button" 
+                class="btn-delete-mini" 
+                (click)="eliminarPrenda(i)"
+                title="Eliminar"
+              >
+                <i class="fas fa-trash"></i>
+                <span class="btn-text">Eliminar</span>
+              </button>
+            </div>
+          </div>
+          
+          <div class="prenda-detalles">
+            <div class="detalle-item">
+              <i class="fas fa-tshirt"></i>
+              <span>Material: {{ getNombreTipoInsumo(prenda.idTipoInsumoMaterial) }}</span>
+              <span *ngIf="prenda.colorTela" class="color-badge">{{ prenda.colorTela }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensaje si no hay prendas -->
+      <div class="sin-prendas" *ngIf="prendasProyecto.length === 0 && !prendaEditando">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <p>No hay prendas agregadas. Haz clic en "Agregar Prenda" para comenzar.</p>
+      </div>
+
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SECCIÃ“N: REFERENCIA VISUAL -->
+    <!-- ============================================ -->
+    <div class="seccion">
+      <div class="seccion-header">
+        <h3>Referencia Visual</h3>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="referenciaVisual.bordado.requerido"
+              [ngModelOptions]="{standalone: true}"
+            >
+            <span>Bordado</span>
+          </label>
+          <textarea
+            [(ngModel)]="referenciaVisual.bordado.descripcion"
+            [ngModelOptions]="{standalone: true}"
+            [disabled]="!referenciaVisual.bordado.requerido"
+            [class.is-disabled]="!referenciaVisual.bordado.requerido"
+            rows="2"
+            placeholder="Describe el bordado (posiciÃ³n, tamaÃ±o, colores, etc.)"
+          ></textarea>
+          <input type="file" accept="image/*" (change)="onReferenciaImagenChange($event, 'bordado')">
+          <img *ngIf="referenciaVisual.bordado.imagen" class="file-preview" [src]="referenciaVisual.bordado.imagen" alt="Referencia bordado">
+        </div>
+
+        <div class="field">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="referenciaVisual.estampado.requerido"
+              [ngModelOptions]="{standalone: true}"
+            >
+            <span>Estampado</span>
+          </label>
+          <textarea
+            [(ngModel)]="referenciaVisual.estampado.descripcion"
+            [ngModelOptions]="{standalone: true}"
+            [disabled]="!referenciaVisual.estampado.requerido"
+            [class.is-disabled]="!referenciaVisual.estampado.requerido"
+            rows="2"
+            placeholder="Describe el estampado (posiciÃ³n, tamaÃ±o, colores, etc.)"
+          ></textarea>
+          <input type="file" accept="image/*" (change)="onReferenciaImagenChange($event, 'estampado')">
+          <img *ngIf="referenciaVisual.estampado.imagen" class="file-preview" [src]="referenciaVisual.estampado.imagen" alt="Referencia estampado">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Otros detalles</label>
+        <textarea
+          [(ngModel)]="referenciaVisual.otrosDetalle"
+          [ngModelOptions]="{standalone: true}"
+          rows="2"
+          placeholder="Cualquier otro detalle o comentario..."
+        ></textarea>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>Mockup *</label>
+          <input type="file" accept="image/*" (change)="onMockupChange($event)" required>
+          <small>Obligatorio para guardar.</small>
+          <img *ngIf="referenciaVisual.mockup" class="file-preview" [src]="referenciaVisual.mockup" alt="Mockup">
+        </div>
+
+        <div class="field">
+          <label>Paleta RGB</label>
+          <div class="input-row">
+            <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.r" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="R">
+            <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.g" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="G">
+            <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.b" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="B">
+          </div>
+          <div class="paleta-preview">
+            <span class="color-swatch" [style.background]="paletaRgbTexto"></span>
+            <div class="paleta-codes">
+              <strong>{{ paletaHex }}</strong>
+              <span>{{ paletaRgbTexto }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODAL: EDITAR/AGREGAR PRENDA -->
+    <!-- ============================================ -->
+    <div class="modal-overlay-inner" *ngIf="prendaEditando" (click)="confirmarCerrarModalPrenda()">
+      <div class="modal-prenda" (click)="$event.stopPropagation()">
+        <div class="modal-prenda-header">
+          <h3>
+            {{ indexPrendaEditando === -1 ? ' Agregar Prenda' : ' Editar Prenda' }}
+          </h3>
+          <button type="button" class="btn-close-sm" (click)="confirmarCerrarModalPrenda()">Ã—</button>
+        </div>
+
+        <div class="modal-prenda-body">
+          <!-- Tipo de Prenda -->
+          <div class="field">
+            <label>Tipo de Prenda *</label>
+            <div class="input-row">
+              <select [(ngModel)]="prendaEditando.idTipoPrenda" [ngModelOptions]="{standalone: true}" class="flex-2">
+                <option [value]="undefined">Seleccionar...</option>
+                <option *ngFor="let tipo of tiposPrenda" [value]="tipo.idTipoPrenda">
+                  {{ tipo.nombrePrenda }}
+                </option>
+              </select>
+              <button
+                type="button"
+                class="btn-add-mini"
+                (click)="abrirModalTipoPrenda()"
+                title="Agregar tipo de prenda"
+                aria-label="Agregar tipo de prenda"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
+            <small>Si no aparece, agrega uno nuevo.</small>
+          </div>
+
+          <!-- Tipo de Material (Tipo de Tela) -->
+          <div class="field">
+            <label>Tipo de Material *</label>
+            <select 
+              [(ngModel)]="prendaEditando.idTipoInsumoMaterial" 
+              [ngModelOptions]="{standalone: true}"
+              (change)="onTipoMaterialChange()"
+            >
+              <option [value]="undefined">Seleccionar tipo de tela...</option>
+              <option *ngFor="let tipoInsumo of tiposInsumoTelas" [value]="tipoInsumo.idTipoInsumo">
+                {{ tipoInsumo.nombreTipo }}
+              </option>
+            </select>
+            <small>Ej: AlgodÃ³n, Lycra, Polyester, etc.</small>
+          </div>
+          <!-- Color/Variante (referencial) -->
+          <div class="field">
+            <label>Color o variante (referencial)</label>
+            <input
+              type="text"
+              [(ngModel)]="prendaEditando.colorTela"
+              [ngModelOptions]="{standalone: true}"
+              placeholder="Ej: Azul marino, Rayado, etc."
+            >
+            <small>Solo informativo, no impacta stock.</small>
+          </div>
+        </div>
+
+        <div class="modal-prenda-footer">
+          <button type="button" class="btn-secondary" (click)="confirmarCerrarModalPrenda()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-primary" (click)="guardarPrenda(prendaEditando)">
+            {{ indexPrendaEditando === -1 ? 'Agregar' : 'Guardar Cambios' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODAL: NUEVO TIPO DE PRENDA -->
+    <!-- ============================================ -->
+    <div class="modal-overlay-inner" *ngIf="mostrarModalTipoPrenda" (click)="cancelarModalTipoPrenda()">
+      <div class="modal-prenda" (click)="$event.stopPropagation()">
+        <div class="modal-prenda-header">
+          <h3>Nuevo Tipo de Prenda</h3>
+          <button type="button" class="btn-close-sm" (click)="cancelarModalTipoPrenda()">Ã—</button>
+        </div>
+
+        <div class="modal-prenda-body">
+          <div class="field">
+            <label>Nombre *</label>
+            <input
+              type="text"
+              [(ngModel)]="nuevoTipoPrenda.nombrePrenda"
+              [ngModelOptions]="{standalone: true}"
+              placeholder="Ej: Campera, Buzo, Polo"
+            >
+          </div>
+
+          <div class="field">
+            <label>Descripcion</label>
+            <textarea
+              [(ngModel)]="nuevoTipoPrenda.descripcion"
+              [ngModelOptions]="{standalone: true}"
+              rows="2"
+              placeholder="Detalles del tipo de prenda..."
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label>Longitud de costura (m)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="nuevoTipoPrenda.longitudCosturaMetros"
+              [ngModelOptions]="{standalone: true}"
+              placeholder="Ej: 1.5"
+            >
+            <small>Opcional. Si no sabes, puedes dejarlo vacio.</small>
+          </div>
+        </div>
+
+        <div class="modal-prenda-footer">
+          <button type="button" class="btn-secondary" (click)="cancelarModalTipoPrenda()">
+            Cancelar
+          </button>
+          <button type="button" class="btn-primary" (click)="guardarTipoPrenda()">
+            Guardar Tipo
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- ============================================ -->
+    <!-- ERROR GENERAL -->
+    <!-- ============================================ -->
+    <div class="alert-error" *ngIf="errorMensaje">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      {{ errorMensaje }}
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FOOTER: BOTONES DE ACCIÃ“N -->
+    <!-- ============================================ -->
+    <div class="form-footer">
+      <button 
+        type="button" 
+        class="btn-secondary-large" 
+        (click)="cancelar()" 
+        [disabled]="cargando"
+      >
+        Cancelar
+      </button>
+      <button 
+        type="submit" 
+        class="btn-primary-large" 
+        [disabled]="cargando || formulario.invalid || prendasProyecto.length === 0 || !referenciaVisual.mockup || (referenciaVisual.bordado.requerido && !referenciaVisual.bordado.descripcion.trim()) || (referenciaVisual.estampado.requerido && !referenciaVisual.estampado.descripcion.trim())"
+      >
+        <span *ngIf="!cargando">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          Crear Muestra
+        </span>
+        <span *ngIf="cargando">
+          <svg class="spinner-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+          </svg>
+          Guardando...
+        </span>
+      </button>
+    </div>
+
+  </form>
+</ng-template>
+
+<!-- ========================================
+     ESTILOS CSS PARA EL PREVIEW INLINE
+     ======================================== -->
+<style>
+.preview-materiales-section {
+  background: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.preview-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-calcular {
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: 0.2s;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.3);
+}
+
+.btn-calcular:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33,150,243,0.4);
+}
+
+.btn-calcular:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-calcular .spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.preview-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.preview-empty i {
+  font-size: 3rem;
+  color: #bbb;
+  margin-bottom: 12px;
+}
+
+.preview-empty p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Alertas */
+.alertas-stock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alerta {
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+.alerta-warning {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+}
+
+.alerta-error {
+  background: #f8d7da;
+  border: 1px solid #f44336;
+  color: #721c24;
+}
+
+/* Estado general */
+.estado-general {
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.estado-ok {
+  background: #d4edda;
+  border: 1px solid #4caf50;
+  color: #155724;
+}
+
+.estado-advertencia {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+}
+
+.estado-general i {
+  font-size: 1.5rem;
+}
+
+/* Tabla de materiales */
+.tabla-materiales {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.tabla-materiales table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-materiales th {
+  background: #f5f5f5;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #555;
+  border-bottom: 2px solid #ddd;
+}
+
+.tabla-materiales td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.tabla-materiales tbody tr:hover {
+  background: #fafafa;
+}
+
+.fila-sin-stock {
+  background: #fff3cd !important;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Badges */
+.badge-categoria {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.badge-calculo {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-auto {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-manual {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.estado-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.stock-ok {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.stock-insuficiente {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+/* Resumen */
+.resumen-materiales {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.resumen-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.resumen-item i {
+  font-size: 1.8rem;
+  color: #666;
+}
+
+.resumen-item strong {
+  display: block;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.resumen-item span {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.text-success {
+  color: #4caf50 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .preview-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .btn-calcular {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .resumen-materiales {
+    grid-template-columns: 1fr;
+  }
+
+  .tabla-materiales {
+    overflow-x: auto;
+  }
+}
+</style>
+
+
+
+
+
