@@ -34,7 +34,7 @@ export const roleGuard: CanActivateFn = (
   
   if (!hasPermission) {
     console.warn(`Acceso denegado. Rol requerido: ${requiredRoles}, Rol usuario: ${userRoleName}`);
-    router.navigate(['/proyectos']);
+    router.navigate(['/proyectos/explorar']);
   }
   
   return of(hasPermission);

@@ -49,6 +49,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
   // Estado y validación para edición
   estadoProyecto: string = 'Pendiente';
   permitirEdicionCompleta: boolean = true;
+  permitirEdicionPrendas: boolean = true;
   mensajeRestriccion: string = '';
 
   // Datos del formulario (catálogos)
@@ -269,6 +270,8 @@ export class ProyectoFormNuevoComponent implements OnInit {
     this.indexPrendaEditando = -1;
     this.insumosTelasFiltrados = [];
     this.errorMensaje = '';
+
+    this.recalcularMaterialesSiCorresponde();
   }
 
   cancelarEditarPrenda(): void {
@@ -378,6 +381,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
 
   eliminarPrenda(index: number): void {
     this.prendasProyecto.splice(index, 1);
+    this.recalcularMaterialesSiCorresponde();
   }
 
   // ========================================
@@ -516,6 +520,12 @@ export class ProyectoFormNuevoComponent implements OnInit {
     });
   }
 
+  private recalcularMaterialesSiCorresponde(): void {
+    if (this.materialesCalculados) {
+      this.calcularMateriales();
+    }
+  }
+
   cerrarPreviewMateriales(): void {
     this.mostrarPreviewMateriales = false;
   }
@@ -610,7 +620,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
       idUsuarioEncargado: formValue.idUsuarioEncargado
         ? Number(formValue.idUsuarioEncargado)
         : undefined,
-      prendas: this.permitirEdicionCompleta
+      prendas: this.permitirEdicionPrendas
         ? this.prendasProyecto.map((p, index) => ({
             idTipoPrenda: p.idTipoPrenda!,
             idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
@@ -699,7 +709,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
       if (this.esModal) {
         this.cerrar.emit();
       } else {
-        this.router.navigate(['/proyectos']);
+        this.router.navigate(['/proyectos/explorar']);
       }
     },
     error: (err) => {
@@ -735,7 +745,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
     if (this.esModal) {
       this.cerrar.emit();
     } else {
-      this.router.navigate(['/proyectos']);
+      this.router.navigate(['/proyectos/explorar']);
     }
   }
 
@@ -797,13 +807,15 @@ export class ProyectoFormNuevoComponent implements OnInit {
     
     if (this.estadoProyecto === 'En Proceso' || this.estadoProyecto === 'Pausado') {
       this.permitirEdicionCompleta = false;
-      this.mensajeRestriccion = '⚠️ El proyecto está en producción. Solo puedes editar: nombre, descripción, prioridad, fecha fin, encargado y materiales manuales.';
+      this.permitirEdicionPrendas = true;
+      this.mensajeRestriccion = '⚠️ El proyecto está en producción. Puedes editar: nombre, descripción, prioridad, fecha fin, encargado, cantidades de prendas y materiales manuales.';
       
       // Deshabilitar campos que no se pueden editar
       this.formulario.get('idCliente')?.disable();
       this.formulario.get('fechaInicio')?.disable();
     } else if (this.estadoProyecto === 'Pendiente') {
       this.permitirEdicionCompleta = true;
+      this.permitirEdicionPrendas = true;
       this.mensajeRestriccion = 'ℹ️ Puedes editar todos los campos mientras el proyecto no haya iniciado.';
     }
   }
@@ -826,7 +838,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
     });
     
     // Precargar prendas solo si permite edición completa
-    if (this.permitirEdicionCompleta && this.proyectoAEditar.prendas) {
+    if (this.permitirEdicionPrendas && this.proyectoAEditar.prendas) {
       this.prendasProyecto = this.proyectoAEditar.prendas.map((p: any) => ({
         id: generarIdTemporal(),
         idTipoPrenda: p.idTipoPrenda,

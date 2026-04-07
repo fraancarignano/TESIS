@@ -340,6 +340,7 @@ export class ProyectoListComponent implements OnInit {
       'Pendiente': 'badge-pendiente',
       'En Proceso': 'badge-en-curso',
       'Finalizado': 'badge-finalizado',
+      'Despachado': 'badge-despachado',
       'Cancelado': 'badge-cancelado',
       'Pausado': 'badge-pausado',
       'Archivado': 'badge-inactivo'

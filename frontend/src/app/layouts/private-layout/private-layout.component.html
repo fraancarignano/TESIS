@@ -9,7 +9,7 @@
     <nav class="nav-menu">
       
       <div class="nav-item-container" *appHasPermission="{ modulo: 'Proyectos', accion: 'Ver' }">
-        <a routerLink="/proyectos" routerLinkActive="active" class="nav-item parent" [class.active]="proyectoAbierto"
+        <a routerLink="/proyectos/explorar" routerLinkActive="active" class="nav-item parent" [class.active]="proyectoAbierto"
           (click)="toggleProyectos()">
           <span class="text">Proyectos</span>
         </a>
@@ -18,12 +18,12 @@
           <a routerLink="/proyectos/crear" routerLinkActive="active" class="nav-item sub">
             <span class="text">Crear Proyecto</span>
           </a>
-          <a routerLink="/proyectos/explorar" routerLinkActive="active" class="nav-item sub">
-            <span class="text">Explorar Proyectos</span>
-          </a>
-          <a routerLink="/proyectos/lista" routerLinkActive="active" class="nav-item sub">
+          <!-- <a routerLink="/proyectos" routerLinkActive="active" class="nav-item sub">
+            <span class="text">Kanban de Proyectos</span>
+          </a> -->
+          <!-- <a routerLink="/proyectos/lista" routerLinkActive="active" class="nav-item sub">
             <span class="text">Consultar Lista de Proyectos</span>
-          </a>
+          </a> -->
         </div>
       </div>
 

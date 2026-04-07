@@ -271,6 +271,11 @@
   color: #7b1fa2;
 }
 
+.badge-despachado {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
 .badge-pausado {
   background: #fff3e0;
   color: #ef6c00;

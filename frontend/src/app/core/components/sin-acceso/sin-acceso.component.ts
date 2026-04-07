@@ -10,7 +10,7 @@ import { RouterLink } from '@angular/router';
     <section class="sin-acceso">
       <h1>Sin acceso</h1>
       <p>No tenés permisos para ingresar a esta sección.</p>
-      <a routerLink="/proyectos">Volver</a>
+      <a routerLink="/proyectos/explorar">Volver</a>
     </section>
   `,
   styles: [`

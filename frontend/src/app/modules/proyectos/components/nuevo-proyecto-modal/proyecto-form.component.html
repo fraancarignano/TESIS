@@ -543,8 +543,16 @@
       <div class="materiales-list" *ngIf="materialesManuales.length > 0">
         <h4>Materiales Agregados:</h4>
         <div class="material-chip" *ngFor="let material of materialesManuales; let i = index">
-          <span class="material-icon">
-            {{ material.categoria === 'Hilo' ? '🧵' : '📎' }}
+          <span class="material-icon" aria-hidden="true">
+            <svg *ngIf="material.categoria === 'Hilo'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9"></circle>
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M12 3v6"></path>
+              <path d="M12 15v6"></path>
+            </svg>
+            <svg *ngIf="material.categoria !== 'Hilo'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 8.5l-8.5 8.5a4 4 0 0 1-5.7 0 4 4 0 0 1 0-5.7l8.5-8.5a2.5 2.5 0 0 1 3.5 3.5L10 14"></path>
+            </svg>
           </span>
           <span class="material-nombre">{{ material.nombreInsumo }}</span>
           <span class="material-cantidad">{{ material.cantidad }} {{ material.unidadMedida }}</span>

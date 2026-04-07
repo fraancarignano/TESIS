@@ -21,8 +21,9 @@ export class ProyectoFiltrosComponent implements OnInit {
     { valor: 'Pendiente', seleccionado: false },
     { valor: 'En Proceso', seleccionado: false },
     { valor: 'Finalizado', seleccionado: false },
-    { valor: 'Pausado', seleccionado: false },
+    { valor: 'Despachado', seleccionado: false },
     { valor: 'Cancelado', seleccionado: false },
+    { valor: 'Pausado', seleccionado: false },
     { valor: 'Archivado', seleccionado: false }
   ];
 

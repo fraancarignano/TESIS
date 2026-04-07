@@ -93,7 +93,7 @@ export class ProyectoDetallePageComponent implements OnInit {
   }
 
   volver(): void {
-    this.router.navigate(['/proyectos']);
+    this.router.navigate(['/proyectos/explorar']);
   }
 
   private obtenerProyectoDesdeState(): ProyectoVista | null {

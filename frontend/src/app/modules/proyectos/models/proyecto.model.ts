@@ -77,6 +77,7 @@ export type EstadoProyecto =
   | 'Pendiente'
   | 'En Proceso' 
   | 'Finalizado'
+  | 'Despachado'
   | 'Cancelado'
   | 'Pausado'
   | 'Archivado';
@@ -288,6 +289,7 @@ export function getEstadoColor(estado: EstadoProyecto): string {
     'Pendiente': '#ffa726',
     'En Proceso': '#42a5f5',
     'Finalizado': '#66bb6a',
+    'Despachado': '#2e7d32',
     'Cancelado': '#ef5350',
     'Pausado': '#bdbdbd',
     'Archivado': '#9e9e9e'
@@ -349,6 +351,7 @@ export function mapearEstadoParaBackend(estado: string): string {
     'pendiente': 'Pendiente',
     'en-proceso': 'En Proceso',
     'finalizado': 'Finalizado',
+    'despachado': 'Despachado',
     'cancelado': 'Cancelado',
     'pausado': 'Pausado',
     'archivado': 'Archivado'

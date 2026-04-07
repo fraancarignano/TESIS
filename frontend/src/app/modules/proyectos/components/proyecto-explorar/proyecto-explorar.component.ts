@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,6 +6,8 @@ import { ProyectosService } from '../../services/proyecto.service';
 import { Proyecto, ProyectoVista, proyectoToVista } from '../../models/proyecto.model';
 import { getAreaActual } from '../../constants/areas.constants';
 import { ProyectoCardComponent } from '../proyecto-card/proyecto-card.component';
+import { AlertasService } from '../../../../core/services/alertas';
+import { ProyectoFormNuevoComponent } from '../nuevo-proyecto-modal/proyecto-form.component';
 
 type VistaModo = 'lista' | 'mosaico';
 type OrdenDireccion = 'asc' | 'desc';
@@ -54,11 +56,13 @@ interface GrupoMosaico {
 @Component({
   selector: 'app-proyecto-explorar',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProyectoCardComponent],
+  imports: [CommonModule, FormsModule, ProyectoCardComponent, ProyectoFormNuevoComponent],
   templateUrl: './proyecto-explorar.component.html',
-  styleUrls: ['./proyecto-explorar.component.css']
+  styleUrls: ['./proyecto-explorar.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProyectoExplorarComponent implements OnInit {
+  private readonly storageKey = 'proyectos-explorar-estado';
   vistaActual: VistaModo = 'lista';
   agrupacionActual: AgrupacionKey = 'ninguna';
   terminoBusqueda = '';
@@ -66,11 +70,16 @@ export class ProyectoExplorarComponent implements OnInit {
   ordenDireccion: OrdenDireccion = 'asc';
 
   proyectos: Proyecto[] = [];
+  proyectosFiltrados: Proyecto[] = [];
+  gruposLista: GrupoLista[] = [];
+  gruposMosaico: GrupoMosaico[] = [];
   loading = false;
   error = false;
+  proyectoSeleccionado: Proyecto | null = null;
+  mostrarModalEdicion = false;
 
   readonly agrupaciones: AgrupacionOption[] = [
-    { key: 'ninguna', label: 'Sin agrupar' },
+    { key: 'ninguna', label: 'Mostrar todos' },
     { key: 'cliente', label: 'Cliente' },
     { key: 'tipoProyecto', label: 'Tipo de proyecto' },
     { key: 'tipoPrenda', label: 'Tipo de prenda' },
@@ -92,10 +101,12 @@ export class ProyectoExplorarComponent implements OnInit {
 
   constructor(
     private proyectosService: ProyectosService,
-    private router: Router
+    private router: Router,
+    private alertas: AlertasService
   ) {}
 
   ngOnInit(): void {
+    this.cargarEstadoPersistido();
     this.cargarProyectos();
   }
 
@@ -106,6 +117,7 @@ export class ProyectoExplorarComponent implements OnInit {
     this.proyectosService.obtenerProyectosConCache().subscribe({
       next: (data) => {
         this.proyectos = data || [];
+        this.recalcularListados();
         this.loading = false;
       },
       error: (err) => {
@@ -116,7 +128,7 @@ export class ProyectoExplorarComponent implements OnInit {
     });
   }
 
-  get proyectosFiltrados(): Proyecto[] {
+  private recalcularListados(): void {
     let resultado = [...this.proyectos];
 
     if (this.terminoBusqueda) {
@@ -137,16 +149,9 @@ export class ProyectoExplorarComponent implements OnInit {
       });
     }
 
-    return resultado;
-  }
-
-  get gruposLista(): GrupoLista[] {
-    return this.construirGruposLista(this.proyectosFiltrados);
-  }
-
-  get gruposMosaico(): GrupoMosaico[] {
-    const gruposBase = this.construirGruposLista(this.proyectosFiltrados);
-    return gruposBase.map(grupo => ({
+    this.proyectosFiltrados = resultado;
+    this.gruposLista = this.construirGruposLista(this.proyectosFiltrados);
+    this.gruposMosaico = this.gruposLista.map(grupo => ({
       key: grupo.key,
       label: grupo.label,
       orden: grupo.orden,
@@ -156,10 +161,13 @@ export class ProyectoExplorarComponent implements OnInit {
 
   setVista(modo: VistaModo): void {
     this.vistaActual = modo;
+    this.persistirEstado();
   }
 
   toggleOrdenDireccion(): void {
     this.ordenDireccion = this.ordenDireccion === 'asc' ? 'desc' : 'asc';
+    this.recalcularListados();
+    this.persistirEstado();
   }
 
   setOrdenCampo(campo: OrdenCampo): void {
@@ -169,6 +177,8 @@ export class ProyectoExplorarComponent implements OnInit {
     }
     this.ordenCampo = campo;
     this.ordenDireccion = 'asc';
+    this.recalcularListados();
+    this.persistirEstado();
   }
 
   isOrdenCampo(campo: OrdenCampo): boolean {
@@ -191,11 +201,68 @@ export class ProyectoExplorarComponent implements OnInit {
     this.verDetalleProyecto(proyecto);
   }
 
+  verDetalleAccion(proyecto: Proyecto | ProyectoVista, event?: Event): void {
+    event?.stopPropagation();
+    this.abrirDetalle(proyecto as Proyecto);
+  }
+
+  editarProyecto(proyecto: Proyecto | ProyectoVista, event?: Event): void {
+    event?.stopPropagation();
+    const estadosNoEditables = ['Finalizado', 'Archivado', 'Cancelado'];
+    if (estadosNoEditables.includes(proyecto.estado)) {
+      this.alertas.warning('No se puede editar', `El proyecto esta en estado ${proyecto.estado} y no puede ser editado`);
+      return;
+    }
+
+    const proyectoBase = this.obtenerProyectoBase(proyecto);
+    if (!proyectoBase) {
+      this.alertas.error('Error', 'No se pudo encontrar el proyecto');
+      return;
+    }
+
+    this.proyectoSeleccionado = proyectoBase;
+    this.mostrarModalEdicion = true;
+  }
+
+  cerrarModalEdicion(): void {
+    this.mostrarModalEdicion = false;
+    this.proyectoSeleccionado = null;
+    this.cargarProyectos();
+  }
+
+  async eliminarProyecto(proyecto: Proyecto | ProyectoVista, event?: Event): Promise<void> {
+    event?.stopPropagation();
+    if (!proyecto.idProyecto) {
+      this.alertas.error('Error', 'Proyecto sin ID valido');
+      return;
+    }
+
+    const confirmado = await this.alertas.confirmar(
+      'Eliminar proyecto?',
+      `Se eliminara el proyecto "${proyecto.nombreProyecto}". Esta accion no se puede deshacer.`,
+      'Si, eliminar'
+    );
+
+    if (!confirmado) return;
+
+    this.proyectosService.eliminarProyecto(proyecto.idProyecto).subscribe({
+      next: () => {
+        this.alertas.success('Proyecto eliminado', 'El proyecto se elimino correctamente');
+        this.cargarProyectos();
+      },
+      error: (err) => {
+        console.error('Error al eliminar:', err);
+        this.alertas.error('Error', 'No se pudo eliminar el proyecto');
+      }
+    });
+  }
+
   getEstadoClass(estado: string): string {
     const estados: { [key: string]: string } = {
       'Pendiente': 'badge-pendiente',
       'En Proceso': 'badge-en-curso',
       'Finalizado': 'badge-finalizado',
+      'Despachado': 'badge-despachado',
       'Cancelado': 'badge-cancelado',
       'Pausado': 'badge-pausado',
       'Archivado': 'badge-archivado'
@@ -234,6 +301,15 @@ export class ProyectoExplorarComponent implements OnInit {
 
   getTipoPrendaNombre(proyecto: Proyecto): string {
     const anyProyecto = proyecto as any;
+    const prendas = Array.isArray(anyProyecto.prendas) ? (anyProyecto.prendas as any[]) : [];
+    if (prendas.length > 0) {
+      const nombres: string[] = prendas
+        .map((p: any) => String(p?.nombrePrenda ?? p?.nombreTipoPrenda ?? p?.tipoPrenda ?? p?.nombreTipo ?? '').trim())
+        .filter((n: string) => !!n);
+      const unicos: string[] = Array.from(new Set(nombres));
+      if (unicos.length === 1) return unicos[0];
+      if (unicos.length > 1) return 'Varias prendas';
+    }
     return (
       proyecto.tipoPrenda ||
       anyProyecto.nombrePrenda ||
@@ -334,6 +410,21 @@ export class ProyectoExplorarComponent implements OnInit {
   }
 
   private compararGrupos(a: GrupoLista, b: GrupoLista): number {
+    if (this.agrupacionActual === 'estado') {
+      const ordenEstado: Record<string, number> = {
+        'Pendiente': 1,
+        'En Proceso': 2,
+        'Finalizado': 3,
+        'Despachado': 4,
+        'Cancelado': 5,
+        'Pausado': 6,
+        'Archivado': 7
+      };
+      const ordenA = ordenEstado[a.label] ?? 999;
+      const ordenB = ordenEstado[b.label] ?? 999;
+      if (ordenA !== ordenB) return ordenA - ordenB;
+    }
+
     if (typeof a.orden === 'number' && typeof b.orden === 'number') {
       return a.orden - b.orden;
     }
@@ -383,6 +474,49 @@ export class ProyectoExplorarComponent implements OnInit {
       case 'nombre':
       default:
         return proyecto.nombreProyecto || '';
+    }
+  }
+
+  private obtenerProyectoBase(proyecto: Proyecto | ProyectoVista): Proyecto | null {
+    if (!proyecto.idProyecto) return null;
+    return this.proyectos.find(p => p.idProyecto === proyecto.idProyecto) || (proyecto as Proyecto);
+  }
+
+  onBusquedaChange(valor: string): void {
+    this.terminoBusqueda = valor;
+    this.recalcularListados();
+    this.persistirEstado();
+  }
+
+  onAgrupacionChange(valor: AgrupacionKey): void {
+    this.agrupacionActual = valor;
+    this.recalcularListados();
+    this.persistirEstado();
+  }
+
+  private persistirEstado(): void {
+    const estado = {
+      vistaActual: this.vistaActual,
+      agrupacionActual: this.agrupacionActual,
+      terminoBusqueda: this.terminoBusqueda,
+      ordenCampo: this.ordenCampo,
+      ordenDireccion: this.ordenDireccion
+    };
+    localStorage.setItem(this.storageKey, JSON.stringify(estado));
+  }
+
+  private cargarEstadoPersistido(): void {
+    try {
+      const raw = localStorage.getItem(this.storageKey);
+      if (!raw) return;
+      const estado = JSON.parse(raw);
+      if (estado?.vistaActual) this.vistaActual = estado.vistaActual;
+      if (estado?.agrupacionActual) this.agrupacionActual = estado.agrupacionActual;
+      if (estado?.terminoBusqueda !== undefined) this.terminoBusqueda = estado.terminoBusqueda;
+      if (estado?.ordenCampo) this.ordenCampo = estado.ordenCampo;
+      if (estado?.ordenDireccion) this.ordenDireccion = estado.ordenDireccion;
+    } catch {
+      // ignore invalid storage
     }
   }
 }
