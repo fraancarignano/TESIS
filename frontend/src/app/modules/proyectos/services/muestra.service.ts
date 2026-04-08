@@ -74,8 +74,14 @@ export class MuestrasService {
     );
   }
 
-  rechazarMuestra(id: number, comentario: string): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${id}/rechazar`, { comentario }).pipe(
+  rechazarMuestra(idMuestra: number, comentario: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${idMuestra}/rechazar`, { comentario }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  sincronizarDiseno(idMuestra: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${idMuestra}/sincronizar-diseno`, {}).pipe(
       catchError(this.handleError)
     );
   }

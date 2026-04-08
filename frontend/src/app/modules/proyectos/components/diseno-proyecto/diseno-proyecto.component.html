@@ -14,6 +14,20 @@
   <div class="estado error" *ngIf="!loading && error">{{ error }}</div>
 
   <ng-container *ngIf="!loading && resumen">
+    <!-- Banner de Muestra Asociada -->
+    <div class="muestra-banner" *ngIf="resumen.idMuestra">
+      <div class="banner-body">
+        <span class="icon">ℹ️</span>
+        <div class="banner-text">
+          <strong>Proyecto asociado a la muestra: {{ resumen.nombreMuestra }}</strong>
+          <p>Puedes sincronizar automáticamente el diseño guardado en la muestra.</p>
+        </div>
+      </div>
+      <button type="button" class="btn-outline" (click)="sincronizar()" [disabled]="readonlyMode || loadingSync">
+        {{ loadingSync ? 'Sincronizando...' : 'Sincronizar Diseño' }}
+      </button>
+    </div>
+
     <article class="card">
       <div class="card-header">
         <h2>Resumen del proyecto</h2>

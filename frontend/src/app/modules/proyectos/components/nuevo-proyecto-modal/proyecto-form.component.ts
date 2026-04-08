@@ -28,6 +28,7 @@ import {
   CalculoMaterialesResponse
 } from '../../models/nuevo-proyecto.model';
 import { Cliente } from '../../../clientes/models/cliente.model';
+import { AlertasService } from '../../../../core/services/alertas';
 
 @Component({
   selector: 'app-proyecto-form-nuevo',
@@ -103,7 +104,8 @@ export class ProyectoFormNuevoComponent implements OnInit {
     private fb: FormBuilder,
     private proyectosService: ProyectosServiceNuevo,
     private muestrasService: MuestrasService,
-    private router: Router
+    private router: Router,
+    private alertas: AlertasService
   ) {
     this.crearFormulario();
   }
@@ -153,12 +155,15 @@ export class ProyectoFormNuevoComponent implements OnInit {
     });
   }
 
-  onMuestraSeleccionada(): void {
+  async onMuestraSeleccionada(): Promise<void> {
     const id = Number(this.formulario.get('idMuestraAprobada')?.value);
     if (!id) return;
 
     if (this.prendasProyecto.length > 0) {
-      const confirmar = window.confirm('Esto reemplazarÃ¡ las prendas actuales. Â¿Deseas continuar?');
+      const confirmar = await this.alertas.confirmar(
+        '¿Continuar con la muestra?',
+        'Esto reemplazará las prendas actuales por las de la muestra seleccionada.'
+      );
       if (!confirmar) {
         this.formulario.patchValue({ idMuestraAprobada: '' });
         return;
@@ -166,17 +171,43 @@ export class ProyectoFormNuevoComponent implements OnInit {
     }
 
     const muestraLocal = this.muestrasAprobadas.find(m => m.idMuestra === id);
-    if (muestraLocal?.prendas?.length) {
-      this.aplicarMuestraAFormulario(muestraLocal);
-      return;
+    
+    if (muestraLocal) {
+      await this.preguntarUsarCliente(muestraLocal);
+      
+      if (muestraLocal.prendas?.length) {
+        this.aplicarMuestraAFormulario(muestraLocal);
+        return;
+      }
     }
 
     this.muestrasService.obtenerMuestraPorId(id).subscribe({
-      next: (muestra) => this.aplicarMuestraAFormulario(muestra),
+      next: async (muestra) => {
+        if (!muestraLocal) {
+          await this.preguntarUsarCliente(muestra);
+        }
+        this.aplicarMuestraAFormulario(muestra);
+      },
       error: () => {
         this.errorMensaje = 'No se pudo cargar la muestra seleccionada';
       }
     });
+  }
+
+  private async preguntarUsarCliente(muestra: MuestraDetalle): Promise<void> {
+    if (muestra.idCliente) {
+      const clienteActual = this.formulario.get('idCliente')?.value;
+      if (clienteActual && Number(clienteActual) === muestra.idCliente) return;
+
+      const confirmar = await this.alertas.confirmar(
+        'Usar cliente de muestra',
+        `¿Deseas asignar automáticamente a "${muestra.nombreCliente || 'el cliente de la muestra'}" como el cliente para este proyecto?`
+      );
+      
+      if (confirmar) {
+        this.formulario.patchValue({ idCliente: muestra.idCliente });
+      }
+    }
   }
 
   private aplicarMuestraAFormulario(muestra: MuestraDetalle): void {
@@ -351,9 +382,12 @@ export class ProyectoFormNuevoComponent implements OnInit {
     this.prendaEditandoSnapshot = undefined;
   }
 
-  confirmarCerrarModalPrenda(): void {
+  async confirmarCerrarModalPrenda(): Promise<void> {
     if (this.prendaEditando && this.tieneCambiosEnPrenda()) {
-      const confirmar = window.confirm('Tienes cambios sin guardar. ¿Deseas cerrar la prenda sin guardar?');
+      const confirmar = await this.alertas.confirmar(
+        'Cambios sin guardar',
+        '¿Deseas cerrar la configuración de la prenda? Se perderán los cambios realizados.'
+      );
       if (!confirmar) return;
     }
 

@@ -195,6 +195,9 @@
     <button class="btn-aceptar" (click)="aceptarMuestra()" [disabled]="editando || !puedeAceptar">
       Aceptar muestra
     </button>
+    <button class="btn-secundario" (click)="abrirHistorial()">
+      Ver Feedback
+    </button>
   </div>
 
   <div class="modal-overlay" *ngIf="mostrarModalComentario">
@@ -209,6 +212,26 @@
       <div class="modal-actions">
         <button class="btn-secundario" (click)="cerrarModalComentario()">Cancelar</button>
         <button class="btn-primario" (click)="confirmarComentario()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="mostrarModalHistorial">
+    <div class="modal modal-historial">
+      <div class="modal-header">
+        <h4>Historial y Feedback</h4>
+        <button class="btn-close" (click)="cerrarHistorial()">&times;</button>
+      </div>
+      <div class="historial-list">
+        <div *ngIf="!muestra?.historial?.length" class="estado">No hay historial para esta muestra.</div>
+        <div class="historial-item" *ngFor="let h of muestra?.historial">
+          <div class="historial-meta">
+            <span class="badge" [ngClass]="'badge-' + h.tipo.toLowerCase()">{{ h.tipo }}</span>
+            <span class="fecha">{{ h.fecha | date:'short' }}</span>
+            <span class="usuario" *ngIf="h.nombreUsuario">por {{ h.nombreUsuario }}</span>
+          </div>
+          <div class="historial-comentario">{{ h.comentario }}</div>
+        </div>
       </div>
     </div>
   </div>

@@ -67,6 +67,8 @@ public partial class TamarindoDbContext : DbContext
 
     public virtual DbSet<ProyectoPrendum> ProyectoPrenda { get; set; }
 
+    public virtual DbSet<ProyectoDiseno> ProyectoDisenos { get; set; }
+
     public virtual DbSet<Rol> Rols { get; set; }
 
     public virtual DbSet<RolPermiso> RolPermisos { get; set; }
@@ -1522,6 +1524,35 @@ public partial class TamarindoDbContext : DbContext
             entity.HasOne(d => d.IdUbicacionNavigation).WithMany(p => p.Despachos)
                 .HasForeignKey(d => d.IdUbicacion)
                 .HasConstraintName("FK_Despacho_Ubicacion_Unique");
+        });
+
+        modelBuilder.Entity<ProyectoDiseno>(entity =>
+        {
+            entity.HasKey(e => e.IdDiseno).HasName("PK_ProyectoDiseño");
+
+            entity.ToTable("ProyectoDiseño");
+
+            entity.Property(e => e.IdDiseno).HasColumnName("id_Diseño");
+            entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            entity.Property(e => e.IdPrenda).HasColumnName("id_Prenda");
+            entity.Property(e => e.ImagenLogo).HasColumnName("imagen_Logo").HasColumnType("varchar(max)").IsUnicode(false);
+            entity.Property(e => e.DescripcionLogo).HasMaxLength(500).IsUnicode(false).HasColumnName("descripcion_Logo");
+            entity.Property(e => e.ImagenMockup).HasColumnName("imagen_Mockup").HasColumnType("varchar(max)").IsUnicode(false);
+            entity.Property(e => e.DescripcionMockup).HasMaxLength(500).IsUnicode(false).HasColumnName("descripcion_Mockup");
+            entity.Property(e => e.IdUsuarioCreacion).HasColumnName("id_Usuario_Creacion");
+            entity.Property(e => e.FechaCreacion).HasColumnType("datetime").HasColumnName("fecha_Creacion");
+            entity.Property(e => e.IdUsuarioModificacion).HasColumnName("id_Usuario_Modificacion");
+            entity.Property(e => e.FechaModificacion).HasColumnType("datetime").HasColumnName("fecha_Modificacion");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany()
+                .HasForeignKey(d => d.IdProyecto)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ProyectoDiseno_Proyecto");
+
+            entity.HasOne(d => d.IdPrendaNavigation).WithMany()
+                .HasForeignKey(d => d.IdPrenda)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ProyectoDiseno_Prenda");
         });
 
         OnModelCreatingPartial(modelBuilder);

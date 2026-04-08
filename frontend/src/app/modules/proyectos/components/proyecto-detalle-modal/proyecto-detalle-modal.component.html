@@ -1,4 +1,4 @@
-﻿<div class="modal-overlay" [class.pantalla-completa]="modoPantallaCompleta" (click)="!modoPantallaCompleta && cerrarModal()">
+<div class="modal-overlay" [class.pantalla-completa]="modoPantallaCompleta" (click)="!modoPantallaCompleta && cerrarModal()">
   <div class="modal-detalle" [class.pantalla-completa]="modoPantallaCompleta" (click)="$event.stopPropagation()">
 
     <!-- HEADER -->
@@ -407,6 +407,20 @@
                 </div>
               </div>
               <div *ngIf="esAreaDiseno" class="diseno-form">
+                <!-- Banner de sincronización con muestra -->
+                <div class="muestra-sync-banner" *ngIf="proyecto.idMuestra">
+                  <div class="banner-content">
+                    <i class="fas fa-sync-alt anim-sync" [class.fa-spin]="loadingSync"></i>
+                    <div class="banner-text">
+                      <span class="banner-title">Muestra Asociada: {{ proyecto.nombreMuestra }}</span>
+                      <span class="banner-subtitle">Este proyecto tiene una muestra vinculada. Puedes importar sus mockups y descripciones.</span>
+                    </div>
+                  </div>
+                  <button class="btn-sync-action" (click)="sincronizarConMuestra()" [disabled]="loadingSync">
+                    {{ loadingSync ? 'Sincronizando...' : 'Sincronizar Diseño' }}
+                  </button>
+                </div>
+
                 <div class="corte-header">
                   <h4><i class="fas fa-pencil-ruler"></i> Resumen de diseño y desarrollo</h4>
                   <span class="corte-resumen">{{ cargandoDiseno ? 'Cargando...' : 'Operativo' }}</span>

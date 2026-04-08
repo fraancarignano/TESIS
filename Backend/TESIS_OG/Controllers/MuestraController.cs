@@ -39,7 +39,8 @@ namespace TESIS_OG.Controllers
             catch (DbUpdateException ex)
             {
                 _logger.LogError(ex, "Error de base de datos al crear muestra");
-                return BadRequest(new { message = "Error de integridad en base de datos al crear la muestra" });
+                var errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return BadRequest(new { message = $"Error de integridad en base de datos al crear la muestra: {errorMsg}" });
             }
             catch (Exception ex)
             {
@@ -148,6 +149,25 @@ namespace TESIS_OG.Controllers
             {
                 _logger.LogError(ex, "Error al rechazar muestra");
                 return StatusCode(500, new { message = "Error al rechazar la muestra" });
+            }
+        }
+
+        [HttpPost("{id}/sincronizar-diseno")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> SincronizarConDiseno(int id)
+        {
+            try
+            {
+                var (ok, mensaje) = await _muestrasService.SincronizarMuestraConDisenoAsync(id);
+                if (!ok) return BadRequest(new { message = mensaje });
+                return Ok(new { message = mensaje });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al sincronizar muestra con diseno");
+                return StatusCode(500, new { message = "Error al sincronizar con diseño" });
             }
         }
     }

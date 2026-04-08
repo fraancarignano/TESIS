@@ -1,4 +1,4 @@
-﻿<!-- ============================================ -->
+<!-- ============================================ -->
 <!-- MODO MODAL -->
 <!-- ============================================ -->
 <div class="modal-overlay" *ngIf="esModal" (click)="cancelar()">
@@ -39,6 +39,17 @@
     <div class="seccion">
       <div class="seccion-header">
         <h3>Datos Generales del Proyecto</h3>
+      </div>
+
+      <div class="field" style="margin-bottom: 1.5rem; padding: 1rem; background: #f0f7ff; border-radius: 8px; border: 1px dashed #2196f3;">
+        <label style="color: #1565c0; font-weight: 600;">Muestra aprobada (primero selecciona si aplica)</label>
+        <select formControlName="idMuestraAprobada" (change)="onMuestraSeleccionada()">
+          <option value="">Sin muestra (Crear desde cero)</option>
+          <option *ngFor="let m of muestrasAprobadas" [value]="m.idMuestra">
+            {{ m.nombreMuestra }} ({{ m.codigoMuestra || 'Sin codigo' }})
+          </option>
+        </select>
+        <small style="color: #1976d2;">Al seleccionar una muestra, se precargarán las prendas y se ofrecerá asignar el cliente automáticamente.</small>
       </div>
 
       <div class="grid-3">
@@ -94,16 +105,6 @@
       </div>
 
       <!-- DescripciÃ³n -->
-      <!-- Muestra Aprobada -->
-      <div class="field">
-        <label>Muestra aprobada (opcional)</label>
-        <select formControlName="idMuestraAprobada" (change)="onMuestraSeleccionada()">
-          <option value="">Sin muestra</option>
-          <option *ngFor="let m of muestrasAprobadas" [value]="m.idMuestra">
-            {{ m.nombreMuestra }} ({{ m.codigoMuestra || 'Sin codigo' }})
-          </option>
-        </select>
-      </div>
 
 
       <div class="field">

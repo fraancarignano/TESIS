@@ -158,6 +158,8 @@ namespace TESIS_OG.DTOs.Proyectos
         public int? AvanceCalidadPrenda { get; set; }
         public int? AvanceEtiquetadoEmpaquetado { get; set; }
         public bool EsMultiPrenda { get; set; }
+        public int? IdMuestra { get; set; }
+        public string? NombreMuestra { get; set; }
 
         // Prendas del proyecto
         public List<ProyectoPrendaDTO> Prendas { get; set; } = new();

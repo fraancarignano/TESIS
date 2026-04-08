@@ -29,6 +29,7 @@ namespace TESIS_OG.DTOs.Muestras
         public string? PaletaRgb { get; set; }
 
         public List<MuestraPrendaDTO> Prendas { get; set; } = new();
+        public List<MuestraHistorialDTO> Historial { get; set; } = new();
     }
 
     public class MuestraPrendaDTO
@@ -42,5 +43,15 @@ namespace TESIS_OG.DTOs.Muestras
         public bool TieneBordado { get; set; }
         public bool TieneEstampado { get; set; }
         public string? DescripcionDiseno { get; set; }
+    }
+
+    public class MuestraHistorialDTO
+    {
+        public int IdHistorial { get; set; }
+        public DateTime Fecha { get; set; }
+        public string Tipo { get; set; } = null!;
+        public string Comentario { get; set; } = null!;
+        public int? IdUsuario { get; set; }
+        public string? NombreUsuario { get; set; }
     }
 }

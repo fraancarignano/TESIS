@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MaterialProyecto, ObservacionProyecto, ProyectoVista } from '../../models/proyecto.model';
 import { ProyectosService } from '../../services/proyecto.service';
 import { DisenoService } from '../../services/diseno.service';
+import { MuestrasService } from '../../services/muestra.service';
 import { AlertasService } from '../../../../core/services/alertas';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { ExportService, PlanillaConfeccionExport } from '../../../../core/services/export.service';
@@ -75,6 +76,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
   disenoPrendas: DisenoPrendaForm[] = [];
   disenoPrendasMap: Record<number, DisenoPrendaForm> = {};
   disenoResumenPrendas: DisenoResumenPrenda[] = [];
+  loadingSync = false;
 
   // Observaciones generales
   nuevaObservacion: string = '';
@@ -92,7 +94,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
     private exportService: ExportService,
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
-    private talleresService: TalleresService
+    private talleresService: TalleresService,
+    private muestrasService: MuestrasService
   ) { }
 
   ngOnInit(): void {
@@ -168,6 +171,30 @@ export class ProyectoDetalleModalComponent implements OnInit {
     if (area.campo === 'avanceDiseno' && !this.disenoPrendas.length) {
       this.cargarDisenoArea();
     }
+  }
+
+  async sincronizarConMuestra(): Promise<void> {
+    if (!this.proyecto.idMuestra || this.loadingSync) return;
+
+    const confirmar = await this.alertas.confirmar(
+      'Sincronizar Diseño',
+      '¿Deseas importar los mockups y descripciones de la muestra asociada? Esto sobrescribirá los datos actuales de diseño.'
+    );
+
+    if (!confirmar) return;
+
+    this.loadingSync = true;
+    this.muestrasService.sincronizarDiseno(this.proyecto.idMuestra).subscribe({
+      next: () => {
+        this.alertas.toast('Diseño sincronizado correctamente');
+        this.cargarDisenoArea(); // Recargar los datos para mostrar los nuevos mockups
+        this.loadingSync = false;
+      },
+      error: (err: any) => {
+        this.alertas.error('Error de sincronización', err?.message || 'No se pudo sincronizar el diseño.');
+        this.loadingSync = false;
+      }
+    });
   }
 
   puedeRetrocederArea(): boolean {

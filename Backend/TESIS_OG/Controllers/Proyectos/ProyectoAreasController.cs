@@ -222,6 +222,146 @@ namespace TESIS_OG.Controllers
             return Ok(new { message = $"Área '{areaObjetivo.NombreArea}' completada correctamente." });
         }
 
+        [HttpGet("{id}/resumen")]
+        public async Task<IActionResult> ObtenerResumenDiseno(int id)
+        {
+            var proyecto = await _context.Proyectos
+                .Include(p => p.IdClienteNavigation)
+                .Include(p => p.Muestras)
+                .Include(p => p.ProyectoPrenda)
+                    .ThenInclude(pp => pp.IdTipoPrendaNavigation)
+                .Include(p => p.ProyectoPrenda)
+                    .ThenInclude(pp => pp.IdTipoInsumoMaterialNavigation)
+                .Include(p => p.ProyectoPrenda)
+                    .ThenInclude(pp => pp.PrendaTalles)
+                        .ThenInclude(pt => pt.IdTalleNavigation)
+                .FirstOrDefaultAsync(p => p.IdProyecto == id);
+
+            if (proyecto == null)
+                return NotFound(new { message = "Proyecto no encontrado" });
+
+            var avances = await _context.AvanceAreaProyectos
+                .Where(a => a.IdProyecto == id && a.PorcentajeAvance >= 100)
+                .Select(a => a.IdArea)
+                .ToListAsync();
+
+            var areaDiseno = await _context.AreaProduccions.FirstOrDefaultAsync(a => a.NombreArea.Contains("Diseño"));
+            var completada = areaDiseno != null && avances.Contains(areaDiseno.IdArea);
+
+            var muestraAsociada = await _context.Muestras
+                .FirstOrDefaultAsync(m => m.IdProyectoAsignado == id);
+
+            var response = new ProyectoResumenDisenoDTO
+            {
+                IdProyecto = proyecto.IdProyecto,
+                Cliente = proyecto.IdClienteNavigation?.RazonSocial 
+                    ?? $"{proyecto.IdClienteNavigation?.Nombre} {proyecto.IdClienteNavigation?.Apellido}".Trim(),
+                NombreProyecto = proyecto.NombreProyecto,
+                Prioridad = proyecto.Prioridad,
+                FechaInicio = proyecto.FechaInicio,
+                FechaFin = proyecto.FechaFin,
+                AreaCompletada = completada,
+                EstadoArea = completada ? "Completado" : "Pendiente",
+                IdMuestra = muestraAsociada?.IdMuestra,
+                NombreMuestra = muestraAsociada?.NombreMuestra,
+                Prendas = proyecto.ProyectoPrenda.Select(pp => new ProyectoResumenDisenoPrendaDTO
+                {
+                    IdProyectoPrenda = pp.IdProyectoPrenda,
+                    TipoPrenda = pp.IdTipoPrendaNavigation?.NombrePrenda ?? "Sin tipo",
+                    MaterialBase = pp.IdTipoInsumoMaterialNavigation?.NombreTipo,
+                    CantidadTotal = pp.CantidadTotal,
+                    TieneBordado = pp.TieneBordado ?? false,
+                    TieneEstampado = pp.TieneEstampado ?? false,
+                    DescripcionDiseno = pp.DescripcionDiseno,
+                    Talles = pp.PrendaTalles.Select(pt => new ProyectoResumenDisenoTalleDTO
+                    {
+                        IdTalle = pt.IdTalle,
+                        NombreTalle = pt.IdTalleNavigation?.NombreTalle ?? "Talle",
+                        Cantidad = pt.Cantidad
+                    }).ToList()
+                }).ToList()
+            };
+
+            return Ok(response);
+        }
+
+        [HttpGet("{id}/diseno")]
+        public async Task<IActionResult> ObtenerDetalleDiseno(int id)
+        {
+            var areaDiseno = await _context.AreaProduccions.FirstOrDefaultAsync(a => a.NombreArea.Contains("Diseño"));
+            var ultimoAvance = await _context.AvanceAreaProyectos
+                .Where(a => a.IdProyecto == id && a.IdArea == (areaDiseno != null ? areaDiseno.IdArea : 0))
+                .OrderByDescending(a => a.FechaActualizacion)
+                .FirstOrDefaultAsync();
+
+            var completado = ultimoAvance?.PorcentajeAvance >= 100;
+
+            var disenos = await _context.ProyectoDisenos
+                .Where(d => d.IdProyecto == id)
+                .ToListAsync();
+
+            var response = new ProyectoDisenoDetalleDTO
+            {
+                IdProyecto = id,
+                Completado = completado,
+                EstadoArea = completado ? "Completado" : "Pendiente",
+                FechaCompletado = ultimoAvance?.FechaActualizacion,
+                ObservacionesGenerales = ultimoAvance?.Observaciones,
+                Prendas = disenos.Select(d => new ProyectoDisenoDetallePrendaDTO
+                {
+                    IdDiseno = d.IdDiseno,
+                    IdPrenda = d.IdPrenda,
+                    ImagenLogo = d.ImagenLogo,
+                    DescripcionLogo = d.DescripcionLogo,
+                    ImagenMockup = d.ImagenMockup,
+                    DescripcionMockup = d.DescripcionMockup
+                }).ToList()
+            };
+
+            return Ok(response);
+        }
+
+        [HttpPost("{id}/diseno")]
+        public async Task<IActionResult> GuardarDiseno(int id, [FromBody] ProyectoDisenoPayloadDTO request)
+        {
+            var idUsuario = ObtenerIdUsuarioDesdeToken();
+            
+            var disenosExistentes = await _context.ProyectoDisenos
+                .Where(d => d.IdProyecto == id)
+                .ToListAsync();
+
+            foreach (var prendaRequest in request.Prendas)
+            {
+                var diseno = disenosExistentes.FirstOrDefault(d => d.IdPrenda == prendaRequest.IdPrenda);
+                if (diseno != null)
+                {
+                    diseno.ImagenLogo = prendaRequest.ImagenLogo;
+                    diseno.DescripcionLogo = prendaRequest.DescripcionLogo;
+                    diseno.ImagenMockup = prendaRequest.ImagenMockup;
+                    diseno.DescripcionMockup = prendaRequest.DescripcionMockup;
+                    diseno.FechaModificacion = DateTime.Now;
+                    diseno.IdUsuarioModificacion = idUsuario;
+                }
+                else
+                {
+                    _context.ProyectoDisenos.Add(new ProyectoDiseno
+                    {
+                        IdProyecto = id,
+                        IdPrenda = prendaRequest.IdPrenda,
+                        ImagenLogo = prendaRequest.ImagenLogo,
+                        DescripcionLogo = prendaRequest.DescripcionLogo,
+                        ImagenMockup = prendaRequest.ImagenMockup,
+                        DescripcionMockup = prendaRequest.DescripcionMockup,
+                        FechaCreacion = DateTime.Now,
+                        IdUsuarioCreacion = idUsuario
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Diseño guardado correctamente." });
+        }
+
         private static string Normalizar(string? value)
         {
             if (string.IsNullOrWhiteSpace(value)) return string.Empty;

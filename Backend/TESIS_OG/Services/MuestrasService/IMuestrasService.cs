@@ -11,5 +11,6 @@ namespace TESIS_OG.Services.MuestrasService
         Task<bool> AsignarMuestraAProyectoAsync(int idMuestra, int idProyecto);
         Task<bool> AceptarMuestraAsync(int idMuestra, string? comentario);
         Task<bool> RechazarMuestraAsync(int idMuestra, string comentario);
+        Task<(bool ok, string mensaje)> SincronizarMuestraConDisenoAsync(int idMuestra);
     }
 }

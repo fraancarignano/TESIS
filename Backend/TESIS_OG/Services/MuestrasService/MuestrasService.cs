@@ -37,7 +37,10 @@ namespace TESIS_OG.Services.MuestrasService
                 EstampadoDescripcion = dto.EstampadoDescripcion?.Trim(),
                 EstampadoReferencia = dto.EstampadoReferencia,
                 OtrosDetalle = dto.OtrosDetalle?.Trim(),
-                PaletaRgb = dto.PaletaRgb
+                PaletaRgb = dto.PaletaRgb,
+                CodigoMuestra = !string.IsNullOrWhiteSpace(dto.CodigoMuestra) 
+                    ? dto.CodigoMuestra.Trim() 
+                    : $"MUE-{DateTime.Now:yyyyMMdd}-{new Random().Next(1000, 9999)}"
             };
 
             foreach (var prendaDto in dto.Prendas)
@@ -52,6 +55,14 @@ namespace TESIS_OG.Services.MuestrasService
                     DescripcionDiseno = prendaDto.DescripcionDiseno?.Trim()
                 });
             }
+
+            // Historial de creacion
+            muestra.MuestraHistorials.Add(new MuestraHistorial
+            {
+                Fecha = DateTime.UtcNow,
+                Tipo = "Creacion",
+                Comentario = "Muestra creada"
+            });
 
             _context.Muestras.Add(muestra);
             await _context.SaveChangesAsync();
@@ -81,6 +92,8 @@ namespace TESIS_OG.Services.MuestrasService
                     .ThenInclude(mp => mp.IdTipoPrendaNavigation)
                 .Include(m => m.MuestraPrendas)
                     .ThenInclude(mp => mp.IdTipoInsumoMaterialNavigation)
+                .Include(m => m.MuestraHistorials)
+                    .ThenInclude(h => h.IdUsuarioNavigation)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m => m.IdMuestra == id);
 
@@ -141,18 +154,23 @@ namespace TESIS_OG.Services.MuestrasService
 
             muestra.Estado = "Aprobada";
 
-            if (!string.IsNullOrWhiteSpace(comentario))
+            _context.MuestraHistorials.Add(new MuestraHistorial
             {
-                _context.MuestraHistorials.Add(new MuestraHistorial
-                {
-                    IdMuestra = muestra.IdMuestra,
-                    Fecha = DateTime.UtcNow,
-                    Tipo = "Aprobacion",
-                    Comentario = comentario.Trim()
-                });
-            }
+                IdMuestra = muestra.IdMuestra,
+                Fecha = DateTime.UtcNow,
+                Tipo = "Aprobacion",
+                Comentario = !string.IsNullOrWhiteSpace(comentario) ? comentario.Trim() : "Muestra aprobada"
+            });
 
             await _context.SaveChangesAsync();
+
+            // Sincronizar automaticamente con diseno si hay proyecto asignado
+            if (muestra.IdProyectoAsignado.HasValue)
+            {
+                try { await SincronizarMuestraConDisenoAsync(idMuestra); }
+                catch { /* No bloquear la aprobacion */ }
+            }
+
             return true;
         }
 
@@ -173,6 +191,98 @@ namespace TESIS_OG.Services.MuestrasService
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<(bool ok, string mensaje)> SincronizarMuestraConDisenoAsync(int idMuestra)
+        {
+            var muestra = await _context.Muestras
+                .Include(m => m.MuestraPrendas)
+                .FirstOrDefaultAsync(m => m.IdMuestra == idMuestra);
+
+            if (muestra == null)
+                return (false, "Muestra no encontrada");
+
+            if (!muestra.IdProyectoAsignado.HasValue)
+                return (false, "La muestra no tiene un proyecto asignado");
+
+            var idProyecto = muestra.IdProyectoAsignado.Value;
+
+            var prendasProyecto = await _context.ProyectoPrenda
+                .Where(p => p.IdProyecto == idProyecto)
+                .ToListAsync();
+
+            if (!prendasProyecto.Any())
+                return (false, "El proyecto no tiene prendas registradas");
+
+            var disenosExistentes = await _context.ProyectoDisenos
+                .Where(d => d.IdProyecto == idProyecto)
+                .ToListAsync();
+
+            int sincronizados = 0;
+
+            foreach (var prendaProyecto in prendasProyecto)
+            {
+                var prendaMuestra = muestra.MuestraPrendas
+                    .FirstOrDefault(pm => pm.IdTipoPrenda == prendaProyecto.IdTipoPrenda);
+
+                var disenoExistente = disenosExistentes
+                    .FirstOrDefault(d => d.IdPrenda == prendaProyecto.IdProyectoPrenda);
+
+                var mockupUrl = muestra.MockupUrl;
+                var descripcionMockup = !string.IsNullOrWhiteSpace(muestra.OtrosDetalle) ? muestra.OtrosDetalle : null;
+
+                string? imagenLogo = null;
+                string? descripcionLogo = null;
+                if (prendaMuestra?.TieneBordado == true)
+                {
+                    imagenLogo = !string.IsNullOrWhiteSpace(muestra.BordadoReferencia) ? muestra.BordadoReferencia : null;
+                    descripcionLogo = !string.IsNullOrWhiteSpace(muestra.BordadoDescripcion) ? muestra.BordadoDescripcion : null;
+                }
+
+                // Actualizar flags en prenda del proyecto
+                if (prendaMuestra != null)
+                {
+                    prendaProyecto.TieneBordado = prendaMuestra.TieneBordado;
+                    prendaProyecto.TieneEstampado = prendaMuestra.TieneEstampado;
+                    if (!string.IsNullOrWhiteSpace(prendaMuestra.DescripcionDiseno))
+                        prendaProyecto.DescripcionDiseno = prendaMuestra.DescripcionDiseno;
+                }
+
+                if (disenoExistente != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(mockupUrl)) disenoExistente.ImagenMockup = mockupUrl;
+                    if (!string.IsNullOrWhiteSpace(descripcionMockup)) disenoExistente.DescripcionMockup = descripcionMockup;
+                    if (!string.IsNullOrWhiteSpace(imagenLogo)) disenoExistente.ImagenLogo = imagenLogo;
+                    if (!string.IsNullOrWhiteSpace(descripcionLogo)) disenoExistente.DescripcionLogo = descripcionLogo;
+                    disenoExistente.FechaModificacion = DateTime.UtcNow;
+                }
+                else
+                {
+                    _context.ProyectoDisenos.Add(new ProyectoDiseno
+                    {
+                        IdProyecto = idProyecto,
+                        IdPrenda = prendaProyecto.IdProyectoPrenda,
+                        ImagenMockup = mockupUrl,
+                        DescripcionMockup = descripcionMockup,
+                        ImagenLogo = imagenLogo,
+                        DescripcionLogo = descripcionLogo,
+                        FechaCreacion = DateTime.UtcNow
+                    });
+                }
+
+                sincronizados++;
+            }
+
+            _context.MuestraHistorials.Add(new MuestraHistorial
+            {
+                IdMuestra = idMuestra,
+                Fecha = DateTime.UtcNow,
+                Tipo = "SincDiseno",
+                Comentario = $"Datos sincronizados con diseno del proyecto #{idProyecto} ({sincronizados} prendas)"
+            });
+
+            await _context.SaveChangesAsync();
+            return (true, $"Diseno sincronizado correctamente ({sincronizados} prendas actualizadas)");
         }
 
         private static MuestraDetalleDTO MapToDetalle(Muestra muestra)
@@ -212,7 +322,20 @@ namespace TESIS_OG.Services.MuestrasService
                     TieneBordado = p.TieneBordado,
                     TieneEstampado = p.TieneEstampado,
                     DescripcionDiseno = p.DescripcionDiseno
-                }).ToList()
+                }).ToList(),
+                Historial = muestra.MuestraHistorials
+                    .OrderByDescending(h => h.Fecha)
+                    .Select(h => new MuestraHistorialDTO
+                    {
+                        IdHistorial = h.IdMuestraHistorial,
+                        Fecha = h.Fecha,
+                        Tipo = h.Tipo,
+                        Comentario = h.Comentario,
+                        IdUsuario = h.IdUsuario,
+                        NombreUsuario = h.IdUsuarioNavigation != null
+                            ? $"{h.IdUsuarioNavigation.NombreUsuario} {h.IdUsuarioNavigation.ApellidoUsuario}".Trim()
+                            : null
+                    }).ToList()
             };
         }
 
@@ -220,17 +343,13 @@ namespace TESIS_OG.Services.MuestrasService
         {
             var clienteExiste = await _context.Clientes.AnyAsync(c => c.IdCliente == dto.IdCliente);
             if (!clienteExiste)
-            {
                 throw new ArgumentException($"El cliente con ID {dto.IdCliente} no existe");
-            }
 
             if (dto.IdUsuarioEncargado.HasValue)
             {
                 var usuarioExiste = await _context.Usuarios.AnyAsync(u => u.IdUsuario == dto.IdUsuarioEncargado.Value);
                 if (!usuarioExiste)
-                {
                     throw new ArgumentException($"El usuario con ID {dto.IdUsuarioEncargado.Value} no existe");
-                }
             }
 
             var tipoPrendaIds = dto.Prendas.Select(p => p.IdTipoPrenda).Distinct().ToList();
@@ -242,9 +361,7 @@ namespace TESIS_OG.Services.MuestrasService
                     .ToListAsync();
                 var faltantes = tipoPrendaIds.Except(existentes).ToList();
                 if (faltantes.Count > 0)
-                {
                     throw new ArgumentException($"Tipo de prenda inexistente: {string.Join(", ", faltantes)}");
-                }
             }
 
             var tipoInsumoIds = dto.Prendas.Select(p => p.IdTipoInsumoMaterial).Distinct().ToList();
@@ -256,9 +373,7 @@ namespace TESIS_OG.Services.MuestrasService
                     .ToListAsync();
                 var faltantes = tipoInsumoIds.Except(existentes).ToList();
                 if (faltantes.Count > 0)
-                {
                     throw new ArgumentException($"Tipo de material inexistente: {string.Join(", ", faltantes)}");
-                }
             }
         }
     }

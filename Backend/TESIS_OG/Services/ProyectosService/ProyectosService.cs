@@ -1022,9 +1022,8 @@ namespace TESIS_OG.Services.ProyectoService
                 .Select(m => $"Stock insuficiente de {m.NombreInsumo}")
                 .ToList();
 
-            var areas = await ObtenerAreasOrdenadasAsync();
-            var avances = await ObtenerAvancesActualesPorAreaAsync(proyecto.IdProyecto, areas);
-            var slots = areas.Select(a => avances[a.IdArea]).ToList();
+            var muestraAsociada = await _context.Muestras
+                .FirstOrDefaultAsync(m => m.IdProyectoAsignado == proyecto.IdProyecto);
 
             return new ProyectoDetalleDTO
             {
@@ -1052,13 +1051,15 @@ namespace TESIS_OG.Services.ProyectoService
                     : null,
 
                 AreaActual = proyecto.AreaActual,
-                AvanceDiseno = slots.Count > 0 ? slots[0] : 0,
-                AvanceCorte = slots.Count > 1 ? slots[1] : 0,
-                AvanceConfeccion = slots.Count > 2 ? slots[2] : 0,
-                AvanceCalidadPrenda = slots.Count > 3 ? slots[3] : 0,
-                AvanceEtiquetadoEmpaquetado = slots.Count > 4 ? slots[4] : 0,
+                AvanceDiseno = proyecto.AvanceGerenciaAdmin ?? 0,
+                AvanceCorte = proyecto.AvanceDisenoDesarrollo ?? 0,
+                AvanceConfeccion = proyecto.AvanceControlCalidad ?? 0,
+                AvanceCalidadPrenda = proyecto.AvanceEtiquetadoEmpaquetado ?? 0,
+                AvanceEtiquetadoEmpaquetado = proyecto.AvanceDepositoLogistica ?? 0,
 
                 EsMultiPrenda = proyecto.EsMultiPrenda ?? false,
+                IdMuestra = muestraAsociada?.IdMuestra,
+                NombreMuestra = muestraAsociada?.NombreMuestra,
                 Prendas = prendas,
                 Materiales = materiales,
                 AlertasStock = alertasStock

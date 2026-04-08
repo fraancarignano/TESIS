@@ -21,6 +21,16 @@ export interface MuestraDetalle {
   otrosDetalle?: string | null;
   paletaRgb?: string | null;
   prendas?: MuestraPrenda[];
+  historial?: MuestraHistorialItem[];
+}
+
+export interface MuestraHistorialItem {
+  idHistorial: number;
+  fecha: string;
+  tipo: string;
+  comentario: string;
+  idUsuario?: number | null;
+  nombreUsuario?: string | null;
 }
 
 export interface MuestraPrenda {

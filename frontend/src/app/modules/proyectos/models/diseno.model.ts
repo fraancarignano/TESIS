@@ -7,6 +7,8 @@ export interface ProyectoResumenDiseno {
   fechaFin?: string | null;
   areaCompletada: boolean;
   estadoArea: 'Pendiente' | 'EnProceso' | 'Completado' | string;
+  idMuestra?: number | null;
+  nombreMuestra?: string | null;
   prendas: ProyectoResumenDisenoPrenda[];
 }
 

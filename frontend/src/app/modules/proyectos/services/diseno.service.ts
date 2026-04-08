@@ -44,6 +44,12 @@ export class DisenoService {
     );
   }
 
+  sincronizarDesdeMuestra(idMuestra: number): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/Muestra/${idMuestra}/sincronizar-diseno`, {}).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Ocurrió un error inesperado.';
 

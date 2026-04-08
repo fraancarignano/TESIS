@@ -20,6 +20,7 @@ namespace TESIS_OG.DTOs.Muestras
         public string? Prioridad { get; set; }
 
         public string Estado { get; set; } = "Pendiente";
+        public string? CodigoMuestra { get; set; }
 
         [Required(ErrorMessage = "La fecha de creación es obligatoria")]
         public DateOnly FechaCreacion { get; set; }

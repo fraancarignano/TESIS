@@ -50,6 +50,8 @@ export interface Proyecto {
   tipoEstacion?: string | null;
   codigoProyecto?: string | null;
   areaActual?: string | null;
+  idMuestra?: number | null;
+  nombreMuestra?: string | null;
   
   // Avances (0-100)
   avanceDiseno?: number | null;

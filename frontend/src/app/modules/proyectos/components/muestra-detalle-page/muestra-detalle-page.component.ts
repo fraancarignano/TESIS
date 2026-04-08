@@ -22,6 +22,7 @@ export class MuestraDetallePageComponent implements OnInit {
   editando = false;
 
   mostrarModalComentario = false;
+  mostrarModalHistorial = false;
   comentario = '';
   accionComentario?: AccionComentario;
   comentarioObligatorio = false;
@@ -217,6 +218,33 @@ export class MuestraDetallePageComponent implements OnInit {
         this.error = err.message || 'No se pudo aprobar la muestra';
       }
     });
+  }
+
+  sincronizarConDiseno(): void {
+    const id = this.muestra?.idMuestra;
+    if (!id) return;
+
+    this.loading = true;
+    this.error = '';
+
+    this.muestrasService.sincronizarDiseno(id).subscribe({
+      next: (res) => {
+        alert(res.message || 'Diseño sincronizado correctamente');
+        this.cargarMuestra(id);
+      },
+      error: (err) => {
+        this.error = err.message || 'Error al sincronizar con diseño';
+        this.loading = false;
+      }
+    });
+  }
+
+  abrirHistorial(): void {
+    this.mostrarModalHistorial = true;
+  }
+
+  cerrarHistorial(): void {
+    this.mostrarModalHistorial = false;
   }
 
   get estadoActual(): string {

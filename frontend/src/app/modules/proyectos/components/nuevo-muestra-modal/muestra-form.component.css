@@ -256,6 +256,27 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.1);
 }
 
+.campo-error input,
+.campo-error select,
+.campo-error textarea {
+  border-color: #d32f2f;
+  background-color: #fffafb;
+}
+
+.campo-error input:focus,
+.campo-error select:focus,
+.campo-error textarea:focus {
+  border-color: #d32f2f;
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+}
+
+.error-msg {
+  color: #d32f2f;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  display: block;
+}
+
 input:disabled,
 select:disabled,
 textarea:disabled {

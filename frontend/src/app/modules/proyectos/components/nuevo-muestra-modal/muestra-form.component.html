@@ -1,4 +1,4 @@
-﻿<!-- ============================================ -->
+<!-- ============================================ -->
 <!-- MODO MODAL -->
 <!-- ============================================ -->
 <div class="modal-overlay" *ngIf="esModal" (click)="cancelar()">
@@ -43,7 +43,7 @@
 
       <div class="grid-3">
         <!-- Cliente -->
-        <div class="field">
+        <div class="field" [ngClass]="{'campo-error': formulario.get('idCliente')?.invalid && formulario.get('idCliente')?.touched}">
           <label>Cliente *</label>
           <select formControlName="idCliente">
             <option value="">Seleccionar cliente</option>
@@ -54,16 +54,19 @@
           <span class="cliente-selected" *ngIf="nombreCliente">
             âœ“ {{ nombreCliente }}
           </span>
+          <span class="error-msg" *ngIf="formulario.get('idCliente')?.invalid && formulario.get('idCliente')?.touched">Selecciona un cliente</span>
         </div>
 
         <!-- Nombre Proyecto -->
-        <div class="field">
+        <div class="field" [ngClass]="{'campo-error': formulario.get('nombreProyecto')?.invalid && formulario.get('nombreProyecto')?.touched}">
           <label>Nombre de la Muestra *</label>
           <input 
             type="text" 
             formControlName="nombreProyecto" 
             placeholder="Ej: Remeras Verano 2025"
           >
+          <span class="error-msg" *ngIf="formulario.get('nombreProyecto')?.errors?.['required'] && formulario.get('nombreProyecto')?.touched">El nombre es obligatorio</span>
+          <span class="error-msg" *ngIf="formulario.get('nombreProyecto')?.errors?.['minlength'] && formulario.get('nombreProyecto')?.touched">Al menos 3 caracteres</span>
         </div>
 
         <!-- Prioridad -->
@@ -94,9 +97,10 @@
 
       <div class="grid-2">
         <!-- Fecha Inicio -->
-        <div class="field">
+        <div class="field" [ngClass]="{'campo-error': formulario.get('fechaInicio')?.invalid && formulario.get('fechaInicio')?.touched}">
           <label>Fecha de Inicio *</label>
           <input type="date" formControlName="fechaInicio">
+          <span class="error-msg" *ngIf="formulario.get('fechaInicio')?.invalid && formulario.get('fechaInicio')?.touched">Requerida</span>
         </div>
 
         <!-- Fecha LÃ­mite -->
@@ -124,7 +128,7 @@
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
-        <h3>Prendas de la Muestra</h3>
+        <h3>Prendas de la Muestra *</h3>
         <button 
           type="button" 
           class="btn-primary" 
@@ -174,13 +178,14 @@
       </div>
 
       <!-- Mensaje si no hay prendas -->
-      <div class="sin-prendas" *ngIf="prendasProyecto.length === 0 && !prendaEditando">
+      <div class="sin-prendas" [ngClass]="{'campo-error': prendasProyecto.length === 0 && errorMensaje.includes('prenda')}" *ngIf="prendasProyecto.length === 0 && !prendaEditando">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="8" x2="12" y2="12"></line>
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
         <p>No hay prendas agregadas. Haz clic en "Agregar Prenda" para comenzar.</p>
+        <span class="error-msg" *ngIf="errorMensaje.includes('prenda')">Debes agregar al menos una prenda</span>
       </div>
 
     </div>
@@ -248,10 +253,11 @@
       </div>
 
       <div class="grid-2">
-        <div class="field">
+        <div class="field" [ngClass]="{'campo-error': !referenciaVisual.mockup && (errorMensaje.includes('mockup') || errorMensaje.includes('Completa'))}">
           <label>Mockup *</label>
-          <input type="file" accept="image/*" (change)="onMockupChange($event)" required>
+          <input type="file" accept="image/*" (change)="onMockupChange($event)">
           <small>Obligatorio para guardar.</small>
+          <span class="error-msg" *ngIf="!referenciaVisual.mockup && (errorMensaje.includes('mockup') || errorMensaje.includes('Completa'))">El mockup es obligatorio</span>
           <img *ngIf="referenciaVisual.mockup" class="file-preview" [src]="referenciaVisual.mockup" alt="Mockup">
         </div>
 

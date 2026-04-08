@@ -35,6 +35,7 @@ export class DisenoProyectoComponent implements OnInit {
   idProyecto = 0;
   loading = true;
   saving = false;
+  loadingSync = false;
   error = '';
 
   resumen: ProyectoResumenDiseno | null = null;
@@ -126,6 +127,31 @@ export class DisenoProyectoComponent implements OnInit {
       error: (err) => {
         this.saving = false;
         this.alertas.error('Error', err?.message || 'No se pudo guardar el diseño.');
+      }
+    });
+  }
+
+  async sincronizar(): Promise<void> {
+    if (!this.resumen?.idMuestra || this.readonlyMode || this.loadingSync) return;
+
+    const confirmado = await this.alertas.confirmar(
+      '¿Sincronizar con muestra?',
+      'Esta acción reemplazará los mockups y logos actuales con los de la muestra aprobada.',
+      'Sincronizar'
+    );
+
+    if (!confirmado) return;
+
+    this.loadingSync = true;
+    this.disenoService.sincronizarDesdeMuestra(this.resumen.idMuestra).subscribe({
+      next: () => {
+        this.alertas.success('Sincronizados', 'Los datos de la muestra se cargaron correctamente.');
+        this.cargarPantalla();
+        this.loadingSync = false;
+      },
+      error: (err) => {
+        this.loadingSync = false;
+        this.alertas.error('Error de sincronización', err?.message || 'No se pudo sincronizar.');
       }
     });
   }

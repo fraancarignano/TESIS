@@ -399,6 +399,86 @@
   margin-top: 0.8rem;
 }
 
+.modal-historial {
+  width: min(600px, 95vw);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.modal-header h4 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  color: #666;
+}
+
+.historial-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding-right: 0.5rem;
+}
+
+.historial-item {
+  background: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 0.8rem;
+}
+
+.historial-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.fecha {
+  color: #6b7280;
+}
+
+.usuario {
+  color: #525252;
+  font-weight: 600;
+}
+
+.historial-comentario {
+  font-size: 0.95rem;
+  color: #1f2937;
+  white-space: pre-wrap;
+}
+
+.badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.badge-creacion { background: #e3f2fd; color: #1976d2; }
+.badge-actualizacion { background: #fff3e0; color: #f57c00; }
+.badge-aprobacion { background: #e8f5e9; color: #388e3c; }
+.badge-rechazo { background: #ffebee; color: #d32f2f; }
+.badge-sincdiseno { background: #f3e5f5; color: #7b1fa2; }
+
 .badge-aprobada {
   background: #e8f5e9;
   color: #2e7d32;
