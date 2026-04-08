@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>4899d783-1168-44a7-983f-7ba3574f7b75</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DefaultItemExcludes>$(DefaultItemExcludes);binlocal\**;objlocal\**;build-verificacion\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

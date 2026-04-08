@@ -21,7 +21,6 @@ namespace TESIS_OG.DTOs.Muestras
 
         public int? IdUsuarioEncargado { get; set; }
 
-        [StringLength(500)]
         public string? MockupUrl { get; set; }
 
         public bool? BordadoRequerido { get; set; }
@@ -29,7 +28,6 @@ namespace TESIS_OG.DTOs.Muestras
         [StringLength(400)]
         public string? BordadoDescripcion { get; set; }
 
-        [StringLength(500)]
         public string? BordadoReferencia { get; set; }
 
         public bool? EstampadoRequerido { get; set; }
@@ -37,7 +35,6 @@ namespace TESIS_OG.DTOs.Muestras
         [StringLength(400)]
         public string? EstampadoDescripcion { get; set; }
 
-        [StringLength(500)]
         public string? EstampadoReferencia { get; set; }
 
         [StringLength(500)]

@@ -658,8 +658,8 @@ public partial class TamarindoDbContext : DbContext
                 .HasColumnName("codigo_Muestra");
             entity.Property(e => e.IdProyectoAsignado).HasColumnName("id_Proyecto");
             entity.Property(e => e.MockupUrl)
-                .HasMaxLength(500)
                 .IsUnicode(false)
+                .HasColumnType("varchar(max)")
                 .HasColumnName("mockup_url");
             entity.Property(e => e.BordadoRequerido)
                 .HasDefaultValue(false)
@@ -669,8 +669,8 @@ public partial class TamarindoDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("bordado_descripcion");
             entity.Property(e => e.BordadoReferencia)
-                .HasMaxLength(500)
                 .IsUnicode(false)
+                .HasColumnType("varchar(max)")
                 .HasColumnName("bordado_referencia");
             entity.Property(e => e.EstampadoRequerido)
                 .HasDefaultValue(false)
@@ -680,8 +680,8 @@ public partial class TamarindoDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("estampado_descripcion");
             entity.Property(e => e.EstampadoReferencia)
-                .HasMaxLength(500)
                 .IsUnicode(false)
+                .HasColumnType("varchar(max)")
                 .HasColumnName("estampado_referencia");
             entity.Property(e => e.OtrosDetalle)
                 .HasMaxLength(500)

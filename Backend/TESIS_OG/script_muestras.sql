@@ -16,13 +16,13 @@ CREATE TABLE dbo.Muestra (
     id_UsuarioEncargado INT NULL,
     codigo_Muestra VARCHAR(20) NULL,
     id_Proyecto INT NULL,
-    mockup_url VARCHAR(500) NULL,
+    mockup_url VARCHAR(MAX) NULL,
     bordado_requerido BIT NOT NULL DEFAULT 0,
     bordado_descripcion VARCHAR(400) NULL,
-    bordado_referencia VARCHAR(500) NULL,
+    bordado_referencia VARCHAR(MAX) NULL,
     estampado_requerido BIT NOT NULL DEFAULT 0,
     estampado_descripcion VARCHAR(400) NULL,
-    estampado_referencia VARCHAR(500) NULL,
+    estampado_referencia VARCHAR(MAX) NULL,
     otros_detalle VARCHAR(500) NULL,
     paleta_rgb VARCHAR(50) NULL
 );

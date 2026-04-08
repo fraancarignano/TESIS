@@ -1,69 +1,145 @@
 <div class="detalle-container">
   <div class="detalle-header">
-    <div>
-      <h2>Detalle de Muestra</h2>
-      <p *ngIf="muestra">Código {{ muestra.codigoMuestra || '-' }} · Estado {{ muestra.estado }}</p>
+    <div class="header-main">
+      <button class="btn-volver" (click)="router.navigate(['/proyectos/muestras'])">Volver</button>
+      <div>
+        <h2>Detalle de Muestra</h2>
+        <p *ngIf="muestra">Seguimiento, referencia visual y definición de prendas.</p>
+      </div>
     </div>
-    <button class="btn-volver" (click)="router.navigate(['/proyectos/muestras'])">Volver</button>
+    <div class="header-badges" *ngIf="muestra">
+      <span class="codigo-chip">Código {{ muestra.codigoMuestra || '-' }}</span>
+      <span class="badge-estado" [ngClass]="getEstadoClass(muestra.estado)">{{ muestra.estado }}</span>
+    </div>
   </div>
 
   <div *ngIf="loading" class="estado">Cargando muestra...</div>
   <div *ngIf="error" class="estado error">{{ error }}</div>
 
   <form *ngIf="muestra" [formGroup]="form" class="detalle-form">
-    <div class="grid">
-      <div class="campo">
-        <label>Nombre de la muestra *</label>
-        <input type="text" formControlName="nombreMuestra">
-      </div>
-      <div class="campo">
-        <label>Prioridad</label>
-        <input type="text" formControlName="prioridad" placeholder="Alta / Media / Baja">
-      </div>
-      <div class="campo">
-        <label>Fecha entrega</label>
-        <input type="date" formControlName="fechaEntrega">
-      </div>
-      <div class="campo">
-        <label>Encargado (ID)</label>
-        <input type="number" formControlName="idUsuarioEncargado">
-      </div>
-    </div>
-
-    <div class="campo">
-      <label>Descripción</label>
-      <textarea rows="3" formControlName="descripcion"></textarea>
-    </div>
-
-    <div class="seccion">
-      <h3>Referencia visual</h3>
-      <div class="grid">
-        <div class="campo">
-          <label>Mockup *</label>
-          <input type="text" formControlName="mockupUrl">
+    <section class="panel panel-resumen">
+      <div class="panel-head">
+        <div>
+          <span class="eyebrow">Resumen</span>
+          <h3>{{ muestra.nombreMuestra }}</h3>
         </div>
-        <div class="campo">
-          <label>Paleta RGB</label>
-          <input type="text" formControlName="paletaRgb" placeholder="#000000,#FFFFFF">
+        <span class="panel-tag">{{ editando ? 'Edición habilitada' : 'Solo lectura' }}</span>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Prioridad</span>
+          <strong>{{ form.get('prioridad')?.value || '-' }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Entrega</span>
+          <strong>{{ form.get('fechaEntrega')?.value || '-' }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Encargado</span>
+          <strong>{{ form.get('idUsuarioEncargado')?.value || '-' }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Prendas</span>
+          <strong>{{ muestra.prendas?.length || 0 }}</strong>
         </div>
       </div>
 
+      <div class="campo">
+        <label>Descripción</label>
+        <textarea rows="3" formControlName="descripcion"></textarea>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <span class="eyebrow">Datos generales</span>
+          <h3>Ficha de la muestra</h3>
+        </div>
+      </div>
+
       <div class="grid">
         <div class="campo">
-          <label>
+          <label>Nombre de la muestra *</label>
+          <input type="text" formControlName="nombreMuestra">
+        </div>
+        <div class="campo">
+          <label>Prioridad</label>
+          <input type="text" formControlName="prioridad" placeholder="Alta / Media / Baja">
+        </div>
+        <div class="campo">
+          <label>Fecha entrega</label>
+          <input type="date" formControlName="fechaEntrega">
+        </div>
+        <div class="campo">
+          <label>Encargado (ID)</label>
+          <input type="number" formControlName="idUsuarioEncargado">
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <span class="eyebrow">Referencia visual</span>
+          <h3>Diseño y acabados</h3>
+        </div>
+      </div>
+
+      <div class="media-grid">
+        <div class="media-card media-card-wide">
+          <div class="media-top">
+            <span class="media-title">Mockup</span>
+            <span class="media-helper">Vista principal</span>
+          </div>
+          <div class="media-preview">
+            <img *ngIf="form.get('mockupUrl')?.value; else sinMockup" [src]="form.get('mockupUrl')?.value" alt="Mockup de muestra">
+            <ng-template #sinMockup>
+              <div class="media-empty">Sin mockup</div>
+            </ng-template>
+          </div>
+          <input type="text" formControlName="mockupUrl" placeholder="URL o contenido del mockup">
+        </div>
+
+        <div class="media-card">
+          <div class="media-top">
+            <span class="media-title">Paleta</span>
+            <span class="media-helper">Color de referencia</span>
+          </div>
+          <div class="paleta-card">
+            <span class="paleta-swatch" [style.background]="paletaColor"></span>
+            <div>
+              <strong>{{ form.get('paletaRgb')?.value || '-' }}</strong>
+              <small>Aplicada al diseño</small>
+            </div>
+          </div>
+          <input type="text" formControlName="paletaRgb" placeholder="#000000, #FFFFFF">
+        </div>
+      </div>
+
+      <div class="grid diseno-grid">
+        <div class="campo diseno-card">
+          <label class="check-line">
             <input type="checkbox" formControlName="bordadoRequerido">
-            Bordado requerido
+            <span>Bordado requerido</span>
           </label>
           <textarea rows="2" formControlName="bordadoDescripcion" placeholder="Descripción bordado"></textarea>
           <input type="text" formControlName="bordadoReferencia" placeholder="Referencia bordado">
+          <div class="referencia-preview" *ngIf="form.get('bordadoReferencia')?.value">
+            <img [src]="form.get('bordadoReferencia')?.value" alt="Referencia de bordado">
+          </div>
         </div>
-        <div class="campo">
-          <label>
+        <div class="campo diseno-card">
+          <label class="check-line">
             <input type="checkbox" formControlName="estampadoRequerido">
-            Estampado requerido
+            <span>Estampado requerido</span>
           </label>
           <textarea rows="2" formControlName="estampadoDescripcion" placeholder="Descripción estampado"></textarea>
           <input type="text" formControlName="estampadoReferencia" placeholder="Referencia estampado">
+          <div class="referencia-preview" *ngIf="form.get('estampadoReferencia')?.value">
+            <img [src]="form.get('estampadoReferencia')?.value" alt="Referencia de estampado">
+          </div>
         </div>
       </div>
 
@@ -71,11 +147,16 @@
         <label>Otros detalles</label>
         <textarea rows="2" formControlName="otrosDetalle"></textarea>
       </div>
-    </div>
+    </section>
   </form>
 
-  <div *ngIf="muestra?.prendas?.length" class="seccion">
-    <h3>Prendas</h3>
+  <section *ngIf="muestra?.prendas?.length" class="panel seccion-prendas">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">Composición</span>
+        <h3>Prendas de la muestra</h3>
+      </div>
+    </div>
     <table class="tabla">
       <thead>
         <tr>
@@ -96,7 +177,7 @@
         </tr>
       </tbody>
     </table>
-  </div>
+  </section>
 
   <div class="footer-botones" *ngIf="muestra">
     <button class="btn-primario" *ngIf="!editando" (click)="iniciarEdicion()">
@@ -111,16 +192,20 @@
     <button class="btn-danger" (click)="solicitarComentario('rechazo')" [disabled]="editando || !puedeRechazar">
       Rechazar muestra
     </button>
-    <button class="btn-aceptar" (click)="solicitarComentario('aceptacion')" [disabled]="editando || !puedeAceptar">
+    <button class="btn-aceptar" (click)="aceptarMuestra()" [disabled]="editando || !puedeAceptar">
       Aceptar muestra
     </button>
   </div>
 
   <div class="modal-overlay" *ngIf="mostrarModalComentario">
     <div class="modal">
-      <h4>Comentario</h4>
+      <h4>{{ accionComentario === 'rechazo' ? 'Motivo del rechazo' : 'Comentario de actualización' }}</h4>
       <p *ngIf="comentarioObligatorio">El comentario es obligatorio.</p>
-      <textarea rows="4" [(ngModel)]="comentario" placeholder="Escribe el comentario"></textarea>
+      <textarea
+        rows="4"
+        [(ngModel)]="comentario"
+        [placeholder]="accionComentario === 'rechazo' ? 'Explica por qué se rechaza la muestra' : 'Escribe el comentario de actualización'"
+      ></textarea>
       <div class="modal-actions">
         <button class="btn-secundario" (click)="cerrarModalComentario()">Cancelar</button>
         <button class="btn-primario" (click)="confirmarComentario()">Confirmar</button>

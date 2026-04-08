@@ -45,6 +45,22 @@ export class MuestrasService {
     );
   }
 
+  crearMuestra(dto: any): Observable<MuestraDetalle> {
+    return this.http.post<MuestraDetalle>(this.apiUrl, dto).pipe(
+      tap((muestraCreada) => {
+        const muestrasActuales = this.muestrasSubject.value;
+        const yaExiste = muestrasActuales.some(m => m.idMuestra === muestraCreada.idMuestra);
+        const nuevasMuestras = yaExiste
+          ? muestrasActuales.map(m => m.idMuestra === muestraCreada.idMuestra ? muestraCreada : m)
+          : [muestraCreada, ...muestrasActuales];
+
+        this.muestrasSubject.next(nuevasMuestras);
+        this.guardarCache(nuevasMuestras);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
   actualizarMuestra(id: number, dto: any): Observable<MuestraDetalle> {
     return this.http.put<MuestraDetalle>(`${this.apiUrl}/${id}`, dto).pipe(
       catchError(this.handleError)

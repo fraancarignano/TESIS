@@ -5,7 +5,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } 
 import { MuestrasService } from '../../services/muestra.service';
 import { MuestraDetalle } from '../../models/muestra.model';
 
-type AccionComentario = 'actualizacion' | 'rechazo' | 'aceptacion';
+type AccionComentario = 'actualizacion' | 'rechazo';
 
 @Component({
   selector: 'app-muestra-detalle-page',
@@ -57,12 +57,14 @@ export class MuestraDetallePageComponent implements OnInit {
       this.router.navigate(['/proyectos/muestras']);
       return;
     }
+
     this.cargarMuestra(id);
   }
 
   private cargarMuestra(id: number): void {
     this.loading = true;
     this.error = '';
+
     this.muestrasService.obtenerMuestraPorId(id).subscribe({
       next: (muestra) => {
         this.muestra = muestra;
@@ -100,6 +102,7 @@ export class MuestraDetallePageComponent implements OnInit {
 
   cancelarEdicion(): void {
     if (!this.muestra) return;
+
     this.form.patchValue({
       nombreMuestra: this.muestra.nombreMuestra,
       descripcion: this.muestra.descripcion || '',
@@ -118,12 +121,14 @@ export class MuestraDetallePageComponent implements OnInit {
     });
     this.form.disable();
     this.editando = false;
+    this.error = '';
   }
 
   solicitarComentario(accion: AccionComentario): void {
     this.accionComentario = accion;
     this.comentario = '';
-    this.comentarioObligatorio = accion !== 'aceptacion';
+    this.comentarioObligatorio = accion === 'rechazo';
+    this.error = '';
     this.mostrarModalComentario = true;
   }
 
@@ -131,6 +136,7 @@ export class MuestraDetallePageComponent implements OnInit {
     this.mostrarModalComentario = false;
     this.accionComentario = undefined;
     this.comentario = '';
+    this.error = '';
   }
 
   confirmarComentario(): void {
@@ -187,23 +193,25 @@ export class MuestraDetallePageComponent implements OnInit {
       return;
     }
 
-    if (this.accionComentario === 'rechazo') {
-      this.muestrasService.rechazarMuestra(id, comentario).subscribe({
-        next: () => {
-          this.cargarMuestra(id);
-          this.cerrarModalComentario();
-        },
-        error: (err) => {
-          this.error = err.message || 'No se pudo rechazar la muestra';
-        }
-      });
-      return;
-    }
-
-    this.muestrasService.aceptarMuestra(id, comentario || undefined).subscribe({
+    this.muestrasService.rechazarMuestra(id, comentario).subscribe({
       next: () => {
         this.cargarMuestra(id);
         this.cerrarModalComentario();
+      },
+      error: (err) => {
+        this.error = err.message || 'No se pudo rechazar la muestra';
+      }
+    });
+  }
+
+  aceptarMuestra(): void {
+    const id = this.muestra?.idMuestra;
+    if (!id) return;
+
+    this.error = '';
+    this.muestrasService.aceptarMuestra(id).subscribe({
+      next: () => {
+        this.cargarMuestra(id);
       },
       error: (err) => {
         this.error = err.message || 'No se pudo aprobar la muestra';
@@ -213,6 +221,27 @@ export class MuestraDetallePageComponent implements OnInit {
 
   get estadoActual(): string {
     return this.muestra?.estado || '-';
+  }
+
+  getEstadoClass(estado?: string | null): string {
+    const valor = (estado || '').toLowerCase();
+    if (valor.includes('aprob')) return 'badge-aprobada';
+    if (valor.includes('rechaz')) return 'badge-rechazada';
+    if (valor.includes('pend')) return 'badge-pendiente';
+    return 'badge-neutra';
+  }
+
+  get paletaColor(): string {
+    const paleta = this.form.get('paletaRgb')?.value?.trim();
+    if (!paleta) return 'transparent';
+
+    const hexMatch = paleta.match(/#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/);
+    if (hexMatch) return hexMatch[0];
+
+    const rgbMatch = paleta.match(/rgb\(([^)]+)\)/i);
+    if (rgbMatch) return `rgb(${rgbMatch[1]})`;
+
+    return paleta.includes(',') ? paleta.split(',')[0].trim() : paleta;
   }
 
   get puedeAceptar(): boolean {

@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProyectosServiceNuevo } from '../../services/proyectos-nuevo.service';
+import { MuestrasService } from '../../services/muestra.service';
 import {
   ProyectoCrearNuevo,
   FormularioProyectoInicializacion,
@@ -108,6 +109,7 @@ export class MuestraFormNuevoComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private proyectosService: ProyectosServiceNuevo,
+    private muestrasService: MuestrasService,
     private router: Router
   ) {
     this.crearFormulario();
@@ -690,55 +692,42 @@ export class MuestraFormNuevoComponent implements OnInit {
   }
 
   // ========== MODO CREACIÃ“N (cÃ³digo original) ==========
-  const dto: ProyectoCrearNuevo = {
+  const dtoMuestra = {
     idCliente: Number(formValue.idCliente),
-    nombreProyecto: formValue.nombreProyecto.trim(),
+    nombreMuestra: formValue.nombreProyecto.trim(),
     descripcion: formValue.descripcion?.trim() || undefined,
     prioridad: formValue.prioridad,
     estado: 'Pendiente',
-    fechaInicio: formValue.fechaInicio,
-    fechaFin: formValue.fechaFin || undefined,
+    fechaCreacion: formValue.fechaInicio,
+    fechaEntrega: formValue.fechaFin || undefined,
     idUsuarioEncargado: formValue.idUsuarioEncargado
       ? Number(formValue.idUsuarioEncargado)
       : undefined,
+    mockupUrl: this.referenciaVisual.mockup,
+    bordadoRequerido: this.referenciaVisual.bordado.requerido,
+    bordadoDescripcion: this.referenciaVisual.bordado.descripcion?.trim() || undefined,
+    bordadoReferencia: this.referenciaVisual.bordado.imagen || undefined,
+    estampadoRequerido: this.referenciaVisual.estampado.requerido,
+    estampadoDescripcion: this.referenciaVisual.estampado.descripcion?.trim() || undefined,
+    estampadoReferencia: this.referenciaVisual.estampado.imagen || undefined,
+    otrosDetalle: this.referenciaVisual.otrosDetalle?.trim() || undefined,
+    paletaRgb: this.paletaRgbTexto,
     prendas: this.prendasProyecto.map((p, index) => ({
       idTipoPrenda: p.idTipoPrenda!,
       idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
-      idInsumo: p.idInsumo!,
-      cantidadTotal: p.cantidadTotal,
+      colorTela: p.colorTela || undefined,
       tieneBordado: p.tieneBordado,
       tieneEstampado: p.tieneEstampado,
-      descripcionDiseño: p.descripcionDiseno?.trim() || undefined,
-      orden: index,
-      talles: p.tallesDistribuidos.map(t => ({
-        idTalle: t.idTalle,
-        cantidad: t.cantidad
-      }))
-    })),
-    materialesManuales:
-      this.materialesManuales.length > 0
-        ? this.materialesManuales.map(m => ({
-            idInsumo: m.idInsumo!,
-            cantidad: m.cantidad,
-            unidadMedida: m.unidadMedida!,
-            observaciones: undefined
-          }))
-        : undefined
+      descripcionDiseno: p.descripcionDiseno?.trim() || undefined
+    }))
   };
 
-  const validacion = this.proyectosService.validarFormularioLocal(dto);
-  if (!validacion.esValido) {
-    this.errorMensaje = validacion.errores.join('; ');
-    this.cargando = false;
-    return;
-  }
-
-  this.proyectosService.crearProyecto(dto).subscribe({
+  this.muestrasService.crearMuestra(dtoMuestra).subscribe({
     next: () => {
       if (this.esModal) {
         this.cerrar.emit();
       } else {
-        this.router.navigate(['/proyectos/explorar']);
+        this.router.navigate(['/proyectos/muestras']);
       }
     },
     error: (err) => {
