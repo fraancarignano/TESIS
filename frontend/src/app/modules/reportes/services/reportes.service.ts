@@ -271,10 +271,9 @@ export class ReportesService {
   ): Observable<ReporteClientesTemporadaResponse> {
     const params: string[] = [];
 
-    if (filtros.anioInicio !== undefined) params.push(`anioInicio=${filtros.anioInicio}`);
-    if (filtros.anioFin !== undefined) params.push(`anioFin=${filtros.anioFin}`);
+    if (filtros.fechaInicio) params.push(`fechaInicio=${encodeURIComponent(filtros.fechaInicio)}`);
+    if (filtros.fechaFin) params.push(`fechaFin=${encodeURIComponent(filtros.fechaFin)}`);
     if (filtros.idCliente !== undefined) params.push(`idCliente=${filtros.idCliente}`);
-    if (filtros.temporada) params.push(`temporada=${encodeURIComponent(filtros.temporada)}`);
 
     const qs = params.length ? `?${params.join('&')}` : '';
 

@@ -22,6 +22,15 @@ import {
 
 Chart.register(...registerables);
 
+interface ClientePrendasResumen {
+  cliente: string;
+  tipoCliente: string;
+  totalPrendas: number;
+  cantidadProyectos: number;
+  proyectosFinalizados: number;
+  proyectosCancelados: number;
+}
+
 @Component({
   selector: 'app-clientes-temporada',
   standalone: true,
@@ -40,15 +49,13 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
   datosReporte: ReporteClientesTemporadaResponse | null = null;
   filas: ReporteClientesTemporadaItem[] = [];
 
-  readonly temporadas = ['Primavera-Verano', 'Otoño-Invierno'];
-  readonly aniosDisponibles: number[] = [];
+  readonly limiteTopClientes = 10;
   private chart?: Chart<'bar', (number | [number, number] | null)[], unknown>;
 
   filtros: ReporteClientesTemporadaRequest = {
-    anioInicio: undefined,
-    anioFin: undefined,
-    idCliente: undefined,
-    temporada: undefined
+    fechaInicio: undefined,
+    fechaFin: undefined,
+    idCliente: undefined
   };
 
   constructor(
@@ -56,13 +63,8 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
     private alertas: AlertasService,
     private cdr: ChangeDetectorRef
   ) {
-    const anioActual = new Date().getFullYear();
-    for (let i = 0; i < 10; i++) {
-      this.aniosDisponibles.push(anioActual - i);
-    }
-
-    this.filtros.anioInicio = anioActual - 2;
-    this.filtros.anioFin = anioActual;
+    this.filtros.fechaInicio = this.formatearFechaInput(this.sumarAnios(new Date(), -2));
+    this.filtros.fechaFin = this.formatearFechaInput(new Date());
   }
 
   ngOnInit(): void {
@@ -92,12 +94,8 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
   }
 
   aplicarFiltros(): void {
-    if (
-      this.filtros.anioInicio !== undefined &&
-      this.filtros.anioFin !== undefined &&
-      this.filtros.anioInicio > this.filtros.anioFin
-    ) {
-      this.alertas.warning('Rango inválido', 'El Año Inicio no puede ser mayor al Año Fin');
+    if (this.filtros.fechaInicio && this.filtros.fechaFin && this.filtros.fechaInicio > this.filtros.fechaFin) {
+      this.alertas.warning('Rango invalido', 'La fecha de inicio no puede ser mayor a la fecha de fin');
       return;
     }
 
@@ -105,12 +103,10 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
   }
 
   limpiarFiltros(): void {
-    const anioActual = new Date().getFullYear();
     this.filtros = {
-      anioInicio: anioActual - 2,
-      anioFin: anioActual,
-      idCliente: undefined,
-      temporada: undefined
+      fechaInicio: this.formatearFechaInput(this.sumarAnios(new Date(), -2)),
+      fechaFin: this.formatearFechaInput(new Date()),
+      idCliente: undefined
     };
     this.cargarReporte();
   }
@@ -124,7 +120,7 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
       next: (response) => {
         this.datosReporte = response;
         this.filas = [...response.items].sort((a, b) => {
-          if (a.anio !== b.anio) return b.anio - a.anio;
+          if (a.totalPrendas !== b.totalPrendas) return b.totalPrendas - a.totalPrendas;
           return a.cliente.localeCompare(b.cliente);
         });
 
@@ -135,7 +131,7 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
       error: (err) => {
         this.loading = false;
         this.error = true;
-        this.mensajeError = err.message || 'No se pudo cargar el reporte de clientes por temporada.';
+        this.mensajeError = err.message || 'No se pudo cargar el reporte de demanda por cliente.';
         this.alertas.error('Error', this.mensajeError);
       }
     });
@@ -151,18 +147,18 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
       const datos = this.filas.map((f) => ({
         Cliente: f.cliente,
         'Tipo Cliente': f.tipoCliente,
-        Año: f.anio,
-        Temporada: f.temporada,
         'Cant. Proyectos': f.cantidadProyectos,
         'Total Prendas': f.totalPrendas,
+        'Promedio Prendas/Proyecto': this.calcularPromedioPrendas(f),
         Finalizados: f.proyectosFinalizados,
-        Cancelados: f.proyectosCancelados
+        Cancelados: f.proyectosCancelados,
+        'Cancelacion %': this.calcularPorcentajeCancelacion(f)
       }));
 
       const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(datos);
       const workbook: XLSX.WorkBook = {
-        Sheets: { 'Clientes por Temporada': worksheet },
-        SheetNames: ['Clientes por Temporada']
+        Sheets: { 'Demanda por Cliente': worksheet },
+        SheetNames: ['Demanda por Cliente']
       };
 
       const excelBuffer: ArrayBuffer = XLSX.write(workbook, {
@@ -178,10 +174,10 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `reporte_clientes_temporada_${fecha}.xlsx`;
+      a.download = `reporte_demanda_clientes_${fecha}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
-      this.alertas.success('Exportación exitosa', `Se exportaron ${this.filas.length} registros`);
+      this.alertas.success('Exportacion exitosa', `Se exportaron ${this.filas.length} registros`);
     } catch {
       this.alertas.error('Error', 'No se pudo generar el archivo Excel');
     }
@@ -189,6 +185,77 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
 
   get sinDatos(): boolean {
     return !this.loading && !this.error && this.filas.length === 0;
+  }
+
+  get totalPrendasReporte(): number {
+    return this.filas.reduce((total, fila) => total + fila.totalPrendas, 0);
+  }
+
+  get totalProyectosReporte(): number {
+    return this.filas.reduce((total, fila) => total + fila.cantidadProyectos, 0);
+  }
+
+  get clientesConDemanda(): number {
+    return this.filas.filter((fila) => fila.totalPrendas > 0).length;
+  }
+
+  get promedioPrendasPorCliente(): number {
+    if (this.clientesConDemanda === 0) return 0;
+    return Math.round(this.totalPrendasReporte / this.clientesConDemanda);
+  }
+
+  calcularPromedioPrendas(fila: ReporteClientesTemporadaItem): number {
+    if (fila.cantidadProyectos === 0) return 0;
+    return Math.round(fila.totalPrendas / fila.cantidadProyectos);
+  }
+
+  calcularPorcentajeCancelacion(fila: ReporteClientesTemporadaItem): number {
+    if (fila.cantidadProyectos === 0) return 0;
+    return Math.round((fila.proyectosCancelados / fila.cantidadProyectos) * 100);
+  }
+
+  private formatearFechaInput(fecha: Date): string {
+    return fecha.toISOString().slice(0, 10);
+  }
+
+  private sumarAnios(fecha: Date, anios: number): Date {
+    const resultado = new Date(fecha);
+    resultado.setFullYear(resultado.getFullYear() + anios);
+    return resultado;
+  }
+
+  get tituloGrafico(): string {
+    if (this.filtros.idCliente) {
+      return 'Prendas del cliente seleccionado';
+    }
+
+    return `Top ${Math.min(this.limiteTopClientes, this.obtenerTopClientesPorPrendas().length)} clientes por prendas`;
+  }
+
+  private obtenerTopClientesPorPrendas(): ClientePrendasResumen[] {
+    const clientes = new Map<number, ClientePrendasResumen>();
+
+    this.filas.forEach((fila) => {
+      const resumen = clientes.get(fila.idCliente) || {
+        cliente: fila.cliente,
+        tipoCliente: fila.tipoCliente,
+        totalPrendas: 0,
+        cantidadProyectos: 0,
+        proyectosFinalizados: 0,
+        proyectosCancelados: 0
+      };
+
+      resumen.totalPrendas += fila.totalPrendas;
+      resumen.cantidadProyectos += fila.cantidadProyectos;
+      resumen.proyectosFinalizados += fila.proyectosFinalizados;
+      resumen.proyectosCancelados += fila.proyectosCancelados;
+
+      clientes.set(fila.idCliente, resumen);
+    });
+
+    return Array.from(clientes.values())
+      .sort((a, b) => b.totalPrendas - a.totalPrendas)
+      .slice(0, this.limiteTopClientes);
   }
 
   private crearGrafico(): void {
@@ -202,30 +269,23 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
     const ctx = this.chartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    const clientes = Array.from(new Set(this.filas.map((f) => f.cliente)));
-    const temporadas = this.filtros.temporada ? [this.filtros.temporada] : this.temporadas;
-
-    const datasets = temporadas.map((temporada, index) => {
-      const data = clientes.map((cliente) =>
-        this.filas
-          .filter((f) => f.cliente === cliente && f.temporada === temporada)
-          .reduce((acum, actual) => acum + actual.cantidadProyectos, 0)
-      );
-
-      return {
-        label: temporada,
-        data,
-        borderRadius: 6,
-        borderWidth: 0,
-        backgroundColor: index === 0 ? '#ff6d2d' : '#1f3b6b'
-      };
-    });
+    const topClientes = this.obtenerTopClientesPorPrendas();
+    const clientes = topClientes.map((item) => item.cliente);
+    const data = topClientes.map((item) => item.totalPrendas);
 
     const config: ChartConfiguration<'bar'> = {
       type: 'bar',
       data: {
         labels: clientes,
-        datasets
+        datasets: [
+          {
+            label: 'Total prendas',
+            data,
+            borderRadius: 6,
+            borderWidth: 0,
+            backgroundColor: '#ff6d2d'
+          }
+        ]
       },
       options: {
         responsive: true,
@@ -233,17 +293,26 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
         indexAxis: 'y',
         plugins: {
           legend: {
-            display: true,
-            position: 'right',
-            labels: {
-              usePointStyle: true,
-              pointStyle: 'circle',
-              padding: 16
-            }
+            display: false
           },
           tooltip: {
             callbacks: {
-              label: (context) => `${context.dataset.label}: ${context.parsed.x} proyectos`
+              label: (context) => {
+                const resumen = topClientes[context.dataIndex];
+                if (!resumen) return '';
+
+                const prendas = resumen.totalPrendas.toLocaleString('es-AR');
+                const cancelacion = resumen.cantidadProyectos > 0
+                  ? Math.round((resumen.proyectosCancelados / resumen.cantidadProyectos) * 100)
+                  : 0;
+
+                return [
+                  `Prendas: ${prendas}`,
+                  `Proyectos: ${resumen.cantidadProyectos}`,
+                  `Finalizados: ${resumen.proyectosFinalizados}`,
+                  `Cancelados: ${resumen.proyectosCancelados} (${cancelacion}%)`
+                ];
+              }
             }
           }
         },
@@ -251,7 +320,17 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
           x: {
             beginAtZero: true,
             grid: { color: '#f2f2f2' },
-            ticks: { precision: 0, color: '#5f6368' }
+            title: {
+              display: true,
+              text: 'Total prendas',
+              color: '#5f6368',
+              font: { weight: 600 }
+            },
+            ticks: {
+              precision: 0,
+              color: '#5f6368',
+              callback: (value) => Number(value).toLocaleString('es-AR')
+            }
           },
           y: {
             grid: { display: false },

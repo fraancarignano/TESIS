@@ -95,7 +95,8 @@
   letter-spacing: 0.4px;
 }
 
-.filtro-group select {
+.filtro-group select,
+.filtro-group input {
   padding: 6px 8px;
   border: 1px solid #e0e0e0;
   border-radius: 5px;
@@ -104,7 +105,8 @@
   background: white;
 }
 
-.filtro-group select:focus {
+.filtro-group select:focus,
+.filtro-group input:focus {
   outline: none;
   border-color: #ff5722;
   box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.1);
@@ -194,10 +196,52 @@
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
 }
 
+.grafico-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .grafico-header h3 {
   margin: 0;
   font-size: 1rem;
   color: #1f3b6b;
+}
+
+.grafico-header p {
+  margin: 4px 0 0;
+  color: #777;
+  font-size: 0.78rem;
+}
+
+.metricas-resumen {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.metricas-resumen div {
+  border: 1px solid #eeeeee;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metricas-resumen strong {
+  color: #222;
+  font-size: 1rem;
+}
+
+.metricas-resumen span {
+  color: #777;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .grafico-container {
@@ -272,5 +316,9 @@
 
   .grafico-container {
     height: 280px;
+  }
+
+  .metricas-resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

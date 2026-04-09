@@ -1,16 +1,13 @@
 export interface ReporteClientesTemporadaRequest {
-  anioInicio?: number;
-  anioFin?: number;
+  fechaInicio?: string;
+  fechaFin?: string;
   idCliente?: number;
-  temporada?: string;
 }
 
 export interface ReporteClientesTemporadaItem {
   idCliente: number;
   cliente: string;
   tipoCliente: string;
-  anio: number;
-  temporada: string;
   cantidadProyectos: number;
   totalPrendas: number;
   proyectosFinalizados: number;

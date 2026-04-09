@@ -2,10 +2,9 @@ namespace TESIS_OG.DTOs.Reportes
 {
     public class ReporteClientesTemporadaRequestDTO
     {
-        public int? AnioInicio { get; set; }
-        public int? AnioFin { get; set; }
+        public DateOnly? FechaInicio { get; set; }
+        public DateOnly? FechaFin { get; set; }
         public int? IdCliente { get; set; }
-        public string? Temporada { get; set; }
     }
 
     public class ReporteClientesTemporadaItemDTO
@@ -13,8 +12,6 @@ namespace TESIS_OG.DTOs.Reportes
         public int IdCliente { get; set; }
         public string? Cliente { get; set; }
         public string? TipoCliente { get; set; }
-        public int Anio { get; set; }
-        public string? Temporada { get; set; }
         public int CantidadProyectos { get; set; }
         public int TotalPrendas { get; set; }
         public int ProyectosFinalizados { get; set; }

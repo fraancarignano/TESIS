@@ -161,39 +161,36 @@ namespace TESIS_OG.Controllers
     }
 
     /// <summary>
-    /// Obtener reporte de clientes por temporada (SP: sp_ReporteClientesPorTemporada)
+    /// Obtener reporte de demanda por cliente.
     /// </summary>
-    /// <param name="anioInicio">Año de inicio del filtro (opcional)</param>
-    /// <param name="anioFin">Año de fin del filtro (opcional)</param>
-    /// <param name="idCliente">ID de cliente específico (opcional)</param>
-    /// <param name="temporada">Temporada específica (opcional)</param>
-    /// <returns>Listado de clientes por temporada con métricas de proyectos y prendas</returns>
+    /// <param name="fechaInicio">Fecha de inicio del filtro (opcional)</param>
+    /// <param name="fechaFin">Fecha de fin del filtro (opcional)</param>
+    /// <param name="idCliente">ID de cliente especifico (opcional)</param>
+    /// <returns>Listado de clientes con metricas de proyectos y prendas</returns>
     [HttpGet("clientes-temporada")]
     [ProducesResponseType(typeof(ReporteClientesTemporadaResponseDTO), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ReporteClientesTemporadaResponseDTO>> ObtenerClientesPorTemporada(
-      [FromQuery] int? anioInicio,
-      [FromQuery] int? anioFin,
-      [FromQuery] int? idCliente,
-      [FromQuery] string? temporada)
+      [FromQuery] DateOnly? fechaInicio,
+      [FromQuery] DateOnly? fechaFin,
+      [FromQuery] int? idCliente)
     {
       try
       {
-        if (anioInicio.HasValue && anioFin.HasValue && anioInicio > anioFin)
+        if (fechaInicio.HasValue && fechaFin.HasValue && fechaInicio > fechaFin)
         {
           return BadRequest(new
           {
-            message = "El parámetro anioInicio no puede ser mayor que anioFin."
+            message = "La fecha de inicio no puede ser mayor que la fecha de fin."
           });
         }
 
         var request = new ReporteClientesTemporadaRequestDTO
         {
-          AnioInicio = anioInicio,
-          AnioFin = anioFin,
-          IdCliente = idCliente,
-          Temporada = temporada
+          FechaInicio = fechaInicio,
+          FechaFin = fechaFin,
+          IdCliente = idCliente
         };
 
         var response = await _reportesService.ObtenerReporteClientesPorTemporada(request);
@@ -203,16 +200,15 @@ namespace TESIS_OG.Controllers
       {
         _logger.LogError(
           ex,
-          "Error en endpoint reporte clientes-temporada. anioInicio={AnioInicio}, anioFin={AnioFin}, idCliente={IdCliente}, temporada={Temporada}",
-          anioInicio,
-          anioFin,
-          idCliente,
-          temporada
+          "Error en endpoint reporte demanda por cliente. fechaInicio={FechaInicio}, fechaFin={FechaFin}, idCliente={IdCliente}",
+          fechaInicio,
+          fechaFin,
+          idCliente
         );
 
         return StatusCode(StatusCodes.Status500InternalServerError, new
         {
-          message = "Error al generar el reporte de clientes por temporada",
+          message = "Error al generar el reporte de demanda por cliente",
           error = ex.Message
         });
       }

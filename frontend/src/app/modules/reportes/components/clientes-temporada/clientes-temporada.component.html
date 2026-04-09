@@ -7,12 +7,12 @@
           <line x1="12" y1="20" x2="12" y2="4"></line>
           <line x1="6" y1="20" x2="6" y2="14"></line>
         </svg>
-        Reporte de Clientes por Temporada
+        Reporte de Demanda por Cliente
       </h2>
     </div>
     <div class="header-right">
       <span class="total-badge" *ngIf="!loading && !error">
-        {{ filas.length }} registro{{ filas.length !== 1 ? 's' : '' }}
+        {{ filas.length }} cliente{{ filas.length !== 1 ? 's' : '' }}
       </span>
       <button class="btn-exportar" (click)="exportarExcel()">
         Exportar Excel
@@ -23,19 +23,13 @@
   <div class="filtros-panel">
     <div class="filtros-grid">
       <div class="filtro-group">
-        <label>Año Inicio</label>
-        <select [(ngModel)]="filtros.anioInicio">
-          <option [ngValue]="undefined">Todos</option>
-          <option *ngFor="let anio of aniosDisponibles" [ngValue]="anio">{{ anio }}</option>
-        </select>
+        <label>Fecha Inicio</label>
+        <input type="date" [(ngModel)]="filtros.fechaInicio">
       </div>
 
       <div class="filtro-group">
-        <label>Año Fin</label>
-        <select [(ngModel)]="filtros.anioFin">
-          <option [ngValue]="undefined">Todos</option>
-          <option *ngFor="let anio of aniosDisponibles" [ngValue]="anio">{{ anio }}</option>
-        </select>
+        <label>Fecha Fin</label>
+        <input type="date" [(ngModel)]="filtros.fechaFin">
       </div>
 
       <div class="filtro-group">
@@ -43,14 +37,6 @@
         <select [(ngModel)]="filtros.idCliente">
           <option [ngValue]="undefined">Todos los clientes</option>
           <option *ngFor="let cliente of clientes" [ngValue]="cliente.idCliente">{{ cliente.nombre }}</option>
-        </select>
-      </div>
-
-      <div class="filtro-group">
-        <label>Temporada</label>
-        <select [(ngModel)]="filtros.temporada">
-          <option [ngValue]="undefined">Todas</option>
-          <option *ngFor="let t of temporadas" [value]="t">{{ t }}</option>
         </select>
       </div>
     </div>
@@ -77,7 +63,28 @@
 
   <div class="grafico-modal" *ngIf="!loading && !error && !sinDatos">
     <div class="grafico-header">
-      <h3>Demanda por cliente</h3>
+      <div>
+        <h3>{{ tituloGrafico }}</h3>
+        <p>Volumen registrado por cliente en el rango elegido.</p>
+      </div>
+    </div>
+    <div class="metricas-resumen">
+      <div>
+        <strong>{{ totalPrendasReporte | number:'1.0-0' }}</strong>
+        <span>Prendas</span>
+      </div>
+      <div>
+        <strong>{{ clientesConDemanda }}</strong>
+        <span>Clientes con demanda</span>
+      </div>
+      <div>
+        <strong>{{ totalProyectosReporte }}</strong>
+        <span>Proyectos</span>
+      </div>
+      <div>
+        <strong>{{ promedioPrendasPorCliente | number:'1.0-0' }}</strong>
+        <span>Prom. prendas/cliente</span>
+      </div>
     </div>
     <div class="grafico-container">
       <canvas #chartClientesTemporada></canvas>
@@ -91,24 +98,24 @@
           <tr>
             <th>Cliente</th>
             <th>Tipo Cliente</th>
-            <th>Año</th>
-            <th>Temporada</th>
-            <th>Cant. Proyectos</th>
             <th>Total Prendas</th>
+            <th>Cant. Proyectos</th>
+            <th>Promedio Prendas/Proyecto</th>
             <th>Finalizados</th>
             <th>Cancelados</th>
+            <th>Cancelacion</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let fila of filas">
             <td>{{ fila.cliente }}</td>
             <td>{{ fila.tipoCliente }}</td>
-            <td>{{ fila.anio }}</td>
-            <td>{{ fila.temporada }}</td>
-            <td>{{ fila.cantidadProyectos }}</td>
             <td>{{ fila.totalPrendas }}</td>
+            <td>{{ fila.cantidadProyectos }}</td>
+            <td>{{ calcularPromedioPrendas(fila) }}</td>
             <td>{{ fila.proyectosFinalizados }}</td>
             <td>{{ fila.proyectosCancelados }}</td>
+            <td>{{ calcularPorcentajeCancelacion(fila) }}%</td>
           </tr>
         </tbody>
       </table>

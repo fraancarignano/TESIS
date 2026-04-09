@@ -1,4 +1,3 @@
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using TESIS_OG.Data;
 using TESIS_OG.DTOs.Reportes;
@@ -20,26 +19,57 @@ namespace TESIS_OG.Services.ReportesService
         {
             try
             {
-                var anioInicioParam = new SqlParameter("@AnioInicio", (object?)request.AnioInicio ?? DBNull.Value);
-                var anioFinParam = new SqlParameter("@AnioFin", (object?)request.AnioFin ?? DBNull.Value);
-                var idClienteParam = new SqlParameter("@IdCliente", (object?)request.IdCliente ?? DBNull.Value);
-                var temporadaParam = new SqlParameter("@Temporada", (object?)request.Temporada ?? DBNull.Value);
-
-                var resultado = await _context.ReporteClientesTemporadaItems
-                    .FromSqlRaw(
-                        "EXEC sp_ReporteClientesPorTemporada @AnioInicio, @AnioFin, @IdCliente, @Temporada",
-                        anioInicioParam,
-                        anioFinParam,
-                        idClienteParam,
-                        temporadaParam
-                    )
+                var query = _context.ProyectoPrenda
+                    .Include(pp => pp.IdProyectoNavigation)
+                        .ThenInclude(p => p.IdClienteNavigation)
                     .AsNoTracking()
+                    .AsQueryable();
+
+                if (request.FechaInicio.HasValue)
+                    query = query.Where(pp => pp.IdProyectoNavigation.FechaInicio >= request.FechaInicio.Value);
+
+                if (request.FechaFin.HasValue)
+                    query = query.Where(pp => pp.IdProyectoNavigation.FechaInicio <= request.FechaFin.Value);
+
+                if (request.IdCliente.HasValue)
+                    query = query.Where(pp => pp.IdProyectoNavigation.IdCliente == request.IdCliente.Value);
+
+                var filas = await query
+                    .Select(pp => new
+                    {
+                        pp.IdProyecto,
+                        pp.CantidadTotal,
+                        pp.IdProyectoNavigation.IdCliente,
+                        pp.IdProyectoNavigation.Estado,
+                        Cliente = pp.IdProyectoNavigation.IdClienteNavigation.RazonSocial ??
+                                  (pp.IdProyectoNavigation.IdClienteNavigation.Nombre + " " + pp.IdProyectoNavigation.IdClienteNavigation.Apellido).Trim(),
+                        pp.IdProyectoNavigation.IdClienteNavigation.TipoCliente
+                    })
                     .ToListAsync();
 
-                var items = resultado.Where(r =>
-                    !string.IsNullOrEmpty(r.Cliente) &&
-                    !string.IsNullOrEmpty(r.Temporada)
-                ).ToList();
+                var items = filas
+                    .GroupBy(f => new { f.IdCliente, f.Cliente, f.TipoCliente })
+                    .Select(g =>
+                    {
+                        var proyectos = g
+                            .GroupBy(p => new { p.IdProyecto, p.Estado })
+                            .Select(p => p.Key)
+                            .ToList();
+
+                        return new ReporteClientesTemporadaItemDTO
+                        {
+                            IdCliente = g.Key.IdCliente,
+                            Cliente = string.IsNullOrWhiteSpace(g.Key.Cliente) ? "Sin cliente" : g.Key.Cliente,
+                            TipoCliente = g.Key.TipoCliente,
+                            TotalPrendas = g.Sum(p => p.CantidadTotal),
+                            CantidadProyectos = proyectos.Count,
+                            ProyectosFinalizados = proyectos.Count(p => p.Estado == "Finalizado"),
+                            ProyectosCancelados = proyectos.Count(p => p.Estado == "Cancelado")
+                        };
+                    })
+                    .OrderByDescending(i => i.TotalPrendas)
+                    .ThenBy(i => i.Cliente)
+                    .ToList();
 
                 return new ReporteClientesTemporadaResponseDTO
                 {
@@ -53,11 +83,10 @@ namespace TESIS_OG.Services.ReportesService
             {
                 _logger.LogError(
                     ex,
-                    "Error al obtener reporte de clientes por temporada. Filtros: anioInicio={AnioInicio}, anioFin={AnioFin}, idCliente={IdCliente}, temporada={Temporada}",
-                    request.AnioInicio,
-                    request.AnioFin,
-                    request.IdCliente,
-                    request.Temporada
+                    "Error al obtener reporte de demanda por cliente. Filtros: fechaInicio={FechaInicio}, fechaFin={FechaFin}, idCliente={IdCliente}",
+                    request.FechaInicio,
+                    request.FechaFin,
+                    request.IdCliente
                 );
                 throw;
             }
