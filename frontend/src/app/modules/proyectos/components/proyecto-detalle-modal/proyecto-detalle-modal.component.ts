@@ -283,7 +283,6 @@ export class ProyectoDetalleModalComponent implements OnInit {
   get puedeEditarFormularioCorte(): boolean {
     if (!this.esAreaCorte) return false;
     if (!this.puedeGestionarAvance) return false;
-    if (this.areaSeleccionada && this.estaCompleta(this.areaSeleccionada)) return false;
     return true;
   }
 
@@ -563,16 +562,6 @@ export class ProyectoDetalleModalComponent implements OnInit {
     if (!this.corteReal.corteNumero.trim()) return false;
     if (!this.corteReal.fechaCorte.trim()) return false;
     if (!this.corteReal.responsable.trim()) return false;
-    const tieneTelaConUso = this.corteReal.detalleTelas.some(
-      t => (Number(t.telaUsadaKg) || 0) > 0
-    );
-    if (!tieneTelaConUso) return false;
-    const tienePrendasInvalidas = this.corteReal.detalleTelas.some(t => {
-      const kg = Number(t.telaUsadaKg) || 0;
-      const prendas = Number(t.prendasCortadas) || 0;
-      return kg > 0 && prendas <= 0;
-    });
-    if (tienePrendasInvalidas) return false;
     return true;
   }
 
@@ -1597,6 +1586,17 @@ export class ProyectoDetalleModalComponent implements OnInit {
         this.guardandoCorteReal = false;
         this.refrescarHistorialCorteReal();
         this.alertas.success('Corte registrado', 'Se guardó el parte de corte real.');
+
+        // Registrar scrap en la tabla Scrap por cada tela con scrap > 0
+        const telasConScrap = this.corteReal.detalleTelas.filter(t => Number(t.scrapKg) > 0 && t.idInsumo > 0);
+        for (const tela of telasConScrap) {
+          this.proyectosService.registrarScrap(this.proyecto.idProyecto!, {
+            idInsumo: tela.idInsumo,
+            cantidadScrap: Number(tela.scrapKg),
+            motivo: 'Corte',
+            areaOcurrencia: 'Corte'
+          }).subscribe();
+        }
       },
       error: (err) => {
         console.error('Error al guardar corte real:', err);

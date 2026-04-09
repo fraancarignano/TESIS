@@ -779,5 +779,112 @@ namespace TESIS_OG.Controllers
                 return StatusCode(500, new { message = "Error al obtener reporte de precisión de pedidos", error = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Reporte de scrap por proyecto — lee la tabla Scrap directamente
+        /// </summary>
+        [HttpGet("scrap")]
+        public async Task<ActionResult<object>> GetReporteScrap(
+            DateOnly? fechaDesde,
+            DateOnly? fechaHasta,
+            int? idProyecto)
+        {
+            try
+            {
+                var query = _context.Scraps
+                    .Include(s => s.IdProyectoNavigation)
+                        .ThenInclude(p => p.IdClienteNavigation)
+                    .Include(s => s.IdInsumoNavigation)
+                    .AsQueryable();
+
+                if (fechaDesde.HasValue)
+                    query = query.Where(s => DateOnly.FromDateTime(s.FechaRegistro) >= fechaDesde.Value);
+
+                if (fechaHasta.HasValue)
+                    query = query.Where(s => DateOnly.FromDateTime(s.FechaRegistro) <= fechaHasta.Value);
+
+                if (idProyecto.HasValue)
+                    query = query.Where(s => s.IdProyecto == idProyecto.Value);
+
+                var scraps = await query.OrderByDescending(s => s.FechaRegistro).ToListAsync();
+
+                var registros = scraps.Select(s => new
+                {
+                    idScrap = s.IdScrap,
+                    idProyecto = s.IdProyecto,
+                    codigoProyecto = s.IdProyectoNavigation.CodigoProyecto ?? $"P-{s.IdProyecto}",
+                    nombreProyecto = s.IdProyectoNavigation.NombreProyecto,
+                    cliente = s.IdProyectoNavigation.IdClienteNavigation != null
+                        ? (!string.IsNullOrWhiteSpace(s.IdProyectoNavigation.IdClienteNavigation.RazonSocial)
+                            ? s.IdProyectoNavigation.IdClienteNavigation.RazonSocial
+                            : $"{s.IdProyectoNavigation.IdClienteNavigation.Nombre} {s.IdProyectoNavigation.IdClienteNavigation.Apellido}".Trim())
+                        : "Sin cliente",
+                    insumo = s.IdInsumoNavigation.NombreInsumo,
+                    cantidadScrap = s.CantidadScrap,
+                    motivo = s.Motivo ?? "-",
+                    destino = s.Destino ?? "-",
+                    areaOcurrencia = s.AreaOcurrencia ?? "-",
+                    fechaRegistro = s.FechaRegistro.ToString("yyyy-MM-dd")
+                }).ToList();
+
+                // Resumen por proyecto
+                var resumenPorProyecto = registros
+                    .GroupBy(r => new { r.idProyecto, r.codigoProyecto, r.nombreProyecto, r.cliente })
+                    .Select(g => new
+                    {
+                        idProyecto = g.Key.idProyecto,
+                        codigoProyecto = g.Key.codigoProyecto,
+                        nombreProyecto = g.Key.nombreProyecto,
+                        cliente = g.Key.cliente,
+                        cantidadScrapTotal = g.Sum(r => r.cantidadScrap),
+                        registros = g.Count()
+                    })
+                    .OrderByDescending(r => r.cantidadScrapTotal)
+                    .ToList();
+
+                // Serie temporal: scrap agrupado por día
+                var serieTemporal = registros
+                    .GroupBy(r => r.fechaRegistro)
+                    .Select(g => new { fecha = g.Key, cantidadScrap = g.Sum(r => r.cantidadScrap) })
+                    .OrderBy(g => g.fecha)
+                    .ToList();
+
+                // Resumen por insumo
+                var resumenPorInsumo = registros
+                    .GroupBy(r => r.insumo)
+                    .Select(g => new { insumo = g.Key, cantidadScrapTotal = g.Sum(r => r.cantidadScrap), registros = g.Count() })
+                    .OrderByDescending(r => r.cantidadScrapTotal)
+                    .ToList();
+
+                // KPIs globales
+                var totalScrap = registros.Sum(r => r.cantidadScrap);
+                var proyectosAfectados = registros.Select(r => r.idProyecto).Distinct().Count();
+
+                // Proyectos disponibles para filtro
+                var proyectos = await _context.Proyectos
+                    .Select(p => new { p.IdProyecto, p.CodigoProyecto, p.NombreProyecto })
+                    .OrderBy(p => p.CodigoProyecto)
+                    .ToListAsync();
+
+                return Ok(new
+                {
+                    kpis = new
+                    {
+                        totalScrap,
+                        proyectosAfectados,
+                        totalRegistros = registros.Count
+                    },
+                    resumenPorProyecto,
+                    resumenPorInsumo,
+                    serieTemporal,
+                    registros,
+                    proyectos
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al obtener reporte de scrap", error = ex.Message });
+            }
+        }
     }
 }

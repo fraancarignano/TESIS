@@ -934,6 +934,24 @@
   gap: 0.35rem;
 }
 
+.aviso-bloqueado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  color: #5d4037;
+  margin-bottom: 12px;
+}
+
+.aviso-bloqueado i {
+  color: #f9a825;
+  flex-shrink: 0;
+}
+
 .corte-resumen {
   background: #ffebee;
   color: #c62828;

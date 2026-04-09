@@ -1,12 +1,20 @@
 <div class="reporte-container">
+
+  <!-- HEADER -->
   <div class="reporte-header">
     <div>
-      <h2>Reporte de Scrap por Material</h2>
-      <p>Compara tela usada, scrap real y desvio vs consumo teorico por material.</p>
+      <h2>Reporte de Scrap</h2>
+      <p>Scrap registrado por proyecto — cantidad neta acumulada.</p>
     </div>
-    <button class="btn-refresh" (click)="cargarDatos()" [disabled]="loading">Actualizar</button>
+    <button class="btn-refresh" (click)="cargarDatos()" [disabled]="loading">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+      </svg>
+      Actualizar
+    </button>
   </div>
 
+  <!-- FILTROS -->
   <div class="filtros-panel">
     <div class="filtro-group">
       <label>Desde</label>
@@ -16,18 +24,13 @@
       <label>Hasta</label>
       <input type="date" [(ngModel)]="filtros.fechaHasta" />
     </div>
-    <div class="filtro-group">
-      <label>Cliente</label>
-      <select [(ngModel)]="filtros.cliente">
+    <div class="filtro-group filtro-wide">
+      <label>Proyecto</label>
+      <select [(ngModel)]="filtros.idProyecto">
         <option value="">Todos</option>
-        <option *ngFor="let c of clientes" [value]="c">{{ c }}</option>
-      </select>
-    </div>
-    <div class="filtro-group">
-      <label>Material</label>
-      <select [(ngModel)]="filtros.material">
-        <option value="">Todos</option>
-        <option *ngFor="let m of materiales" [value]="m">{{ m }}</option>
+        <option *ngFor="let p of proyectos" [value]="p.idProyecto">
+          {{ p.codigoProyecto }} — {{ p.nombreProyecto }}
+        </option>
       </select>
     </div>
     <div class="filtros-actions">
@@ -37,106 +40,145 @@
   </div>
 
   <div class="loading" *ngIf="loading">Cargando reporte...</div>
-  <div class="error" *ngIf="error">{{ mensajeError }}</div>
+  <div class="error-msg" *ngIf="error">{{ mensajeError }}</div>
 
   <ng-container *ngIf="!loading && !error">
+
+    <!-- KPIs -->
     <div class="kpis">
       <div class="kpi-card">
-        <span class="label">Tela usada</span>
-        <strong>{{ totalTelaUsadaKg }} kg</strong>
+        <span class="label">Scrap total</span>
+        <strong>{{ kpis.totalScrap | number:'1.0-2' }} u.</strong>
       </div>
       <div class="kpi-card">
-        <span class="label">Scrap</span>
-        <strong>{{ totalScrapKg }} kg</strong>
+        <span class="label">Proyectos afectados</span>
+        <strong>{{ kpis.proyectosAfectados }}</strong>
       </div>
       <div class="kpi-card">
-        <span class="label">% Scrap general</span>
-        <strong [class]="getClassScrap(scrapPorcentajeGeneral)">{{ scrapPorcentajeGeneral }}%</strong>
-      </div>
-      <div class="kpi-card">
-        <span class="label">Recuperable</span>
-        <strong>{{ totalUtilizableKg }} kg</strong>
-      </div>
-      <div class="kpi-card">
-        <span class="label">Cortes</span>
-        <strong>{{ totalCortes }}</strong>
-      </div>
-      <div class="kpi-card">
-        <span class="label">Promedio kg/prenda</span>
-        <strong>{{ promedioKgPorPrenda }}</strong>
+        <span class="label">Registros</span>
+        <strong>{{ kpis.totalRegistros }}</strong>
       </div>
     </div>
 
-    <div class="tabla-wrapper" *ngIf="resumenPorMaterial.length > 0; else sinDatos">
-      <h3>Resumen por material</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Material</th>
-            <th>Cortes</th>
-            <th>Proyectos</th>
-            <th>Tela usada (kg)</th>
-            <th>Scrap (kg)</th>
-            <th>% Scrap</th>
-            <th>Recuperable (kg)</th>
-            <th>Desvio consumo (kg)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of resumenPorMaterial">
-            <td>{{ item.material }}</td>
-            <td>{{ item.cortes }}</td>
-            <td>{{ item.proyectos }}</td>
-            <td>{{ item.telaUsadaKg }}</td>
-            <td>{{ item.scrapKg }}</td>
-            <td><span [class]="getClassScrap(item.scrapPorcentaje)">{{ item.scrapPorcentaje }}%</span></td>
-            <td>{{ item.utilizableKg }}</td>
-            <td>{{ item.desvioConsumoKg }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- SIN DATOS -->
+    <div class="sin-datos" *ngIf="kpis.totalRegistros === 0">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <p>No hay registros de scrap para los filtros seleccionados.</p>
     </div>
 
-    <div class="tabla-wrapper" *ngIf="registrosFiltrados.length > 0">
-      <h3>Detalle de cortes</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Proyecto</th>
-            <th>Cliente</th>
-            <th>Material</th>
-            <th>Partida</th>
-            <th>Tela usada</th>
-            <th>Scrap</th>
-            <th>% Scrap</th>
-            <th>Kg/Prenda</th>
-            <th>Teorico</th>
-            <th>Desvio kg</th>
-            <th>Ref. externa</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let r of registrosFiltrados">
-            <td>{{ formatearFecha(r.fechaCorte) }}</td>
-            <td>{{ r.codigoProyecto }} - {{ r.nombreProyecto }}</td>
-            <td>{{ r.cliente }}</td>
-            <td>{{ r.material }}</td>
-            <td>{{ r.partida || '-' }}</td>
-            <td>{{ r.telaUsadaKg }}</td>
-            <td>{{ r.scrapKg }}</td>
-            <td><span [class]="getClassScrap(r.scrapPorcentaje)">{{ r.scrapPorcentaje }}%</span></td>
-            <td>{{ r.kgPorPrenda ?? '-' }}</td>
-            <td>{{ r.consumoTeoricoKg ?? '-' }}</td>
-            <td>{{ r.desvioConsumoKg ?? '-' }}</td>
-            <td>{{ r.referenciaExterna || '-' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <ng-container *ngIf="kpis.totalRegistros > 0">
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab" [class.active]="vistaActiva === 'graficos'" (click)="cambiarVista('graficos')">
+          Gráficos
+        </button>
+        <button class="tab" [class.active]="vistaActiva === 'resumen'" (click)="cambiarVista('resumen')">
+          Por proyecto
+        </button>
+        <button class="tab" [class.active]="vistaActiva === 'detalle'" (click)="cambiarVista('detalle')">
+          Detalle
+        </button>
+      </div>
+
+      <!-- GRÁFICOS -->
+      <div class="graficos-grid" *ngIf="vistaActiva === 'graficos'">
+
+        <!-- Temporal -->
+        <div class="grafico-card grafico-full" *ngIf="serieTemporal.length > 1">
+          <div class="grafico-titulo">Evolución del scrap en el tiempo</div>
+          <div class="grafico-wrap">
+            <canvas #chartTemporal></canvas>
+          </div>
+        </div>
+
+        <!-- Por proyecto -->
+        <div class="grafico-card" *ngIf="resumenPorProyecto.length > 0">
+          <div class="grafico-titulo">Scrap por proyecto (top 8)</div>
+          <div class="grafico-wrap">
+            <canvas #chartProyecto></canvas>
+          </div>
+        </div>
+
+        <!-- Por insumo -->
+        <div class="grafico-card" *ngIf="resumenPorInsumo.length > 0">
+          <div class="grafico-titulo">Scrap por insumo</div>
+          <div class="grafico-wrap grafico-wrap-donut">
+            <canvas #chartInsumo></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RESUMEN POR PROYECTO -->
+      <div class="tabla-wrapper" *ngIf="vistaActiva === 'resumen'">
+        <table>
+          <thead>
+            <tr>
+              <th>Proyecto</th>
+              <th>Cliente</th>
+              <th>Registros</th>
+              <th>Scrap total (u.)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of resumenPorProyecto">
+              <td>
+                <span class="codigo">{{ r.codigoProyecto }}</span>
+                <span class="nombre">{{ r.nombreProyecto }}</span>
+              </td>
+              <td>{{ r.cliente }}</td>
+              <td class="text-center">{{ r.registros }}</td>
+              <td class="text-center">
+                <span [class]="getClaseScrap(r.cantidadScrapTotal)">{{ r.cantidadScrapTotal | number:'1.0-2' }}</span>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" class="text-right"><strong>Total</strong></td>
+              <td class="text-center"><strong>{{ kpis.totalScrap | number:'1.0-2' }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- DETALLE DE REGISTROS -->
+      <div class="tabla-wrapper" *ngIf="vistaActiva === 'detalle'">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Proyecto</th>
+              <th>Cliente</th>
+              <th>Insumo</th>
+              <th>Cantidad</th>
+              <th>Motivo</th>
+              <th>Área</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of registros">
+              <td>{{ formatearFecha(r.fechaRegistro) }}</td>
+              <td>
+                <span class="codigo">{{ r.codigoProyecto }}</span>
+                <span class="nombre">{{ r.nombreProyecto }}</span>
+              </td>
+              <td>{{ r.cliente }}</td>
+              <td>{{ r.insumo }}</td>
+              <td class="text-center">
+                <span [class]="getClaseScrap(r.cantidadScrap)">{{ r.cantidadScrap | number:'1.0-2' }}</span>
+              </td>
+              <td>{{ r.motivo }}</td>
+              <td>{{ r.areaOcurrencia }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </ng-container>
   </ng-container>
 
-  <ng-template #sinDatos>
-    <div class="sin-datos">No hay registros de corte real para los filtros seleccionados.</div>
-  </ng-template>
 </div>

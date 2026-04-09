@@ -409,6 +409,12 @@
                   <span class="corte-resumen">Manual</span>
                 </div>
 
+                <!-- Aviso cuando el proyecto no está En Proceso -->
+                <div class="aviso-bloqueado" *ngIf="!puedeGestionarAvance">
+                  <i class="fas fa-lock"></i>
+                  El proyecto debe estar en estado <strong>En Proceso</strong> para registrar el corte. Iniciá el proyecto desde el panel de áreas.
+                </div>
+
                 <div class="corte-kpis">
                   <span class="kpi kpi-total">Registros: {{ historialCortesReales.length }}</span>
                   <span class="kpi kpi-total">Tela usada total: {{ totalTelaUsadaCorteReal }} kg</span>
