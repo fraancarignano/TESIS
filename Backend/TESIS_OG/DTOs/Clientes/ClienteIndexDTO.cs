@@ -17,6 +17,7 @@
     public string? Nombre { get; set; }
     public string? Apellido { get; set; }
     public string? RazonSocial { get; set; }
+    public string? TipoDocumento { get; set; }
     public string? NumeroDocumento { get; set; }
     public string? CuitCuil { get; set; }
     public string? Telefono { get; set; }

@@ -108,11 +108,14 @@ export class ClientesService {
       errorMessage = `Código: ${error.status}\nMensaje: ${error.message}`;
       
       switch (error.status) {
+        case 400:
+          errorMessage = error.error?.message || 'Solicitud inválida';
+          break;
         case 404:
-          errorMessage = 'Recurso no encontrado';
+          errorMessage = error.error?.message || 'Recurso no encontrado';
           break;
         case 500:
-          errorMessage = 'Error interno del servidor';
+          errorMessage = error.error?.message || 'Error interno del servidor';
           break;
         case 0:
           errorMessage = `No se pudo conectar con el servidor. Verifica que el backend esté corriendo en ${environment.apiBaseUrl}`;

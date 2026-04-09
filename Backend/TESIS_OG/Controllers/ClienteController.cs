@@ -73,7 +73,15 @@ namespace TESIS_OG.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> EliminarCliente(int id)
         {
-            var result = await _clienteService.EliminarClienteAsync(id);
+            bool result;
+            try
+            {
+                result = await _clienteService.EliminarClienteAsync(id);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
 
             if (!result)
                 return NotFound(new { message = $"Cliente con ID {id} no encontrado" });

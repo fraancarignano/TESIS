@@ -300,8 +300,21 @@ export class ClientesComponent implements OnInit {
   }
 
   abrirDetalle(cliente: Cliente): void {
-    this.clienteDetalle = cliente;
-    this.mostrarDetalle = true;
+    if (!cliente.idCliente) {
+      this.alertas.error('Error', 'Cliente sin ID válido');
+      return;
+    }
+
+    this.clientesService.obtenerClientePorId(cliente.idCliente).subscribe({
+      next: (detalle) => {
+        this.clienteDetalle = detalle;
+        this.mostrarDetalle = true;
+      },
+      error: (err) => {
+        console.error('Error al cargar detalle:', err);
+        this.alertas.error('Error', err?.message || 'No se pudo cargar el detalle del cliente');
+      }
+    });
   }
 
   cerrarDetalle(): void {
@@ -338,7 +351,7 @@ export class ClientesComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error al eliminar:', err);
-          this.alertas.error('Error', 'No se pudo eliminar el cliente');
+          this.alertas.error('Error', err?.message || 'No se pudo eliminar el cliente');
         }
       });
     }

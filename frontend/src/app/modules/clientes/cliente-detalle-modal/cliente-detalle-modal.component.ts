@@ -26,7 +26,7 @@ import { Cliente } from '../models/cliente.model';
         </div>
 
         <div class="modal-body">
-          <!-- Tipo de Cliente -->
+          <!-- Tipo de Persona -->
           <div class="seccion">
             <div class="seccion-titulo">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -35,14 +35,14 @@ import { Cliente } from '../models/cliente.model';
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
-              <span>Tipo de Cliente</span>
+              <span>Tipo de Persona</span>
             </div>
             <div class="campos-grid">
               <div class="campo">
                 <label>Tipo</label>
                 <div class="valor">
                   <span class="badge" [ngClass]="getTipoClienteClass()">
-                    {{ cliente?.tipoCliente }}
+                    {{ getTipoPersonaTexto() }}
                   </span>
                 </div>
               </div>
@@ -120,7 +120,7 @@ import { Cliente } from '../models/cliente.model';
           </div>
 
           <!-- Ubicación -->
-          <div class="seccion" *ngIf="cliente?.direccion || cliente?.codigoPostal">
+          <div class="seccion" *ngIf="cliente?.nombreProvincia || cliente?.nombreCiudad || cliente?.direccion || cliente?.codigoPostal">
             <div class="seccion-titulo">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -129,6 +129,14 @@ import { Cliente } from '../models/cliente.model';
               <span>Ubicación</span>
             </div>
             <div class="campos-grid">
+              <div class="campo" *ngIf="cliente?.nombreProvincia">
+                <label>Provincia</label>
+                <div class="valor">{{ cliente?.nombreProvincia }}</div>
+              </div>
+              <div class="campo" *ngIf="cliente?.nombreCiudad">
+                <label>Ciudad</label>
+                <div class="valor">{{ cliente?.nombreCiudad }}</div>
+              </div>
               <div class="campo" *ngIf="cliente?.direccion">
                 <label>Dirección</label>
                 <div class="valor">{{ cliente?.direccion }}</div>
@@ -161,6 +169,14 @@ import { Cliente } from '../models/cliente.model';
               <div class="campo">
                 <label>Fecha de Alta</label>
                 <div class="valor">{{ formatearFecha(cliente?.fechaAlta) }}</div>
+              </div>
+              <div class="campo">
+                <label>Categoría del Cliente</label>
+                <div class="valor">
+                  <span class="badge badge-categoria">
+                    {{ cliente?.tipoCliente || '-' }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -213,8 +229,8 @@ import { Cliente } from '../models/cliente.model';
       background: white;
       border-radius: 10px;
       width: 90%;
-      max-width: 620px;
-      max-height: 82vh;
+      max-width: min(1080px, 94vw);
+      max-height: 94vh;
       display: flex;
       flex-direction: column;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -291,13 +307,16 @@ import { Cliente } from '../models/cliente.model';
     }
 
     .modal-body {
-      padding: 12px 14px;
+      padding: 10px 14px;
       overflow-y: auto;
       flex: 1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 12px;
     }
 
     .seccion {
-      margin-bottom: 12px;
+      margin-bottom: 0;
     }
 
     .seccion:last-child {
@@ -322,8 +341,8 @@ import { Cliente } from '../models/cliente.model';
 
     .campos-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
     }
 
     .campo label {
@@ -339,10 +358,11 @@ import { Cliente } from '../models/cliente.model';
     .campo .valor {
       font-size: 12px;
       color: #333;
-      padding: 6px 8px;
+      padding: 5px 8px;
       background: #f8f8f8;
       border-radius: 4px;
       border: 1px solid #e8e8e8;
+      min-height: 28px;
     }
 
     .badge {
@@ -378,6 +398,15 @@ import { Cliente } from '../models/cliente.model';
     .badge.badge-suspendido {
       background: #fff3e0;
       color: #ef6c00;
+    }
+
+    .badge.badge-categoria {
+      background: #e0f2f1;
+      color: #00695c;
+    }
+
+    .seccion:has(.observaciones-texto) {
+      grid-column: 1 / -1;
     }
 
     .observaciones-texto {
@@ -436,6 +465,11 @@ import { Cliente } from '../models/cliente.model';
 
       .modal-body {
         padding: 10px 12px;
+        display: block;
+      }
+
+      .seccion {
+        margin-bottom: 10px;
       }
     }
   `]
@@ -448,30 +482,34 @@ export class ClienteDetalleModalComponent {
    * Verificar si es Persona Física
    */
   esPersonaFisica(): boolean {
-    return this.cliente?.tipoCliente === 'Persona Física';
+    return !!this.cliente && !this.cliente.razonSocial;
   }
 
   /**
    * Verificar si es Persona Jurídica
    */
   esPersonaJuridica(): boolean {
-    return this.cliente?.tipoCliente === 'Persona Jurídica';
+    return !!this.cliente?.razonSocial;
+  }
+
+  getTipoPersonaTexto(): string {
+    return this.esPersonaJuridica() ? 'Jurídica' : 'Física';
   }
 
   /**
    * Obtener clase CSS según tipo de cliente
    */
   getTipoClienteClass(): string {
-    if (!this.cliente || !this.cliente.tipoCliente) {
+    if (!this.cliente) {
       return '';
     }
 
     const tipos: { [key: string]: string } = {
-      'Persona Física': 'tipo-fisica',
-      'Persona Jurídica': 'tipo-juridica'
+      'Física': 'tipo-fisica',
+      'Jurídica': 'tipo-juridica'
     };
 
-    return tipos[this.cliente.tipoCliente] || '';
+    return tipos[this.getTipoPersonaTexto()] || '';
   }
 
   /**

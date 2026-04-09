@@ -29,8 +29,8 @@
   background: white;
   border-radius: 10px;
   width: 100%;
-  max-width: min(1080px, 94vw);
-  max-height: 90vh;
+  max-width: min(1180px, 96vw);
+  max-height: 94vh;
   overflow: hidden;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
   animation: slideUp 0.3s ease;
@@ -121,9 +121,15 @@
 
 /* === BODY === */
 .modal-body {
-  padding: 12px 16px;
+  padding: 10px 16px;
   overflow-y: auto;
   flex: 1;
+}
+
+.modal-body form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
 }
 
 .modal-body::-webkit-scrollbar {
@@ -145,7 +151,7 @@
 
 /* === FORM SECTIONS === */
 .form-section {
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .form-section:last-child {
@@ -156,8 +162,8 @@
   font-size: 12px;
   font-weight: 600;
   color: #1a1a1a;
-  margin: 0 0 8px 0;
-  padding-bottom: 5px;
+  margin: 0 0 6px 0;
+  padding-bottom: 4px;
   border-bottom: 2px solid #f0f0f0;
   display: flex;
   align-items: center;
@@ -174,7 +180,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .form-row:last-child {
@@ -217,7 +223,7 @@
 .input-wrapper select,
 .input-wrapper textarea {
   width: 100%;
-  padding: 8px 10px 8px 36px;
+  padding: 7px 10px 7px 34px;
   border: 2px solid #e0e0e0;
   border-radius: 6px;
   font-size: 12px;
@@ -225,7 +231,7 @@
   background: #fafafa;
   font-weight: 500;
   font-family: inherit;
-  min-height: 34px;
+  min-height: 32px;
 }
 
 .input-wrapper input::placeholder,
@@ -273,7 +279,7 @@
 /* === TEXTAREA ESPECÍFICO === */
 .input-wrapper textarea {
   resize: vertical;
-  min-height: 64px;
+  min-height: 46px;
   padding: 8px 10px;
   line-height: 1.35;
 }
@@ -314,6 +320,7 @@
 
 /* === FOOTER === */
 .modal-footer {
+  grid-column: 1 / -1;
   padding: 8px 16px 12px;
   background: #fafafa;
   border-top: 1px solid #e0e0e0;
@@ -404,6 +411,10 @@
 
   .modal-body {
     padding: 10px 12px;
+  }
+
+  .modal-body form {
+    display: block;
   }
 
   .form-row {

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { QRCodeModule } from 'angularx-qrcode';
+import { QRCodeComponent } from 'angularx-qrcode';
 import { AlertasService } from '../../../../core/services/alertas';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { UbicacionesService, Ubicacion } from '../../../ubicaciones/services/ubicaciones.service';
@@ -12,7 +12,7 @@ import { DespachoService } from '../../services/despacho.service';
 @Component({
   selector: 'app-despachos-lista',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, QRCodeModule],
+  imports: [CommonModule, FormsModule, RouterModule, QRCodeComponent],
   templateUrl: './despachos-lista.component.html',
   styleUrls: ['./despachos-lista.component.css']
 })
@@ -20,7 +20,7 @@ export class DespachosListaComponent implements OnInit {
   despachos: Despacho[] = [];
   ubicaciones: Ubicacion[] = [];
   loading = false;
-  
+
   despachoImprimir: Despacho | null = null;
   qrUrl = '';
 
@@ -53,8 +53,9 @@ export class DespachosListaComponent implements OnInit {
   cargarUbicacionesDES(): void {
     this.ubicacionService.getUbicaciones().subscribe({
       next: (data: Ubicacion[]) => {
-        // Filtrar ubicaciones tipo DES-
-        this.ubicaciones = data.filter((u: Ubicacion) => u.codigo.toUpperCase().startsWith('DES-'));
+        this.ubicaciones = data.filter((u: Ubicacion) =>
+          u.codigo.toUpperCase().startsWith('DES-')
+        );
       }
     });
   }
@@ -62,7 +63,7 @@ export class DespachosListaComponent implements OnInit {
   asignarUbicacion(idDespacho: number, event: Event): void {
     const selectElement = event.target as HTMLSelectElement;
     const idUbicacion = selectElement.value ? +selectElement.value : null;
-    
+
     if (idUbicacion === null) return;
 
     this.despachoService.asignarUbicacion(idDespacho, { idUbicacion }).subscribe({
@@ -83,8 +84,8 @@ export class DespachosListaComponent implements OnInit {
     if (confirmado) {
       this.despachoService.marcarDespachado(despacho.idDespacho).subscribe({
         next: () => {
-           this.alertas.success('¡Despachado!', 'El proyecto ha sido despachado.');
-           this.cargarDespachos();
+          this.alertas.success('¡Despachado!', 'El proyecto ha sido despachado.');
+          this.cargarDespachos();
         },
         error: () => this.alertas.error('Error', 'Hubo un error al intentar despachar.')
       });
@@ -93,19 +94,18 @@ export class DespachosListaComponent implements OnInit {
 
   prepararImpresion(despacho: Despacho): void {
     this.despachoImprimir = despacho;
-    
-    // Generar resumen de texto para el QR (Offline)
+
     const fechaText = new Date(despacho.fechaCreacion).toLocaleDateString('es-AR');
-    this.qrUrl = `TAMARINDO - DESPACHO\n` +
-                 `------------------\n` +
-                 `PROYECTO: ${despacho.nombreProyecto}\n` +
-                 `CLIENTE: ${despacho.cliente}\n` +
-                 `CÓDIGO: ${despacho.codigoDespacho}\n` +
-                 `UBICACIÓN: ${despacho.codigoUbicacion || 'A DESIGNAR'}\n` +
-                 `FECHA: ${fechaText}\n` +
-                 `------------------`;
-    
-    // Esperar a que se actualice la vista antes de imprimir
+    this.qrUrl =
+      `TAMARINDO - DESPACHO\n` +
+      `------------------\n` +
+      `PROYECTO: ${despacho.nombreProyecto}\n` +
+      `CLIENTE: ${despacho.cliente}\n` +
+      `CÓDIGO: ${despacho.codigoDespacho}\n` +
+      `UBICACIÓN: ${despacho.codigoUbicacion || 'A DESIGNAR'}\n` +
+      `FECHA: ${fechaText}\n` +
+      `------------------`;
+
     setTimeout(() => {
       window.print();
     }, 500);

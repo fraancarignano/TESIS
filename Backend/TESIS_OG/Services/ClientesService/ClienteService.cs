@@ -105,6 +105,7 @@ namespace TESIS_OG.Services.ClienteService
                     Nombre = c.Nombre,
                     Apellido = c.Apellido,
                     RazonSocial = c.RazonSocial,
+                    TipoDocumento = c.TipoDocumento,
                     NumeroDocumento = c.NumeroDocumento,
                     CuitCuil = c.CuitCuil,
                     Telefono = c.Telefono,
@@ -142,6 +143,7 @@ namespace TESIS_OG.Services.ClienteService
                     Nombre = c.Nombre,
                     Apellido = c.Apellido,
                     RazonSocial = c.RazonSocial,
+                    TipoDocumento = c.TipoDocumento,
                     NumeroDocumento = c.NumeroDocumento,
                     CuitCuil = c.CuitCuil,
                     Telefono = c.Telefono,
@@ -237,6 +239,15 @@ namespace TESIS_OG.Services.ClienteService
             var cliente = await _context.Clientes.FindAsync(id);
             if (cliente == null) return false;
 
+            var tieneRelaciones = await _context.Proyectos.AnyAsync(p => p.IdCliente == id)
+                || await _context.Muestras.AnyAsync(m => m.IdCliente == id)
+                || await _context.HistorialClientes.AnyAsync(h => h.IdCliente == id);
+
+            if (tieneRelaciones)
+            {
+                throw new InvalidOperationException("No se puede eliminar el cliente porque tiene proyectos, muestras o historial asociados.");
+            }
+
             _context.Clientes.Remove(cliente);
             await _context.SaveChangesAsync();
 
@@ -293,6 +304,7 @@ namespace TESIS_OG.Services.ClienteService
                     Nombre = c.Nombre,
                     Apellido = c.Apellido,
                     RazonSocial = c.RazonSocial,
+                    TipoDocumento = c.TipoDocumento,
                     NumeroDocumento = c.NumeroDocumento,
                     CuitCuil = c.CuitCuil,
                     Telefono = c.Telefono,
