@@ -9,6 +9,7 @@ import { AlertasService } from '../../../../core/services/alertas';
 import { PermissionService } from '../../../../core/services/permission.service';
 import { ExportService, PlanillaConfeccionExport } from '../../../../core/services/export.service';
 import { AuthService } from '../../../login/services/auth.service';
+import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
 import { environment } from '../../../../../environments/environment';
 import { TalleresService } from '../../../talleres/services/talleres.service';
 import { Taller } from '../../../talleres/models/taller.model';
@@ -27,7 +28,7 @@ import { ProyectoDisenoDetalle, ProyectoDisenoPayload } from '../../models/disen
 @Component({
   selector: 'app-proyecto-detalle-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HasPermissionDirective],
   templateUrl: './proyecto-detalle-modal.component.html',
   styleUrls: ['./proyecto-detalle-modal.component.css']
 })
@@ -1250,7 +1251,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
     if (!this.distribucionCorteValida) {
       this.alertas.error(
-        'DistribuciÃ³n invÃ¡lida',
+        'Distribución invÃ¡lida',
         `La suma de talles debe coincidir con el pedido total. Diferencia actual: ${this.diferenciaDistribucionCorte}.`
       );
       return;
@@ -1275,7 +1276,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
         });
         this.guardandoPlanCorte = false;
         this.refrescarHistorialPlanesCorte();
-        this.alertas.success('Plan guardado', 'Se registrÃ³ el requerimiento de corte.');
+        this.alertas.success('Plan guardado', 'Se registró el requerimiento de corte.');
       },
       error: (err) => {
         console.error('Error al guardar plan de corte:', err);
@@ -1312,7 +1313,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
         });
         this.guardandoCorteReal = false;
         this.refrescarHistorialCorteReal();
-        this.alertas.success('Corte registrado', 'Se guardÃ³ el parte de corte real.');
+        this.alertas.success('Corte registrado', 'Se guardó el parte de corte real.');
       },
       error: (err) => {
         console.error('Error al guardar corte real:', err);

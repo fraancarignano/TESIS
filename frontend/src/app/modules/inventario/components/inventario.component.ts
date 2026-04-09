@@ -9,6 +9,7 @@ import { InsumoFiltrosComponent, FiltrosInsumo } from './insumo-filtros/insumo-f
 import { AlertasService } from '../../../core/services/alertas';
 import { NotificacionesService } from '../../../core/services/notificaciones.service';
 import { PermissionService } from '../../../core/services/permission.service';
+import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 
 @Component({
   selector: 'app-inventario',
@@ -18,7 +19,8 @@ import { PermissionService } from '../../../core/services/permission.service';
     FormsModule,
     InsumoDetalleModalComponent,
     InsumoFormComponent,
-    InsumoFiltrosComponent
+    InsumoFiltrosComponent,
+    HasPermissionDirective
   ],
   templateUrl: './inventario.component.html',
   styleUrls: ['./inventario.component.css']

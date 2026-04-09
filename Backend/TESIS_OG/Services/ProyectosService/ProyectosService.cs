@@ -150,6 +150,83 @@ namespace TESIS_OG.Services.ProyectoService
             return proyectosDto;
         }
 
+        public async Task<List<ProyectoListaDTO>> ObtenerProyectosResumenAsync()
+        {
+            var proyectos = await _context.Proyectos
+              .AsNoTracking()
+              .Select(p => new ProyectoListaDTO
+              {
+                  IdProyecto = p.IdProyecto,
+                  IdCliente = p.IdCliente,
+                  ClienteNombre = !string.IsNullOrWhiteSpace(p.IdClienteNavigation.RazonSocial)
+                      ? p.IdClienteNavigation.RazonSocial
+                      : (p.IdClienteNavigation.Nombre ?? "") + " " + (p.IdClienteNavigation.Apellido ?? ""),
+                  NombreProyecto = p.NombreProyecto,
+                  TipoPrenda = p.TipoPrendaLegacy,
+                  Descripcion = p.Descripcion,
+                  Prioridad = p.Prioridad,
+                  Estado = p.Estado,
+                  FechaInicio = p.FechaInicio,
+                  FechaFin = p.FechaFin,
+                  CantidadTotal = p.CantidadTotal,
+                  CantidadProducida = p.CantidadProducida,
+                  IdUsuarioEncargado = p.IdUsuarioEncargado,
+                  NombreEncargado = p.IdUsuarioEncargadoNavigation != null
+                      ? (p.IdUsuarioEncargadoNavigation.NombreUsuario ?? "") + " " + (p.IdUsuarioEncargadoNavigation.ApellidoUsuario ?? "")
+                      : null,
+                  TipoEstacion = p.TipoEstacion,
+                  CodigoProyecto = p.CodigoProyecto,
+                  AreaActual = p.AreaActual,
+                  AvanceDiseno = p.AvanceGerenciaAdmin,
+                  AvanceCorte = p.AvanceDisenoDesarrollo,
+                  AvanceConfeccion = p.AvanceControlCalidad,
+                  AvanceCalidadPrenda = p.AvanceEtiquetadoEmpaquetado,
+                  AvanceEtiquetadoEmpaquetado = p.AvanceDepositoLogistica,
+                  CostoMaterialEstimado = p.CostoMaterialEstimado,
+                  ScrapTotal = p.ScrapTotal,
+                  ScrapPorcentaje = p.ScrapPorcentaje
+              })
+              .ToListAsync();
+
+            if (proyectos.Count == 0)
+            {
+                return proyectos;
+            }
+
+            var ids = proyectos.Select(p => p.IdProyecto).ToList();
+
+            var prendas = await _context.ProyectoPrenda
+              .AsNoTracking()
+              .Where(pp => ids.Contains(pp.IdProyecto))
+              .Select(pp => new
+              {
+                  pp.IdProyecto,
+                  DTO = new ProyectoPrendaResumenDTO
+                  {
+                      IdProyectoPrenda = pp.IdProyectoPrenda,
+                      IdTipoPrenda = pp.IdTipoPrenda,
+                      NombrePrenda = pp.IdTipoPrendaNavigation != null
+                          ? pp.IdTipoPrendaNavigation.NombrePrenda
+                          : null
+                  }
+              })
+              .ToListAsync();
+
+            var prendasPorProyecto = prendas
+              .GroupBy(p => p.IdProyecto)
+              .ToDictionary(g => g.Key, g => g.Select(x => x.DTO).ToList());
+
+            foreach (var proyecto in proyectos)
+            {
+                if (prendasPorProyecto.TryGetValue(proyecto.IdProyecto, out var lista))
+                {
+                    proyecto.Prendas = lista;
+                }
+            }
+
+            return proyectos;
+        }
+
         public async Task<ProyectoDetalleDTO?> ObtenerProyectoPorIdAsync(int id)
         {
             var proyecto = await _context.Proyectos

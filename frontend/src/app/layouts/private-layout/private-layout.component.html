@@ -12,13 +12,16 @@
         <a routerLink="/proyectos/explorar" routerLinkActive="active" class="nav-item parent" [class.active]="proyectoAbierto"
           (click)="toggleProyectos()">
           <span class="text">Proyectos</span>
+          <span class="chevron" [class.open]="proyectoAbierto">▾</span>
         </a>
 
         <div class="submenu" [class.open]="proyectoAbierto">
-          <a routerLink="/proyectos/crear" routerLinkActive="active" class="nav-item sub">
+          <a routerLink="/proyectos/crear" routerLinkActive="active" class="nav-item sub"
+            *appHasPermission="{ modulo: 'Proyectos', accion: 'Crear' }">
             <span class="text">Crear Proyecto</span>
           </a>
-          <a routerLink="/proyectos/crear-muestra" routerLinkActive="active" class="nav-item sub">
+          <a routerLink="/proyectos/crear-muestra" routerLinkActive="active" class="nav-item sub"
+            *appHasPermission="{ modulo: 'Proyectos', accion: 'Crear' }">
             <span class="text">Crear Muestra</span>
           </a>
           <a routerLink="/proyectos/muestras" routerLinkActive="active" class="nav-item sub">
@@ -42,6 +45,7 @@
         <a routerLink="/inventario" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
           class="nav-item parent" [class.active]="inventarioAbierto" (click)="toggleInventario()">
           <span class="text">Inventario</span>
+          <span class="chevron" [class.open]="inventarioAbierto">▾</span>
         </a>
 
         <div class="submenu" [class.open]="inventarioAbierto">
@@ -49,16 +53,20 @@
             class="nav-item sub">
             <span class="text">Consultar Inventario</span>
           </a>
-          <a routerLink="/inventario/catalogo" routerLinkActive="active" class="nav-item sub">
+          <a routerLink="/inventario/catalogo" routerLinkActive="active" class="nav-item sub"
+            *appHasPermission="{ modulo: 'Inventario', accion: 'GestionInsumos' }">
             <span class="text">Gestión de Insumos</span>
           </a>
-          <a routerLink="/inventario/transferir" routerLinkActive="active" class="nav-item sub">
+          <a routerLink="/inventario/transferir" routerLinkActive="active" class="nav-item sub"
+            *appHasPermission="{ modulo: 'Inventario', accion: 'Transferir' }">
             <span class="text">Transferir Insumos</span>
           </a>
-          <a routerLink="/inventario/movimientos" routerLinkActive="active" class="nav-item sub">
+          <a routerLink="/inventario/movimientos" routerLinkActive="active" class="nav-item sub"
+            *appHasPermission="{ modulo: 'Inventario', accion: 'Historial' }">
             <span class="text">Historial de Movimientos</span>
           </a>
-          <a routerLink="/inventario/control-recepcion" routerLinkActive="active" class="nav-item sub">
+          <a routerLink="/inventario/control-recepcion" routerLinkActive="active" class="nav-item sub"
+            *appHasPermission="{ modulo: 'Inventario', accion: 'Recepcionar' }">
             <span class="text">Control Recepción</span>
           </a>
         </div>
@@ -72,6 +80,7 @@
       <div class="nav-item-container" *appHasPermission="{ modulo: 'Reportes', accion: 'Ver' }">
         <div class="nav-item parent" [class.active]="reportesAbierto" (click)="toggleReportes()">
           <span class="text">Reportes</span>
+          <span class="chevron" [class.open]="reportesAbierto">▾</span>
         </div>
 
         <div class="submenu" [class.open]="reportesAbierto">
@@ -96,9 +105,10 @@
         </div>
       </div>
 
-      <div class="nav-item-container" *ngIf="permissionService.esAdmin()">
+      <div class="nav-item-container" *appHasPermission="{ modulo: 'Usuarios', accion: 'Ver' }">
         <div class="nav-item parent" [class.active]="usuariosAbierto" (click)="toggleUsuarios()">
           <span class="text">Usuarios</span>
+          <span class="chevron" [class.open]="usuariosAbierto">▾</span>
         </div>
 
         <div class="submenu" [class.open]="usuariosAbierto">

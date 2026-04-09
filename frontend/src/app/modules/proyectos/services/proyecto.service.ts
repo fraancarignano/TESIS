@@ -25,8 +25,8 @@ import {
 })
 export class ProyectosService {
   private apiUrl = `${environment.apiUrl}/Proyecto`;
-  private readonly cacheKey = 'proyectos_cache_v1';
-  private readonly cacheTimestampKey = 'proyectos_cache_v1_ts';
+  private readonly cacheKey = 'proyectos_cache_v2';
+  private readonly cacheTimestampKey = 'proyectos_cache_v2_ts';
   private readonly cacheTtlMs = 5 * 60 * 1000; // 5 minutos
   
   private proyectosSubject = new BehaviorSubject<Proyecto[]>([]);
@@ -214,7 +214,7 @@ export class ProyectosService {
       return this.fetchEnCurso$;
     }
 
-    this.fetchEnCurso$ = this.http.get<Proyecto[]>(this.apiUrl).pipe(
+    this.fetchEnCurso$ = this.http.get<Proyecto[]>(`${this.apiUrl}/resumen`).pipe(
       tap(proyectos => {
         this.proyectosSubject.next(proyectos);
         this.guardarCache(proyectos);

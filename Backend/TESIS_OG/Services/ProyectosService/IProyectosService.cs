@@ -20,6 +20,11 @@ namespace TESIS_OG.Services.ProyectosService
         Task<List<ProyectoDetalleDTO>> ObtenerTodosLosProyectosAsync();
 
         /// <summary>
+        /// Obtiene un listado liviano de proyectos para carga inicial
+        /// </summary>
+        Task<List<ProyectoListaDTO>> ObtenerProyectosResumenAsync();
+
+        /// <summary>
         /// Obtiene un proyecto por ID con toda su información (prendas, talles, materiales)
         /// </summary>
         Task<ProyectoDetalleDTO?> ObtenerProyectoPorIdAsync(int id);

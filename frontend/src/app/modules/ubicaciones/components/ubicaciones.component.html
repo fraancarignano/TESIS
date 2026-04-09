@@ -7,7 +7,8 @@
         </div>
 
         <div class="actions-bar">
-            <button class="btn btn-primary" (click)="abrirNuevo()">
+            <button class="btn btn-primary" (click)="abrirNuevo()"
+                *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Gestionar' }">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -28,7 +29,7 @@
                     <th>Division</th>
                     <th>Espacio</th>
                     <th>Descripcion</th>
-                    <th style="text-align: right;">Acciones</th>
+                    <th style="text-align: right;" *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Gestionar' }">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -40,7 +41,7 @@
                     <td>{{ u.division }}</td>
                     <td>{{ u.espacio === 1 ? 'Abajo (1)' : 'Arriba (2)' }}</td>
                     <td>{{ u.descripcion || '-' }}</td>
-                    <td class="td-acciones">
+                    <td class="td-acciones" *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Gestionar' }">
                         <div class="acciones">
                             <button class="btn-icon btn-edit" (click)="abrirEditar(u)" title="Editar ubicacion">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -64,7 +65,8 @@
                 <tr *ngIf="ubicaciones.length === 0">
                     <td colspan="6" class="sin-resultados">
                         <h3>No se encontraron ubicaciones configuradas</h3>
-                        <button class="btn btn-primary" (click)="abrirNuevo()">
+                        <button class="btn btn-primary" (click)="abrirNuevo()"
+                            *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Gestionar' }">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -89,7 +91,8 @@
 </app-proyecto-detalle-modal>
 
 <!-- Modal Formulario -->
-<div class="modal-overlay" *ngIf="mostrarFormulario" (click)="cerrarFormulario()">
+<ng-container *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Gestionar' }">
+  <div class="modal-overlay" *ngIf="mostrarFormulario" (click)="cerrarFormulario()">
     <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
             <h3>{{ ubicacionSeleccionada ? 'Modificar' : 'Nueva' }} Ubicacion</h3>
@@ -132,4 +135,5 @@
             </div>
         </form>
     </div>
-</div>
+  </div>
+</ng-container>

@@ -109,22 +109,16 @@ namespace TESIS_OG.Services.AuthorizationService
         {
             if (idRol == 2) // Supervisor
             {
-                return (modulo, accion) switch
+                if (modulo == "usuarios" && (
+                    accion == "crear" ||
+                    accion == "editar" ||
+                    accion == "eliminar" ||
+                    accion == "asignararea"
+                ))
                 {
-                    ("proyectos", "ver") => true,
-                    ("proyectos", "veravanceareas") => true,
-                    ("clientes", "ver") => true,
-                    ("inventario", "ver") => true,
-                    ("dashboard", "ver") => true,
-                    ("notificaciones", "ver") => true,
-                    ("notificaciones", "crear") => true,
-                    ("auditoria", "ver") => true,
-                    ("usuarios", "asignararea") => true,
-                    ("usuarios", "verareas") => true,
-                    ("usuarios", "verpermisos") => true,
-                    ("talleres", "gestionar") => true,
-                    _ => false
-                };
+                    return false;
+                }
+                return true;
             }
 
             if (idRol == 3) // Operario
@@ -132,9 +126,9 @@ namespace TESIS_OG.Services.AuthorizationService
                 return (modulo, accion) switch
                 {
                     ("proyectos", "ver") => true,
-                    ("proyectos", "veravanceareas") => true,
-                    ("proyectos", "completararea") => true,
-                    ("proyectos", "agregarobservacion") => true,
+                    ("clientes", "ver") => true,
+                    ("inventario", "ver") => true,
+                    ("despachos", "ver") => true,
                     _ => false
                 };
             }
@@ -143,12 +137,10 @@ namespace TESIS_OG.Services.AuthorizationService
             {
                 return (modulo, accion) switch
                 {
-                    ("inventario", "ver") => true,
-                    ("inventario", "recepcionar") => true,
-                    ("ubicaciones", "ver") => true,
-                    ("ordenescompra", "recepcionar") => true,
-                    ("notificaciones", "crear") => true,
-                    ("notificaciones", "ver") => true,
+                    ("inventario", _) => true,
+                    ("ubicaciones", _) => true,
+                    ("ordenescompra", _) => true,
+                    ("despachos", _) => true,
                     _ => false
                 };
             }

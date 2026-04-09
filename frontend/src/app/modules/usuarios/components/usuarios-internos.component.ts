@@ -6,11 +6,12 @@ import { UsuariosService } from '../services/usuarios.service';
 import { AreaSubrol, RolUsuario, UsuarioAuditoria, UsuarioInterno } from '../models/usuario.model';
 import { UsuarioDetalleModalComponent } from './usuario-detalle-modal/usuario-detalle-modal.component';
 import { UsuarioFormComponent, UsuarioFormSubmit } from './usuario-form/usuario-form.component';
+import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 
 @Component({
   selector: 'app-usuarios-internos',
   standalone: true,
-  imports: [CommonModule, FormsModule, UsuarioFormComponent, UsuarioDetalleModalComponent],
+  imports: [CommonModule, FormsModule, UsuarioFormComponent, UsuarioDetalleModalComponent, HasPermissionDirective],
   templateUrl: './usuarios-internos.component.html',
   styleUrls: ['./usuarios-internos.component.css']
 })

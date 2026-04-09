@@ -96,6 +96,25 @@ namespace TESIS_OG.Controllers
         }
 
         /// <summary>
+        /// Obtiene un listado liviano de proyectos (para carga inicial rÃ¡pida)
+        /// </summary>
+        [HttpGet("resumen")]
+        [ProducesResponseType(typeof(List<ProyectoListaDTO>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> ObtenerProyectosResumen()
+        {
+            try
+            {
+                var proyectos = await _proyectoService.ObtenerProyectosResumenAsync();
+                return Ok(proyectos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener proyectos (resumen)");
+                return StatusCode(500, new { message = "Error al obtener proyectos" });
+            }
+        }
+
+        /// <summary>
         /// Obtiene un proyecto por ID con toda su información
         /// </summary>
         [HttpGet("{id}")]

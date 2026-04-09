@@ -131,7 +131,7 @@
                       Area actual <span class="th-sort-icon">{{ getOrdenIcono('areaActual') }}</span>
                     </button>
                   </th>
-                  <th class="th-acciones">Acciones</th>
+                  <th class="th-acciones" *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -151,7 +151,7 @@
                   <td>{{ formatearFecha(proyecto.fechaInicio) }}</td>
                   <td>{{ formatearFecha(proyecto.fechaFin || undefined) }}</td>
                   <td>{{ getAreaActualNombre(proyecto) }}</td>
-                  <td class="td-acciones">
+                  <td class="td-acciones" *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">
                     <div class="acciones">
                       <button
                         class="btn-icon btn-edit"
@@ -209,6 +209,7 @@
                   type="button"
                   (click)="editarProyecto(proyecto, $event)"
                   [disabled]="proyecto.estado === 'Finalizado' || proyecto.estado === 'Archivado' || proyecto.estado === 'Cancelado'"
+                  *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 20h9"></path>
@@ -220,6 +221,7 @@
                   class="btn-action btn-danger"
                   type="button"
                   (click)="eliminarProyecto(proyecto, $event)"
+                  *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <polyline points="3 6 5 6 21 6"></polyline>

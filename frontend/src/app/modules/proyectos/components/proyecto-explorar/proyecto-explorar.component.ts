@@ -8,6 +8,7 @@ import { getAreaActual } from '../../constants/areas.constants';
 import { ProyectoCardComponent } from '../proyecto-card/proyecto-card.component';
 import { AlertasService } from '../../../../core/services/alertas';
 import { ProyectoFormNuevoComponent } from '../nuevo-proyecto-modal/proyecto-form.component';
+import { HasPermissionDirective } from '../../../../core/directives/has-permission.directive';
 
 type VistaModo = 'lista' | 'mosaico';
 type OrdenDireccion = 'asc' | 'desc';
@@ -56,7 +57,7 @@ interface GrupoMosaico {
 @Component({
   selector: 'app-proyecto-explorar',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProyectoCardComponent, ProyectoFormNuevoComponent],
+  imports: [CommonModule, FormsModule, ProyectoCardComponent, ProyectoFormNuevoComponent, HasPermissionDirective],
   templateUrl: './proyecto-explorar.component.html',
   styleUrls: ['./proyecto-explorar.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush

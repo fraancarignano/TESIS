@@ -789,18 +789,22 @@
     <!-- FOOTER CON BOTONES ARCHIVAR/LIBERAR -->
     <div class="modal-footer">
       <!-- Botón Archivar (solo para proyectos NO archivados) -->
-      <button *ngIf="proyecto.estado !== 'Archivado'" class="btn-archivar" (click)="archivarProyecto()"
-        [disabled]="procesandoArchivo">
-        <i class="fas" [ngClass]="procesandoArchivo ? 'fa-spinner fa-spin' : 'fa-archive'"></i>
-        {{ procesandoArchivo ? 'Archivando...' : 'Archivar Proyecto' }}
-      </button>
+      <ng-container *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">
+        <button *ngIf="proyecto.estado !== 'Archivado'" class="btn-archivar" (click)="archivarProyecto()"
+          [disabled]="procesandoArchivo">
+          <i class="fas" [ngClass]="procesandoArchivo ? 'fa-spinner fa-spin' : 'fa-archive'"></i>
+          {{ procesandoArchivo ? 'Archivando...' : 'Archivar Proyecto' }}
+        </button>
+      </ng-container>
 
       <!-- Botón Liberar (solo para proyectos archivados) -->
-      <button *ngIf="proyecto.estado === 'Archivado'" class="btn-liberar" (click)="liberarProyecto()"
-        [disabled]="procesandoLiberacion">
-        <i class="fas" [ngClass]="procesandoLiberacion ? 'fa-spinner fa-spin' : 'fa-lock-open'"></i>
-        {{ procesandoLiberacion ? 'Liberando...' : 'Liberar Proyecto' }}
-      </button>
+      <ng-container *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">
+        <button *ngIf="proyecto.estado === 'Archivado'" class="btn-liberar" (click)="liberarProyecto()"
+          [disabled]="procesandoLiberacion">
+          <i class="fas" [ngClass]="procesandoLiberacion ? 'fa-spinner fa-spin' : 'fa-lock-open'"></i>
+          {{ procesandoLiberacion ? 'Liberando...' : 'Liberar Proyecto' }}
+        </button>
+      </ng-container>
     </div>
   </div>
 </div>

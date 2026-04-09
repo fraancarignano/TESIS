@@ -62,10 +62,14 @@ export const routes: Routes = [
       },
       {
         path: 'proyectos/crear',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Proyectos', accion: 'Crear' } },
         loadComponent: () => import('./modules/proyectos/components/nuevo-proyecto-modal/proyecto-form.component').then(m => m.ProyectoFormNuevoComponent)
       },
       {
         path: 'proyectos/crear-muestra',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Proyectos', accion: 'Crear' } },
         loadComponent: () => import('./modules/proyectos/components/nuevo-muestra-modal/muestra-form.component').then(m => m.MuestraFormNuevoComponent)
       },
       {
@@ -98,18 +102,26 @@ export const routes: Routes = [
       },
       {
         path: 'inventario/transferir',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Inventario', accion: 'Transferir' } },
         loadComponent: () => import('./modules/inventario/components/ubicacion-transfer/ubicacion-transfer.component').then(m => m.UbicacionTransferComponent)
       },
       {
         path: 'inventario/movimientos',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Inventario', accion: 'Historial' } },
         loadComponent: () => import('./modules/movimientos/components/movimientos.component').then(m => m.MovimientosComponent)
       },
       {
         path: 'inventario/control-recepcion',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Inventario', accion: 'Recepcionar' } },
         loadComponent: () => import('./modules/inventario/components/control-recepcion/control-recepcion.component').then(m => m.ControlRecepcionComponent)
       },
       {
         path: 'inventario/catalogo',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Inventario', accion: 'GestionInsumos' } },
         loadComponent: () => import('./modules/inventario/components/insumo-catalog/insumo-catalog.component').then(m => m.InsumoCatalogComponent)
       },
       {
@@ -181,14 +193,20 @@ export const routes: Routes = [
       },
       {
         path: 'usuarios/internos',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Usuarios', accion: 'Ver' } },
         loadComponent: () => import('./modules/usuarios/components/usuarios-internos.component').then(m => m.UsuariosInternosComponent)
       },
       {
         path: 'usuarios/proveedores',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Usuarios', accion: 'Ver' } },
         loadComponent: () => import('./modules/proveedores/components/proveedores.component').then(m => m.ProveedoresComponent)
       },
       {
         path: 'usuarios/talleres',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Usuarios', accion: 'Ver' } },
         loadComponent: () => import('./modules/talleres/components/talleres.component').then(m => m.TalleresComponent)
       },
       {

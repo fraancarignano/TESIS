@@ -7,11 +7,12 @@ import { OrdenCompraFormComponent } from './orden-compra-form/orden-compra-form.
 import { OrdenCompraReceiveComponent } from './orden-compra-receive/orden-compra-receive.component';
 import { AlertasService } from '../../../core/services/alertas';
 import { AuthService } from '../../login/services/auth.service';
+import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 
 @Component({
   selector: 'app-orden-compra',
   standalone: true,
-  imports: [CommonModule, FormsModule, OrdenCompraFormComponent, OrdenCompraReceiveComponent],
+  imports: [CommonModule, FormsModule, OrdenCompraFormComponent, OrdenCompraReceiveComponent, HasPermissionDirective],
   templateUrl: './orden-compra.component.html',
   styleUrls: ['./orden-compra.component.css']
 })

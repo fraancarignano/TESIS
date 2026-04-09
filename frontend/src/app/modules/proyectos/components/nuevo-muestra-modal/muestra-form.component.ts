@@ -47,7 +47,7 @@ export class MuestraFormNuevoComponent implements OnInit {
   errorMensaje = '';
   fechaMinima!: string;
 
-  // Estado y validaciÃ³n para ediciÃ³n
+  // Estado y validación para edición
   estadoProyecto: string = 'Pendiente';
   permitirEdicionCompleta: boolean = true;
   permitirEdicionPrendas: boolean = true;
@@ -118,7 +118,7 @@ export class MuestraFormNuevoComponent implements OnInit {
   ngOnInit(): void {
   this.cargarDatosFormulario();
   
-  // ========== NUEVO: Detectar modo ediciÃ³n ==========
+  // ========== NUEVO: Detectar modo edición ==========
   if (this.modoEdicion && this.proyectoAEditar) {
     this.estadoProyecto = this.proyectoAEditar.estado;
     // Esperamos a que se carguen los datos del formulario para precargar
@@ -179,7 +179,7 @@ export class MuestraFormNuevoComponent implements OnInit {
 
         this.cargando = false;
 
-        // ========== NUEVO: Si es modo ediciÃ³n, precargar datos ==========
+        // ========== NUEVO: Si es modo edición, precargar datos ==========
           if (this.modoEdicion && this.proyectoAEditar) {
           this.precargarDatos();
           this.configurarEdicionSegunEstado();
@@ -603,12 +603,12 @@ export class MuestraFormNuevoComponent implements OnInit {
   }
 
   if (this.referenciaVisual.bordado.requerido && !this.referenciaVisual.bordado.descripcion.trim()) {
-    this.errorMensaje = 'Ingresa la descripciÃ³n del bordado';
+    this.errorMensaje = 'Ingresa la descripción del bordado';
     return;
   }
 
   if (this.referenciaVisual.estampado.requerido && !this.referenciaVisual.estampado.descripcion.trim()) {
-    this.errorMensaje = 'Ingresa la descripciÃ³n del estampado';
+    this.errorMensaje = 'Ingresa la descripción del estampado';
     return;
   }
 
@@ -628,7 +628,7 @@ export class MuestraFormNuevoComponent implements OnInit {
     this.aplicarTalleDefecto(prenda);
 
     if (!validarSumaTalles(prenda.tallesDistribuidos, prenda.cantidadTotal)) {
-      this.errorMensaje = `Prenda ${i + 1}: La distribuciÃ³n de talles no coincide con la cantidad total`;
+      this.errorMensaje = `Prenda ${i + 1}: La distribución de talles no coincide con la cantidad total`;
       return;
     }
   }
@@ -691,7 +691,7 @@ export class MuestraFormNuevoComponent implements OnInit {
     return; // Salir despuÃ©s de actualizar
   }
 
-  // ========== MODO CREACIÃ“N (cÃ³digo original) ==========
+  // ========== MODO CREACIÃ“N (código original) ==========
   const dtoMuestra = {
     idCliente: Number(formValue.idCliente),
     nombreMuestra: formValue.nombreProyecto.trim(),
@@ -894,7 +894,7 @@ export class MuestraFormNuevoComponent implements OnInit {
     if (this.estadoProyecto === 'En Proceso' || this.estadoProyecto === 'Pausado') {
       this.permitirEdicionCompleta = false;
       this.permitirEdicionPrendas = true;
-      this.mensajeRestriccion = 'âš ï¸ La muestra estÃ¡ en producciÃ³n. Puedes editar: nombre, descripciÃ³n, prioridad, fecha fin, encargado, cantidades de prendas y materiales manuales.';
+      this.mensajeRestriccion = 'âš ï¸ La muestra estÃ¡ en producción. Puedes editar: nombre, descripción, prioridad, fecha fin, encargado, cantidades de prendas y materiales manuales.';
       
       // Deshabilitar campos que no se pueden editar
       this.formulario.get('idCliente')?.disable();
@@ -923,7 +923,7 @@ export class MuestraFormNuevoComponent implements OnInit {
       idUsuarioEncargado: this.proyectoAEditar.idUsuarioEncargado
     });
     
-    // Precargar prendas solo si permite ediciÃ³n completa
+    // Precargar prendas solo si permite edición completa
     if (this.permitirEdicionPrendas && this.proyectoAEditar.prendas) {
       this.prendasProyecto = this.proyectoAEditar.prendas.map((p: any) => ({
         id: generarIdTemporal(),

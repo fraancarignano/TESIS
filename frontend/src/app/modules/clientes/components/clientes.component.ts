@@ -8,6 +8,7 @@ import { ClienteDetalleModalComponent } from '../cliente-detalle-modal/cliente-d
 import { ClienteFiltrosComponent, FiltrosCliente } from './cliente-filtros/cliente-filtros.component';
 import { AlertasService } from '../../../core/services/alertas';
 import { ExportService } from '../../../core/services/export.service';
+import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 
 @Component({
   selector: 'app-clientes',
@@ -17,7 +18,8 @@ import { ExportService } from '../../../core/services/export.service';
     FormsModule, 
     ClienteFormComponent,
     ClienteDetalleModalComponent,
-    ClienteFiltrosComponent
+    ClienteFiltrosComponent,
+    HasPermissionDirective
   ],
   templateUrl: './clientes.component.html',
   styleUrls: ['./clientes.component.css']

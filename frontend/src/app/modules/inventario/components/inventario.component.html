@@ -11,7 +11,8 @@
         <input type="text" placeholder="Buscar en Inventario..." [(ngModel)]="terminoBusqueda"
           (ngModelChange)="aplicarFiltrosAvanzados()">
       </div>
-      <button class="btn btn-primary" (click)="abrirFormularioNuevo()">
+      <button class="btn btn-primary" (click)="abrirFormularioNuevo()"
+        *appHasPermission="{ modulo: 'Inventario', accion: 'GestionInsumos' }">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
@@ -35,7 +36,7 @@
           <th>Ubicacion</th>
           <th>Stock Actual</th>
           <th style="text-align: center;">Estado</th>
-          <th style="text-align: right;">Acciones</th>
+          <th style="text-align: right;" *appHasPermission="{ modulo: 'Inventario', accion: 'GestionInsumos' }">Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -63,26 +64,33 @@
             </span>
           </td>
           <td style="text-align: center;" class="td-estado">
-            <div class="estado-wrapper" (click)="$event.stopPropagation()">
-              <span class="badge-estado" [ngClass]="getEstadoClass(insumo.estado)"
-                (click)="toggleDropdownEstado(insumo, $event)">
-                {{ insumo.estado || 'Disponible' }}
-                <svg class="chevron-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2.5">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </span>
-              <div class="estado-dropdown" *ngIf="insumoDropdownAbierto === insumo.idInsumo">
-                <div class="dropdown-item" *ngFor="let estado of estadosDisponibles"
-                  [class.activo]="(insumo.estado || 'Disponible') === estado"
-                  (click)="seleccionarEstado(insumo, estado)">
-                  <span class="dot-estado" [ngClass]="getEstadoClass(estado)"></span>
-                  {{ estado }}
+            <ng-container *appHasPermission="{ modulo: 'Inventario', accion: 'GestionInsumos' }">
+              <div class="estado-wrapper" (click)="$event.stopPropagation()">
+                <span class="badge-estado" [ngClass]="getEstadoClass(insumo.estado)"
+                  (click)="toggleDropdownEstado(insumo, $event)">
+                  {{ insumo.estado || 'Disponible' }}
+                  <svg class="chevron-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+                <div class="estado-dropdown" *ngIf="insumoDropdownAbierto === insumo.idInsumo">
+                  <div class="dropdown-item" *ngFor="let estado of estadosDisponibles"
+                    [class.activo]="(insumo.estado || 'Disponible') === estado"
+                    (click)="seleccionarEstado(insumo, estado)">
+                    <span class="dot-estado" [ngClass]="getEstadoClass(estado)"></span>
+                    {{ estado }}
+                  </div>
                 </div>
               </div>
-            </div>
+            </ng-container>
+            <ng-container *ngIf="!permissionService.tienePermiso('Inventario', 'GestionInsumos')">
+              <span class="badge-estado" [ngClass]="getEstadoClass(insumo.estado)">
+                {{ insumo.estado || 'Disponible' }}
+              </span>
+            </ng-container>
           </td>
-          <td class="td-acciones">
+          <td class="td-acciones" *appHasPermission="{ modulo: 'Inventario', accion: 'GestionInsumos' }">
             <div class="acciones">
               <button class="btn-icon btn-edit" (click)="abrirFormularioEditar(insumo, $event)" title="Editar insumo">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -112,7 +120,8 @@
         <tr *ngIf="insumosFiltrados.length === 0">
           <td colspan="8" class="sin-resultados">
             <h3>No se encontraron insumos</h3>
-            <button class="btn btn-primary" (click)="abrirFormularioNuevo()">
+            <button class="btn btn-primary" (click)="abrirFormularioNuevo()"
+              *appHasPermission="{ modulo: 'Inventario', accion: 'GestionInsumos' }">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>

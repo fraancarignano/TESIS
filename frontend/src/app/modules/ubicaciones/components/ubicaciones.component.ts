@@ -7,11 +7,12 @@ import { ProyectoDetalleModalComponent } from '../../proyectos/components/proyec
 import { ProyectosService } from '../../proyectos/services/proyecto.service';
 import { ProyectoVista, proyectoToVista } from '../../proyectos/models/proyecto.model';
 import { map } from 'rxjs/operators';
+import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 
 @Component({
     selector: 'app-ubicaciones',
     standalone: true,
-    imports: [CommonModule, FormsModule, UbicacionDetalleModalComponent, ProyectoDetalleModalComponent, NgIf, NgFor],
+    imports: [CommonModule, FormsModule, UbicacionDetalleModalComponent, ProyectoDetalleModalComponent, NgIf, NgFor, HasPermissionDirective],
     templateUrl: './ubicaciones.component.html',
     styleUrls: ['./ubicaciones.component.css']
 })

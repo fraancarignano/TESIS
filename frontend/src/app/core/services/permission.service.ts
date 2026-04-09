@@ -75,34 +75,33 @@ export class PermissionService {
     const moduloNorm = (modulo || '').trim().toLowerCase();
     const accionNorm = (accion || '').trim().toLowerCase();
 
-    if (perfil.esOperario) {
-      return (
-        (moduloNorm === 'proyectos' && accionNorm === 'ver') ||
-        (moduloNorm === 'proyectos' && accionNorm === 'veravanceareas') ||
-        (moduloNorm === 'proyectos' && accionNorm === 'completararea') ||
-        (moduloNorm === 'proyectos' && accionNorm === 'agregarobservacion')
-      );
+    if (perfil.esSupervisor) {
+      if (moduloNorm === 'usuarios' && (
+        accionNorm === 'crear' ||
+        accionNorm === 'editar' ||
+        accionNorm === 'eliminar' ||
+        accionNorm === 'asignararea'
+      )) {
+        return false;
+      }
+      return true;
     }
 
-    if (perfil.esSupervisor) {
+    if (perfil.esOperario) {
       return (
         (moduloNorm === 'proyectos' && accionNorm === 'ver') ||
         (moduloNorm === 'clientes' && accionNorm === 'ver') ||
         (moduloNorm === 'inventario' && accionNorm === 'ver') ||
-        (moduloNorm === 'dashboard' && accionNorm === 'ver') ||
-        (moduloNorm === 'notificaciones' && (accionNorm === 'ver' || accionNorm === 'crear')) ||
-        (moduloNorm === 'auditoria' && accionNorm === 'ver') ||
-        (moduloNorm === 'usuarios' && (accionNorm === 'asignararea' || accionNorm === 'verareas' || accionNorm === 'verpermisos')) ||
-        (moduloNorm === 'talleres' && accionNorm === 'gestionar')
+        (moduloNorm === 'despachos' && accionNorm === 'ver')
       );
     }
 
     if (perfil.esDeposito) {
       return (
-        (moduloNorm === 'inventario' && (accionNorm === 'ver' || accionNorm === 'recepcionar')) ||
-        (moduloNorm === 'ubicaciones' && accionNorm === 'ver') ||
-        (moduloNorm === 'ordenescompra' && accionNorm === 'recepcionar') ||
-        (moduloNorm === 'notificaciones' && (accionNorm === 'ver' || accionNorm === 'crear'))
+        (moduloNorm === 'inventario') ||
+        (moduloNorm === 'ubicaciones') ||
+        (moduloNorm === 'ordenescompra') ||
+        (moduloNorm === 'despachos')
       );
     }
 

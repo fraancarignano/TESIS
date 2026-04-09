@@ -104,15 +104,15 @@
         </div>
       </div>
 
-      <!-- DescripciÃ³n -->
+      <!-- Descripción -->
 
 
       <div class="field">
-        <label>DescripciÃ³n del Proyecto</label>
+        <label>Descripción del Proyecto</label>
         <textarea 
           formControlName="descripcion" 
           rows="2" 
-          placeholder="DescripciÃ³n general del proyecto..."
+          placeholder="Descripción general del proyecto..."
         ></textarea>
       </div>
     </div>
@@ -249,7 +249,7 @@
                 {{ tipoInsumo.nombreTipo }}
               </option>
             </select>
-            <small>Ej: AlgodÃ³n, Lycra, Polyester, etc.</small>
+            <small>Ej: Algodón, Lycra, Polyester, etc.</small>
           </div>
 
           <!-- Color/Variante de Tela -->
@@ -289,7 +289,7 @@
             >
           </div>
 
-          <!-- BotÃ³n Distribuir Talles -->
+          <!-- Botón Distribuir Talles -->
           <div class="field">
             <button 
               type="button" 
@@ -335,14 +335,14 @@
             </div>
           </div>
 
-          <!-- DescripciÃ³n del DiseÃ±o -->
+          <!-- Descripción del DiseÃ±o -->
           <div class="field" *ngIf="prendaEditando.tieneBordado || prendaEditando.tieneEstampado">
-            <label>DescripciÃ³n del DiseÃ±o</label>
+            <label>Descripción del DiseÃ±o</label>
             <textarea 
               [(ngModel)]="prendaEditando.descripcionDiseno"
               [ngModelOptions]="{standalone: true}"
               rows="2" 
-              placeholder="Describe el diseÃ±o, colores, posiciÃ³n, etc..."
+              placeholder="Describe el diseÃ±o, colores, posición, etc..."
             ></textarea>
           </div>
         </div>
@@ -471,7 +471,7 @@
             (click)="guardarDistribucionTalles()"
             [disabled]="obtenerSumaTallesActual() !== cantidadTotalTalles"
           >
-            Confirmar DistribuciÃ³n
+            Confirmar Distribución
           </button>
         </div>
       </div>
