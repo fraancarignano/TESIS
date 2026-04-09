@@ -238,30 +238,38 @@
 }
 
 .btn-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 4px;
-  border: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  background: transparent;
+  transition: all 0.18s ease;
+  background: #f4f4f5;
   padding: 0;
 }
 
+.btn-icon:hover {
+  border-color: currentColor;
+  opacity: 0.85;
+}
+
 .btn-delete {
-  color: #d32f2f;
+  color: #c62828;
+  background: #fdecea;
 }
 
 .btn-delete:hover {
-  background: #ffebee;
+  background: #ffcdd2;
+  border-color: #ef9a9a;
 }
 
 .btn-icon svg {
-  width: 0.76rem;
-  height: 0.76rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  stroke-width: 2.5;
 }
 
 .btn-agregar {
@@ -553,4 +561,136 @@
   .info-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===== CHIPS DE RECEPCIÓN EN LISTA ===== */
+.chips-recepcion {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: default;
+}
+
+.chip-satisfecho {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.chip-faltante {
+  background: #fdecea;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+.chip-sobrante {
+  background: #fff8e1;
+  color: #e65100;
+  border: 1px solid #ffcc80;
+}
+
+.sin-datos {
+  color: #bbb;
+  font-size: 0.8rem;
+}
+
+.orden-desc {
+  font-size: 0.7rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* ===== BADGES DE RECEPCIÓN EN DETALLE ===== */
+.badge-recepcion {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.badge-rec-satisfecho {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.badge-rec-faltante {
+  background: #fdecea;
+  color: #c62828;
+}
+
+.badge-rec-sobrante {
+  background: #fff8e1;
+  color: #e65100;
+}
+
+.badge-rec-pendiente {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+.diferencia-pos {
+  color: #e65100;
+  font-weight: 600;
+}
+
+.diferencia-neg {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.badge-anulada {
+  background: #ede7f6;
+  color: #4527a0;
+}
+
+.btn-anular {
+  color: #6a1b9a;
+  background: #f3e5f5;
+  border-color: #ce93d8;
+}
+
+.btn-anular:hover {
+  background: #e1bee7;
+  border-color: #ab47bc;
+}
+
+.btn-habilitar {
+  color: #1b5e20;
+  background: #e8f5e9;
+  border-color: #a5d6a7;
+}
+
+.btn-habilitar:hover {
+  background: #c8e6c9;
+  border-color: #66bb6a;
+}
+
+.btn-recalcular {
+  color: #bf360c;
+  background: #fbe9e7;
+  border-color: #ffab91;
+}
+
+.btn-recalcular:hover {
+  background: #ffccbc;
+  border-color: #ff7043;
+}
+
+.modal-footer .btn-primary,
+.modal-footer .btn-danger,
+.modal-footer .btn-warning,
+.modal-footer .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }

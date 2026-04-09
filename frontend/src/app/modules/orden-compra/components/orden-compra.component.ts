@@ -153,12 +153,32 @@ export class OrdenCompraComponent implements OnInit {
     });
   }
 
-  async eliminarOrden(orden: OrdenCompra, event: Event): Promise<void> {
-    event.stopPropagation();
+  async anularOrden(orden: OrdenCompra, event?: Event): Promise<void> {
+    event?.stopPropagation();
+
+    const confirmado = await this.alertas.confirmar(
+      '¿Anular orden de compra?',
+      `La orden ${orden.nroOrden} quedará anulada. Luego podrá eliminarla definitivamente.`,
+      'Sí, anular'
+    );
+    if (!confirmado) return;
+
+    this.ordenCompraService.anularOrden(orden.idOrdenCompra).subscribe({
+      next: () => {
+        this.alertas.success('Orden anulada', 'La orden fue anulada correctamente.');
+        this.cargarOrdenes();
+        this.cerrarDetalle();
+      },
+      error: () => this.alertas.error('Error', 'No se pudo anular la orden.')
+    });
+  }
+
+  async eliminarOrden(orden: OrdenCompra, event?: Event): Promise<void> {
+    if (event) event.stopPropagation();
 
     const confirmado = await this.alertas.confirmar(
       '¿Eliminar orden de compra?',
-      `Se eliminará la orden ${orden.nroOrden}. Esta acción no se puede deshacer.`,
+      `Se eliminará permanentemente la orden ${orden.nroOrden}. Esta acción no se puede deshacer.`,
       'Sí, eliminar'
     );
 
@@ -167,6 +187,7 @@ export class OrdenCompraComponent implements OnInit {
         next: () => {
           this.alertas.success('Orden eliminada', 'La orden de compra se eliminó correctamente');
           this.cargarOrdenes();
+          this.cerrarDetalle();
         },
         error: (err) => {
           console.error('Error al eliminar:', err);
@@ -182,9 +203,14 @@ export class OrdenCompraComponent implements OnInit {
       'Aprobada': 'badge-aprobada',
       'PendienteControl': 'badge-pendiente-control',
       'Recibida': 'badge-recibida',
-      'Cancelada': 'badge-cancelada'
+      'Cancelada': 'badge-cancelada',
+      'Anulada': 'badge-anulada'
     };
     return estados[estado] || 'badge-default';
+  }
+
+  contarEstado(orden: OrdenCompra, estado: string): number {
+    return orden.detalles?.filter(d => d.estadoRecepcion === estado).length ?? 0;
   }
 
   formatearFecha(fecha: string): string {

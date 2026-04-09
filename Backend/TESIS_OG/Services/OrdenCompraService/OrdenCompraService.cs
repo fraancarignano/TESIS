@@ -23,40 +23,39 @@ namespace TESIS_OG.Services.OrdenCompraService
                     .AnyAsync(p => p.IdProveedor == ordenDto.IdProveedor);
                 if (!proveedorExiste) return null;
 
-                // Validar que todos los insumos existan y tengan stock suficiente
+                // Validar que todos los insumos existan
                 foreach (var detalle in ordenDto.Detalles)
                 {
                     var insumo = await _context.Insumos
                         .FirstOrDefaultAsync(i => i.IdInsumo == detalle.IdInsumo);
 
                     if (insumo == null) return null;
-
-                    // Validación: cantidad debe ser mayor a 0
                     if (detalle.Cantidad <= 0) return null;
-
-                    // Validación: precio unitario debe ser mayor a 0
                     if (detalle.PrecioUnitario <= 0) return null;
 
-                    // Calcular subtotal
                     detalle.Subtotal = detalle.Cantidad * detalle.PrecioUnitario;
                 }
 
-                // Validar que el total coincida
+                // Ajustar total automáticamente
                 var totalCalculado = ordenDto.Detalles.Sum(d => d.Subtotal);
                 if (Math.Abs(totalCalculado - ordenDto.TotalOrden) > 0.01m)
-                {
-                    // Ajustar el total automáticamente
                     ordenDto.TotalOrden = totalCalculado;
-                }
 
-                // Crear la orden de compra
+                // Generar código automático: OC-YYYYMMDD-XXXX
+                var hoy = DateTime.Now.ToString("yyyyMMdd");
+                var contadorHoy = await _context.OrdenCompras
+                    .CountAsync(o => o.NroOrden.StartsWith($"OC-{hoy}-"));
+                var nroOrden = $"OC-{hoy}-{(contadorHoy + 1):D4}";
+
+                // Crear la orden de compra (estado siempre Pendiente al crear)
                 var nuevaOrden = new OrdenCompra
                 {
-                    NroOrden = ordenDto.NroOrden,
+                    NroOrden = nroOrden,
                     IdProveedor = ordenDto.IdProveedor,
+                    Descripcion = ordenDto.Descripcion?.Trim(),
                     FechaSolicitud = ordenDto.FechaSolicitud,
                     FechaEntregaEstimada = ordenDto.FechaEntregaEstimada,
-                    Estado = ordenDto.Estado,
+                    Estado = "Pendiente",
                     TotalOrden = ordenDto.TotalOrden
                 };
 
@@ -96,30 +95,13 @@ namespace TESIS_OG.Services.OrdenCompraService
                 .Include(o => o.IdProveedorNavigation)
                 .Include(o => o.DetalleOrdenCompras)
                     .ThenInclude(d => d.IdInsumoNavigation)
-                .Select(o => new OrdenCompraIndexDTO
-                {
-                    IdOrdenCompra = o.IdOrdenCompra,
-                    NroOrden = o.NroOrden,
-                    IdProveedor = o.IdProveedor,
-                    NombreProveedor = o.IdProveedorNavigation.NombreProveedor,
-                    FechaSolicitud = o.FechaSolicitud,
-                    FechaEntregaEstimada = o.FechaEntregaEstimada,
-                    Estado = o.Estado,
-                    TotalOrden = o.TotalOrden ?? 0m,
-                    Detalles = o.DetalleOrdenCompras.Select(d => new DetalleOrdenCompraIndexDTO
-                    {
-                        IdDetalle = d.IdDetalle,
-                        IdInsumo = d.IdInsumo,
-                        NombreInsumo = d.IdInsumoNavigation.NombreInsumo,
-                        Cantidad = d.Cantidad,
-                        PrecioUnitario = d.PrecioUnitario,
-                        Subtotal = d.Subtotal ?? 0m
-                    }).ToList()
-                })
                 .OrderByDescending(o => o.FechaSolicitud)
                 .ToListAsync();
 
-            return ordenes;
+            var result = new List<OrdenCompraIndexDTO>();
+            foreach (var o in ordenes)
+                result.Add(await MapearOrdenAsync(o));
+            return result;
         }
 
         public async Task<OrdenCompraIndexDTO?> ObtenerOrdenPorIdAsync(int id)
@@ -128,30 +110,47 @@ namespace TESIS_OG.Services.OrdenCompraService
                 .Include(o => o.IdProveedorNavigation)
                 .Include(o => o.DetalleOrdenCompras)
                     .ThenInclude(d => d.IdInsumoNavigation)
-                .Where(o => o.IdOrdenCompra == id)
-                .Select(o => new OrdenCompraIndexDTO
-                {
-                    IdOrdenCompra = o.IdOrdenCompra,
-                    NroOrden = o.NroOrden,
-                    IdProveedor = o.IdProveedor,
-                    NombreProveedor = o.IdProveedorNavigation.NombreProveedor,
-                    FechaSolicitud = o.FechaSolicitud,
-                    FechaEntregaEstimada = o.FechaEntregaEstimada,
-                    Estado = o.Estado,
-                    TotalOrden = o.TotalOrden ?? 0m,
-                    Detalles = o.DetalleOrdenCompras.Select(d => new DetalleOrdenCompraIndexDTO
-                    {
-                        IdDetalle = d.IdDetalle,
-                        IdInsumo = d.IdInsumo,
-                        NombreInsumo = d.IdInsumoNavigation.NombreInsumo,
-                        Cantidad = d.Cantidad,
-                        PrecioUnitario = d.PrecioUnitario,
-                        Subtotal = d.Subtotal ?? 0m
-                    }).ToList()
-                })
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(o => o.IdOrdenCompra == id);
 
-            return orden;
+            return orden == null ? null : await MapearOrdenAsync(orden);
+        }
+
+        private async Task<OrdenCompraIndexDTO> MapearOrdenAsync(OrdenCompra o)
+        {
+            // Obtener cantidades recibidas por insumo desde movimientos de inventario
+            var movimientos = await _context.InventarioMovimientos
+                .Where(m => m.IdOrdenCompra == o.IdOrdenCompra && m.TipoMovimiento == "Entrada")
+                .GroupBy(m => m.IdInsumo)
+                .Select(g => new { IdInsumo = g.Key, TotalRecibido = g.Sum(m => m.Cantidad) })
+                .ToListAsync();
+
+            var recibidoMap = movimientos.ToDictionary(m => m.IdInsumo, m => m.TotalRecibido);
+
+            return new OrdenCompraIndexDTO
+            {
+                IdOrdenCompra = o.IdOrdenCompra,
+                NroOrden = o.NroOrden,
+                IdProveedor = o.IdProveedor,
+                NombreProveedor = o.IdProveedorNavigation?.NombreProveedor,
+                Descripcion = o.Descripcion,
+                FechaSolicitud = o.FechaSolicitud,
+                FechaEntregaEstimada = o.FechaEntregaEstimada,
+                Estado = o.Estado,
+                TotalOrden = o.TotalOrden ?? 0m,
+                FechaHabilitacionControl = o.FechaHabilitacionControl,
+                FechaRecepcionControl = o.FechaRecepcionControl,
+                ObservacionControl = o.ObservacionControl,
+                Detalles = o.DetalleOrdenCompras.Select(d => new DetalleOrdenCompraIndexDTO
+                {
+                    IdDetalle = d.IdDetalle,
+                    IdInsumo = d.IdInsumo,
+                    NombreInsumo = d.IdInsumoNavigation?.NombreInsumo,
+                    Cantidad = d.Cantidad,
+                    CantidadRecibida = recibidoMap.TryGetValue(d.IdInsumo, out var rec) ? rec : 0,
+                    PrecioUnitario = d.PrecioUnitario,
+                    Subtotal = d.Subtotal ?? 0m
+                }).ToList()
+            };
         }
 
         public async Task<OrdenCompraIndexDTO?> ActualizarOrdenCompraAsync(int id, OrdenCompraEditDTO ordenDto)
@@ -198,6 +197,19 @@ namespace TESIS_OG.Services.OrdenCompraService
             return await ObtenerOrdenPorIdAsync(id);
         }
 
+        public async Task<OrdenCompraIndexDTO?> AnularOrdenAsync(int id)
+        {
+            var orden = await _context.OrdenCompras.FirstOrDefaultAsync(o => o.IdOrdenCompra == id);
+            if (orden == null) return null;
+
+            if (orden.Estado == "Recibida" || orden.Estado == "PendienteControl" || orden.Estado == "Anulada")
+                return null;
+
+            orden.Estado = "Anulada";
+            await _context.SaveChangesAsync();
+            return await ObtenerOrdenPorIdAsync(id);
+        }
+
         public async Task<bool> EliminarOrdenCompraAsync(int id)
         {
             var orden = await _context.OrdenCompras
@@ -206,14 +218,12 @@ namespace TESIS_OG.Services.OrdenCompraService
 
             if (orden == null) return false;
 
-            // Eliminar detalles primero
+            // Solo se pueden eliminar órdenes anuladas
+            if (orden.Estado != "Anulada") return false;
+
             _context.DetalleOrdenCompras.RemoveRange(orden.DetalleOrdenCompras);
-
-            // Eliminar orden
             _context.OrdenCompras.Remove(orden);
-
             await _context.SaveChangesAsync();
-
             return true;
         }
 
@@ -307,33 +317,13 @@ namespace TESIS_OG.Services.OrdenCompraService
                 .Include(o => o.DetalleOrdenCompras)
                     .ThenInclude(d => d.IdInsumoNavigation)
                 .Where(o => o.Estado == "PendienteControl")
-                .Select(o => new OrdenCompraIndexDTO
-                {
-                    IdOrdenCompra = o.IdOrdenCompra,
-                    NroOrden = o.NroOrden,
-                    IdProveedor = o.IdProveedor,
-                    NombreProveedor = o.IdProveedorNavigation.NombreProveedor,
-                    FechaSolicitud = o.FechaSolicitud,
-                    FechaEntregaEstimada = o.FechaEntregaEstimada,
-                    Estado = o.Estado,
-                    TotalOrden = o.TotalOrden ?? 0m,
-                    FechaHabilitacionControl = o.FechaHabilitacionControl,
-                    FechaRecepcionControl = o.FechaRecepcionControl,
-                    ObservacionControl = o.ObservacionControl,
-                    Detalles = o.DetalleOrdenCompras.Select(d => new DetalleOrdenCompraIndexDTO
-                    {
-                        IdDetalle = d.IdDetalle,
-                        IdInsumo = d.IdInsumo,
-                        NombreInsumo = d.IdInsumoNavigation.NombreInsumo,
-                        Cantidad = d.Cantidad,
-                        PrecioUnitario = d.PrecioUnitario,
-                        Subtotal = d.Subtotal ?? 0m
-                    }).ToList()
-                })
                 .OrderByDescending(o => o.FechaSolicitud)
                 .ToListAsync();
 
-            return ordenes;
+            var result = new List<OrdenCompraIndexDTO>();
+            foreach (var o in ordenes)
+                result.Add(await MapearOrdenAsync(o));
+            return result;
         }
 
         public async Task<OrdenCompraIndexDTO?> RegistrarControlRecepcionAsync(ControlRecepcionDTO dto)
@@ -347,17 +337,17 @@ namespace TESIS_OG.Services.OrdenCompraService
             // Solo se puede controlar si está PendienteControl
             if (orden.Estado != "PendienteControl") return null;
 
-            // Validar detalles
+            // Validar detalles — cantidad 0 es válida en recontrol (significa "no llegó nada más de este insumo")
             foreach (var detalle in dto.Detalles)
             {
                 var insumo = await _context.Insumos.FirstOrDefaultAsync(i => i.IdInsumo == detalle.IdInsumo);
                 if (insumo == null) return null;
-                if (detalle.CantidadRecibida <= 0) return null;
+                if (detalle.CantidadRecibida < 0) return null;
             }
 
-            // Actualizar stock y registrar movimientos
+            // Actualizar stock y registrar movimientos — solo para los que tienen cantidad > 0
             var fechaControl = DateOnly.Parse(dto.FechaControl);
-            foreach (var detalle in dto.Detalles)
+            foreach (var detalle in dto.Detalles.Where(d => d.CantidadRecibida > 0))
             {
                 var insumo = await _context.Insumos.FirstOrDefaultAsync(i => i.IdInsumo == detalle.IdInsumo);
                 if (insumo != null)

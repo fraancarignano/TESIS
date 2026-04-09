@@ -821,9 +821,12 @@ public partial class TamarindoDbContext : DbContext
             entity.Property(e => e.FechaSolicitud).HasColumnName("fecha_Solicitud");
             entity.Property(e => e.IdProveedor).HasColumnName("id_Proveedor");
             entity.Property(e => e.NroOrden)
-                .HasMaxLength(15)
+                .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasColumnName("nro_Orden");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(500)
+                .HasColumnName("Descripcion");
             entity.Property(e => e.TotalOrden)
                 .HasColumnType("decimal(9, 1)")
                 .HasColumnName("total_Orden");

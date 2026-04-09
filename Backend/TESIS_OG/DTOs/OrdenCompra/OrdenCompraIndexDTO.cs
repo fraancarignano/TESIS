@@ -6,6 +6,7 @@
         public string NroOrden { get; set; } = null!;
         public int IdProveedor { get; set; }
         public string? NombreProveedor { get; set; }
+        public string? Descripcion { get; set; }
         public DateOnly FechaSolicitud { get; set; }
         public DateOnly? FechaEntregaEstimada { get; set; }
         public string Estado { get; set; } = null!;
@@ -26,6 +27,12 @@
         public int IdInsumo { get; set; }
         public string? NombreInsumo { get; set; }
         public decimal Cantidad { get; set; }
+        public decimal CantidadRecibida { get; set; }
+        public decimal Diferencia => CantidadRecibida - Cantidad;
+        public string EstadoRecepcion => Diferencia == 0 && CantidadRecibida > 0 ? "Satisfecho"
+            : CantidadRecibida > Cantidad ? "Sobrante"
+            : CantidadRecibida > 0 ? "Faltante"
+            : "Pendiente";
         public decimal PrecioUnitario { get; set; }
         public decimal Subtotal { get; set; }
     }

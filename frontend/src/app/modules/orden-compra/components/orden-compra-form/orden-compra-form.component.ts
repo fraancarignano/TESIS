@@ -17,11 +17,10 @@ export class OrdenCompraFormComponent implements OnInit {
   @Output() ordenCreada = new EventEmitter<void>();
 
   // Datos del formulario
-  nroOrden = '';
   idProveedorSeleccionado?: number;
+  descripcion = '';
   fechaSolicitud = '';
   fechaEntregaEstimada = '';
-  estado = 'Pendiente';
 
   // Listas
   proveedores: Proveedor[] = [];
@@ -126,7 +125,7 @@ export class OrdenCompraFormComponent implements OnInit {
   }
 
   async guardarOrden(): Promise<void> {
-    if (!this.nroOrden || !this.idProveedorSeleccionado || !this.fechaSolicitud) {
+    if (!this.idProveedorSeleccionado || !this.fechaSolicitud) {
       this.alertas.error('Datos incompletos', 'Complete todos los campos obligatorios');
       return;
     }
@@ -137,11 +136,10 @@ export class OrdenCompraFormComponent implements OnInit {
     }
 
     const nuevaOrden: NuevaOrdenCompra = {
-      nroOrden: this.nroOrden,
       idProveedor: this.idProveedorSeleccionado,
+      descripcion: this.descripcion || undefined,
       fechaSolicitud: this.fechaSolicitud,
       fechaEntregaEstimada: this.fechaEntregaEstimada || undefined,
-      estado: this.estado,
       totalOrden: this.totalOrden,
       detalles: this.detalles
     };

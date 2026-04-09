@@ -31,7 +31,7 @@ namespace TESIS_OG.DTOs.OrdenCompra
         public int IdInsumo { get; set; }
 
         [Required]
-        [Range(0.01, double.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
+        [Range(0, double.MaxValue, ErrorMessage = "La cantidad no puede ser negativa")]
         public decimal CantidadRecibida { get; set; }
 
         public string? ObservacionDetalle { get; set; }

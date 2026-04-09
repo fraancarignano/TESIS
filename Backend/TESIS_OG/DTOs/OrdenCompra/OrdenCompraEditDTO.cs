@@ -5,6 +5,7 @@
         public int IdOrdenCompra { get; set; }
         public string NroOrden { get; set; } = null!;
         public int IdProveedor { get; set; }
+        public string? Descripcion { get; set; }
         public DateOnly FechaSolicitud { get; set; }
         public DateOnly? FechaEntregaEstimada { get; set; }
         public string Estado { get; set; } = null!;

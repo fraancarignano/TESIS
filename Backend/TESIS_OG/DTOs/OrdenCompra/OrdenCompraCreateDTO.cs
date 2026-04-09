@@ -2,11 +2,12 @@
 {
     public class OrdenCompraCreateDTO
     {
-        public string NroOrden { get; set; } = null!;
+        // NroOrden se genera automáticamente, no se recibe del cliente
         public int IdProveedor { get; set; }
+        public string? Descripcion { get; set; }
         public DateOnly FechaSolicitud { get; set; }
         public DateOnly? FechaEntregaEstimada { get; set; }
-        public string Estado { get; set; } = "Pendiente"; // Pendiente, Aprobada, Recibida, Cancelada
+        // Estado siempre es "Pendiente" al crear
         public decimal TotalOrden { get; set; }
 
         // Lista de detalles (insumos)

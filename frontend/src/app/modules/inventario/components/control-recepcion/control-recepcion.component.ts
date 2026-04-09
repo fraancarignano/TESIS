@@ -48,11 +48,15 @@ export class ControlRecepcionComponent implements OnInit {
     abrirControl(orden: OrdenCompra): void {
         this.ordenActiva = orden;
         this.observacion = '';
-        this.detallesControl = (orden.detalles || []).map(d => ({
-            idInsumo: d.idInsumo,
-            cantidadRecibida: d.cantidad,
-            observacionDetalle: ''
-        }));
+        // Inicializar con el faltante real (pedido - ya recibido), mínimo 0
+        this.detallesControl = (orden.detalles || []).map(d => {
+            const faltante = Math.max(0, d.cantidad - (d.cantidadRecibida ?? 0));
+            return {
+                idInsumo: d.idInsumo,
+                cantidadRecibida: faltante > 0 ? faltante : d.cantidad,
+                observacionDetalle: ''
+            };
+        });
     }
 
     cerrarControl(): void {
@@ -67,12 +71,32 @@ export class ControlRecepcionComponent implements OnInit {
         return this.ordenActiva?.detalles?.find(d => d.idInsumo === idInsumo)?.cantidad || 0;
     }
 
+    getCantidadYaRecibida(idInsumo: number): number {
+        return this.ordenActiva?.detalles?.find(d => d.idInsumo === idInsumo)?.cantidadRecibida ?? 0;
+    }
+
+    getFaltante(idInsumo: number): number {
+        const pedido = this.getCantidadSolicitada(idInsumo);
+        const recibido = this.getCantidadYaRecibida(idInsumo);
+        return Math.max(0, pedido - recibido);
+    }
+
+    esRecontrol(idInsumo: number): boolean {
+        return this.getCantidadYaRecibida(idInsumo) > 0;
+    }
+
     async confirmarControl(): Promise<void> {
         if (!this.ordenActiva) return;
 
-        const hayInvalidos = this.detallesControl.some(d => d.cantidadRecibida <= 0);
+        const hayInvalidos = this.detallesControl.some(d => d.cantidadRecibida < 0);
         if (hayInvalidos) {
-            this.alertas.error('Cantidades inválidas', 'Todas las cantidades deben ser mayores a 0.');
+            this.alertas.error('Cantidades inválidas', 'Las cantidades no pueden ser negativas.');
+            return;
+        }
+
+        const todosCero = this.detallesControl.every(d => d.cantidadRecibida === 0);
+        if (todosCero) {
+            this.alertas.error('Sin cantidades', 'Debe ingresar al menos una cantidad mayor a 0.');
             return;
         }
 

@@ -2,7 +2,11 @@
     <div class="section-header">
         <h2>Control de Recepción</h2>
         <p class="subtitle">Órdenes habilitadas por el administrador para revisión física</p>
-        <button class="btn-refresh" (click)="cargarOrdenes()" title="Actualizar lista">🔄</button>
+        <button class="btn-refresh" (click)="cargarOrdenes()" title="Actualizar lista">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Loading -->
@@ -13,13 +17,19 @@
 
     <!-- Error -->
     <div *ngIf="error && !loading" class="error-container">
-        <p>❌ Error al cargar las órdenes</p>
+        <p>Error al cargar las órdenes</p>
         <button class="btn-retry" (click)="cargarOrdenes()">Reintentar</button>
     </div>
 
     <!-- Empty -->
     <div *ngIf="!loading && !error && ordenes.length === 0" class="empty-state">
-        <div class="empty-icon">📭</div>
+        <div class="empty-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+        </div>
         <h3>Sin órdenes pendientes</h3>
         <p>No hay órdenes habilitadas para control en este momento. El administrador debe habilitar la recepción de una
             orden desde el módulo de Órdenes de Compra.</p>
@@ -35,7 +45,7 @@
                 </div>
                 <div class="orden-meta">
                     <span class="fecha">Habilitado: {{ formatearFecha(orden.fechaHabilitacionControl || '') }}</span>
-                    <span class="badge-control">⏳ Pendiente Control</span>
+                    <span class="badge-control">Pendiente Control</span>
                 </div>
             </div>
 
@@ -49,7 +59,14 @@
 
             <div class="orden-card-footer">
                 <button class="btn-iniciar-control" (click)="abrirControl(orden)">
-                    📋 Iniciar Control
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    Iniciar Control
                 </button>
             </div>
         </div>
@@ -81,18 +98,26 @@
                         <tr>
                             <th>Insumo</th>
                             <th>Pedido</th>
-                            <th>Recibido ✏️</th>
+                            <th>Ya recibido</th>
+                            <th>Faltante</th>
+                            <th>Recibido ahora</th>
                             <th>Observación</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let det of detallesControl">
+                        <tr *ngFor="let det of detallesControl" [class.fila-satisfecha]="getFaltante(det.idInsumo) === 0 && getCantidadYaRecibida(det.idInsumo) > 0">
                             <td>{{ getNombreInsumo(det.idInsumo) }}</td>
                             <td class="text-center">{{ getCantidadSolicitada(det.idInsumo) }}</td>
+                            <td class="text-center" [class.ya-recibido]="getCantidadYaRecibida(det.idInsumo) > 0">
+                                {{ getCantidadYaRecibida(det.idInsumo) }}
+                            </td>
+                            <td class="text-center" [class.faltante-cell]="getFaltante(det.idInsumo) > 0">
+                                {{ getFaltante(det.idInsumo) }}
+                            </td>
                             <td>
-                                <input type="number" [(ngModel)]="det.cantidadRecibida" min="0.01" step="0.01"
+                                <input type="number" [(ngModel)]="det.cantidadRecibida" min="0" step="0.01"
                                     class="input-cantidad"
-                                    [class.input-diff]="det.cantidadRecibida !== getCantidadSolicitada(det.idInsumo)" />
+                                    [class.input-diff]="det.cantidadRecibida !== getFaltante(det.idInsumo) && getFaltante(det.idInsumo) > 0" />
                             </td>
                             <td>
                                 <input type="text" [(ngModel)]="det.observacionDetalle" placeholder="Opcional..."
@@ -113,7 +138,10 @@
             <div class="modal-footer">
                 <button class="btn-secondary" (click)="cerrarControl()">Cancelar</button>
                 <button class="btn-confirmar" (click)="confirmarControl()" [disabled]="guardando">
-                    {{ guardando ? 'Guardando...' : '✅ Confirmar Control' }}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    {{ guardando ? 'Guardando...' : 'Confirmar Control' }}
                 </button>
             </div>
         </div>

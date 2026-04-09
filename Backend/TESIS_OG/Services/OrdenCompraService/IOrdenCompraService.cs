@@ -16,5 +16,6 @@ namespace TESIS_OG.Services.OrdenCompraService
         Task<OrdenCompraIndexDTO?> RegistrarControlRecepcionAsync(ControlRecepcionDTO dto);
         Task<OrdenCompraIndexDTO?> RecalcularRecepcionAsync(int id);
         Task<List<OrdenCompraIndexDTO>> ObtenerOrdenesPendienteControlAsync();
+        Task<OrdenCompraIndexDTO?> AnularOrdenAsync(int id);
     }
 }

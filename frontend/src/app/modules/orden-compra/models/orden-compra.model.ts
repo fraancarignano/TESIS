@@ -3,6 +3,7 @@ export interface OrdenCompra {
   nroOrden: string;
   idProveedor: number;
   nombreProveedor?: string;
+  descripcion?: string;
   fechaSolicitud: string;
   fechaEntregaEstimada?: string;
   estado: string;
@@ -19,16 +20,18 @@ export interface DetalleOrdenCompra {
   idInsumo: number;
   nombreInsumo?: string;
   cantidad: number;
+  cantidadRecibida: number;
+  diferencia: number;
+  estadoRecepcion: 'Satisfecho' | 'Sobrante' | 'Faltante' | 'Pendiente';
   precioUnitario: number;
   subtotal: number;
 }
 
 export interface NuevaOrdenCompra {
-  nroOrden: string;
   idProveedor: number;
+  descripcion?: string;
   fechaSolicitud: string;
   fechaEntregaEstimada?: string;
-  estado: string;
   totalOrden: number;
   detalles: DetalleOrdenCompraDTO[];
 }

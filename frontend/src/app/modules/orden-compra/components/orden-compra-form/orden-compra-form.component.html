@@ -10,21 +10,8 @@
         <!-- Información General -->
         <div class="form-section">
           <h3>Información General</h3>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="nroOrden">Número de Orden *</label>
-              <input
-                type="text"
-                id="nroOrden"
-                [(ngModel)]="nroOrden"
-                name="nroOrden"
-                placeholder="OC-001"
-                [disabled]="cargando"
-                required
-              />
-            </div>
 
+          <div class="form-row">
             <div class="form-group">
               <label for="proveedor">Proveedor *</label>
               <select
@@ -41,9 +28,7 @@
                 </option>
               </select>
             </div>
-          </div>
 
-          <div class="form-row">
             <div class="form-group">
               <label for="fechaSolicitud">Fecha de Solicitud *</label>
               <input
@@ -55,7 +40,9 @@
                 required
               />
             </div>
+          </div>
 
+          <div class="form-row">
             <div class="form-group">
               <label for="fechaEntrega">Fecha de Entrega Estimada</label>
               <input
@@ -66,28 +53,25 @@
                 [disabled]="cargando"
               />
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="estado">Estado</label>
-            <select
-              id="estado"
-              [(ngModel)]="estado"
-              name="estado"
-              [disabled]="cargando"
-            >
-              <option value="Pendiente">Pendiente</option>
-              <option value="Aprobada">Aprobada</option>
-              <option value="Recibida">Recibida</option>
-              <option value="Cancelada">Cancelada</option>
-            </select>
+            <div class="form-group">
+              <label for="descripcion">Descripción</label>
+              <input
+                type="text"
+                id="descripcion"
+                [(ngModel)]="descripcion"
+                name="descripcion"
+                placeholder="Ej: Reposición mensual de telas"
+                [disabled]="cargando"
+              />
+            </div>
           </div>
         </div>
 
         <!-- Agregar Insumos -->
         <div class="form-section">
           <h3>Agregar Insumos</h3>
-          
+
           <div class="form-row">
             <div class="form-group">
               <label for="insumo">Insumo</label>
@@ -146,7 +130,7 @@
         <!-- Lista de Insumos Agregados -->
         <div class="form-section" *ngIf="detalles.length > 0">
           <h3>Insumos en la Orden</h3>
-          
+
           <div class="tabla-container">
             <table class="tabla-insumos">
               <thead>

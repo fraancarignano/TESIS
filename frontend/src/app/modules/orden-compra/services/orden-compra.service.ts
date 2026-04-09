@@ -39,6 +39,10 @@ export class OrdenCompraService {
     return this.http.put<OrdenCompra>(`${this.apiUrl}/${id}`, orden);
   }
 
+  anularOrden(id: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/anular`, {});
+  }
+
   eliminarOrden(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

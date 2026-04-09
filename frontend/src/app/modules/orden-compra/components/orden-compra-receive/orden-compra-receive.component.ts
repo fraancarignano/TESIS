@@ -69,11 +69,7 @@ export class OrdenCompraReceiveComponent implements OnInit {
     }
 
     const usuario = this.authService.obtenerUsuarioActual();
-    
-    // ✅ Logs para debug
-    console.log('👤 Usuario actual:', usuario);
-    console.log('🔑 idUsuario:', usuario?.idUsuario);
-    
+
     if (!usuario || !usuario.idUsuario) {
       this.alertas.error('Error', 'No se pudo obtener el usuario actual');
       return;
@@ -86,8 +82,6 @@ export class OrdenCompraReceiveComponent implements OnInit {
       idUsuario: usuario.idUsuario,
       detalles: this.detalles
     };
-
-    console.log('📦 DTO a enviar:', recepcionDto);
 
     this.cargando = true;
 

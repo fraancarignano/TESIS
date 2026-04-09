@@ -86,7 +86,19 @@ namespace TESIS_OG.Controllers
         }
 
         /// <summary>
-        /// Eliminar una orden de compra
+        /// Anular una orden de compra (Pendiente o Aprobada → Anulada)
+        /// </summary>
+        [HttpPost("{id}/anular")]
+        public async Task<IActionResult> AnularOrden(int id)
+        {
+            var result = await _ordenCompraService.AnularOrdenAsync(id);
+            if (result == null)
+                return BadRequest(new { message = "No se puede anular. La orden debe estar en estado Pendiente o Aprobada." });
+            return Ok(new { message = "Orden anulada correctamente.", data = result });
+        }
+
+        /// <summary>
+        /// Eliminar una orden de compra (solo si está Anulada)
         /// </summary>
         [HttpDelete("{id}")]
         public async Task<IActionResult> EliminarOrdenCompra(int id)
@@ -94,7 +106,7 @@ namespace TESIS_OG.Controllers
             var result = await _ordenCompraService.EliminarOrdenCompraAsync(id);
 
             if (!result)
-                return NotFound(new { message = $"Orden de compra con ID {id} no encontrada" });
+                return BadRequest(new { message = "No se puede eliminar. La orden debe estar en estado Anulada." });
 
             return Ok(new { message = "Orden de compra eliminada exitosamente" });
         }
