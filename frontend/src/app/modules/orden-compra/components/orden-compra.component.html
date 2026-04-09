@@ -33,7 +33,7 @@
 
   <!-- Error -->
   <div *ngIf="error && !loading" class="error-container">
-    <p>❌ Error al cargar las órdenes de compra</p>
+    <p>Error al cargar las órdenes de compra</p>
     <button class="btn-retry" (click)="cargarOrdenes()">Reintentar</button>
   </div>
 
@@ -93,7 +93,7 @@
 
     <!-- Empty State -->
     <div *ngIf="ordenesFiltradas.length === 0" class="empty-state">
-      <div class="empty-icon">📦</div>
+      <div class="empty-icon"></div>
       <h3>No se encontraron órdenes de compra</h3>
       <p *ngIf="terminoBusqueda">Intenta ajustar los filtros o el término de búsqueda</p>
       <p *ngIf="!terminoBusqueda">Comienza creando tu primera orden de compra</p>

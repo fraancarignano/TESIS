@@ -67,7 +67,7 @@ export class AlertasService {
   /**
    * Confirmación con pregunta (Sí/No)
    */
-  async confirmar(titulo: string, mensaje?: string, textoBoton: string = 'Sí, confirmar'): Promise<boolean> {
+  async confirmar(titulo: string, mensaje?: string, textoBoton: string = 'S�, confirmar'): Promise<boolean> {
     const result = await Swal.fire({
       title: titulo,
       text: mensaje,
@@ -83,6 +83,34 @@ export class AlertasService {
     });
 
     return result.isConfirmed;
+  }
+
+  async pedirTexto(titulo: string, placeholder: string, textoBoton: string = 'Confirmar'): Promise<string | null> {
+    const result = await Swal.fire({
+      title: titulo,
+      input: 'textarea',
+      inputPlaceholder: placeholder,
+      inputAttributes: {
+        'aria-label': placeholder
+      },
+      showCancelButton: true,
+      confirmButtonColor: '#ff5722',
+      cancelButtonColor: '#666',
+      confirmButtonText: textoBoton,
+      cancelButtonText: 'Cancelar',
+      inputValidator: (value) => {
+        if (!value || !value.trim()) {
+          return 'El motivo es obligatorio';
+        }
+        return null;
+      },
+      customClass: {
+        container: 'swal-high-zindex'
+      }
+    });
+
+    if (!result.isConfirmed) return null;
+    return (result.value || '').trim();
   }
 
   /**

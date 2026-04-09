@@ -1,6 +1,7 @@
 ﻿import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { MaterialProyecto, ObservacionProyecto, ProyectoVista } from '../../models/proyecto.model';
 import { ProyectosService } from '../../services/proyecto.service';
 import { DisenoService } from '../../services/diseno.service';
@@ -28,7 +29,7 @@ import { ProyectoDisenoDetalle, ProyectoDisenoPayload } from '../../models/disen
 @Component({
   selector: 'app-proyecto-detalle-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, HasPermissionDirective],
+  imports: [CommonModule, FormsModule, RouterModule, HasPermissionDirective],
   templateUrl: './proyecto-detalle-modal.component.html',
   styleUrls: ['./proyecto-detalle-modal.component.css']
 })
@@ -39,7 +40,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
   @Output() actualizado = new EventEmitter<void>();
 
   // Tabs
-  tabActiva: 'info' | 'areas' | 'materiales' | 'observaciones' = 'areas';
+  tabActiva: 'info' | 'areas' | 'materiales' | 'auditoria' = 'areas';
 
   // Áreas
   readonly AREAS = AREAS_PRODUCCION;
@@ -100,6 +101,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    const estado = (this.proyecto?.estado || '').trim();
+    if (!estado || estado === 'Pendiente') {
+      this.tabActiva = 'info';
+    }
     // Seleccionar área actual por defecto
     this.areaSeleccionada = getAreaActual(this.proyecto) || AREAS_PRODUCCION[0];
     this.refrescarHistorialInspeccionesCalidad();
@@ -260,7 +265,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
   }
 
   get totalDistribucionCorte(): number {
-    return this.cortePlan.distribucionTalles.reduce((acc, item) => acc + (Number(item.cantidad) || 0), 0);
+    return this.cortePlan.distribucionTalles.reduce(
+      (acc: number, item: DistribucionTallePlan) => acc + (Number(item.cantidad) || 0),
+      0
+    );
   }
 
   get diferenciaDistribucionCorte(): number {
@@ -313,7 +321,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
           cantidadTotal: Math.max(0, Number(prenda?.cantidadTotal ?? 0)),
           tieneBordado: !!prenda?.tieneBordado,
           tieneEstampado: !!prenda?.tieneEstampado,
-          descripcionDiseno: String(prenda?.descripcionDiseno ?? prenda?.descripcionDiseño ?? '').trim(),
+          descripcionDiseno: String(
+            prenda?.descripcionDiseno ?? prenda?.['descripcionDise\u00f1o'] ?? ''
+          ).trim(),
           talles
         };
       });
@@ -382,6 +392,46 @@ export class ProyectoDetalleModalComponent implements OnInit {
       mapa.set(etiqueta, actual + (Number(t.prendasCortadas) || 0));
     });
     return Array.from(mapa.entries()).map(([etiqueta, prendas]) => ({ etiqueta, prendas }));
+  }
+
+  get materialesTotales(): number {
+    return (this.proyecto.materiales ?? []).length;
+  }
+
+  get totalMaterialAsignado(): number {
+    return (this.proyecto.materiales ?? []).reduce((acc, m) => acc + (Number(m.cantidadAsignada) || 0), 0);
+  }
+
+  get totalMaterialUtilizado(): number {
+    return (this.proyecto.materiales ?? []).reduce((acc, m) => acc + (Number(m.cantidadUtilizada) || 0), 0);
+  }
+
+  get totalMaterialDesperdicio(): number {
+    return (this.proyecto.materiales ?? []).reduce((acc, m) => acc + (Number(m.desperdicioEstimado) || 0), 0);
+  }
+
+  get porcentajeUsoMateriales(): number | null {
+    if (this.totalMaterialAsignado <= 0) return null;
+    return this.redondearNumero((this.totalMaterialUtilizado / this.totalMaterialAsignado) * 100, 1);
+  }
+
+  getUsoMaterial(material: MaterialProyecto): number {
+    const asignado = Number(material.cantidadAsignada) || 0;
+    const usado = Number(material.cantidadUtilizada) || 0;
+    if (asignado <= 0) return 0;
+    return this.redondearNumero((usado / asignado) * 100, 1);
+  }
+
+  getRestanteMaterial(material: MaterialProyecto): number {
+    const asignado = Number(material.cantidadAsignada) || 0;
+    const usado = Number(material.cantidadUtilizada) || 0;
+    return Math.max(0, this.redondearNumero(asignado - usado, 2));
+  }
+
+  get auditoriaItems(): AuditoriaItem[] {
+    const observaciones = [...(this.proyecto.observaciones ?? [])];
+    observaciones.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+    return observaciones.map(obs => this.construirItemAuditoria(obs));
   }
 
   abrirModalRecepcion(): void {
@@ -463,7 +513,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
     const estado = this.cortePlan.estadoPlanificacion;
     if (estado === 'BORRADOR') return 'Borrador';
     if (estado === 'CONFIRMADO') return 'Confirmado';
-    return 'Enviado a diseÃ±o';
+    return 'Enviado a diseno';
   }
 
   get totalTelaUsadaCorteReal(): number {
@@ -861,7 +911,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   async continuarSiguienteArea(): Promise<void> {
     if (!this.areaSeleccionada || !this.proyecto.idProyecto) {
-      console.warn('⚠️ No se puede continuar: área o proyecto no seleccionado');
+      console.warn('?? No se puede continuar: área o proyecto no seleccionado');
       return;
     }
     if (!this.puedeContinuarAreaSeleccionada()) {
@@ -894,7 +944,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
     );
 
     if (!confirmado) {
-      console.log('❌ Usuario canceló la operación');
+      console.log('? Usuario canceló la operación');
       return;
     }
 
@@ -903,7 +953,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
     const siguienteDeCompletada = getSiguienteArea(areaCompletada);
 
     // Construir el DTO de actualización
-    // ⭐ IMPORTANTE: Enviamos IdArea (int) no Area (string)
+    // ? IMPORTANTE: Enviamos IdArea (int) no Area (string)
     const dto: any = {
       idArea: areaCompletada.idArea,
       porcentaje: 100
@@ -914,11 +964,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
       dto.observaciones = this.observacionArea.trim();
     }
 
-    console.log('📤 Enviando actualización de área:', {
+    console.log('?? Enviando actualización de área:', {
       idProyecto: this.proyecto.idProyecto,
       areaSeleccionada: {
         id: areaCompletada.id,
-        idArea: areaCompletada.idArea,  // ⭐ Este es el que va al backend
+        idArea: areaCompletada.idArea,  // ? Este es el que va al backend
         nombre: areaCompletada.nombre,
         campo: areaCompletada.campo
       },
@@ -928,7 +978,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
     this.proyectosService.actualizarAvance(this.proyecto.idProyecto, dto).subscribe({
       next: (response) => {
-        console.log('✅ Área actualizada correctamente:', response);
+        console.log('? Área actualizada correctamente:', response);
 
         // Actualizar el proyecto localmente
         (this.proyecto as any)[areaCompletada.campo] = 100;
@@ -937,12 +987,13 @@ export class ProyectoDetalleModalComponent implements OnInit {
         this.procesandoArea = false;
         this.observacionArea = '';
         this.actualizado.emit();
+        this.registrarAuditoria(`[AVANCE_AREA] ar=${this.codificarToken(areaCompletada.nombre)} pct=100`);
         this.cdr.detectChanges();
 
         // Mostrar mensaje de éxito
         const mensajeExito = this.esUltimaArea
           ? '¡Área completada! Finalizando proyecto...'
-          : `✅ ${areaCompletada.nombre} completada`;
+          : `? ${areaCompletada.nombre} completada`;
 
         console.log(mensajeExito);
 
@@ -961,8 +1012,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('❌ Error al avanzar área:', err);
-        console.error('📋 Detalles completos del error:', {
+        console.error('? Error al avanzar área:', err);
+        console.error('?? Detalles completos del error:', {
           status: err.status,
           statusText: err.statusText,
           error: err.error,
@@ -991,12 +1042,12 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
         // Agregar información adicional según el código de estado
         if (err.status === 400) {
-          console.error('💡 Posibles causas del error 400:');
+          console.error('?? Posibles causas del error 400:');
           console.error('- El IdArea no existe en la tabla AreaProduccion');
           console.error('- El porcentaje está fuera de rango (0-100)');
           console.error('- Falta información requerida en el DTO');
-          console.error('\n🔍 DTO enviado:', dto);
-          console.error('🔍 IdArea enviado:', this.areaSeleccionada?.idArea);
+          console.error('\n?? DTO enviado:', dto);
+          console.error('?? IdArea enviado:', this.areaSeleccionada?.idArea);
         } else if (err.status === 404) {
           mensajeError = 'No se encontró el proyecto o el área especificada';
         } else if (err.status === 500) {
@@ -1053,11 +1104,12 @@ export class ProyectoDetalleModalComponent implements OnInit {
         this.actualizarProgresoVisual();
         this.procesandoArea = false;
         this.actualizado.emit();
+        this.registrarAuditoria(`[RETROCESO_AREA] ar=${this.codificarToken(ultimaCompleta?.nombre || 'Area')}`);
         this.cdr.detectChanges();
         this.alertas.success('Área retrocedida', 'Se volvió al área anterior correctamente');
       },
       error: (err) => {
-        console.error('❌ Error al retroceder área:', err);
+        console.error('? Error al retroceder área:', err);
         this.procesandoArea = false;
         this.alertas.error('Error', 'No se pudo retroceder el área');
       }
@@ -1067,27 +1119,28 @@ export class ProyectoDetalleModalComponent implements OnInit {
   async archivarProyecto(): Promise<void> {
     if (!this.proyecto.idProyecto) return;
 
-    const confirmado = await this.alertas.confirmar(
+    const motivo = await this.alertas.pedirTexto(
       '¿Archivar proyecto?',
-      `El proyecto "${this.proyecto.nombreProyecto}" ya no aparecerá en el tablero Kanban, pero podrá consultarlo en la lista de proyectos.`,
-      'Sí, archivar'
+      'Escribí el motivo del archivado (se guardará en auditoría).',
+      'Archivar'
     );
 
-    if (!confirmado) return;
+    if (!motivo) return;
 
     this.procesandoArchivo = true;
 
     this.proyectosService.cambiarEstado(this.proyecto.idProyecto, 'Archivado').subscribe({
       next: () => {
-        console.log('✅ Proyecto archivado exitosamente');
+        console.log('? Proyecto archivado exitosamente');
         this.proyecto.estado = 'Archivado';
         this.procesandoArchivo = false;
         this.actualizado.emit();
+        this.registrarAuditoria(`[ARCHIVADO] mot=${this.codificarToken(motivo)}`);
         this.alertas.success('Proyecto archivado', 'El proyecto se archivó correctamente');
         this.cerrarModal();
       },
       error: (err) => {
-        console.error('❌ Error al archivar proyecto:', err);
+        console.error('? Error al archivar proyecto:', err);
         this.alertas.error('Error', 'No se pudo archivar el proyecto');
         this.procesandoArchivo = false;
       }
@@ -1109,15 +1162,16 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
     this.proyectosService.cambiarEstado(this.proyecto.idProyecto, 'Pendiente').subscribe({
       next: () => {
-        console.log('✅ Proyecto liberado exitosamente');
+        console.log('? Proyecto liberado exitosamente');
         this.proyecto.estado = 'Pendiente';
         this.procesandoLiberacion = false;
         this.actualizado.emit();
+        this.registrarAuditoria('[LIBERADO]');
         this.alertas.success('Proyecto liberado', 'El proyecto volvió al tablero Kanban');
         this.cerrarModal();
       },
       error: (err) => {
-        console.error('❌ Error al liberar proyecto:', err);
+        console.error('? Error al liberar proyecto:', err);
         this.alertas.error('Error', 'No se pudo liberar el proyecto');
         this.procesandoLiberacion = false;
       }
@@ -1143,6 +1197,14 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
     this.proyectosService.agregarObservacion(this.proyecto.idProyecto, dto).subscribe({
       next: () => {
+        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
+        this.proyecto.observaciones.unshift({
+          idObservacion: Date.now(),
+          idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Usuario',
+          fecha: new Date().toISOString(),
+          descripcion: this.nuevaObservacion.trim()
+        });
         this.nuevaObservacion = '';
         this.guardandoObservacion = false;
         this.actualizado.emit();
@@ -1178,6 +1240,32 @@ export class ProyectoDetalleModalComponent implements OnInit {
     });
   }
 
+  async iniciarProyecto(): Promise<void> {
+    if (!this.proyecto.idProyecto) return;
+    if (this.proyecto.estado !== 'Pendiente') return;
+
+    const confirmado = await this.alertas.confirmar(
+      '¿Iniciar proyecto?',
+      'El proyecto pasará a estado "En Proceso" y se habilitarán los avances.',
+      'Sí, iniciar'
+    );
+
+    if (!confirmado) return;
+
+    this.proyectosService.cambiarEstado(this.proyecto.idProyecto, 'En Proceso').subscribe({
+      next: () => {
+        this.proyecto.estado = 'En Proceso';
+        this.actualizado.emit();
+        this.registrarAuditoria('[INICIO_PROYECTO]');
+        this.alertas.success('Proyecto iniciado', 'El proyecto quedó En Proceso.');
+      },
+      error: (err) => {
+        console.error('Error al iniciar proyecto:', err);
+        this.alertas.error('Error', 'No se pudo iniciar el proyecto');
+      }
+    });
+  }
+
   cerrarModal(): void {
     this.cerrar.emit();
   }
@@ -1195,6 +1283,185 @@ export class ProyectoDetalleModalComponent implements OnInit {
   private actualizarProgresoVisual(): void {
     (this.proyecto as any).progresoGeneral = calcularProgresoGeneralPorAreas(this.proyecto);
     this.cdr.detectChanges();
+  }
+
+  private registrarAuditoria(descripcion: string): void {
+    if (!this.proyecto.idProyecto) return;
+    const idUsuario = this.obtenerIdUsuarioActual();
+    if (!idUsuario) return;
+
+    const dto = { idUsuario, descripcion };
+    this.proyectosService.agregarObservacion(this.proyecto.idProyecto, dto).subscribe({
+      next: () => {
+        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
+        this.proyecto.observaciones.unshift({
+          idObservacion: Date.now(),
+          idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Sistema',
+          fecha: new Date().toISOString(),
+          descripcion
+        });
+      },
+      error: (err) => {
+        console.error('Error al registrar auditoria:', err);
+      }
+    });
+  }
+
+  private construirItemAuditoria(obs: ObservacionProyecto): AuditoriaItem {
+    const descripcion = obs.descripcion ?? '';
+    const tag = this.detectarTagAuditoria(descripcion);
+    const tokens = this.extraerTokensAuditoria(descripcion);
+
+    if (tag === '[CONTROL_CALIDAD]') {
+      return {
+        id: obs.idObservacion,
+        tipo: 'Control de calidad',
+        area: 'Calidad',
+        detalle: `Resultado ${tokens.get('res') || 'Pendiente'} | Lote ${tokens.get('lot') || '-'} | Avance ${tokens.get('av') || '-'}`,
+        usuario: obs.nombreUsuario || 'Inspector',
+        fecha: obs.fecha
+      };
+    }
+
+    if (tag === '[CORTE_PLAN]') {
+      return {
+        id: obs.idObservacion,
+        tipo: 'Plan de corte',
+        area: 'Corte',
+        detalle: `Estado ${tokens.get('est') || 'BORRADOR'} | Pedido ${tokens.get('ped') || '-'} | Version ${tokens.get('ver') || '-'}`,
+        usuario: obs.nombreUsuario || 'Corte',
+        fecha: obs.fecha
+      };
+    }
+
+    if (tag === '[CORTE_REAL]') {
+      return {
+        id: obs.idObservacion,
+        tipo: 'Corte real',
+        area: 'Corte',
+        detalle: `Corte ${tokens.get('cn') || '-'} | Prendas ${tokens.get('pc') || '-'} | Tela ${tokens.get('tu') || '-'} kg`,
+        usuario: obs.nombreUsuario || 'Corte',
+        fecha: obs.fecha
+      };
+    }
+
+    if (tag === '[CONFECCION]') {
+      return {
+        id: obs.idObservacion,
+        tipo: 'Planilla confeccion',
+        area: 'Confeccion',
+        detalle: `Taller ${tokens.get('tn') || '-'} | Fechas ${tokens.get('fi') || '-'} - ${tokens.get('fl') || '-'}`,
+        usuario: obs.nombreUsuario || 'Confeccion',
+        fecha: obs.fecha
+      };
+    }
+
+    if (tag === '[CONFECCION_REC]') {
+      return {
+        id: obs.idObservacion,
+        tipo: 'Recepcion confeccion',
+        area: 'Confeccion',
+        detalle: `Responsable ${tokens.get('rr') || '-'} | Total ${tokens.get('rt') || '-'}`,
+        usuario: obs.nombreUsuario || 'Confeccion',
+        fecha: obs.fecha
+      };
+    }
+
+    if (tag === '[ARCHIVADO]') {
+      return {
+        id: obs.idObservacion,
+        tipo: 'Archivado',
+        area: 'Proyecto',
+        detalle: tokens.get('mot') ? `Motivo: ${tokens.get('mot')}` : 'Proyecto archivado',
+        usuario: obs.nombreUsuario || 'Sistema',
+        fecha: obs.fecha
+      };
+    }
+
+    if (tag === '[LIBERADO]') {
+      return {
+        id: obs.idObservacion,
+        tipo: 'Liberado',
+        area: 'Proyecto',
+        detalle: 'Proyecto liberado y vuelto a Pendiente.',
+        usuario: obs.nombreUsuario || 'Sistema',
+        fecha: obs.fecha
+      };
+    }
+
+    if (tag === '[INICIO_PROYECTO]') {
+      return {
+        id: obs.idObservacion,
+        tipo: 'Inicio',
+        area: 'Proyecto',
+        detalle: 'Proyecto iniciado (En Proceso).',
+        usuario: obs.nombreUsuario || 'Sistema',
+        fecha: obs.fecha
+      };
+    }
+
+    if (tag === '[AVANCE_AREA]') {
+      return {
+        id: obs.idObservacion,
+        tipo: 'Avance de area',
+        area: tokens.get('ar') || 'Produccion',
+        detalle: `Area completada al ${tokens.get('pct') || '100'}%`,
+        usuario: obs.nombreUsuario || 'Sistema',
+        fecha: obs.fecha
+      };
+    }
+
+    if (tag === '[RETROCESO_AREA]') {
+      return {
+        id: obs.idObservacion,
+        tipo: 'Retroceso de area',
+        area: tokens.get('ar') || 'Produccion',
+        detalle: 'Se retrocedio el avance de area.',
+        usuario: obs.nombreUsuario || 'Sistema',
+        fecha: obs.fecha
+      };
+    }
+
+    return {
+      id: obs.idObservacion,
+      tipo: 'Observacion',
+      area: 'General',
+      detalle: descripcion || 'Sin detalle',
+      usuario: obs.nombreUsuario || 'Usuario',
+      fecha: obs.fecha
+    };
+  }
+
+  private detectarTagAuditoria(descripcion: string): string | null {
+    const tags = [
+      '[CONTROL_CALIDAD]',
+      '[CORTE_PLAN]',
+      '[CORTE_REAL]',
+      '[CONFECCION]',
+      '[CONFECCION_REC]',
+      '[ARCHIVADO]',
+      '[LIBERADO]',
+      '[INICIO_PROYECTO]',
+      '[AVANCE_AREA]',
+      '[RETROCESO_AREA]'
+    ];
+    return tags.find(tag => descripcion.includes(tag)) ?? null;
+  }
+
+  private extraerTokensAuditoria(descripcion: string): Map<string, string> {
+    const resultado = new Map<string, string>();
+    const tag = this.detectarTagAuditoria(descripcion);
+    if (!tag) return resultado;
+    const tokens = descripcion.split(' ').slice(1);
+    tokens.forEach(token => {
+      const idx = token.indexOf('=');
+      if (idx <= 0) return;
+      const key = token.substring(0, idx);
+      const value = token.substring(idx + 1);
+      resultado.set(key, this.decodificarToken(value));
+    });
+    return resultado;
   }
 
   setResultadoCriterio(criterio: CriterioCalidadUI, resultado: ResultadoCriterio): void {
@@ -1251,7 +1518,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
     if (!this.distribucionCorteValida) {
       this.alertas.error(
-        'Distribución invÃ¡lida',
+        'Distribucion invalida',
         `La suma de talles debe coincidir con el pedido total. Diferencia actual: ${this.diferenciaDistribucionCorte}.`
       );
       return;
@@ -1266,6 +1533,14 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.guardandoPlanCorte = true;
     this.proyectosService.agregarObservacion(this.proyecto.idProyecto, dto).subscribe({
       next: () => {
+        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
+        this.proyecto.observaciones.unshift({
+          idObservacion: Date.now(),
+          idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Usuario',
+          fecha: new Date().toISOString(),
+          descripcion: this.nuevaObservacion.trim()
+        });
         if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
         this.proyecto.observaciones.unshift({
           idObservacion: Date.now(),
@@ -1307,6 +1582,14 @@ export class ProyectoDetalleModalComponent implements OnInit {
         this.proyecto.observaciones.unshift({
           idObservacion: Date.now(),
           idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Usuario',
+          fecha: new Date().toISOString(),
+          descripcion: this.nuevaObservacion.trim()
+        });
+        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
+        this.proyecto.observaciones.unshift({
+          idObservacion: Date.now(),
+          idUsuario,
           nombreUsuario: this.obtenerNombreUsuarioActual() || 'Corte',
           fecha: new Date().toISOString(),
           descripcion
@@ -1340,6 +1623,14 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.guardandoConfeccion = true;
     this.proyectosService.agregarObservacion(this.proyecto.idProyecto, dto).subscribe({
       next: () => {
+        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
+        this.proyecto.observaciones.unshift({
+          idObservacion: Date.now(),
+          idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Usuario',
+          fecha: new Date().toISOString(),
+          descripcion: this.nuevaObservacion.trim()
+        });
         if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
         this.proyecto.observaciones.unshift({
           idObservacion: Date.now(),
@@ -1416,6 +1707,14 @@ export class ProyectoDetalleModalComponent implements OnInit {
         this.proyecto.observaciones.unshift({
           idObservacion: Date.now(),
           idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Usuario',
+          fecha: new Date().toISOString(),
+          descripcion: this.nuevaObservacion.trim()
+        });
+        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
+        this.proyecto.observaciones.unshift({
+          idObservacion: Date.now(),
+          idUsuario,
           nombreUsuario: this.obtenerNombreUsuarioActual() || 'Recepcion',
           fecha: new Date().toISOString(),
           descripcion
@@ -1460,6 +1759,14 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.guardandoInspeccionCalidad = true;
     this.proyectosService.agregarObservacion(this.proyecto.idProyecto, dto).subscribe({
       next: () => {
+        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
+        this.proyecto.observaciones.unshift({
+          idObservacion: Date.now(),
+          idUsuario,
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Usuario',
+          fecha: new Date().toISOString(),
+          descripcion: this.nuevaObservacion.trim()
+        });
         if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
         this.proyecto.observaciones.unshift({
           idObservacion: Date.now(),
@@ -2449,6 +2756,15 @@ interface RecepcionConfeccionForm {
 
 interface RecepcionConfeccionRegistro extends RecepcionConfeccionForm {}
 
+interface AuditoriaItem {
+  id: number;
+  tipo: string;
+  area: string;
+  detalle: string;
+  usuario: string;
+  fecha: string;
+}
+
 interface DisenoTalleResumen {
   nombreTalle: string;
   cantidad: number;
@@ -2539,3 +2855,27 @@ const CRITERIOS_CALIDAD_INICIALES: CriterioCalidadUI[] = [
     observacion: ''
   }
 ];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

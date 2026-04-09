@@ -41,60 +41,131 @@
         <i class="fas fa-box"></i>
         Materiales
       </button>
-      <button class="tab" [class.active]="tabActiva === 'observaciones'" (click)="tabActiva = 'observaciones'">
-        <i class="fas fa-comment"></i>
-        Observaciones
+      <button class="tab" [class.active]="tabActiva === 'auditoria'" (click)="tabActiva = 'auditoria'">
+        <i class="fas fa-clipboard-check"></i>
+        Auditoria
       </button>
     </div>
 
     <!-- CONTENIDO -->
     <div class="modal-content">
 
-      <!-- TAB: INFORMACIÓN -->
+      <!-- TAB: INFORMACION -->
       <div class="tab-content" *ngIf="tabActiva === 'info'">
         <div class="info-grid">
           <div class="info-item">
-            <label>Tipo de Prenda</label>
+            <label>Codigo proyecto</label>
+            <span>{{ proyecto.codigoProyecto || proyecto.idProyecto || '-' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Cliente</label>
+            <span *ngIf="proyecto.idCliente; else clienteTexto">
+              <a class="info-link" [routerLink]="['/clientes']">{{ proyecto.clienteNombre || 'Cliente' }}</a>
+            </span>
+            <ng-template #clienteTexto>
+              <span>{{ proyecto.clienteNombre || 'Sin cliente' }}</span>
+            </ng-template>
+          </div>
+          <div class="info-item">
+            <label>Muestra asociada</label>
+            <ng-container *ngIf="proyecto.idMuestra; else sinMuestra">
+              <a class="info-link" [routerLink]="['/proyectos/muestras', proyecto.idMuestra]">
+                {{ proyecto.nombreMuestra || ('Muestra #' + proyecto.idMuestra) }}
+              </a>
+            </ng-container>
+            <ng-template #sinMuestra>
+              <span>Sin muestra asociada</span>
+            </ng-template>
+          </div>
+          <div class="info-item">
+            <label>Tipo de prenda</label>
             <span>{{ proyecto.tipoPrenda || 'No especificado' }}</span>
           </div>
           <div class="info-item">
             <label>Prioridad</label>
-            <span class="badge" [ngClass]="'badge-' + proyecto.prioridad">
-              {{ proyecto.prioridad }}
+            <span class="badge" [ngClass]="'badge-' + (proyecto.prioridad || 'media')">
+              {{ proyecto.prioridad || 'media' }}
             </span>
           </div>
           <div class="info-item">
             <label>Estado</label>
-            <span>{{ proyecto.estado }}</span>
+            <span class="badge estado-badge" [style.background-color]="proyecto.estadoColor || '#9e9e9e'">
+              {{ proyecto.estado }}
+            </span>
           </div>
           <div class="info-item">
-            <label>Cantidad Total</label>
+            <label>Encargado</label>
+            <span>{{ proyecto.nombreEncargado || 'Sin asignar' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Estacion</label>
+            <span>{{ proyecto.tipoEstacion || 'Sin definir' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Area actual</label>
+            <span>{{ areaActual?.nombre || proyecto.areaActual || 'Pendiente' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Progreso general</label>
+            <span>{{ proyecto.progresoGeneral }}%</span>
+          </div>
+          <div class="info-item">
+            <label>Cantidad total</label>
             <span>{{ proyecto.cantidadTotal }} unidades</span>
           </div>
           <div class="info-item">
-            <label>Cantidad Producida</label>
+            <label>Cantidad producida</label>
             <span>{{ proyecto.cantidadProducida || 0 }} unidades</span>
           </div>
           <div class="info-item">
-            <label>Fecha Inicio</label>
+            <label>Fecha inicio</label>
             <span>{{ formatearFecha(proyecto.fechaInicio) }}</span>
           </div>
           <div class="info-item">
-            <label>Fecha Fin</label>
+            <label>Fecha fin</label>
             <span>{{ formatearFecha(proyecto.fechaFin) }}</span>
           </div>
           <div class="info-item">
-            <label>Días Transcurridos</label>
-            <span>{{ proyecto.diasTranscurridos }} días</span>
+            <label>Dias transcurridos</label>
+            <span>{{ proyecto.diasTranscurridos }} dias</span>
+          </div>
+          <div class="info-item" *ngIf="proyecto.diasRestantes !== undefined">
+            <label>Dias restantes</label>
+            <span>{{ proyecto.diasRestantes }} dias</span>
           </div>
           <div class="info-item full-width" *ngIf="proyecto.descripcion">
-            <label>Descripción</label>
+            <label>Descripcion</label>
             <p>{{ proyecto.descripcion }}</p>
+          </div>
+          <div class="info-item full-width">
+            <label>Control de estado</label>
+            <div class="estado-actions">
+              <button
+                type="button"
+                class="btn-estado btn-estado-lg"
+                (click)="iniciarProyecto()"
+                [disabled]="proyecto.estado !== 'Pendiente'">
+                <i class="fas fa-play"></i>
+                Iniciar proyecto
+              </button>
+              <ng-container *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">
+                <button
+                  *ngIf="proyecto.estado !== 'Archivado' && proyecto.estado !== 'Pendiente'"
+                  type="button"
+                  class="btn-archivar"
+                  (click)="archivarProyecto()"
+                  [disabled]="procesandoArchivo">
+                  <i class="fas" [ngClass]="procesandoArchivo ? 'fa-spinner fa-spin' : 'fa-archive'"></i>
+                  {{ procesandoArchivo ? 'Archivando...' : 'Archivar Proyecto' }}
+                </button>
+              </ng-container>
+              <small class="estado-nota">Finalizado se marca automaticamente cuando todas las areas llegan al 100%.</small>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- TAB: ÁREAS Y AVANCES -->
+      <!-- TAB: AREAS Y AVANCES -->
       <div class="tab-content" *ngIf="tabActiva === 'areas'">
         <div class="areas-layout">
 
@@ -734,18 +805,53 @@
 
       <!-- TAB: MATERIALES -->
       <div class="tab-content" *ngIf="tabActiva === 'materiales'">
+        <div class="materiales-resumen">
+          <div class="resumen-item">
+            <label>Total materiales</label>
+            <strong>{{ materialesTotales }}</strong>
+          </div>
+          <div class="resumen-item">
+            <label>Asignado</label>
+            <strong>{{ totalMaterialAsignado }}</strong>
+          </div>
+          <div class="resumen-item">
+            <label>Utilizado</label>
+            <strong>{{ totalMaterialUtilizado }}</strong>
+          </div>
+          <div class="resumen-item" *ngIf="porcentajeUsoMateriales !== null">
+            <label>Uso %</label>
+            <strong>{{ porcentajeUsoMateriales }}%</strong>
+          </div>
+          <div class="resumen-item" *ngIf="totalMaterialDesperdicio > 0">
+            <label>Desperdicio estimado</label>
+            <strong>{{ totalMaterialDesperdicio }}</strong>
+          </div>
+        </div>
+
         <div class="materiales-lista">
           <div class="material-item" *ngFor="let material of proyecto.materiales">
             <div class="material-info">
-              <span class="material-nombre">{{ material.nombreInsumo }}</span>
+              <div class="material-main">
+                <span class="material-nombre">{{ material.nombreInsumo || ('Insumo #' + material.idInsumo) }}</span>
+                <span class="material-meta">ID {{ material.idInsumo }}</span>
+              </div>
               <span class="material-cantidad">
-                {{ material.cantidadAsignada }} {{ material.unidadMedida }}
+                {{ material.cantidadAsignada }} {{ material.unidadMedida || '' }}
               </span>
             </div>
-            <div class="material-detalle" *ngIf="material.cantidadUtilizada">
-              <small>Utilizado: {{ material.cantidadUtilizada }}</small>
+
+            <div class="material-bar">
+              <div class="material-bar-fill" [style.width.%]="getUsoMaterial(material)"></div>
+            </div>
+
+            <div class="material-detalle-grid">
+              <span>Utilizado: {{ material.cantidadUtilizada || 0 }} {{ material.unidadMedida || '' }}</span>
+              <span>Restante: {{ getRestanteMaterial(material) }} {{ material.unidadMedida || '' }}</span>
+              <span *ngIf="material.desperdicioEstimado">Desperdicio est.: {{ material.desperdicioEstimado }}</span>
+              <span *ngIf="material.color">Color: {{ material.color }}</span>
             </div>
           </div>
+
           <div class="empty-state" *ngIf="!proyecto.materiales || proyecto.materiales.length === 0">
             <i class="fas fa-box-open"></i>
             <p>No hay materiales asignados</p>
@@ -753,33 +859,38 @@
         </div>
       </div>
 
-      <!-- TAB: OBSERVACIONES -->
-      <div class="tab-content" *ngIf="tabActiva === 'observaciones'">
-        <div class="observaciones-form">
+      <!-- TAB: AUDITORIA -->
+      <div class="tab-content" *ngIf="tabActiva === 'auditoria'">
+        <div class="auditoria-form">
+          <label>Nota interna</label>
           <textarea [(ngModel)]="nuevaObservacion" rows="3"
-            placeholder="Escribe una observación general sobre el proyecto...">
-          </textarea>
+            placeholder="Escribe una nota para el historial del proyecto..."></textarea>
           <button class="btn-agregar-obs" (click)="agregarObservacion()"
             [disabled]="!nuevaObservacion.trim() || guardandoObservacion">
             <i class="fas" [ngClass]="guardandoObservacion ? 'fa-spinner fa-spin' : 'fa-plus'"></i>
-            {{ guardandoObservacion ? 'Guardando...' : 'Agregar Observación' }}
+            {{ guardandoObservacion ? 'Guardando...' : 'Agregar nota' }}
           </button>
         </div>
 
-        <div class="observaciones-lista">
-          <div class="observacion-item" *ngFor="let obs of proyecto.observaciones">
-            <div class="obs-header">
-              <span class="obs-usuario">
-                <i class="fas fa-user-circle"></i>
-                {{ obs.nombreUsuario }}
-              </span>
-              <span class="obs-fecha">{{ formatearFecha(obs.fecha) }}</span>
+        <div class="auditoria-lista">
+          <div class="auditoria-item" *ngFor="let item of auditoriaItems">
+            <div class="auditoria-header">
+              <div class="auditoria-meta">
+                <span class="auditoria-tipo">{{ item.tipo }}</span>
+                <span class="auditoria-area">{{ item.area }}</span>
+              </div>
+              <span class="auditoria-fecha">{{ formatearFecha(item.fecha) }}</span>
             </div>
-            <p class="obs-texto">{{ obs.descripcion }}</p>
+            <div class="auditoria-usuario">
+              <i class="fas fa-user-circle"></i>
+              {{ item.usuario }}
+            </div>
+            <p class="auditoria-texto">{{ item.detalle }}</p>
           </div>
-          <div class="empty-state" *ngIf="!proyecto.observaciones || proyecto.observaciones.length === 0">
-            <i class="fas fa-comment-slash"></i>
-            <p>No hay observaciones</p>
+
+          <div class="empty-state" *ngIf="auditoriaItems.length === 0">
+            <i class="fas fa-clipboard-list"></i>
+            <p>No hay eventos de auditoria</p>
           </div>
         </div>
       </div>
@@ -788,14 +899,7 @@
 
     <!-- FOOTER CON BOTONES ARCHIVAR/LIBERAR -->
     <div class="modal-footer">
-      <!-- Botón Archivar (solo para proyectos NO archivados) -->
-      <ng-container *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">
-        <button *ngIf="proyecto.estado !== 'Archivado'" class="btn-archivar" (click)="archivarProyecto()"
-          [disabled]="procesandoArchivo">
-          <i class="fas" [ngClass]="procesandoArchivo ? 'fa-spinner fa-spin' : 'fa-archive'"></i>
-          {{ procesandoArchivo ? 'Archivando...' : 'Archivar Proyecto' }}
-        </button>
-      </ng-container>
+      
 
       <!-- Botón Liberar (solo para proyectos archivados) -->
       <ng-container *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">
@@ -808,6 +912,13 @@
     </div>
   </div>
 </div>
+
+
+
+
+
+
+
 
 
 
