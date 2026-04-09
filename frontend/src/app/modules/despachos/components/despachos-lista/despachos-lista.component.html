@@ -1,151 +1,142 @@
-<!-- Contenedor Principal con Estética Tamarindo -->
-<div class="pantalla-normal module-container">
-  
-  <!-- Encabezado de Módulo -->
-  <header class="module-header mb-4">
-    <div class="header-info">
-      <div class="header-icon">
-        <i class="fas fa-truck-loading"></i>
-      </div>
-      <div class="header-text">
-        <h1 class="module-title">Despachos</h1>
-        <p class="module-subtitle">Gestión de salida y logística de proyectos finalizados</p>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-refresh" (click)="cargarDespachos()" [disabled]="loading">
-        <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i> 
-        <span>Sincronizar</span>
-      </button>
-    </div>
-  </header>
+<div class="pantalla-normal despachos-container">
 
-  <!-- Tarjeta Principal de Tabla -->
-  <div class="premium-card main-card">
-    <div class="card-header-fancy">
-      <div class="d-flex align-items-center gap-2">
-        <i class="fas fa-list-ul"></i>
-        <span>Cola de Despacho</span>
-      </div>
-      <div class="items-count" *ngIf="!loading">
-        {{ despachos.length }} proyectos pendientes
-      </div>
+  <!-- HEADER -->
+  <div class="despachos-header">
+    <div>
+      <h2>Despachos</h2>
+      <p>Gestión de salida y logística de proyectos finalizados</p>
     </div>
+    <button class="btn-refresh" (click)="cargarDespachos()" [disabled]="loading">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+      </svg>
+      Actualizar
+    </button>
+  </div>
 
-    <div class="card-body p-0">
-      <div *ngIf="loading" class="loader-container">
-        <div class="loader-tamarindo"></div>
-        <p>Actualizando lista de despachos...</p>
-      </div>
+  <!-- LOADING -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Cargando despachos...</p>
+  </div>
 
-      <div class="table-container" *ngIf="!loading">
-        <table class="tamarindo-table">
-          <thead>
-            <tr>
-              <th>ID Despacho</th>
-              <th>Proyecto</th>
-              <th>Cliente</th>
-              <th>Ubicación Fija</th>
-              <th>Estado Logístico</th>
-              <th>Fecha Ingreso</th>
-              <th class="text-end">Operaciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let d of despachos" [class.row-finalized]="d.estado === 'Despachado'">
-              <td class="col-code">
-                <span class="code-badge">{{ d.codigoDespacho }}</span>
-              </td>
-              <td class="col-project">
-                <div class="project-info">
-                  <span class="project-name">{{ d.nombreProyecto }}</span>
-                  <span class="project-id">#ID-{{ d.idProyecto }}</span>
-                </div>
-              </td>
-              <td class="col-client">{{ d.cliente }}</td>
-              <td class="col-location">
-                <div class="location-wrapper" [class.location-unassigned]="!d.idUbicacion">
-                  <i class="fas fa-map-marker-alt"></i>
-                  <select 
-                    class="minimal-select" 
-                    [ngModel]="d.idUbicacion" 
-                    (change)="asignarUbicacion(d.idDespacho, $event)"
-                    [disabled]="d.estado === 'Despachado' || !permissionService.tienePermiso('Despachos', 'Gestionar')"
-                  >
-                    <option [ngValue]="null">Seleccionar DES...</option>
-                    <option *ngFor="let ubi of ubicaciones" [value]="ubi.idUbicacion">
-                      {{ ubi.codigo }}
-                    </option>
-                  </select>
-                </div>
-              </td>
-              <td class="col-status">
-                <span class="status-pill" [ngClass]="d.estado === 'Despachado' ? 'pill-success' : 'pill-pending'">
-                  <i class="fas" [ngClass]="d.estado === 'Despachado' ? 'fa-check-circle' : 'fa-clock'"></i>
-                  {{ d.estado }}
-                </span>
-              </td>
-              <td class="col-date">{{ d.fechaCreacion | date:'dd/MM/yyyy' }}</td>
-              <td class="col-actions text-end">
-                <div class="actions-group">
-                  <button 
-                    class="btn-action btn-print"
-                    title="Imprimir Etiqueta"
-                    (click)="prepararImpresion(d)">
-                    <i class="fas fa-print" style="color: #ff9800 !important;"></i>
-                  </button>
-                  <button 
-                    class="btn btn-dispatch"
-                    *ngIf="d.estado !== 'Despachado' && permissionService.tienePermiso('Despachos', 'Gestionar')"
-                    (click)="marcarDespachado(d)">
-                    <span>Despachar</span>
-                    <i class="fas fa-truck"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr *ngIf="despachos.length === 0" class="row-empty">
-              <td colspan="7">
-                <div class="empty-state">
-                  <i class="fas fa-inbox"></i>
-                  <p>Bandeja de entrada vacía. No hay proyectos listos para despachar.</p>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+  <!-- TABLA -->
+  <div *ngIf="!loading" class="tabla-container">
+    <table class="tabla-despachos">
+      <thead>
+        <tr>
+          <th>CÓDIGO</th>
+          <th>PROYECTO</th>
+          <th>CLIENTE</th>
+          <th>UBICACIÓN</th>
+          <th>ESTADO</th>
+          <th>FECHA INGRESO</th>
+          <th>ACCIONES</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let d of despachos" [class.fila-despachada]="d.estado === 'Despachado'">
+          <td>
+            <span class="codigo-badge">{{ d.codigoDespacho }}</span>
+          </td>
+          <td>
+            <span class="proyecto-nombre">{{ d.nombreProyecto }}</span>
+            <span class="proyecto-id">#{{ d.idProyecto }}</span>
+          </td>
+          <td>{{ d.cliente }}</td>
+          <td>
+            <div class="ubicacion-wrapper" [class.sin-ubicacion]="!d.idUbicacion">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              <select
+                class="select-ubicacion"
+                [ngModel]="d.idUbicacion"
+                (change)="asignarUbicacion(d.idDespacho, $event)"
+                [disabled]="d.estado === 'Despachado' || !permissionService.tienePermiso('Despachos', 'Gestionar')">
+                <option [ngValue]="null">Sin asignar</option>
+                <option *ngFor="let ubi of ubicaciones" [value]="ubi.idUbicacion">{{ ubi.codigo }}</option>
+              </select>
+            </div>
+          </td>
+          <td>
+            <span class="badge-estado" [class.badge-listo]="d.estado !== 'Despachado'" [class.badge-despachado]="d.estado === 'Despachado'">
+              <svg *ngIf="d.estado === 'Despachado'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <svg *ngIf="d.estado !== 'Despachado'" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              {{ d.estado }}
+            </span>
+          </td>
+          <td>{{ d.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <div class="acciones" (click)="$event.stopPropagation()">
+              <!-- Imprimir -->
+              <button class="btn-icon btn-imprimir" title="Imprimir etiqueta" (click)="prepararImpresion(d)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 6 2 18 2 18 9"/>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                  <rect x="6" y="14" width="12" height="8"/>
+                </svg>
+              </button>
+              <!-- Despachar -->
+              <button
+                *ngIf="d.estado !== 'Despachado' && permissionService.tienePermiso('Despachos', 'Gestionar')"
+                class="btn-despachar"
+                (click)="marcarDespachado(d)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="1" y="3" width="15" height="13"/>
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+                Despachar
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="despachos.length === 0">
+          <td colspan="7">
+            <div class="empty-state">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13"/>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                <circle cx="5.5" cy="18.5" r="2.5"/>
+                <circle cx="18.5" cy="18.5" r="2.5"/>
+              </svg>
+              <p>No hay proyectos listos para despachar.</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="footer-info" *ngIf="despachos.length > 0">
+      {{ despachos.length }} despacho(s) en cola
     </div>
   </div>
 </div>
 
-<!-- Zona de Impresión (Oculto en pantalla, se activa con @media print) -->
+<!-- ZONA DE IMPRESIÓN -->
 <div class="zona-impresion" *ngIf="despachoImprimir">
   <div class="etiqueta-despacho">
     <div class="etiqueta-header">
-      <img src="assets/images/logo.png" alt="Tamarindo" class="logo-impresion" *ngIf="false" /> <!-- Configurar src real si hay logo -->
       <h1>Tamarindo</h1>
       <h2>Pase de Despacho</h2>
     </div>
-    
-    <div class="etiqueta-body position-relative">
-      <!-- QR en la parte superior derecha para asegurar 1ra página -->
-      <div class="etiqueta-qr-mini" style="float: right; margin-left: 15px; border: none; padding: 0;">
-        <qrcode 
-          [qrdata]="qrUrl" 
-          [width]="140" 
-          [errorCorrectionLevel]="'M'">
-        </qrcode>
-        <p class="qr-text" style="font-size: 8px; margin-top: 2px;">Detalle Offline (Escanea con Cámara)</p>
+    <div class="etiqueta-body">
+      <div class="etiqueta-qr" style="float: right; margin-left: 15px;">
+        <qrcode [qrdata]="qrUrl" [width]="140" [errorCorrectionLevel]="'M'"></qrcode>
+        <p class="qr-text">Escanear para detalle offline</p>
       </div>
-
       <div class="info-bloque">
         <label>Código:</label>
-        <span class="fw-bold fs-4">{{ despachoImprimir.codigoDespacho }}</span>
+        <span class="codigo-grande">{{ despachoImprimir.codigoDespacho }}</span>
       </div>
       <div class="info-bloque">
         <label>Proyecto:</label>
-        <span class="fw-bold">{{ despachoImprimir.nombreProyecto }}</span>
+        <span>{{ despachoImprimir.nombreProyecto }}</span>
       </div>
       <div class="info-bloque">
         <label>Cliente:</label>
@@ -155,20 +146,13 @@
         <label>Fecha Emisión:</label>
         <span>{{ despachoImprimir.fechaCreacion | date:'dd/MM/yyyy' }}</span>
       </div>
-      <div class="info-bloque mt-2" *ngIf="despachoImprimir.codigoUbicacion">
-        <label>Ubicación Asignada:</label>
-        <span class="fs-5 fw-bold" style="color: #2c3e50;">{{ despachoImprimir.codigoUbicacion }}</span>
-      </div>
-
-      <div class="info-bloque mt-3" style="border-top: 1px solid #eee; padding-top: 10px;">
-        <p style="font-size: 10px; color: #666; font-style: italic;">
-          * Este pase autoriza la salida del material desde el centro logístico.
-        </p>
+      <div class="info-bloque" *ngIf="despachoImprimir.codigoUbicacion">
+        <label>Ubicación:</label>
+        <span class="codigo-grande">{{ despachoImprimir.codigoUbicacion }}</span>
       </div>
     </div>
-
-    <div class="etiqueta-footer" style="text-align: center; border-top: 2px dashed #000; padding-top: 5px;">
-       <p style="font-size: 9px; margin: 0;">SISTEMA DE GESTIÓN PROPIA - TAMARINDO</p>
+    <div class="etiqueta-footer">
+      <p>SISTEMA DE GESTIÓN — TAMARINDO</p>
     </div>
   </div>
 </div>

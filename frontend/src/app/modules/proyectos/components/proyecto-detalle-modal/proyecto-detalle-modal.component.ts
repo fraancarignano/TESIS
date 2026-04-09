@@ -25,6 +25,7 @@ import {
   areaPendiente
 } from '../../constants/areas.constants';
 import { ProyectoDisenoDetalle, ProyectoDisenoPayload } from '../../models/diseno.model';
+import { DespachoService } from '../../../despachos/services/despacho.service';
 
 @Component({
   selector: 'app-proyecto-detalle-modal',
@@ -97,7 +98,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private talleresService: TalleresService,
-    private muestrasService: MuestrasService
+    private muestrasService: MuestrasService,
+    private despachoService: DespachoService
   ) { }
 
   ngOnInit(): void {
@@ -989,7 +991,18 @@ export class ProyectoDetalleModalComponent implements OnInit {
         // Si es la última área, marcar finalizado en UI (el backend lo persiste)
         if (this.esUltimaArea) {
           this.proyecto.estado = 'Finalizado';
-          this.alertas.success('Proyecto finalizado', '¡El proyecto se finalizó exitosamente!');
+          // Crear despacho automáticamente
+          this.despachoService.crearDespacho({
+            idProyecto: this.proyecto.idProyecto!,
+            observaciones: this.observacionArea?.trim() || undefined
+          }).subscribe({
+            next: () => {
+              this.alertas.success('Proyecto finalizado', '¡El proyecto se finalizó y fue enviado a Despacho!');
+            },
+            error: () => {
+              this.alertas.success('Proyecto finalizado', '¡El proyecto se finalizó exitosamente!');
+            }
+          });
           this.cerrarModal();
         } else if (siguienteDeCompletada) {
           // Pasar a la siguiente área
