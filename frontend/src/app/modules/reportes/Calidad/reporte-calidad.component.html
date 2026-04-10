@@ -75,8 +75,44 @@
       </div>
       <div class="grafico-card full" *ngIf="datosTaller.length > 0">
         <h3>Calidad por taller confeccionista</h3>
+        <p class="grafico-subtitulo">Distribución porcentual de resultados por taller, ordenado por tasa de aprobación</p>
         <div class="canvas-wrap canvas-wrap-tall">
           <canvas #chartCalidadTaller></canvas>
+        </div>
+        <div class="ranking-talleres">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Taller</th>
+                <th>Inspecciones</th>
+                <th class="col-ok">✔ Aprobadas</th>
+                <th class="col-warn">⚠ Observadas</th>
+                <th class="col-bad">✘ Rechazadas</th>
+                <th>% Aprobación</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of getTallerOrdenado(); let i = index">
+                <td class="rank-num">{{ i + 1 }}</td>
+                <td>{{ t.nombreTaller }}</td>
+                <td>{{ t.totalInspecciones }}</td>
+                <td class="col-ok">{{ t.aprobadas }}</td>
+                <td class="col-warn">{{ t.observadas }}</td>
+                <td class="col-bad">{{ t.rechazadas }}</td>
+                <td>
+                  <div class="pct-bar-wrap">
+                    <div class="pct-bar" [style.width.%]="getPorcentajeAprobacion(t)"
+                      [class.pct-high]="getPorcentajeAprobacion(t) >= 80"
+                      [class.pct-mid]="getPorcentajeAprobacion(t) >= 50 && getPorcentajeAprobacion(t) < 80"
+                      [class.pct-low]="getPorcentajeAprobacion(t) < 50">
+                    </div>
+                    <span>{{ getPorcentajeAprobacion(t) }}%</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

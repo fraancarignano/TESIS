@@ -46,6 +46,7 @@
           <thead>
             <tr>
               <th>Material</th>
+              <th>Tipo</th>
               <th>Color solicitado</th>
               <th>Necesario</th>
               <th>En stock</th>
@@ -54,10 +55,11 @@
           </thead>
           <tbody>
             <tr *ngFor="let m of conStock">
-              <td><strong>{{ m.nombreInsumo }}</strong><br><small class="text-muted">{{ m.tipoInsumo }}</small></td>
+              <td><strong>{{ m.nombreInsumo }}</strong></td>
+              <td><span class="badge-tipo">{{ m.tipoInsumo }}</span></td>
               <td>
                 <span *ngIf="m.colorSolicitado" class="color-tag solicitado">{{ m.colorSolicitado }}</span>
-                <span *ngIf="!m.colorSolicitado" class="text-muted">Sin especificar</span>
+                <span *ngIf="!m.colorSolicitado" class="text-muted">—</span>
               </td>
               <td>{{ m.cantidadNecesaria }} {{ m.unidadMedida }}</td>
               <td class="text-ok">{{ m.stockDisponible }} {{ m.unidadMedida }}</td>
@@ -76,7 +78,7 @@
         <div class="pt-section-header warn">
           <div class="pt-section-title">
             <span class="dot warn"></span>
-            Sin stock del color solicitado ({{ sinStock.length }})
+            Sin stock suficiente ({{ sinStock.length }}) — telas y avíos
           </div>
           <button class="btn-oc" (click)="abrirPanelOC()">
             + Generar Orden de Compra
@@ -87,18 +89,20 @@
           <thead>
             <tr>
               <th>Material</th>
+              <th>Tipo</th>
               <th>Color solicitado</th>
               <th>Necesario</th>
-              <th>Stock disponible (ese color)</th>
+              <th>Stock disponible</th>
               <th>Faltante</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let m of sinStock">
-              <td><strong>{{ m.nombreInsumo }}</strong><br><small class="text-muted">{{ m.tipoInsumo }}</small></td>
+              <td><strong>{{ m.nombreInsumo }}</strong></td>
+              <td><span class="badge-tipo">{{ m.tipoInsumo }}</span></td>
               <td>
                 <span *ngIf="m.colorSolicitado" class="color-tag solicitado">{{ m.colorSolicitado }}</span>
-                <span *ngIf="!m.colorSolicitado" class="text-muted">Sin especificar</span>
+                <span *ngIf="!m.colorSolicitado" class="text-muted">—</span>
               </td>
               <td>{{ m.cantidadNecesaria }} {{ m.unidadMedida }}</td>
               <td class="text-warn">{{ m.stockDisponible }} {{ m.unidadMedida }}</td>
@@ -140,7 +144,8 @@
 
       <div class="pt-modal-body">
         <p class="pt-modal-desc">
-          Materiales faltantes para <strong>{{ proyectoActual?.nombreProyecto }}</strong>.
+          Materiales faltantes para <strong>{{ proyectoActual?.nombreProyecto }}</strong>
+          (telas y avíos en una sola orden).
           Una vez recibida la OC y el stock ingresado, podrás asignarlos al proyecto.
         </p>
 

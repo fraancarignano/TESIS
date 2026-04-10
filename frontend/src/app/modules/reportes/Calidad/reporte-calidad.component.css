@@ -174,3 +174,66 @@ th {
   position: relative;
   height: 340px;
 }
+
+.grafico-subtitulo {
+  margin: -0.2rem 0 0.6rem;
+  font-size: 0.78rem;
+  color: #90a4ae;
+}
+
+.ranking-talleres {
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.ranking-talleres table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+}
+
+.ranking-talleres th,
+.ranking-talleres td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid #eceff1;
+  text-align: left;
+}
+
+.ranking-talleres th {
+  color: #607d8b;
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.rank-num {
+  color: #90a4ae;
+  font-weight: 700;
+  width: 28px;
+}
+
+.col-ok  { color: #2e7d32; font-weight: 600; }
+.col-warn { color: #ef6c00; font-weight: 600; }
+.col-bad  { color: #c62828; font-weight: 600; }
+
+.pct-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pct-bar {
+  height: 8px;
+  border-radius: 4px;
+  min-width: 4px;
+  transition: width 0.4s ease;
+}
+
+.pct-bar.pct-high { background: #2e7d32; }
+.pct-bar.pct-mid  { background: #f57c00; }
+.pct-bar.pct-low  { background: #c62828; }
+
+.pct-bar-wrap span {
+  font-weight: 700;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}

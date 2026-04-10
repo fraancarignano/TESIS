@@ -206,11 +206,13 @@
 }
 
 .preview img {
-  width: 100%;
-  max-width: 340px;
+  max-width: 220px;
+  max-height: 160px;
+  width: auto;
+  height: auto;
   border-radius: 14px;
   border: 1px solid #eaecf0;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .btn-clear,

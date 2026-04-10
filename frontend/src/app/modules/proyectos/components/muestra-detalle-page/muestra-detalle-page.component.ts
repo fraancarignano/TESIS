@@ -83,7 +83,7 @@ export class MuestraDetallePageComponent implements OnInit {
           estampadoDescripcion: muestra.estampadoDescripcion || '',
           estampadoReferencia: muestra.estampadoReferencia || '',
           otrosDetalle: muestra.otrosDetalle || '',
-          paletaRgb: muestra.paletaRgb || ''
+          paletaRgb: this.normalizarPaleta(muestra.paletaRgb)
         });
         this.form.disable();
         this.editando = false;
@@ -118,7 +118,7 @@ export class MuestraDetallePageComponent implements OnInit {
       estampadoDescripcion: this.muestra.estampadoDescripcion || '',
       estampadoReferencia: this.muestra.estampadoReferencia || '',
       otrosDetalle: this.muestra.otrosDetalle || '',
-      paletaRgb: this.muestra.paletaRgb || ''
+      paletaRgb: this.normalizarPaleta(this.muestra.paletaRgb)
     });
     this.form.disable();
     this.editando = false;
@@ -259,17 +259,11 @@ export class MuestraDetallePageComponent implements OnInit {
     return 'badge-neutra';
   }
 
-  get paletaColor(): string {
-    const paleta = this.form.get('paletaRgb')?.value?.trim();
-    if (!paleta) return 'transparent';
-
-    const hexMatch = paleta.match(/#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})/);
-    if (hexMatch) return hexMatch[0];
-
-    const rgbMatch = paleta.match(/rgb\(([^)]+)\)/i);
-    if (rgbMatch) return `rgb(${rgbMatch[1]})`;
-
-    return paleta.includes(',') ? paleta.split(',')[0].trim() : paleta;
+  /** Normaliza el valor de paletaRgb a un hex simple para el color picker */
+  private normalizarPaleta(valor: string | null | undefined): string {
+    if (!valor) return '#000000';
+    const hex = valor.trim().match(/#([A-Fa-f0-9]{6})/);
+    return hex ? hex[0] : '#000000';
   }
 
   get puedeAceptar(): boolean {

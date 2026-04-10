@@ -199,14 +199,17 @@
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
-        <h3>Referencia Visual (por prenda)</h3>
+        <h3>Referencia Visual</h3>
       </div>
 
       <div *ngIf="prendasProyecto.length > 0; else sinReferencias" class="referencias-list">
         <div class="referencia-card" *ngFor="let prenda of prendasProyecto; trackBy: trackByPrendaId">
           <div class="referencia-header">
-            <strong>{{ prenda.nombrePrenda || getNombreTipoPrenda(prenda.idTipoPrenda) || 'Prenda' }}</strong>
-            <span class="referencia-sub">Referencia visual opcional</span>
+            <strong>{{ prenda.nombrePrenda || getNombreTipoPrenda(+prenda.idTipoPrenda!) || prenda.nombreMaterial || 'Prenda' }}</strong>
+            <div class="referencia-chips" *ngIf="prenda.tieneBordado || prenda.tieneEstampado">
+              <span class="chip-diseno" *ngIf="prenda.tieneBordado">Bordado</span>
+              <span class="chip-diseno" *ngIf="prenda.tieneEstampado">Estampado</span>
+            </div>
           </div>
 
           <div class="grid-2">
@@ -217,14 +220,9 @@
             </div>
 
             <div class="field">
-              <label>Paleta RGB</label>
-              <div class="input-row">
-                <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.r" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="R">
-                <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.g" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="G">
-                <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.b" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="B">
-              </div>
-              <div class="paleta-preview">
-                <span class="color-swatch" [style.background]="paletaRgbTexto"></span>
+              <label>Paleta de color</label>
+              <div class="paleta-picker-row">
+                <input type="color" [(ngModel)]="paletaHex" [ngModelOptions]="{standalone: true}" class="paleta-picker-input">
                 <div class="paleta-codes">
                   <strong>{{ paletaHex }}</strong>
                   <span>{{ paletaRgbTexto }}</span>
@@ -233,6 +231,39 @@
             </div>
           </div>
 
+          <div class="diseno-ref-grid" *ngIf="prenda.tieneBordado">
+            <div class="field">
+              <label>Descripción del bordado</label>
+              <textarea
+                [(ngModel)]="prenda.bordadoDescripcion"
+                [ngModelOptions]="{standalone: true}"
+                rows="2"
+                placeholder="Ej: Logo en pecho izquierdo, 8x8 cm, hilo negro..."
+              ></textarea>
+            </div>
+            <div class="field">
+              <label>Imagen de referencia (bordado)</label>
+              <input type="file" accept="image/*" (change)="onReferenciaImagenPrendaChange($event, prenda, 'bordado')">
+              <img *ngIf="prenda.bordadoReferencia" class="file-preview" [src]="prenda.bordadoReferencia" alt="Ref. bordado">
+            </div>
+          </div>
+
+          <div class="diseno-ref-grid" *ngIf="prenda.tieneEstampado">
+            <div class="field">
+              <label>Descripción del estampado</label>
+              <textarea
+                [(ngModel)]="prenda.estampadoDescripcion"
+                [ngModelOptions]="{standalone: true}"
+                rows="2"
+                placeholder="Ej: Estampado full front, colores CMYK..."
+              ></textarea>
+            </div>
+            <div class="field">
+              <label>Imagen de referencia (estampado)</label>
+              <input type="file" accept="image/*" (change)="onReferenciaImagenPrendaChange($event, prenda, 'estampado')">
+              <img *ngIf="prenda.estampadoReferencia" class="file-preview" [src]="prenda.estampadoReferencia" alt="Ref. estampado">
+            </div>
+          </div>
 
           <div class="field">
             <label>Otros detalles</label>
@@ -339,17 +370,9 @@
                 <span>Estampado</span>
               </label>
             </div>
-          </div>
-
-          <!-- Descripción del Diseño -->
-          <div class="field" *ngIf="prendaEditando.tieneBordado || prendaEditando.tieneEstampado">
-            <label>Descripción del Diseño</label>
-            <textarea
-              [(ngModel)]="prendaEditando.descripcionDiseno"
-              [ngModelOptions]="{standalone: true}"
-              rows="2"
-              placeholder="Describe el diseño, colores, posición, etc..."
-            ></textarea>
+            <small *ngIf="prendaEditando.tieneBordado || prendaEditando.tieneEstampado">
+              Podés agregar la descripción en la sección "Referencia Visual".
+            </small>
           </div>
         </div>
 

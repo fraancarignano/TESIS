@@ -104,7 +104,7 @@ export class MuestraFormNuevoComponent implements OnInit {
     otrosDetalle: '',
     mockup: '' as string | null
   };
-  paletaRgb = { r: 0, g: 0, b: 0 };
+  paletaHex = '#000000';
 
   constructor(
     private fb: FormBuilder,
@@ -703,7 +703,7 @@ export class MuestraFormNuevoComponent implements OnInit {
     estampadoDescripcion: referenciaEstampado?.estampadoDescripcion?.trim() || undefined,
     estampadoReferencia: referenciaEstampado?.estampadoReferencia || undefined,
     otrosDetalle: undefined,
-    paletaRgb: this.paletaRgbTexto,
+    paletaRgb: this.paletaHex,
     prendas: this.prendasProyecto.map((p, index) => ({
       idTipoPrenda: p.idTipoPrenda!,
       idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
@@ -819,25 +819,15 @@ export class MuestraFormNuevoComponent implements OnInit {
     return this.clientes.find(c => c.idCliente === Number(idCliente));
   }
 
-  get paletaHex(): string {
-    const toHex = (value: number) => Math.max(0, Math.min(255, value)).toString(16).padStart(2, '0');
-    return `#${toHex(this.paletaRgb.r)}${toHex(this.paletaRgb.g)}${toHex(this.paletaRgb.b)}`.toUpperCase();
-  }
-
   get paletaRgbTexto(): string {
-    const r = Math.max(0, Math.min(255, this.paletaRgb.r));
-    const g = Math.max(0, Math.min(255, this.paletaRgb.g));
-    const b = Math.max(0, Math.min(255, this.paletaRgb.b));
+    const hex = this.paletaHex.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
     return `rgb(${r}, ${g}, ${b})`;
   }
 
-  normalizarPaletaRgb(): void {
-    this.paletaRgb = {
-      r: Math.max(0, Math.min(255, Number(this.paletaRgb.r) || 0)),
-      g: Math.max(0, Math.min(255, Number(this.paletaRgb.g) || 0)),
-      b: Math.max(0, Math.min(255, Number(this.paletaRgb.b) || 0))
-    };
-  }
+  normalizarPaletaRgb(): void { /* no-op, mantenido por compatibilidad */ }
 
   onReferenciaImagenChange(event: Event, tipo: 'bordado' | 'estampado'): void {
     const input = event.target as HTMLInputElement;

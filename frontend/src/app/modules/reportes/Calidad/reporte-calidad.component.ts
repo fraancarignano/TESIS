@@ -216,6 +216,15 @@ export class ReporteCalidadComponent implements OnInit, AfterViewInit, OnDestroy
     this.chartFallas = new Chart(ctx, config);
   }
 
+  getPorcentajeAprobacion(t: CalidadPorTaller): number {
+    if (!t.totalInspecciones) return 0;
+    return Math.round((t.aprobadas / t.totalInspecciones) * 100);
+  }
+
+  getTallerOrdenado(): CalidadPorTaller[] {
+    return [...this.datosTaller].sort((a, b) => this.getPorcentajeAprobacion(b) - this.getPorcentajeAprobacion(a));
+  }
+
   private crearGraficoCalidadTaller(): void {
     if (!this.chartCalidadTallerRef || !this.datosTaller.length) return;
     const ctx = this.chartCalidadTallerRef.nativeElement.getContext('2d');
@@ -223,7 +232,20 @@ export class ReporteCalidadComponent implements OnInit, AfterViewInit, OnDestroy
 
     this.chartCalidadTaller?.destroy();
 
-    const labels = this.datosTaller.map(t => t.nombreTaller);
+    // Ordenar por % aprobación descendente
+    const ordenados = this.getTallerOrdenado();
+    const labels = ordenados.map(t => t.nombreTaller);
+
+    // Convertir a porcentajes para stacked 100%
+    const pctAprobadas = ordenados.map(t =>
+      t.totalInspecciones ? Math.round((t.aprobadas / t.totalInspecciones) * 100) : 0
+    );
+    const pctObservadas = ordenados.map(t =>
+      t.totalInspecciones ? Math.round((t.observadas / t.totalInspecciones) * 100) : 0
+    );
+    const pctRechazadas = ordenados.map(t =>
+      t.totalInspecciones ? Math.round((t.rechazadas / t.totalInspecciones) * 100) : 0
+    );
 
     const config: ChartConfiguration = {
       type: 'bar',
@@ -232,39 +254,57 @@ export class ReporteCalidadComponent implements OnInit, AfterViewInit, OnDestroy
         datasets: [
           {
             label: 'Aprobadas',
-            data: this.datosTaller.map(t => t.aprobadas),
-            backgroundColor: '#2e7d32'
+            data: pctAprobadas,
+            backgroundColor: '#2e7d32',
+            borderRadius: 0
           },
           {
             label: 'Observadas',
-            data: this.datosTaller.map(t => t.observadas),
-            backgroundColor: '#f57c00'
+            data: pctObservadas,
+            backgroundColor: '#f57c00',
+            borderRadius: 0
           },
           {
             label: 'Rechazadas',
-            data: this.datosTaller.map(t => t.rechazadas),
-            backgroundColor: '#c62828'
+            data: pctRechazadas,
+            backgroundColor: '#c62828',
+            borderRadius: 0
           }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        indexAxis: 'y',
         plugins: {
           legend: { position: 'bottom' },
           tooltip: {
             callbacks: {
+              label: (item) => {
+                const idx = item.dataIndex;
+                const t = ordenados[idx];
+                const abs = item.datasetIndex === 0 ? t.aprobadas
+                  : item.datasetIndex === 1 ? t.observadas
+                  : t.rechazadas;
+                return ` ${item.dataset.label}: ${item.parsed.x}%  (${abs} insp.)`;
+              },
               footer: (items) => {
                 const idx = items[0].dataIndex;
-                const total = this.datosTaller[idx].totalInspecciones;
-                return `Total: ${total}`;
+                return `Total inspecciones: ${ordenados[idx].totalInspecciones}`;
               }
             }
           }
         },
         scales: {
-          x: { stacked: false },
-          y: { stacked: false, beginAtZero: true, ticks: { stepSize: 1 } }
+          x: {
+            stacked: true,
+            max: 100,
+            ticks: { callback: (v) => `${v}%` },
+            grid: { display: false }
+          },
+          y: {
+            stacked: true
+          }
         }
       }
     };

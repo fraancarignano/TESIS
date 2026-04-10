@@ -186,15 +186,14 @@ export class ProyectoTransferComponent implements OnInit {
   abrirPanelOC(): void {
     if (!this.sinStock.length) { this.mostrarMensaje('No hay materiales faltantes', 'error'); return; }
     this.itemsOC = this.sinStock.map(m => ({
-      // Si hay color solicitado, siempre crear como insumo nuevo para garantizar el color correcto
-      // Si no hay color, usar el idInsumo existente del tipo
+      // Telas con color → insumo nuevo (idInsumo=0) para garantizar el color correcto
+      // Avíos/hilos sin color → usar el insumo existente del tipo
       idInsumo: m.colorSolicitado ? 0 : m.idInsumo,
       nombreInsumo: m.tipoInsumo || m.nombreInsumo,
-      colorSolicitado: m.colorSolicitado,
+      colorSolicitado: m.colorSolicitado || '',
       cantidad: Math.max(0.01, m.cantidadNecesaria - m.stockDisponible),
       precioUnitario: 0,
-      // Campos para insumo nuevo
-      nuevoIdTipoInsumo: m.idTipoInsumo || undefined,
+      nuevoIdTipoInsumo: m.colorSolicitado ? (m.idTipoInsumo || undefined) : undefined,
       nuevoUnidadMedida: m.unidadMedida
     }));
     this.idProveedorOC = null;

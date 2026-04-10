@@ -945,10 +945,50 @@ namespace TESIS_OG.Services.ProyectoService
             var proyecto = await _context.Proyectos.FindAsync(idProyecto);
             if (proyecto == null) return false;
 
+            // Validar transiciones de estado
+            var estadoActual = proyecto.Estado;
+            var transicionesValidas = new Dictionary<string, List<string>>
+            {
+                ["Pendiente"]   = new() { "En Proceso", "Archivado" },
+                ["En Proceso"]  = new() { "Pausado", "Finalizado", "Archivado" },
+                ["Pausado"]     = new() { "En Proceso", "Archivado" },
+                ["Finalizado"]  = new() { "Archivado" },
+                ["Archivado"]   = new()
+            };
+
+            if (transicionesValidas.TryGetValue(estadoActual, out var permitidos) &&
+                !permitidos.Contains(nuevoEstado))
+                throw new InvalidOperationException($"No se puede cambiar de '{estadoActual}' a '{nuevoEstado}'");
+
+            // Si va a iniciar, verificar que todos los materiales estén asignados
+            if (nuevoEstado == "En Proceso")
+            {
+                var materiales = await _context.MaterialCalculados
+                    .Where(m => m.IdProyecto == idProyecto)
+                    .ToListAsync();
+
+                foreach (var mat in materiales)
+                {
+                    var cantidadNecesaria = mat.CantidadManual ?? mat.CantidadCalculada;
+                    var stockAsignado = await _context.InsumoStocks
+                        .Where(s => s.IdInsumo == mat.IdInsumo && s.IdProyecto == idProyecto)
+                        .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+
+                    if (stockAsignado < cantidadNecesaria)
+                    {
+                        var insumo = await _context.Insumos.FindAsync(mat.IdInsumo);
+                        throw new InvalidOperationException(
+                            $"No se puede iniciar: falta asignar material '{insumo?.NombreInsumo ?? mat.IdInsumo.ToString()}'. " +
+                            $"Asignado: {stockAsignado}, Requerido: {cantidadNecesaria}");
+                    }
+                }
+            }
+
             proyecto.Estado = nuevoEstado;
             await _context.SaveChangesAsync();
             return true;
         }
+        
 
         private async Task<List<AreaProduccion>> ObtenerAreasOrdenadasAsync()
         {
@@ -1035,7 +1075,6 @@ namespace TESIS_OG.Services.ProyectoService
 
                 if (config != null)
                 {
-                    // Buscar insumo por tipo + color de la prenda (normalizado)
                     var candidatosInsumo = await _context.Insumos
                       .Where(i => i.IdTipoInsumo == prenda.IdTipoInsumoMaterial)
                       .ToListAsync();
@@ -1055,9 +1094,10 @@ namespace TESIS_OG.Services.ProyectoService
                     if (insumo != null)
                     {
                         var cantidadCalculada = prenda.CantidadTotal * config.CantidadPorUnidad;
-                        var tieneStock = insumo.StockActual >= cantidadCalculada;
 
-                        var materialCalculado = new MaterialCalculado
+                        // Solo registrar el MaterialCalculado — NO descontar stock aquí.
+                        // El stock se descuenta cuando inventario asigna el material al proyecto.
+                        _context.MaterialCalculados.Add(new MaterialCalculado
                         {
                             IdProyecto = idProyecto,
                             IdProyectoPrenda = prenda.IdProyectoPrenda,
@@ -1065,24 +1105,8 @@ namespace TESIS_OG.Services.ProyectoService
                             TipoCalculo = "Auto",
                             CantidadCalculada = cantidadCalculada,
                             UnidadMedida = config.UnidadMedida,
-                            TieneStock = tieneStock
-                        };
-
-                        _context.MaterialCalculados.Add(materialCalculado);
-
-                        insumo.StockActual -= cantidadCalculada;
-
-                        if (insumo.StockActual <= 0)
-                        {
-                            insumo.StockActual = 0;
-                            insumo.Estado = "Agotado";
-                        }
-                        else
-                        {
-                            insumo.Estado = "En uso";
-                        }
-
-                        insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+                            TieneStock = insumo.StockActual >= cantidadCalculada
+                        });
                     }
                 }
             }
@@ -1097,9 +1121,8 @@ namespace TESIS_OG.Services.ProyectoService
                 var insumo = await _context.Insumos.FindAsync(material.IdInsumo);
                 if (insumo != null)
                 {
-                    var tieneStock = insumo.StockActual >= material.Cantidad;
-
-                    var materialCalculado = new MaterialCalculado
+                    // Solo registrar el MaterialCalculado — NO descontar stock aquí.
+                    _context.MaterialCalculados.Add(new MaterialCalculado
                     {
                         IdProyecto = idProyecto,
                         IdProyectoPrenda = null,
@@ -1108,25 +1131,9 @@ namespace TESIS_OG.Services.ProyectoService
                         CantidadCalculada = material.Cantidad,
                         CantidadManual = material.Cantidad,
                         UnidadMedida = material.UnidadMedida,
-                        TieneStock = tieneStock,
+                        TieneStock = insumo.StockActual >= material.Cantidad,
                         Observaciones = material.Observaciones
-                    };
-
-                    _context.MaterialCalculados.Add(materialCalculado);
-
-                    insumo.StockActual -= material.Cantidad;
-
-                    if (insumo.StockActual <= 0)
-                    {
-                        insumo.StockActual = 0;
-                        insumo.Estado = "Agotado";
-                    }
-                    else
-                    {
-                        insumo.Estado = "En uso";
-                    }
-
-                    insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+                    });
                 }
             }
 

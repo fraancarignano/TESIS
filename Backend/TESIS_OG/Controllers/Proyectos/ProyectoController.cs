@@ -540,6 +540,10 @@ namespace TESIS_OG.Controllers
 
                 return Ok(new { message = "Estado actualizado correctamente", nuevoEstado = dto.Estado });
             }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cambiar estado del proyecto {IdProyecto}", id);
@@ -557,11 +561,15 @@ namespace TESIS_OG.Controllers
         [HttpPost("{id}/asignar-materiales")]
         public async Task<IActionResult> AsignarMateriales(int id, [FromBody] AsignarMaterialesDTO dto)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 var proyecto = await _context.Proyectos.FindAsync(id);
                 if (proyecto == null)
                     return NotFound(new { message = $"Proyecto {id} no encontrado" });
+
+                if (proyecto.Estado != "Pendiente")
+                    return BadRequest(new { message = $"Solo se pueden asignar materiales a proyectos en estado Pendiente. Estado actual: {proyecto.Estado}" });
 
                 if (dto?.Materiales == null || !dto.Materiales.Any())
                     return BadRequest(new { message = "No se recibieron materiales para asignar" });
@@ -572,7 +580,7 @@ namespace TESIS_OG.Controllers
                 {
                     if (item.IdInsumo <= 0)
                     {
-                        resultados.Add(new { idInsumo = item.IdInsumo, error = "IdInsumo inválido (0 o negativo)" });
+                        resultados.Add(new { idInsumo = item.IdInsumo, error = "IdInsumo inválido" });
                         continue;
                     }
 
@@ -589,35 +597,37 @@ namespace TESIS_OG.Controllers
                         continue;
                     }
 
+                    // Idempotencia: si ya fue asignado, omitir
+                    var yaAsignado = await _context.InsumoStocks
+                        .AnyAsync(s => s.IdInsumo == item.IdInsumo && s.IdProyecto == id);
+                    if (yaAsignado)
+                    {
+                        resultados.Add(new { idInsumo = item.IdInsumo, nombre = insumo.NombreInsumo, info = "Ya estaba asignado, omitido" });
+                        continue;
+                    }
+
                     if (insumo.StockActual < item.Cantidad)
+                    {
+                        await transaction.RollbackAsync();
                         return BadRequest(new { message = $"Stock insuficiente de {insumo.NombreInsumo} ({insumo.Color}). Disponible: {insumo.StockActual}, Requerido: {item.Cantidad}" });
+                    }
 
                     var stockAntes = insumo.StockActual;
                     insumo.StockActual -= item.Cantidad;
                     insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+                    if (insumo.StockActual <= 0) { insumo.StockActual = 0; insumo.Estado = "Agotado"; }
+                    else insumo.Estado = "En uso";
 
-                    var stockEntry = await _context.InsumoStocks
-                        .FirstOrDefaultAsync(s => s.IdInsumo == item.IdInsumo && s.IdProyecto == id);
-
-                    if (stockEntry == null)
+                    _context.InsumoStocks.Add(new InsumoStock
                     {
-                        _context.InsumoStocks.Add(new InsumoStock
-                        {
-                            IdInsumo = item.IdInsumo,
-                            IdProyecto = id,
-                            Cantidad = item.Cantidad,
-                            FechaActualizacion = DateTime.Now
-                        });
-                    }
-                    else
-                    {
-                        stockEntry.Cantidad += item.Cantidad;
-                        stockEntry.FechaActualizacion = DateTime.Now;
-                    }
+                        IdInsumo = item.IdInsumo,
+                        IdProyecto = id,
+                        Cantidad = item.Cantidad,
+                        FechaActualizacion = DateTime.Now
+                    });
 
                     var destino = $"Proyecto {proyecto.CodigoProyecto ?? id.ToString()}";
                     var observacion = $"Asignado al proyecto {proyecto.NombreProyecto}";
-
                     _context.InventarioMovimientos.Add(new InventarioMovimiento
                     {
                         IdInsumo = item.IdInsumo,
@@ -634,10 +644,12 @@ namespace TESIS_OG.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
                 return Ok(new { message = "Materiales asignados correctamente", detalle = resultados });
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error al asignar materiales al proyecto {id}", id);
                 return StatusCode(500, new { message = "Error al asignar materiales", detalle = ex.Message, inner = ex.InnerException?.Message });
             }

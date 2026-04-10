@@ -985,6 +985,31 @@ small {
   margin-bottom: 10px;
 }
 
+.referencia-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.chip-diseno {
+  background: #fff1e8;
+  color: #c2410c;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.diseno-ref-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+}
+
 .referencia-sub {
   font-size: 0.75rem;
   color: #777;
@@ -1006,6 +1031,24 @@ small {
   align-items: center;
   gap: 12px;
   margin-top: 8px;
+}
+
+.paleta-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.paleta-picker-input {
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 10px;
+  padding: 3px;
+  cursor: pointer;
+  background: transparent;
+  flex-shrink: 0;
 }
 
 .color-swatch {

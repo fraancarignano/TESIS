@@ -108,13 +108,12 @@
             <span class="media-helper">Color de referencia</span>
           </div>
           <div class="paleta-card">
-            <span class="paleta-swatch" [style.background]="paletaColor"></span>
+            <input type="color" formControlName="paletaRgb" class="paleta-picker">
             <div>
               <strong>{{ form.get('paletaRgb')?.value || '-' }}</strong>
               <small>Aplicada al diseño</small>
             </div>
           </div>
-          <input type="text" formControlName="paletaRgb" placeholder="#000000, #FFFFFF">
         </div>
       </div>
 
