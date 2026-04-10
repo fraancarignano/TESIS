@@ -42,6 +42,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   // Tabs
   tabActiva: 'info' | 'areas' | 'materiales' | 'auditoria' = 'areas';
+  readonly mostrarTabsSecundarias = false;
 
   // Áreas
   readonly AREAS = AREAS_PRODUCCION;

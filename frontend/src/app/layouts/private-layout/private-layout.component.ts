@@ -80,8 +80,8 @@ export class PrivateLayoutComponent implements OnInit, OnDestroy {
 
   async cerrarSesion(): Promise<void> {
     const confirmar = await this.alertas.confirmar(
-      'Estas seguro de que deseas cerrar sesion?',
-      'Si, cerrar sesion'
+      'Est\u00e1s seguro de que deseas cerrar sesi\u00f3n?',
+      'S\u00ed, cerrar sesi\u00f3n'
     );
 
     if (confirmar) {

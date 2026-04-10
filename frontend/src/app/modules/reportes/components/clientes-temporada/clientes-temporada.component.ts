@@ -49,7 +49,6 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
   datosReporte: ReporteClientesTemporadaResponse | null = null;
   filas: ReporteClientesTemporadaItem[] = [];
 
-  readonly limiteTopClientes = 10;
   private chart?: Chart<'bar', (number | [number, number] | null)[], unknown>;
 
   filtros: ReporteClientesTemporadaRequest = {
@@ -199,9 +198,9 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
     return this.filas.filter((fila) => fila.totalPrendas > 0).length;
   }
 
-  get promedioPrendasPorCliente(): number {
-    if (this.clientesConDemanda === 0) return 0;
-    return Math.round(this.totalPrendasReporte / this.clientesConDemanda);
+  get alturaGrafico(): number {
+    const cantidadClientes = this.obtenerClientesPorPrendas().length;
+    return Math.max(320, cantidadClientes * 56);
   }
 
   calcularPromedioPrendas(fila: ReporteClientesTemporadaItem): number {
@@ -229,10 +228,10 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
       return 'Prendas del cliente seleccionado';
     }
 
-    return `Top ${Math.min(this.limiteTopClientes, this.obtenerTopClientesPorPrendas().length)} clientes por prendas`;
+    return 'Clientes por prendas';
   }
 
-  private obtenerTopClientesPorPrendas(): ClientePrendasResumen[] {
+  private obtenerClientesPorPrendas(): ClientePrendasResumen[] {
     const clientes = new Map<number, ClientePrendasResumen>();
 
     this.filas.forEach((fila) => {
@@ -254,8 +253,7 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
     });
 
     return Array.from(clientes.values())
-      .sort((a, b) => b.totalPrendas - a.totalPrendas)
-      .slice(0, this.limiteTopClientes);
+      .sort((a, b) => b.totalPrendas - a.totalPrendas);
   }
 
   private crearGrafico(): void {
@@ -269,9 +267,9 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
     const ctx = this.chartRef.nativeElement.getContext('2d');
     if (!ctx) return;
 
-    const topClientes = this.obtenerTopClientesPorPrendas();
-    const clientes = topClientes.map((item) => item.cliente);
-    const data = topClientes.map((item) => item.totalPrendas);
+    const clientesOrdenados = this.obtenerClientesPorPrendas();
+    const clientes = clientesOrdenados.map((item) => item.cliente);
+    const data = clientesOrdenados.map((item) => item.totalPrendas);
 
     const config: ChartConfiguration<'bar'> = {
       type: 'bar',
@@ -298,7 +296,7 @@ export class ClientesTemporadaComponent implements OnInit, AfterViewInit, OnDest
           tooltip: {
             callbacks: {
               label: (context) => {
-                const resumen = topClientes[context.dataIndex];
+                const resumen = clientesOrdenados[context.dataIndex];
                 if (!resumen) return '';
 
                 const prendas = resumen.totalPrendas.toLocaleString('es-AR');

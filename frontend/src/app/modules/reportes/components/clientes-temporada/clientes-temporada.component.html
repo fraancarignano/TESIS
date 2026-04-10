@@ -81,12 +81,8 @@
         <strong>{{ totalProyectosReporte }}</strong>
         <span>Proyectos</span>
       </div>
-      <div>
-        <strong>{{ promedioPrendasPorCliente | number:'1.0-0' }}</strong>
-        <span>Prom. prendas/cliente</span>
-      </div>
     </div>
-    <div class="grafico-container">
+    <div class="grafico-container" [style.height.px]="alturaGrafico">
       <canvas #chartClientesTemporada></canvas>
     </div>
   </div>

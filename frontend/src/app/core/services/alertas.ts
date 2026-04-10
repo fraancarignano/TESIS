@@ -67,7 +67,7 @@ export class AlertasService {
   /**
    * Confirmación con pregunta (Sí/No)
    */
-  async confirmar(titulo: string, mensaje?: string, textoBoton: string = 'S�, confirmar'): Promise<boolean> {
+  async confirmar(titulo: string, mensaje?: string, textoBoton: string = 'S\\u00ed, confirmar'): Promise<boolean> {
     const result = await Swal.fire({
       title: titulo,
       text: mensaje,
