@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import {
+  CalidadPorTaller,
   CriterioFalla,
   ReporteCalidad,
   ReportesService,
@@ -32,10 +33,14 @@ export class ReporteCalidadComponent implements OnInit, AfterViewInit, OnDestroy
   @ViewChild('chartResultados') chartResultadosRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('chartTalles') chartTallesRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('chartFallas') chartFallasRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('chartCalidadTaller') chartCalidadTallerRef!: ElementRef<HTMLCanvasElement>;
 
   private chartResultados?: Chart;
   private chartTalles?: Chart;
   private chartFallas?: Chart;
+  private chartCalidadTaller?: Chart;
+
+  datosTaller: CalidadPorTaller[] = [];
 
   constructor(
     private reportesService: ReportesService,
@@ -89,6 +94,19 @@ export class ReporteCalidadComponent implements OnInit, AfterViewInit, OnDestroy
         this.mensajeError = err.message || 'No se pudo cargar el reporte de calidad.';
       }
     });
+
+    this.reportesService.obtenerCalidadPorTaller(
+      this.filtroProyectoId,
+      this.filtroFechaInicio || undefined,
+      this.filtroFechaFin || undefined
+    ).subscribe({
+      next: (datos) => {
+        this.datosTaller = datos;
+        this.cdr.detectChanges();
+        setTimeout(() => this.crearGraficoCalidadTaller(), 0);
+      },
+      error: () => { /* silencioso, el gráfico simplemente no aparece */ }
+    });
   }
 
   private crearGraficos(): void {
@@ -103,9 +121,11 @@ export class ReporteCalidadComponent implements OnInit, AfterViewInit, OnDestroy
     this.chartResultados?.destroy();
     this.chartTalles?.destroy();
     this.chartFallas?.destroy();
+    this.chartCalidadTaller?.destroy();
     this.chartResultados = undefined;
     this.chartTalles = undefined;
     this.chartFallas = undefined;
+    this.chartCalidadTaller = undefined;
   }
 
   private crearGraficoResultados(): void {
@@ -194,6 +214,62 @@ export class ReporteCalidadComponent implements OnInit, AfterViewInit, OnDestroy
     };
 
     this.chartFallas = new Chart(ctx, config);
+  }
+
+  private crearGraficoCalidadTaller(): void {
+    if (!this.chartCalidadTallerRef || !this.datosTaller.length) return;
+    const ctx = this.chartCalidadTallerRef.nativeElement.getContext('2d');
+    if (!ctx) return;
+
+    this.chartCalidadTaller?.destroy();
+
+    const labels = this.datosTaller.map(t => t.nombreTaller);
+
+    const config: ChartConfiguration = {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Aprobadas',
+            data: this.datosTaller.map(t => t.aprobadas),
+            backgroundColor: '#2e7d32'
+          },
+          {
+            label: 'Observadas',
+            data: this.datosTaller.map(t => t.observadas),
+            backgroundColor: '#f57c00'
+          },
+          {
+            label: 'Rechazadas',
+            data: this.datosTaller.map(t => t.rechazadas),
+            backgroundColor: '#c62828'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' },
+          tooltip: {
+            callbacks: {
+              footer: (items) => {
+                const idx = items[0].dataIndex;
+                const total = this.datosTaller[idx].totalInspecciones;
+                return `Total: ${total}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: { stacked: false },
+          y: { stacked: false, beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+      }
+    };
+
+    this.chartCalidadTaller = new Chart(ctx, config);
   }
 }
 

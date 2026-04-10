@@ -23,16 +23,57 @@ namespace TESIS_OG.Services.OrdenCompraService
                     .AnyAsync(p => p.IdProveedor == ordenDto.IdProveedor);
                 if (!proveedorExiste) return null;
 
-                // Validar que todos los insumos existan
+                // Validar y resolver insumos (existentes o nuevos)
                 foreach (var detalle in ordenDto.Detalles)
                 {
-                    var insumo = await _context.Insumos
-                        .FirstOrDefaultAsync(i => i.IdInsumo == detalle.IdInsumo);
+                    if (detalle.IdInsumo == 0)
+                    {
+                        // Insumo nuevo: validar campos requeridos
+                        if (string.IsNullOrWhiteSpace(detalle.NuevoNombreInsumo))
+                            return null;
+                        if (!detalle.NuevoIdTipoInsumo.HasValue || detalle.NuevoIdTipoInsumo <= 0)
+                            return null;
 
-                    if (insumo == null) return null;
+                        var colorNorm = string.IsNullOrWhiteSpace(detalle.NuevoColor)
+                            ? null
+                            : detalle.NuevoColor.Trim().ToUpperInvariant();
+
+                        // Buscar si ya existe un insumo con ese nombre + color
+                        var insumoExistente = await _context.Insumos.FirstOrDefaultAsync(i =>
+                            i.NombreInsumo.ToLower() == detalle.NuevoNombreInsumo.Trim().ToLower() &&
+                            (i.Color ?? "") == (colorNorm ?? ""));
+
+                        if (insumoExistente != null)
+                        {
+                            // Reusar el existente
+                            detalle.IdInsumo = insumoExistente.IdInsumo;
+                        }
+                        else
+                        {
+                            // Crear el insumo nuevo con stock 0
+                            var nuevoInsumo = new Insumo
+                            {
+                                NombreInsumo = detalle.NuevoNombreInsumo.Trim(),
+                                IdTipoInsumo = detalle.NuevoIdTipoInsumo.Value,
+                                UnidadMedida = detalle.NuevoUnidadMedida?.Trim() ?? "Kg",
+                                StockActual = 0,
+                                Color = colorNorm,
+                                Estado = "A designar",
+                                FechaActualizacion = DateOnly.FromDateTime(DateTime.Now)
+                            };
+                            _context.Insumos.Add(nuevoInsumo);
+                            await _context.SaveChangesAsync();
+                            detalle.IdInsumo = nuevoInsumo.IdInsumo;
+                        }
+                    }
+                    else
+                    {
+                        var insumo = await _context.Insumos.FirstOrDefaultAsync(i => i.IdInsumo == detalle.IdInsumo);
+                        if (insumo == null) return null;
+                    }
+
                     if (detalle.Cantidad <= 0) return null;
                     if (detalle.PrecioUnitario <= 0) return null;
-
                     detalle.Subtotal = detalle.Cantidad * detalle.PrecioUnitario;
                 }
 
@@ -145,6 +186,7 @@ namespace TESIS_OG.Services.OrdenCompraService
                     IdDetalle = d.IdDetalle,
                     IdInsumo = d.IdInsumo,
                     NombreInsumo = d.IdInsumoNavigation?.NombreInsumo,
+                    ColorInsumo = d.IdInsumoNavigation?.Color,
                     Cantidad = d.Cantidad,
                     CantidadRecibida = recibidoMap.TryGetValue(d.IdInsumo, out var rec) ? rec : 0,
                     PrecioUnitario = d.PrecioUnitario,
@@ -354,11 +396,15 @@ namespace TESIS_OG.Services.OrdenCompraService
                 {
                     insumo.StockActual += detalle.CantidadRecibida;
                     insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+                    // Si el insumo estaba "A designar" (recién creado por OC), activarlo
+                    if (insumo.Estado == "A designar" || insumo.Estado == "Agotado")
+                        insumo.Estado = "Disponible";
                 }
 
                 _context.InventarioMovimientos.Add(new InventarioMovimiento
                 {
                     IdInsumo = detalle.IdInsumo,
+                    NombreInsumo = insumo?.NombreInsumo,
                     IdOrdenCompra = orden.IdOrdenCompra,
                     TipoMovimiento = "Entrada",
                     Cantidad = detalle.CantidadRecibida,

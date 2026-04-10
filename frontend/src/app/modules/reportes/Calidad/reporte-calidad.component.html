@@ -73,6 +73,12 @@
           <canvas #chartFallas></canvas>
         </div>
       </div>
+      <div class="grafico-card full" *ngIf="datosTaller.length > 0">
+        <h3>Calidad por taller confeccionista</h3>
+        <div class="canvas-wrap canvas-wrap-tall">
+          <canvas #chartCalidadTaller></canvas>
+        </div>
+      </div>
     </div>
 
     <div class="tabla-container">

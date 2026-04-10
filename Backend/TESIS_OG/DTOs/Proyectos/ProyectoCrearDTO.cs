@@ -88,6 +88,9 @@ namespace TESIS_OG.DTOs.Proyectos
         [StringLength(500, ErrorMessage = "La descripción del diseno no puede exceder 500 caracteres")]
         public string? DescripcionDiseno { get; set; }
 
+        [StringLength(80)]
+        public string? ColorTela { get; set; }
+
         public int? Orden { get; set; }
 
         // ========== DISTRIBUCIÓN POR TALLES ==========
@@ -182,12 +185,11 @@ namespace TESIS_OG.DTOs.Proyectos
         public string NombrePrenda { get; set; } = null!;
         public int? IdTipoInsumoMaterial { get; set; }
         public string? NombreMaterial { get; set; }
+        public string? ColorTela { get; set; }
         public int CantidadTotal { get; set; }
         public bool TieneBordado { get; set; }
         public bool TieneEstampado { get; set; }
         public string? DescripcionDiseno { get; set; }
-
-        // Distribución por talles
         public List<PrendaTalleDTO> Talles { get; set; } = new();
     }
 
@@ -211,20 +213,22 @@ namespace TESIS_OG.DTOs.Proyectos
     {
         public int IdMaterialCalculado { get; set; }
         public int IdInsumo { get; set; }
+        public int IdTipoInsumo { get; set; }
         public string NombreInsumo { get; set; } = null!;
         public string TipoInsumo { get; set; } = null!;
-        public string TipoCalculo { get; set; } = null!; // "Auto" o "Manual"
+        public string TipoCalculo { get; set; } = null!;
         public decimal CantidadCalculada { get; set; }
         public decimal? CantidadManual { get; set; }
-        public decimal CantidadFinal { get; set; } // La que se va a usar
+        public decimal CantidadFinal { get; set; }
         public string UnidadMedida { get; set; } = null!;
         public decimal StockActual { get; set; }
         public bool TieneStock { get; set; }
         public string? Observaciones { get; set; }
-
-        // Info adicional
         public int? IdProyectoPrenda { get; set; }
-        public string? NombrePrenda { get; set; } // Si es material específico de una prenda
+        public string? NombrePrenda { get; set; }
+        public string? ColorInsumo { get; set; }
+        public string? ColorSolicitado { get; set; }
+        public bool ColorCoincide { get; set; } = true;
     }
 
     // ===================================================
@@ -281,6 +285,7 @@ namespace TESIS_OG.DTOs.Proyectos
     public class ProyectoActualizarDTO
     {
         public int IdProyecto { get; set; }
+        public int? IdCliente { get; set; }
         public string? NombreProyecto { get; set; }
         public string? Descripcion { get; set; }
         public string? Prioridad { get; set; }
@@ -288,8 +293,10 @@ namespace TESIS_OG.DTOs.Proyectos
         public DateOnly? FechaFin { get; set; }
         public int? IdUsuarioEncargado { get; set; }
 
-        // NO se pueden modificar las prendas una vez creado el proyecto
-        // Solo materiales manuales
+        // Prendas: si se envían, reemplazan las existentes
+        public List<ProyectoPrendaCrearDTO>? Prendas { get; set; }
+
+        // Materiales manuales
         public List<MaterialManualDTO>? MaterialesManualesActualizados { get; set; }
     }
 

@@ -110,6 +110,7 @@ export interface ProyectoCrearNuevo {
   fechaInicio: string; // YYYY-MM-DD
   fechaFin?: string;
   idUsuarioEncargado?: number;
+  noConsumirStock?: boolean;
   prendas: ProyectoPrendaCrear[];
   materialesManuales?: MaterialManual[];
 }
@@ -198,7 +199,8 @@ export interface MaterialCalculadoPreview {
   nombreInsumo: string;
   categoria : string;
   tipoInsumo: string;
-  color?: string;
+  color?: string;           // color del insumo en stock
+  colorSolicitado?: string; // color pedido en la prenda
   tipoCalculo: string;
   cantidadNecesaria: number;
   unidadMedida: string;
@@ -219,11 +221,13 @@ export interface CalculoMaterialesRequest {
     idTipoPrenda: number;
     idTipoInsumoMaterial: number;
     cantidadTotal: number;
+    colorSolicitado?: string;
   }[];
   materialesManuales?: {
     idInsumo: number;
     cantidad: number;
   }[];
+  noConsumirStock?: boolean;
 }
 
 export interface CalculoMaterialesResponse {
@@ -264,6 +268,12 @@ export interface PrendaFormulario {
   tieneBordado: boolean;
   tieneEstampado: boolean;
   descripcionDiseno?: string;
+  mockupReferencia?: string;
+  bordadoDescripcion?: string;
+  bordadoReferencia?: string;
+  estampadoDescripcion?: string;
+  estampadoReferencia?: string;
+  otrosDetalleReferencia?: string;
   tallesDistribuidos: TalleDistribuido[];
   mostrarModalTalles?: boolean;
 }

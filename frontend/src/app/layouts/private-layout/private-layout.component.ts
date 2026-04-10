@@ -119,7 +119,7 @@ export class PrivateLayoutComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.notificacionesService.contarNotificacionesStock().subscribe({
+    this.notificacionesService.contarSolicitudesPendientes().subscribe({
       next: (res) => this.notificacionesStockCount = res.total || 0,
       error: () => this.notificacionesStockCount = 0
     });

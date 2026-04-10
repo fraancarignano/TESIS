@@ -150,6 +150,8 @@ export class InsumosService {
       idUbicacion: data.idUbicacion,
       codigoUbicacion: data.codigoUbicacion,
       estado: this.normalizarEstado(data.estado),
+      color: data.color || undefined,
+      tipoTela: data.tipoTela || undefined,
       detalleStock: data.detalleStock || [],
       proyectosAsignados: data.proyectosAsignados || []
     };
@@ -167,7 +169,9 @@ export class InsumosService {
       stockMinimo: insumo.stockMinimo,
       idProveedor: insumo.idProveedor,
       idUbicacion: insumo.idUbicacion,
-      estado: this.normalizarEstado(insumo.estado)
+      estado: this.normalizarEstado(insumo.estado),
+      color: insumo.color?.trim().toUpperCase() || undefined,
+      tipoTela: insumo.tipoTela?.trim() || undefined
     };
   }
 

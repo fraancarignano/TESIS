@@ -29,8 +29,7 @@ namespace TESIS_OG.DTOs.Muestras
 
         public int? IdUsuarioEncargado { get; set; }
 
-        [Required(ErrorMessage = "El mockup es obligatorio")]
-        public string MockupUrl { get; set; } = null!;
+        public string? MockupUrl { get; set; }
 
         public bool BordadoRequerido { get; set; }
 

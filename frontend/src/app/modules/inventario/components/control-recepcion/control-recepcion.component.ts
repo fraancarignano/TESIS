@@ -48,12 +48,15 @@ export class ControlRecepcionComponent implements OnInit {
     abrirControl(orden: OrdenCompra): void {
         this.ordenActiva = orden;
         this.observacion = '';
-        // Inicializar con el faltante real (pedido - ya recibido), mínimo 0
+        // Pre-cargar con la cantidad pedida en la OC (lo que falta recibir)
         this.detallesControl = (orden.detalles || []).map(d => {
-            const faltante = Math.max(0, d.cantidad - (d.cantidadRecibida ?? 0));
+            const yaRecibido = d.cantidadRecibida ?? 0;
+            const pendiente = Math.max(0, d.cantidad - yaRecibido);
             return {
                 idInsumo: d.idInsumo,
-                cantidadRecibida: faltante > 0 ? faltante : d.cantidad,
+                // Si nunca se recibió nada, pre-cargar con la cantidad total pedida
+                // Si ya se recibió algo, pre-cargar con lo que falta
+                cantidadRecibida: pendiente > 0 ? pendiente : d.cantidad,
                 observacionDetalle: ''
             };
         });
@@ -65,6 +68,16 @@ export class ControlRecepcionComponent implements OnInit {
 
     getNombreInsumo(idInsumo: number): string {
         return this.ordenActiva?.detalles?.find(d => d.idInsumo === idInsumo)?.nombreInsumo || 'Insumo';
+    }
+
+    getColorInsumo(idInsumo: number): string {
+        return this.ordenActiva?.detalles?.find(d => d.idInsumo === idInsumo)?.colorInsumo || '';
+    }
+
+    getNombreConColor(idInsumo: number): string {
+        const d = this.ordenActiva?.detalles?.find(x => x.idInsumo === idInsumo);
+        if (!d) return 'Insumo';
+        return d.colorInsumo ? `${d.nombreInsumo} — ${d.colorInsumo}` : (d.nombreInsumo || 'Insumo');
     }
 
     getCantidadSolicitada(idInsumo: number): number {

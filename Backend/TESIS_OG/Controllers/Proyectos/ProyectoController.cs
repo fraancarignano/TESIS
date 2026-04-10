@@ -5,6 +5,7 @@ using System.Security.Claims;
 using TESIS_OG.Data;
 using TESIS_OG.DTOs.Proyectos;
 using TESIS_OG.DTOs.Configuracion;
+using TESIS_OG.Models;
 using TESIS_OG.Security;
 using AppAuthorizationService = TESIS_OG.Services.AuthorizationService;
 using TESIS_OG.Services.ProyectosService;
@@ -551,6 +552,151 @@ namespace TESIS_OG.Controllers
         // ========================================
 
         /// <summary>
+        /// Asigna materiales del stock global al proyecto (sin requerir ubicación)
+        /// </summary>
+        [HttpPost("{id}/asignar-materiales")]
+        public async Task<IActionResult> AsignarMateriales(int id, [FromBody] AsignarMaterialesDTO dto)
+        {
+            try
+            {
+                var proyecto = await _context.Proyectos.FindAsync(id);
+                if (proyecto == null)
+                    return NotFound(new { message = $"Proyecto {id} no encontrado" });
+
+                if (dto?.Materiales == null || !dto.Materiales.Any())
+                    return BadRequest(new { message = "No se recibieron materiales para asignar" });
+
+                var resultados = new List<object>();
+
+                foreach (var item in dto.Materiales)
+                {
+                    if (item.IdInsumo <= 0)
+                    {
+                        resultados.Add(new { idInsumo = item.IdInsumo, error = "IdInsumo inválido (0 o negativo)" });
+                        continue;
+                    }
+
+                    var insumo = await _context.Insumos.FindAsync(item.IdInsumo);
+                    if (insumo == null)
+                    {
+                        resultados.Add(new { idInsumo = item.IdInsumo, error = "Insumo no encontrado" });
+                        continue;
+                    }
+
+                    if (item.Cantidad <= 0)
+                    {
+                        resultados.Add(new { idInsumo = item.IdInsumo, error = $"Cantidad inválida: {item.Cantidad}" });
+                        continue;
+                    }
+
+                    if (insumo.StockActual < item.Cantidad)
+                        return BadRequest(new { message = $"Stock insuficiente de {insumo.NombreInsumo} ({insumo.Color}). Disponible: {insumo.StockActual}, Requerido: {item.Cantidad}" });
+
+                    var stockAntes = insumo.StockActual;
+                    insumo.StockActual -= item.Cantidad;
+                    insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+
+                    var stockEntry = await _context.InsumoStocks
+                        .FirstOrDefaultAsync(s => s.IdInsumo == item.IdInsumo && s.IdProyecto == id);
+
+                    if (stockEntry == null)
+                    {
+                        _context.InsumoStocks.Add(new InsumoStock
+                        {
+                            IdInsumo = item.IdInsumo,
+                            IdProyecto = id,
+                            Cantidad = item.Cantidad,
+                            FechaActualizacion = DateTime.Now
+                        });
+                    }
+                    else
+                    {
+                        stockEntry.Cantidad += item.Cantidad;
+                        stockEntry.FechaActualizacion = DateTime.Now;
+                    }
+
+                    var destino = $"Proyecto {proyecto.CodigoProyecto ?? id.ToString()}";
+                    var observacion = $"Asignado al proyecto {proyecto.NombreProyecto}";
+
+                    _context.InventarioMovimientos.Add(new InventarioMovimiento
+                    {
+                        IdInsumo = item.IdInsumo,
+                        NombreInsumo = insumo.NombreInsumo,
+                        TipoMovimiento = "Asignacion",
+                        Cantidad = item.Cantidad,
+                        FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+                        Origen = "Stock General",
+                        Destino = destino.Length > 100 ? destino[..100] : destino,
+                        Observacion = observacion.Length > 100 ? observacion[..100] : observacion
+                    });
+
+                    resultados.Add(new { idInsumo = item.IdInsumo, nombre = insumo.NombreInsumo, color = insumo.Color, stockAntes, stockDespues = insumo.StockActual, cantidad = item.Cantidad });
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Materiales asignados correctamente", detalle = resultados });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al asignar materiales al proyecto {id}", id);
+                return StatusCode(500, new { message = "Error al asignar materiales", detalle = ex.Message, inner = ex.InnerException?.Message });
+            }
+        }
+
+        /// <summary>
+        /// Verifica si todos los materiales del proyecto están asignados
+        /// </summary>
+        [HttpGet("{id}/materiales-listos")]
+        public async Task<IActionResult> VerificarMaterialesListos(int id)
+        {
+            try
+            {
+                var proyecto = await _context.Proyectos.FindAsync(id);
+                if (proyecto == null)
+                    return NotFound(new { message = $"Proyecto {id} no encontrado" });
+
+                var materiales = await _context.MaterialCalculados
+                    .Include(mc => mc.IdInsumoNavigation)
+                    .Where(mc => mc.IdProyecto == id)
+                    .ToListAsync();
+
+                if (!materiales.Any())
+                    return Ok(new { listos = false, mensaje = "El proyecto no tiene materiales calculados" });
+
+                var detalles = new List<object>();
+                bool todosListos = true;
+
+                foreach (var mat in materiales)
+                {
+                    var cantidadNecesaria = mat.CantidadManual ?? mat.CantidadCalculada;
+                    var stockAsignado = await _context.InsumoStocks
+                        .Where(s => s.IdInsumo == mat.IdInsumo && s.IdProyecto == id)
+                        .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+
+                    var listo = stockAsignado >= cantidadNecesaria;
+                    if (!listo) todosListos = false;
+
+                    detalles.Add(new
+                    {
+                        idInsumo = mat.IdInsumo,
+                        nombreInsumo = mat.IdInsumoNavigation?.NombreInsumo,
+                        colorInsumo = mat.IdInsumoNavigation?.Color,
+                        cantidadNecesaria,
+                        stockAsignado,
+                        listo
+                    });
+                }
+
+                return Ok(new { listos = todosListos, detalles });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al verificar materiales del proyecto {id}", id);
+                return StatusCode(500, new { message = "Error al verificar materiales" });
+            }
+        }
+
+        /// <summary>
         /// Valida qué campos se pueden editar según el estado del proyecto
         /// </summary>
         [HttpGet("{id}/validar-edicion")]
@@ -636,5 +782,16 @@ namespace TESIS_OG.Controllers
     public class CambiarEstadoDTO
     {
         public string Estado { get; set; } = null!;
+    }
+
+    public class AsignarMaterialesDTO
+    {
+        public List<AsignarMaterialItem> Materiales { get; set; } = new();
+    }
+
+    public class AsignarMaterialItem
+    {
+        public int IdInsumo { get; set; }
+        public decimal Cantidad { get; set; }
     }
 }

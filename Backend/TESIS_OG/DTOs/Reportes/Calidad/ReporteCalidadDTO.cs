@@ -42,3 +42,13 @@ namespace TESIS_OG.DTOs.Reportes.Calidad
     }
 }
 
+
+    public class CalidadPorTallerDTO
+    {
+        public int IdTaller { get; set; }
+        public string NombreTaller { get; set; } = string.Empty;
+        public int Aprobadas { get; set; }
+        public int Observadas { get; set; }
+        public int Rechazadas { get; set; }
+        public int TotalInspecciones { get; set; }
+    }

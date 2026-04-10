@@ -79,6 +79,15 @@ export interface ClienteResumen {
   nombre: string;
 }
 
+export interface CalidadPorTaller {
+  idTaller: number;
+  nombreTaller: string;
+  aprobadas: number;
+  observadas: number;
+  rechazadas: number;
+  totalInspecciones: number;
+}
+
 export interface ReporteCalidad {
   totalInspecciones: number;
   totalUnidadesInspeccionadas: number;
@@ -252,6 +261,16 @@ export class ReportesService {
    */
   obtenerTiposPrenda(): Observable<string[]> {
     return this.http.get<string[]>(`${this.apiUrl}/tipos-prenda`)
+      .pipe(catchError(this.handleError));
+  }
+
+  obtenerCalidadPorTaller(idProyecto?: number, fechaInicio?: string, fechaFin?: string): Observable<CalidadPorTaller[]> {
+    const params: string[] = [];
+    if (idProyecto) params.push(`idProyecto=${idProyecto}`);
+    if (fechaInicio) params.push(`fechaInicio=${fechaInicio}`);
+    if (fechaFin) params.push(`fechaFin=${fechaFin}`);
+    const qs = params.length ? `?${params.join('&')}` : '';
+    return this.http.get<CalidadPorTaller[]>(`${this.apiUrl}/calidad-por-taller${qs}`)
       .pipe(catchError(this.handleError));
   }
 

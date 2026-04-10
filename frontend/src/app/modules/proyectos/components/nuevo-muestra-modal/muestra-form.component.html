@@ -143,7 +143,7 @@
         <div class="prenda-card" *ngFor="let prenda of prendasProyecto; let i = index">
           <div class="prenda-header">
             <div class="prenda-titulo">
-              <strong>{{ getNombreTipoPrenda(prenda.idTipoPrenda) }}</strong>
+              <strong>{{ prenda.nombrePrenda || getNombreTipoPrenda(prenda.idTipoPrenda) || 'Prenda' }}</strong>
             </div>
             <div class="prenda-acciones">
               <button 
@@ -173,6 +173,10 @@
               <span>Material: {{ getNombreTipoInsumo(prenda.idTipoInsumoMaterial) }}</span>
               <span *ngIf="prenda.colorTela" class="color-badge">{{ prenda.colorTela }}</span>
             </div>
+            <div class="detalle-item" *ngIf="prenda.tieneBordado || prenda.tieneEstampado">
+              <i class="fas fa-palette"></i>
+              <span>{{ getDisenoTexto(prenda) }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -190,96 +194,65 @@
 
     </div>
 
-    <!-- ============================================ -->
+        <!-- ============================================ -->
     <!-- SECCIÃ“N: REFERENCIA VISUAL -->
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
-        <h3>Referencia Visual</h3>
+        <h3>Referencia Visual (por prenda)</h3>
       </div>
 
-      <div class="grid-2">
-        <div class="field">
-          <label class="checkbox-label">
-            <input
-              type="checkbox"
-              [(ngModel)]="referenciaVisual.bordado.requerido"
-              [ngModelOptions]="{standalone: true}"
-            >
-            <span>Bordado</span>
-          </label>
-          <textarea
-            [(ngModel)]="referenciaVisual.bordado.descripcion"
-            [ngModelOptions]="{standalone: true}"
-            [disabled]="!referenciaVisual.bordado.requerido"
-            [class.is-disabled]="!referenciaVisual.bordado.requerido"
-            rows="2"
-            placeholder="Describe el bordado (posiciÃ³n, tamaÃ±o, colores, etc.)"
-          ></textarea>
-          <input type="file" accept="image/*" (change)="onReferenciaImagenChange($event, 'bordado')">
-          <img *ngIf="referenciaVisual.bordado.imagen" class="file-preview" [src]="referenciaVisual.bordado.imagen" alt="Referencia bordado">
-        </div>
-
-        <div class="field">
-          <label class="checkbox-label">
-            <input
-              type="checkbox"
-              [(ngModel)]="referenciaVisual.estampado.requerido"
-              [ngModelOptions]="{standalone: true}"
-            >
-            <span>Estampado</span>
-          </label>
-          <textarea
-            [(ngModel)]="referenciaVisual.estampado.descripcion"
-            [ngModelOptions]="{standalone: true}"
-            [disabled]="!referenciaVisual.estampado.requerido"
-            [class.is-disabled]="!referenciaVisual.estampado.requerido"
-            rows="2"
-            placeholder="Describe el estampado (posiciÃ³n, tamaÃ±o, colores, etc.)"
-          ></textarea>
-          <input type="file" accept="image/*" (change)="onReferenciaImagenChange($event, 'estampado')">
-          <img *ngIf="referenciaVisual.estampado.imagen" class="file-preview" [src]="referenciaVisual.estampado.imagen" alt="Referencia estampado">
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Otros detalles</label>
-        <textarea
-          [(ngModel)]="referenciaVisual.otrosDetalle"
-          [ngModelOptions]="{standalone: true}"
-          rows="2"
-          placeholder="Cualquier otro detalle o comentario..."
-        ></textarea>
-      </div>
-
-      <div class="grid-2">
-        <div class="field" [ngClass]="{'campo-error': !referenciaVisual.mockup && (errorMensaje.includes('mockup') || errorMensaje.includes('Completa'))}">
-          <label>Mockup *</label>
-          <input type="file" accept="image/*" (change)="onMockupChange($event)">
-          <small>Obligatorio para guardar.</small>
-          <span class="error-msg" *ngIf="!referenciaVisual.mockup && (errorMensaje.includes('mockup') || errorMensaje.includes('Completa'))">El mockup es obligatorio</span>
-          <img *ngIf="referenciaVisual.mockup" class="file-preview" [src]="referenciaVisual.mockup" alt="Mockup">
-        </div>
-
-        <div class="field">
-          <label>Paleta RGB</label>
-          <div class="input-row">
-            <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.r" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="R">
-            <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.g" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="G">
-            <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.b" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="B">
+      <div *ngIf="prendasProyecto.length > 0; else sinReferencias" class="referencias-list">
+        <div class="referencia-card" *ngFor="let prenda of prendasProyecto; trackBy: trackByPrendaId">
+          <div class="referencia-header">
+            <strong>{{ prenda.nombrePrenda || getNombreTipoPrenda(prenda.idTipoPrenda) || 'Prenda' }}</strong>
+            <span class="referencia-sub">Referencia visual opcional</span>
           </div>
-          <div class="paleta-preview">
-            <span class="color-swatch" [style.background]="paletaRgbTexto"></span>
-            <div class="paleta-codes">
-              <strong>{{ paletaHex }}</strong>
-              <span>{{ paletaRgbTexto }}</span>
+
+          <div class="grid-2">
+            <div class="field">
+              <label>Mockup (opcional)</label>
+              <input type="file" accept="image/*" (change)="onMockupPrendaChange($event, prenda)">
+              <img *ngIf="prenda.mockupReferencia" class="file-preview" [src]="prenda.mockupReferencia" alt="Mockup">
+            </div>
+
+            <div class="field">
+              <label>Paleta RGB</label>
+              <div class="input-row">
+                <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.r" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="R">
+                <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.g" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="G">
+                <input type="number" min="0" max="255" class="flex-1" [(ngModel)]="paletaRgb.b" [ngModelOptions]="{standalone: true}" (change)="normalizarPaletaRgb()" placeholder="B">
+              </div>
+              <div class="paleta-preview">
+                <span class="color-swatch" [style.background]="paletaRgbTexto"></span>
+                <div class="paleta-codes">
+                  <strong>{{ paletaHex }}</strong>
+                  <span>{{ paletaRgbTexto }}</span>
+                </div>
+              </div>
             </div>
           </div>
+
+
+          <div class="field">
+            <label>Otros detalles</label>
+            <textarea
+              [(ngModel)]="prenda.otrosDetalleReferencia"
+              [ngModelOptions]="{standalone: true}"
+              rows="2"
+              placeholder="Cualquier otro detalle o comentario..."
+            ></textarea>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- ============================================ -->
+      <ng-template #sinReferencias>
+        <div class="sin-prendas">
+          <p>Agrega prendas para cargar referencias visuales por prenda.</p>
+        </div>
+      </ng-template>
+    </div>
+<!-- ============================================ -->
     <!-- MODAL: EDITAR/AGREGAR PRENDA -->
     <!-- ============================================ -->
     <div class="modal-overlay-inner" *ngIf="prendaEditando" (click)="confirmarCerrarModalPrenda()">
@@ -343,6 +316,40 @@
               placeholder="Ej: Azul marino, Rayado, etc."
             >
             <small>Solo informativo, no impacta stock.</small>
+          </div>
+
+          <!-- Diseño -->
+          <div class="field">
+            <label>Diseño</label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="prendaEditando.tieneBordado"
+                  [ngModelOptions]="{standalone: true}"
+                >
+                <span>Bordado</span>
+              </label>
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="prendaEditando.tieneEstampado"
+                  [ngModelOptions]="{standalone: true}"
+                >
+                <span>Estampado</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Descripción del Diseño -->
+          <div class="field" *ngIf="prendaEditando.tieneBordado || prendaEditando.tieneEstampado">
+            <label>Descripción del Diseño</label>
+            <textarea
+              [(ngModel)]="prendaEditando.descripcionDiseno"
+              [ngModelOptions]="{standalone: true}"
+              rows="2"
+              placeholder="Describe el diseño, colores, posición, etc..."
+            ></textarea>
           </div>
         </div>
 
@@ -439,7 +446,7 @@
       <button 
         type="submit" 
         class="btn-primary-large" 
-        [disabled]="cargando || formulario.invalid || prendasProyecto.length === 0 || !referenciaVisual.mockup || (referenciaVisual.bordado.requerido && !referenciaVisual.bordado.descripcion.trim()) || (referenciaVisual.estampado.requerido && !referenciaVisual.estampado.descripcion.trim())"
+        [disabled]="cargando || formulario.invalid || prendasProyecto.length === 0"
       >
         <span *ngIf="!cargando">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -761,6 +768,10 @@
   }
 }
 </style>
+
+
+
+
 
 
 

@@ -22,6 +22,34 @@ export interface NotificacionStockItem {
   leida: boolean;
 }
 
+export interface SolicitudMaterialItem {
+  idSolicitud: number;
+  idProyecto: number;
+  nombreProyecto: string;
+  nombreTipoInsumo?: string;
+  colorSolicitado?: string;
+  cantidadEstimada?: number;
+  unidadMedida?: string;
+  mensaje?: string;
+  estado: string;
+  usuarioEmisor: string;
+  fechaSolicitud: string;
+  fechaAtendida?: string;
+}
+
+export interface CrearSolicitudMaterialPayload {
+  idProyecto: number;
+  nombreProyecto: string;
+  materiales: {
+    idTipoInsumo?: number;
+    nombreTipoInsumo?: string;
+    colorSolicitado?: string;
+    cantidadEstimada?: number;
+    unidadMedida?: string;
+    mensaje?: string;
+  }[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -48,6 +76,29 @@ export class NotificacionesService {
 
   marcarNotificacionLeida(idHistorial: number): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.apiUrl}/stock/${idHistorial}/leer`, {}).pipe(
+      tap(() => this.emitirCambio())
+    );
+  }
+
+  // ── Solicitudes de material por proyecto ──────────────────────
+
+  crearSolicitudMaterial(payload: CrearSolicitudMaterialPayload): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/solicitudes-material`, payload).pipe(
+      tap(() => this.emitirCambio())
+    );
+  }
+
+  obtenerSolicitudesMaterial(estado?: string): Observable<SolicitudMaterialItem[]> {
+    const params = estado ? `?estado=${estado}` : '';
+    return this.http.get<SolicitudMaterialItem[]>(`${this.apiUrl}/solicitudes-material${params}`);
+  }
+
+  contarSolicitudesPendientes(): Observable<{ total: number }> {
+    return this.http.get<{ total: number }>(`${this.apiUrl}/solicitudes-material/count`);
+  }
+
+  atenderSolicitud(id: number): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/solicitudes-material/${id}/atender`, {}).pipe(
       tap(() => this.emitirCambio())
     );
   }

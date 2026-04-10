@@ -23,6 +23,8 @@ public partial class ProyectoPrendum
 
     public int? Orden { get; set; }
 
+    public string? ColorTela { get; set; }
+
     public virtual Proyecto IdProyectoNavigation { get; set; } = null!;
 
     public virtual TipoInsumo? IdTipoInsumoMaterialNavigation { get; set; }

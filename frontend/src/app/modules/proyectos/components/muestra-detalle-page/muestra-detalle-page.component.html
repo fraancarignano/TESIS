@@ -171,7 +171,7 @@
         <tr *ngFor="let p of muestra?.prendas">
           <td>{{ p.nombrePrenda || p.idTipoPrenda }}</td>
           <td>{{ p.nombreMaterial || p.idTipoInsumoMaterial }}</td>
-          <td>{{ p.colorTela || '-' }}</td>
+          <td>{{ p.colorTela || p.nombreMaterial || '-' }}</td>
           <td>{{ p.tieneBordado ? 'Sí' : 'No' }}</td>
           <td>{{ p.tieneEstampado ? 'Sí' : 'No' }}</td>
         </tr>
@@ -236,3 +236,4 @@
     </div>
   </div>
 </div>
+

@@ -71,6 +71,8 @@ public partial class TamarindoDbContext : DbContext
 
     public virtual DbSet<Rol> Rols { get; set; }
 
+    public virtual DbSet<SolicitudMaterialProyecto> SolicitudMaterialProyectos { get; set; }
+
     public virtual DbSet<RolPermiso> RolPermisos { get; set; }
 
     public virtual DbSet<Scrap> Scraps { get; set; }
@@ -1044,6 +1046,9 @@ public partial class TamarindoDbContext : DbContext
             entity.Property(e => e.IdTipoInsumoMaterial).HasColumnName("id_TipoInsumo_Material");
             entity.Property(e => e.IdTipoPrenda).HasColumnName("id_TipoPrenda");
             entity.Property(e => e.Orden).HasColumnName("orden");
+            entity.Property(e => e.ColorTela)
+                .HasMaxLength(80)
+                .HasColumnName("color_Tela");
             entity.Property(e => e.TieneBordado)
                 .HasDefaultValue(false)
                 .HasColumnName("tiene_Bordado");

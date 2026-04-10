@@ -84,6 +84,7 @@ namespace TESIS_OG.Services.ProyectoService
                         TieneBordado = prendaDto.TieneBordado,
                         TieneEstampado = prendaDto.TieneEstampado,
                         DescripcionDiseno = prendaDto.DescripcionDiseno,
+                        ColorTela = prendaDto.ColorTela?.Trim() != null ? NormalizarColor(prendaDto.ColorTela) : null,
                         Orden = prendaDto.Orden ?? proyectoDto.Prendas.IndexOf(prendaDto)
                     };
 
@@ -321,6 +322,73 @@ namespace TESIS_OG.Services.ProyectoService
             if (proyectoDto.IdUsuarioEncargado != null)
                 proyecto.IdUsuarioEncargado = proyectoDto.IdUsuarioEncargado;
 
+            if (proyectoDto.IdCliente.HasValue && proyectoDto.IdCliente.Value > 0)
+                proyecto.IdCliente = proyectoDto.IdCliente.Value;
+
+            // Actualizar prendas si se envían
+            if (proyectoDto.Prendas != null && proyectoDto.Prendas.Count > 0)
+            {
+                // Validar distribución de talles
+                foreach (var prenda in proyectoDto.Prendas)
+                {
+                    var sumaTalles = prenda.Talles.Sum(t => t.Cantidad);
+                    if (sumaTalles != prenda.CantidadTotal)
+                        throw new InvalidOperationException(
+                            $"La suma de talles ({sumaTalles}) no coincide con la cantidad total ({prenda.CantidadTotal})");
+                }
+
+                // Eliminar prendas y talles anteriores
+                var prendasAnteriores = await _context.ProyectoPrenda
+                    .Include(pp => pp.PrendaTalles)
+                    .Where(pp => pp.IdProyecto == id)
+                    .ToListAsync();
+
+                foreach (var p in prendasAnteriores)
+                    _context.PrendaTalles.RemoveRange(p.PrendaTalles);
+
+                _context.ProyectoPrenda.RemoveRange(prendasAnteriores);
+                await _context.SaveChangesAsync();
+
+                // Crear nuevas prendas
+                foreach (var prendaDto in proyectoDto.Prendas)
+                {
+                    var proyectoPrenda = new ProyectoPrendum
+                    {
+                        IdProyecto = id,
+                        IdTipoPrenda = prendaDto.IdTipoPrenda,
+                        IdTipoInsumoMaterial = prendaDto.IdTipoInsumoMaterial,
+                        CantidadTotal = prendaDto.CantidadTotal,
+                        TieneBordado = prendaDto.TieneBordado,
+                        TieneEstampado = prendaDto.TieneEstampado,
+                        DescripcionDiseno = prendaDto.DescripcionDiseno,
+                        ColorTela = prendaDto.ColorTela?.Trim() != null ? NormalizarColor(prendaDto.ColorTela) : null,
+                        Orden = prendaDto.Orden ?? proyectoDto.Prendas.IndexOf(prendaDto)
+                    };
+
+                    _context.ProyectoPrenda.Add(proyectoPrenda);
+                    await _context.SaveChangesAsync();
+
+                    foreach (var talleDto in prendaDto.Talles)
+                    {
+                        _context.PrendaTalles.Add(new PrendaTalle
+                        {
+                            IdProyectoPrenda = proyectoPrenda.IdProyectoPrenda,
+                            IdTalle = talleDto.IdTalle,
+                            Cantidad = talleDto.Cantidad
+                        });
+                    }
+                }
+
+                // Actualizar cantidad total del proyecto
+                proyecto.CantidadTotal = proyectoDto.Prendas.Sum(p => p.CantidadTotal);
+                proyecto.EsMultiPrenda = proyectoDto.Prendas.Count > 1;
+
+                await _context.SaveChangesAsync();
+
+                // Recalcular materiales automáticos
+                await CalcularYAsignarMaterialesAutomaticosAsync(id);
+            }
+
             if (proyectoDto.MaterialesManualesActualizados != null)
             {
                 var materialesManualesAnteriores = await _context.MaterialCalculados
@@ -384,44 +452,61 @@ namespace TESIS_OG.Services.ProyectoService
 
                 var cantidadNecesaria = prenda.CantidadTotal * config.CantidadPorUnidad;
 
-                var insumo = await _context.Insumos
+                // Buscar insumos del tipo solicitado con el color exacto (normalizado)
+                var candidatos = await _context.Insumos
                   .Include(i => i.IdTipoInsumoNavigation)
-                  .FirstOrDefaultAsync(i => i.IdTipoInsumo == prenda.IdTipoInsumoMaterial);
+                  .Where(i => i.IdTipoInsumo == prenda.IdTipoInsumoMaterial)
+                  .ToListAsync();
 
-                if (insumo == null)
+                var tipoInsumoNombre = candidatos.FirstOrDefault()?.IdTipoInsumoNavigation?.NombreTipo
+                    ?? $"Tipo {prenda.IdTipoInsumoMaterial}";
+
+                Insumo? insumo = null;
+                decimal stockDisponible = 0;
+
+                if (!string.IsNullOrWhiteSpace(prenda.ColorSolicitado))
                 {
-                    response.Alertas.Add(new AlertaCalculoDTO
-                    {
-                        Tipo = "SinStock",
-                        Mensaje = $"No hay insumo disponible del tipo {prenda.IdTipoInsumoMaterial}"
-                    });
-                    response.PuedeCrearse = false;
-                    continue;
+                    var colorNorm = NormalizarColor(prenda.ColorSolicitado);
+                    // Solo buscar insumos que coincidan exactamente con el color solicitado
+                    var coincidencias = candidatos.Where(i => NormalizarColor(i.Color) == colorNorm).ToList();
+                    insumo = coincidencias.FirstOrDefault();
+                    stockDisponible = coincidencias.Sum(i => i.StockActual);
+                }
+                else
+                {
+                    // Sin color especificado: sumar todo el stock del tipo
+                    insumo = candidatos.FirstOrDefault();
+                    stockDisponible = candidatos.Sum(i => i.StockActual);
                 }
 
-                var tieneStock = insumo.StockActual >= cantidadNecesaria;
+                var tieneStock = stockDisponible >= cantidadNecesaria;
 
                 response.MaterialesCalculados.Add(new MaterialCalculadoPreviewDTO
                 {
-                    IdInsumo = insumo.IdInsumo,
-                    NombreInsumo = insumo.NombreInsumo ?? "",
-                    TipoInsumo = insumo.IdTipoInsumoNavigation?.NombreTipo ?? "",
+                    IdInsumo = insumo?.IdInsumo ?? 0,
+                    NombreInsumo = tipoInsumoNombre,
+                    TipoInsumo = tipoInsumoNombre,
                     TipoCalculo = "Auto",
                     CantidadNecesaria = cantidadNecesaria,
                     UnidadMedida = config.UnidadMedida,
-                    StockActual = insumo.StockActual,
+                    StockActual = stockDisponible,
                     TieneStockSuficiente = tieneStock,
-                    Faltante = tieneStock ? null : cantidadNecesaria - insumo.StockActual
+                    Faltante = tieneStock ? null : cantidadNecesaria - stockDisponible,
+                    Color = insumo?.Color,
+                    ColorSolicitado = string.IsNullOrWhiteSpace(prenda.ColorSolicitado) ? null : prenda.ColorSolicitado
                 });
 
                 if (!tieneStock)
                 {
+                    var colorMsg = string.IsNullOrWhiteSpace(prenda.ColorSolicitado)
+                        ? ""
+                        : $" color {prenda.ColorSolicitado}";
                     response.Alertas.Add(new AlertaCalculoDTO
                     {
-                        Tipo = "StockInsuficiente",
-                        Mensaje = $"Stock insuficiente de {insumo.NombreInsumo}. Necesario: {cantidadNecesaria} {config.UnidadMedida}, Disponible: {insumo.StockActual} {config.UnidadMedida}",
-                        IdInsumo = insumo.IdInsumo.ToString(),
-                        NombreInsumo = insumo.NombreInsumo
+                        Tipo = stockDisponible == 0 ? "SinStock" : "StockInsuficiente",
+                        Mensaje = $"Stock insuficiente de {tipoInsumoNombre}{colorMsg}. Necesario: {cantidadNecesaria} {config.UnidadMedida}, Disponible: {stockDisponible} {config.UnidadMedida}",
+                        IdInsumo = insumo?.IdInsumo.ToString(),
+                        NombreInsumo = tipoInsumoNombre
                     });
                 }
             }
@@ -576,6 +661,7 @@ namespace TESIS_OG.Services.ProyectoService
                 NombrePrenda = p.IdTipoPrendaNavigation?.NombrePrenda ?? "",
                 IdTipoInsumoMaterial = p.IdTipoInsumoMaterial,
                 NombreMaterial = p.IdTipoInsumoMaterialNavigation?.NombreTipo,
+                ColorTela = p.ColorTela,
                 CantidadTotal = p.CantidadTotal,
                 TieneBordado = p.TieneBordado ?? false,
                 TieneEstampado = p.TieneEstampado ?? false,
@@ -949,8 +1035,22 @@ namespace TESIS_OG.Services.ProyectoService
 
                 if (config != null)
                 {
-                    var insumo = await _context.Insumos
-                      .FirstOrDefaultAsync(i => i.IdTipoInsumo == prenda.IdTipoInsumoMaterial);
+                    // Buscar insumo por tipo + color de la prenda (normalizado)
+                    var candidatosInsumo = await _context.Insumos
+                      .Where(i => i.IdTipoInsumo == prenda.IdTipoInsumoMaterial)
+                      .ToListAsync();
+
+                    Insumo? insumo = null;
+                    if (!string.IsNullOrWhiteSpace(prenda.ColorTela))
+                    {
+                        var colorNorm = NormalizarColor(prenda.ColorTela);
+                        insumo = candidatosInsumo.FirstOrDefault(i => NormalizarColor(i.Color) == colorNorm)
+                              ?? candidatosInsumo.FirstOrDefault();
+                    }
+                    else
+                    {
+                        insumo = candidatosInsumo.FirstOrDefault();
+                    }
 
                     if (insumo != null)
                     {
@@ -1033,6 +1133,17 @@ namespace TESIS_OG.Services.ProyectoService
             await _context.SaveChangesAsync();
         }
 
+        private static string NormalizarColor(string? color)
+        {
+            if (string.IsNullOrWhiteSpace(color)) return string.Empty;
+            // Quitar acentos, pasar a mayúsculas, trim
+            var normalized = color.Trim().ToUpperInvariant();
+            normalized = System.Text.RegularExpressions.Regex.Replace(
+                normalized.Normalize(System.Text.NormalizationForm.FormD),
+                @"\p{Mn}", "");
+            return normalized;
+        }
+
         private string ObtenerCategoriaInsumo(string? nombreTipo)
         {
             if (string.IsNullOrWhiteSpace(nombreTipo)) return "Otros";
@@ -1053,46 +1164,77 @@ namespace TESIS_OG.Services.ProyectoService
         {
             var prendas = await ObtenerPrendasProyectoAsync(proyecto.IdProyecto);
 
-            var materiales = await _context.MaterialCalculados
+            var materialesRaw = await _context.MaterialCalculados
                 .Include(mc => mc.IdInsumoNavigation)
                     .ThenInclude(i => i != null ? i.IdTipoInsumoNavigation : null)
                 .Include(mc => mc.IdProyectoPrendaNavigation)
                     .ThenInclude(pp => pp != null ? pp.IdTipoPrendaNavigation : null)
                 .Where(mc => mc.IdProyecto == proyecto.IdProyecto)
-                .Select(mc => new MaterialCalculadoResponseDTO
+                .ToListAsync();
+
+            // Pre-cargar todos los insumos por tipo para buscar stock por color
+            var idsTipoInsumo = materialesRaw
+                .Where(mc => mc.IdInsumoNavigation != null)
+                .Select(mc => mc.IdInsumoNavigation!.IdTipoInsumo)
+                .Distinct().ToList();
+
+            var insumosPorTipo = await _context.Insumos
+                .Where(i => idsTipoInsumo.Contains(i.IdTipoInsumo))
+                .ToListAsync();
+
+            var materiales = materialesRaw.Select(mc =>
+            {
+                var colorSolicitado = mc.IdProyectoPrendaNavigation?.ColorTela;
+                var idTipoInsumo = mc.IdInsumoNavigation?.IdTipoInsumo ?? 0;
+
+                // Buscar el insumo correcto: mismo tipo + color solicitado normalizado
+                Insumo? insumoReal = null;
+                decimal stockReal = 0;
+
+                if (!string.IsNullOrWhiteSpace(colorSolicitado))
+                {
+                    var colorNorm = NormalizarColor(colorSolicitado);
+                    insumoReal = insumosPorTipo
+                        .Where(i => i.IdTipoInsumo == idTipoInsumo)
+                        .FirstOrDefault(i => NormalizarColor(i.Color) == colorNorm);
+                    stockReal = insumoReal?.StockActual ?? 0;
+                }
+                else
+                {
+                    // Sin color: sumar todo el stock del tipo
+                    stockReal = insumosPorTipo
+                        .Where(i => i.IdTipoInsumo == idTipoInsumo)
+                        .Sum(i => i.StockActual);
+                    insumoReal = insumosPorTipo.FirstOrDefault(i => i.IdTipoInsumo == idTipoInsumo);
+                }
+
+                var cantidadFinal = mc.CantidadManual ?? mc.CantidadCalculada;
+                var tieneStockReal = stockReal >= cantidadFinal;
+
+                return new MaterialCalculadoResponseDTO
                 {
                     IdMaterialCalculado = mc.IdMaterialCalculado,
-                    IdInsumo = mc.IdInsumo,
-
-                    NombreInsumo = mc.IdInsumoNavigation != null
-                        ? mc.IdInsumoNavigation.NombreInsumo ?? ""
-                        : "",
-
-                    TipoInsumo = mc.IdInsumoNavigation != null &&
-                                 mc.IdInsumoNavigation.IdTipoInsumoNavigation != null
-                        ? mc.IdInsumoNavigation.IdTipoInsumoNavigation.NombreTipo ?? ""
-                        : "",
-
+                    // Usar el insumo real (con el color correcto) si existe, sino el original
+                    IdInsumo = insumoReal?.IdInsumo ?? mc.IdInsumo,
+                    IdTipoInsumo = idTipoInsumo,
+                    NombreInsumo = mc.IdInsumoNavigation?.IdTipoInsumoNavigation?.NombreTipo
+                                   ?? mc.IdInsumoNavigation?.NombreInsumo ?? "",
+                    TipoInsumo = mc.IdInsumoNavigation?.IdTipoInsumoNavigation?.NombreTipo ?? "",
                     TipoCalculo = mc.TipoCalculo,
                     CantidadCalculada = mc.CantidadCalculada,
                     CantidadManual = mc.CantidadManual,
-                    CantidadFinal = mc.CantidadManual ?? mc.CantidadCalculada,
+                    CantidadFinal = cantidadFinal,
                     UnidadMedida = mc.UnidadMedida,
-
-                    StockActual = mc.IdInsumoNavigation != null
-                        ? mc.IdInsumoNavigation.StockActual
-                        : 0,
-
-                    TieneStock = mc.TieneStock ?? false,
+                    StockActual = stockReal,
+                    TieneStock = tieneStockReal,
                     Observaciones = mc.Observaciones,
                     IdProyectoPrenda = mc.IdProyectoPrenda,
-
-                    NombrePrenda = mc.IdProyectoPrendaNavigation != null &&
-                                   mc.IdProyectoPrendaNavigation.IdTipoPrendaNavigation != null
-                        ? mc.IdProyectoPrendaNavigation.IdTipoPrendaNavigation.NombrePrenda
-                        : null
-                })
-                .ToListAsync();
+                    NombrePrenda = mc.IdProyectoPrendaNavigation?.IdTipoPrendaNavigation?.NombrePrenda,
+                    ColorInsumo = insumoReal?.Color,
+                    ColorSolicitado = colorSolicitado,
+                    ColorCoincide = tieneStockReal || string.IsNullOrWhiteSpace(colorSolicitado)
+                };
+            }).ToList();
 
             var alertasStock = materiales
                 .Where(m => !m.TieneStock)

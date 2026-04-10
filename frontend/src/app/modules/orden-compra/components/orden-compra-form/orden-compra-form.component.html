@@ -18,7 +18,6 @@
                 id="proveedor"
                 [(ngModel)]="idProveedorSeleccionado"
                 name="proveedor"
-                (change)="onProveedorChange()"
                 [disabled]="cargando"
                 required
               >
@@ -72,57 +71,81 @@
         <div class="form-section">
           <h3>Agregar Insumos</h3>
 
-          <div class="form-row">
+          <!-- Toggle modo -->
+          <div class="modo-toggle" style="display:flex;gap:8px;margin-bottom:14px;">
+            <button type="button" [class.active]="modoAgregar==='existente'" (click)="modoAgregar='existente'" class="btn-modo">
+              Insumo existente
+            </button>
+            <button type="button" [class.active]="modoAgregar==='nuevo'" (click)="modoAgregar='nuevo'" class="btn-modo">
+              + Insumo nuevo
+            </button>
+          </div>
+
+          <!-- MODO EXISTENTE -->
+          <div class="form-row" *ngIf="modoAgregar === 'existente'">
             <div class="form-group">
-              <label for="insumo">Insumo</label>
-              <select
-                id="insumo"
-                [(ngModel)]="insumoSeleccionado"
-                name="insumo"
-                [disabled]="cargando || !idProveedorSeleccionado"
-              >
+              <label>Insumo</label>
+              <select [(ngModel)]="insumoSeleccionado" name="insumo" [disabled]="cargando">
                 <option [ngValue]="undefined">Seleccione un insumo</option>
                 <option *ngFor="let insumo of insumosDisponibles" [ngValue]="insumo.idInsumo">
-                  {{ insumo.nombreInsumo }} (Stock: {{ insumo.stockActual }} {{ insumo.unidadMedida }})
+                  {{ insumo.nombreInsumo }}{{ insumo.color ? ' — ' + insumo.color : '' }} (Stock: {{ insumo.stockActual }} {{ insumo.unidadMedida }})
                 </option>
               </select>
             </div>
-
             <div class="form-group form-group-small">
-              <label for="cantidad">Cantidad</label>
-              <input
-                type="number"
-                id="cantidad"
-                [(ngModel)]="cantidadInsumo"
-                name="cantidad"
-                min="1"
-                step="1"
-                [disabled]="cargando"
-              />
+              <label>Cantidad</label>
+              <input type="number" [(ngModel)]="cantidadInsumo" name="cantidad" min="0.01" step="0.01" [disabled]="cargando">
             </div>
-
             <div class="form-group">
-              <label for="precio">Precio Unitario</label>
-              <input
-                type="number"
-                id="precio"
-                [(ngModel)]="precioUnitarioInsumo"
-                name="precio"
-                min="0"
-                step="0.01"
-                [disabled]="cargando"
-              />
+              <label>Precio Unitario</label>
+              <input type="number" [(ngModel)]="precioUnitarioInsumo" name="precio" min="0" step="0.01" [disabled]="cargando">
             </div>
-
             <div class="form-group form-group-button">
-              <button
-                type="button"
-                class="btn-add"
-                (click)="agregarInsumo()"
-                [disabled]="cargando || !insumoSeleccionado"
-              >
-                + Agregar
-              </button>
+              <button type="button" class="btn-add" (click)="agregarInsumo()" [disabled]="cargando || !insumoSeleccionado">+ Agregar</button>
+            </div>
+          </div>
+
+          <!-- MODO NUEVO -->
+          <div *ngIf="modoAgregar === 'nuevo'">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nombre del material *</label>
+                <input type="text" [(ngModel)]="nuevoNombre" name="nuevoNombre" placeholder="Ej: Algodón" [disabled]="cargando">
+              </div>
+              <div class="form-group">
+                <label>Color *</label>
+                <input type="text" [(ngModel)]="nuevoColor" name="nuevoColor" placeholder="Ej: LILA, BLANCO..." [disabled]="cargando">
+                <small style="color:#9e9e9e">Se normalizará a mayúsculas</small>
+              </div>
+              <div class="form-group">
+                <label>Tipo de insumo *</label>
+                <select [(ngModel)]="nuevoIdTipo" name="nuevoTipo" [disabled]="cargando">
+                  <option [ngValue]="undefined">Seleccionar tipo...</option>
+                  <option *ngFor="let t of tiposInsumo" [ngValue]="t.idTipoInsumo">{{ t.nombreTipo }}</option>
+                </select>
+              </div>
+              <div class="form-group form-group-small">
+                <label>Unidad</label>
+                <select [(ngModel)]="nuevoUnidad" name="nuevoUnidad" [disabled]="cargando">
+                  <option *ngFor="let u of unidadesMedida" [value]="u">{{ u }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group form-group-small">
+                <label>Cantidad</label>
+                <input type="number" [(ngModel)]="cantidadInsumo" name="cantidadN" min="0.01" step="0.01" [disabled]="cargando">
+              </div>
+              <div class="form-group">
+                <label>Precio Unitario</label>
+                <input type="number" [(ngModel)]="precioUnitarioInsumo" name="precioN" min="0" step="0.01" [disabled]="cargando">
+              </div>
+              <div class="form-group form-group-button">
+                <button type="button" class="btn-add" (click)="agregarInsumo()" [disabled]="cargando">+ Agregar</button>
+              </div>
+            </div>
+            <div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:6px;padding:8px 12px;font-size:.82rem;color:#e65100;margin-bottom:8px;">
+              ⚠ Al crear la orden, este insumo se dará de alta automáticamente en el catálogo con stock 0. Al recibirlo, el stock se actualizará con la cantidad recibida.
             </div>
           </div>
         </div>
@@ -143,18 +166,13 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let detalle of detalles">
-                  <td>{{ obtenerNombreInsumo(detalle.idInsumo) }}</td>
+                <tr *ngFor="let detalle of detalles; let i = index">
+                  <td>{{ obtenerNombreDetalle(detalle) }}</td>
                   <td>{{ detalle.cantidad }}</td>
                   <td>${{ detalle.precioUnitario | number:'1.2-2' }}</td>
                   <td>${{ detalle.subtotal | number:'1.2-2' }}</td>
                   <td>
-                    <button
-                      type="button"
-                      class="btn-eliminar-insumo"
-                      (click)="eliminarInsumo(detalle.idInsumo)"
-                      [disabled]="cargando"
-                    >
+                    <button type="button" class="btn-eliminar-insumo" (click)="eliminarInsumo(i)" [disabled]="cargando">
                       Eliminar
                     </button>
                   </td>

@@ -253,28 +253,25 @@
           </div>
 
           <!-- Color/Variante de Tela -->
-          <div class="field" *ngIf="prendaEditando.idTipoInsumoMaterial && insumosTelasFiltrados.length > 0">
-            <label>Color de la Tela *</label>
-            <select [(ngModel)]="prendaEditando.idInsumo" [ngModelOptions]="{standalone: true}">
-              <option [value]="undefined">Seleccionar color...</option>
-              <option *ngFor="let insumo of insumosTelasFiltrados" [value]="insumo.idInsumo">
-                {{ insumo.color || insumo.nombreInsumo }} 
-                - Stock: {{ insumo.stockActual }} {{ insumo.unidadMedida }}
-              </option>
-            </select>
-            <small>Selecciona el color especÃ­fico de {{ getNombreTipoInsumo(prendaEditando.idTipoInsumoMaterial) }}</small>
-          </div>
-
-          <!-- Mensaje si no hay colores disponibles -->
-          <div class="field" *ngIf="prendaEditando.idTipoInsumoMaterial && insumosTelasFiltrados.length === 0">
-            <div class="alert-warning">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
-              <span>No hay insumos disponibles de {{ getNombreTipoInsumo(prendaEditando.idTipoInsumoMaterial) }} en stock.</span>
+          <div class="field" *ngIf="prendaEditando.idTipoInsumoMaterial">
+            <label>Color solicitado</label>
+            <div *ngIf="insumosTelasFiltrados.length > 0">
+              <select [(ngModel)]="prendaEditando.idInsumo" [ngModelOptions]="{standalone: true}" (change)="onInsumoColorChange()">
+                <option [value]="undefined">Seleccionar color en stock...</option>
+                <option *ngFor="let insumo of insumosTelasFiltrados" [value]="insumo.idInsumo">
+                  {{ insumo.color || insumo.nombreInsumo }} — Stock: {{ insumo.stockActual }} {{ insumo.unidadMedida }}
+                </option>
+              </select>
+              <small>Si el color en stock no es el correcto, escribilo abajo.</small>
             </div>
+            <input
+              type="text"
+              [(ngModel)]="prendaEditando.colorTela"
+              [ngModelOptions]="{standalone: true}"
+              placeholder="Ej: Azul marino, Blanco, Rojo..."
+              style="margin-top: 6px;"
+            >
+            <small>Este color se enviará a inventario para gestionar la transferencia.</small>
           </div>
 
           <!-- Cantidad Total -->
@@ -312,39 +309,6 @@
             </small>
           </div>
 
-          <!-- DiseÃ±o -->
-          <div class="field">
-            <label>DiseÃ±o</label>
-            <div class="checkbox-group">
-              <label class="checkbox-label">
-                <input 
-                  type="checkbox" 
-                  [(ngModel)]="prendaEditando.tieneBordado" 
-                  [ngModelOptions]="{standalone: true}"
-                >
-                <span>Bordado</span>
-              </label>
-              <label class="checkbox-label">
-                <input 
-                  type="checkbox" 
-                  [(ngModel)]="prendaEditando.tieneEstampado" 
-                  [ngModelOptions]="{standalone: true}"
-                >
-                <span>Estampado</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Descripción del DiseÃ±o -->
-          <div class="field" *ngIf="prendaEditando.tieneBordado || prendaEditando.tieneEstampado">
-            <label>Descripción del DiseÃ±o</label>
-            <textarea 
-              [(ngModel)]="prendaEditando.descripcionDiseno"
-              [ngModelOptions]="{standalone: true}"
-              rows="2" 
-              placeholder="Describe el diseÃ±o, colores, posición, etc..."
-            ></textarea>
-          </div>
         </div>
 
         <div class="modal-prenda-footer">
@@ -631,21 +595,10 @@
           </div>
         </div>
 
-        <!-- Estado general -->
-        <div class="estado-general" [ngClass]="{
-          'estado-ok': materialesCalculados.puedeCrearse,
-          'estado-advertencia': !materialesCalculados.puedeCrearse
-        }">
-          <i class="fas" [ngClass]="{
-            'fa-check-circle': materialesCalculados.puedeCrearse,
-            'fa-exclamation-circle': !materialesCalculados.puedeCrearse
-          }"></i>
-          <span *ngIf="materialesCalculados.puedeCrearse">
-            Todos los materiales tienen stock suficiente
-          </span>
-          <span *ngIf="!materialesCalculados.puedeCrearse">
-            Hay materiales sin stock suficiente (puedes crear el proyecto con advertencias)
-          </span>
+        <!-- Estado general - solo mostrar si hay problemas -->
+        <div class="estado-general estado-advertencia" *ngIf="!materialesCalculados.puedeCrearse">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>Hay materiales sin stock suficiente (podés crear el proyecto igual, inventario lo gestionará)</span>
         </div>
 
         <!-- Tabla de materiales -->
@@ -673,7 +626,10 @@
 
                  <!-- Color -->
                 <td>
-                  <span class="color-info">{{ getColorInsumo(material.idInsumo) || '-' }}</span>
+                  <span *ngIf="material.colorSolicitado" style="font-size:.78rem; color:#1565c0; background:#e3f2fd; padding:2px 7px; border-radius:8px; display:inline-block;">
+                    {{ material.colorSolicitado }}
+                  </span>
+                  <span *ngIf="!material.colorSolicitado">—</span>
                 </td>
                 
                 <!-- A Utilizar -->

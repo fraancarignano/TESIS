@@ -25,7 +25,9 @@ export class InsumoCatalogComponent implements OnInit {
         idProveedor: undefined,
         stockActual: 0,
         stockMinimo: 0,
-        estado: 'Disponible'
+        estado: 'Disponible',
+        color: '',
+        tipoTela: ''
     };
 
     cargando = false;
@@ -85,7 +87,9 @@ export class InsumoCatalogComponent implements OnInit {
             idProveedor: undefined,
             stockActual: 0,
             stockMinimo: 0,
-            estado: 'Disponible'
+            estado: 'Disponible',
+            color: '',
+            tipoTela: ''
         };
     }
 

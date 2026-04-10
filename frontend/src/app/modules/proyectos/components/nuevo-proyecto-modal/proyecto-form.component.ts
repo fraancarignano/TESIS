@@ -29,6 +29,7 @@ import {
 } from '../../models/nuevo-proyecto.model';
 import { Cliente } from '../../../clientes/models/cliente.model';
 import { AlertasService } from '../../../../core/services/alertas';
+import { NotificacionesService } from '../../../../core/services/notificaciones.service';
 
 @Component({
   selector: 'app-proyecto-form-nuevo',
@@ -105,7 +106,8 @@ export class ProyectoFormNuevoComponent implements OnInit {
     private proyectosService: ProyectosServiceNuevo,
     private muestrasService: MuestrasService,
     private router: Router,
-    private alertas: AlertasService
+    private alertas: AlertasService,
+    private notificacionesService: NotificacionesService
   ) {
     this.crearFormulario();
   }
@@ -301,9 +303,16 @@ export class ProyectoFormNuevoComponent implements OnInit {
       insumo => insumo.idTipoInsumo === Number(this.prendaEditando!.idTipoInsumoMaterial)
     );
 
-
     this.prendaEditando!.idInsumo = undefined;
     this.prendaEditando!.colorTela = undefined;
+  }
+
+  onInsumoColorChange(): void {
+    if (!this.prendaEditando?.idInsumo) return;
+    const insumo = this.insumosTelas.find(i => i.idInsumo === Number(this.prendaEditando!.idInsumo));
+    if (insumo?.color) {
+      this.prendaEditando!.colorTela = insumo.color;
+    }
   }
 
   // ========================================
@@ -339,9 +348,14 @@ export class ProyectoFormNuevoComponent implements OnInit {
   }
 
   guardarPrenda(prenda: PrendaFormulario): void {
-    if (!prenda.idTipoPrenda || !prenda.idTipoInsumoMaterial || !prenda.idInsumo || prenda.cantidadTotal <= 0) {
+    if (!prenda.idTipoPrenda || !prenda.idTipoInsumoMaterial || prenda.cantidadTotal <= 0) {
       this.errorMensaje = 'Completa todos los campos de la prenda';
       return;
+    }
+
+    // Si no hay idInsumo (sin stock), usar el idTipoInsumoMaterial como referencia
+    if (!prenda.idInsumo) {
+      prenda.idInsumo = Number(prenda.idTipoInsumoMaterial);
     }
 
     if (prenda.tallesDistribuidos.length === 0) {
@@ -360,7 +374,10 @@ export class ProyectoFormNuevoComponent implements OnInit {
 
     prenda.nombrePrenda = tipoPrenda?.nombrePrenda;
     prenda.nombreMaterial = tipoInsumo?.nombreTipo;
-    prenda.colorTela = insumoTela?.color;
+    // Solo sobreescribir colorTela si viene del insumo seleccionado (no borrar el ingresado manualmente)
+    if (insumoTela?.color) {
+      prenda.colorTela = insumoTela.color;
+    }
 
     if (this.indexPrendaEditando === -1) {
       this.prendasProyecto.push(prenda);
@@ -605,12 +622,14 @@ export class ProyectoFormNuevoComponent implements OnInit {
       prendas: this.prendasProyecto.map(p => ({
         idTipoPrenda: p.idTipoPrenda!,
         idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
-        cantidadTotal: p.cantidadTotal
+        cantidadTotal: p.cantidadTotal,
+        colorSolicitado: p.colorTela || undefined
       })),
       materialesManuales: this.materialesManuales.map(m => ({
         idInsumo: m.idInsumo!,
         cantidad: m.cantidad
-      }))
+      })),
+      noConsumirStock: true
     };
 
     this.proyectosService.calcularMateriales(request).subscribe({
@@ -729,11 +748,11 @@ export class ProyectoFormNuevoComponent implements OnInit {
         ? this.prendasProyecto.map((p, index) => ({
             idTipoPrenda: p.idTipoPrenda!,
             idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
-            idInsumo: p.idInsumo!,
             cantidadTotal: p.cantidadTotal,
-            tieneBordado: p.tieneBordado,
-            tieneEstampado: p.tieneEstampado,
-            descripcionDiseño: p.descripcionDiseno?.trim() || undefined,
+            tieneBordado: p.tieneBordado ?? false,
+            tieneEstampado: p.tieneEstampado ?? false,
+            descripcionDiseno: p.descripcionDiseno?.trim() || undefined,
+            colorTela: p.colorTela?.trim() || undefined,
             orden: index,
             talles: p.tallesDistribuidos.map(t => ({
               idTalle: t.idTalle,
@@ -741,7 +760,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
             }))
           }))
         : [],
-      materialesManuales:
+      materialesManualesActualizados:
         this.materialesManuales.length > 0
           ? this.materialesManuales.map(m => ({
               idInsumo: m.idInsumo!,
@@ -777,6 +796,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
     idUsuarioEncargado: formValue.idUsuarioEncargado
       ? Number(formValue.idUsuarioEncargado)
       : undefined,
+    noConsumirStock: true,
     prendas: this.prendasProyecto.map((p, index) => ({
       idTipoPrenda: p.idTipoPrenda!,
       idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
@@ -785,6 +805,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
       tieneBordado: p.tieneBordado,
       tieneEstampado: p.tieneEstampado,
       descripcionDiseño: p.descripcionDiseno?.trim() || undefined,
+      colorTela: p.colorTela?.trim() || undefined,
       orden: index,
       talles: p.tallesDistribuidos.map(t => ({
         idTalle: t.idTalle,
@@ -811,6 +832,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
 
   this.proyectosService.crearProyecto(dto).subscribe({
     next: (proyectoCreado) => {
+      this.notificarInventarioPorTelas(proyectoCreado);
       const muestraId = Number(formValue.idMuestraAprobada);
       if (muestraId) {
         this.muestrasService.asignarMuestraAProyecto(muestraId, proyectoCreado.idProyecto).subscribe({
@@ -876,12 +898,78 @@ export class ProyectoFormNuevoComponent implements OnInit {
   // HELPERS PARA EL TEMPLATE
   // ========================================
 
-    
+  private notificarInventarioPorTelas(proyectoCreado: any): void {
+    if (!this.prendasProyecto.length) return;
 
-    getColorInsumo(idInsumo: number): string {
+    const materiales: any[] = [];
+    const vistos = new Set<string>();
+
+    this.prendasProyecto.forEach(p => {
+      if (!p.idTipoInsumoMaterial) return;
+
+      const tipoInsumo = this.tiposInsumo.find(t => t.idTipoInsumo === p.idTipoInsumoMaterial);
+      const esTela = tipoInsumo && (
+        (tipoInsumo.categoria || '').toLowerCase().includes('tela') ||
+        (tipoInsumo.nombreTipo || '').toLowerCase().includes('tela') ||
+        (tipoInsumo.nombreTipo || '').toLowerCase().includes('algod') ||
+        (tipoInsumo.nombreTipo || '').toLowerCase().includes('poli')
+      );
+      if (!esTela) return;
+
+      // Clave única por tipo + color para no duplicar
+      const clave = `${p.idTipoInsumoMaterial}|${(p.colorTela || '').toLowerCase().trim()}`;
+      if (vistos.has(clave)) return;
+      vistos.add(clave);
+
+      materiales.push({
+        idTipoInsumo: p.idTipoInsumoMaterial,
+        nombreTipoInsumo: tipoInsumo?.nombreTipo,
+        colorSolicitado: p.colorTela?.trim() || undefined,
+        cantidadEstimada: p.cantidadTotal,
+        unidadMedida: undefined,
+        mensaje: `Proyecto: ${proyectoCreado.nombreProyecto}` +
+          (p.colorTela ? ` | Color: ${p.colorTela}` : '') +
+          ` | Cantidad: ${p.cantidadTotal} prendas`
+      });
+    });
+
+    if (materiales.length === 0) {
+      // Si no hay telas identificadas, mandar igual con todos los materiales de prendas
+      this.prendasProyecto.forEach(p => {
+        if (!p.idTipoInsumoMaterial) return;
+        const tipoInsumo = this.tiposInsumo.find(t => t.idTipoInsumo === p.idTipoInsumoMaterial);
+        const clave = `${p.idTipoInsumoMaterial}|${(p.colorTela || '').toLowerCase().trim()}`;
+        if (vistos.has(clave)) return;
+        vistos.add(clave);
+        materiales.push({
+          idTipoInsumo: p.idTipoInsumoMaterial,
+          nombreTipoInsumo: tipoInsumo?.nombreTipo,
+          colorSolicitado: p.colorTela?.trim() || undefined,
+          cantidadEstimada: p.cantidadTotal,
+          unidadMedida: undefined,
+          mensaje: `Proyecto: ${proyectoCreado.nombreProyecto}` +
+            (p.colorTela ? ` | Color: ${p.colorTela}` : '') +
+            ` | Cantidad: ${p.cantidadTotal} prendas`
+        });
+      });
+    }
+
+    if (materiales.length === 0) return;
+
+    this.notificacionesService.crearSolicitudMaterial({
+      idProyecto: proyectoCreado.idProyecto,
+      nombreProyecto: proyectoCreado.nombreProyecto,
+      materiales
+    }).subscribe({
+      next: () => this.alertas.toast('Solicitud de material enviada a Inventario'),
+      error: (err) => console.error('Error al enviar solicitud de material:', err)
+    });
+  }
+
+  getColorInsumo(idInsumo: number): string {
     const insumo = this.insumos.find(i => i.idInsumo === idInsumo);
     return insumo?.color || '-';
-    }
+  }
 
   get cantidadTotalProyecto(): number {
     return calcularTotalPrendas(this.prendasProyecto);
@@ -969,6 +1057,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
         idTipoInsumoMaterial: p.idTipoInsumoMaterial,
         nombreMaterial: p.nombreMaterial,
         idInsumo: p.idInsumo,
+        colorTela: p.colorTela,
         cantidadTotal: p.cantidadTotal,
         tieneBordado: p.tieneBordado,
         tieneEstampado: p.tieneEstampado,

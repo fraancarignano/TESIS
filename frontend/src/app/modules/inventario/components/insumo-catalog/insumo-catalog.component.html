@@ -18,27 +18,36 @@
         <h3>Definir Nuevo Insumo</h3>
         <div class="form-grid">
             <div class="form-group">
-                <label>Nombre del Insumo</label>
-                <input type="text" [(ngModel)]="nuevoInsumo.nombreInsumo" placeholder="Ej: Hilo de Poliéster Negro">
+                <label>Nombre del Insumo *</label>
+                <input type="text" [(ngModel)]="nuevoInsumo.nombreInsumo" placeholder="Ej: Algodón">
             </div>
             <div class="form-group">
-                <label>Unidad de Medida</label>
+                <label>Color <small>(obligatorio para telas)</small></label>
+                <input type="text" [(ngModel)]="nuevoInsumo.color" placeholder="Ej: BLANCO, NEGRO, AZUL MARINO">
+                <small>Se normalizará a mayúsculas. Cada color es un insumo distinto.</small>
+            </div>
+            <div class="form-group">
+                <label>Tipo de Insumo (Categoría) *</label>
+                <select [(ngModel)]="nuevoInsumo.idTipoInsumo">
+                    <option *ngFor="let t of tiposInsumo" [value]="t.idTipoInsumo">{{ t.nombreTipo }}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Unidad de Medida *</label>
                 <select [(ngModel)]="nuevoInsumo.unidadMedida">
                     <option value="">Seleccione...</option>
                     <option *ngFor="let u of unidadesMedida" [value]="u">{{ u }}</option>
                 </select>
             </div>
             <div class="form-group">
+                <label>Tipo de Tela <small>(opcional)</small></label>
+                <input type="text" [(ngModel)]="nuevoInsumo.tipoTela" placeholder="Ej: Jersey, Popelín, Denim">
+            </div>
+            <div class="form-group">
                 <label>Proveedor (Opcional)</label>
                 <select [(ngModel)]="nuevoInsumo.idProveedor">
                     <option [ngValue]="undefined">Sin proveedor</option>
                     <option *ngFor="let p of proveedores" [ngValue]="p.idProveedor">{{ p.nombreProveedor }}</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Tipo de Insumo (Categoría)</label>
-                <select [(ngModel)]="nuevoInsumo.idTipoInsumo">
-                    <option *ngFor="let t of tiposInsumo" [value]="t.idTipoInsumo">{{ t.nombreTipo }}</option>
                 </select>
             </div>
         </div>
@@ -62,9 +71,10 @@
                 <thead>
                     <tr>
                         <th>Nombre</th>
+                        <th>Color</th>
+                        <th>Tipo</th>
                         <th>Proveedor</th>
                         <th>Unidad</th>
-                        <th>Tipo</th>
                         <th>Stock Actual</th>
                         <th style="text-align: right;">Acciones</th>
                     </tr>
@@ -72,9 +82,15 @@
                 <tbody>
                     <tr *ngFor="let insumo of insumos">
                         <td class="nombre">{{ insumo.nombreInsumo }}</td>
+                        <td>
+                            <span *ngIf="insumo.color" style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-size:.78rem;font-weight:600;">
+                                {{ insumo.color }}
+                            </span>
+                            <span *ngIf="!insumo.color" style="color:#bdbdbd;font-size:.82rem;">—</span>
+                        </td>
+                        <td>{{ insumo.tipoInsumo?.nombreTipo || '-' }}</td>
                         <td>{{ insumo.nombreProveedor || '-' }}</td>
                         <td>{{ insumo.unidadMedida }}</td>
-                        <td>{{ insumo.tipoInsumo?.nombreTipo || '-' }}</td>
                         <td>{{ insumo.stockActual }}</td>
                         <td class="acciones">
                             <button class="btn-icon" (click)="eliminar(insumo.idInsumo!)" title="Eliminar">

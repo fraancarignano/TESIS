@@ -107,6 +107,12 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/inventario/components/ubicacion-transfer/ubicacion-transfer.component').then(m => m.UbicacionTransferComponent)
       },
       {
+        path: 'inventario/asignar-proyecto',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Inventario', accion: 'Transferir' } },
+        loadComponent: () => import('./modules/inventario/components/proyecto-transfer/proyecto-transfer.component').then(m => m.ProyectoTransferComponent)
+      },
+      {
         path: 'inventario/movimientos',
         canActivate: [permissionGuard],
         data: { permission: { modulo: 'Inventario', accion: 'Historial' } },

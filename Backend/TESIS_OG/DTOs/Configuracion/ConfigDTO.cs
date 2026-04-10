@@ -56,6 +56,7 @@ namespace TESIS_OG.DTOs.Configuracion
         public int IdTipoPrenda { get; set; }
         public int IdTipoInsumoMaterial { get; set; }
         public int CantidadTotal { get; set; }
+        public string? ColorSolicitado { get; set; }
     }
 
     public class MaterialManualParaCalculoDTO
@@ -82,6 +83,8 @@ namespace TESIS_OG.DTOs.Configuracion
         public decimal StockActual { get; set; }
         public bool TieneStockSuficiente { get; set; }
         public decimal? Faltante { get; set; }
+        public string? Color { get; set; }          // color del insumo en stock
+        public string? ColorSolicitado { get; set; } // color pedido en la prenda
     }
 
     public class AlertaCalculoDTO

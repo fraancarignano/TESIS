@@ -26,6 +26,7 @@
         public int IdDetalle { get; set; }
         public int IdInsumo { get; set; }
         public string? NombreInsumo { get; set; }
+        public string? ColorInsumo { get; set; }
         public decimal Cantidad { get; set; }
         public decimal CantidadRecibida { get; set; }
         public decimal Diferencia => CantidadRecibida - Cantidad;

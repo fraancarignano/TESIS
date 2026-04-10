@@ -29,9 +29,10 @@ namespace TESIS_OG.Services.InsumoService
         if (!proveedorExiste) return null;
       }
 
-      // Validar que no exista un insumo con el mismo nombre
+      // Validar que no exista un insumo con el mismo nombre Y mismo color
       var existeNombre = await _context.Insumos
-          .AnyAsync(i => i.NombreInsumo.ToLower() == insumoDto.NombreInsumo.ToLower());
+          .AnyAsync(i => i.NombreInsumo.ToLower() == insumoDto.NombreInsumo.ToLower()
+                      && (i.Color ?? "").ToLower() == (insumoDto.Color ?? "").ToLower());
       if (existeNombre) return null;
 
       // Crear el insumo
@@ -45,6 +46,8 @@ namespace TESIS_OG.Services.InsumoService
         IdProveedor = insumoDto.IdProveedor,
         IdUbicacion = insumoDto.IdUbicacion,
         Estado = NormalizarEstadoInsumo(insumoDto.Estado),
+        Color = string.IsNullOrWhiteSpace(insumoDto.Color) ? null : insumoDto.Color.Trim().ToUpperInvariant(),
+        TipoTela = insumoDto.TipoTela?.Trim(),
         FechaActualizacion = DateOnly.FromDateTime(DateTime.Now)
       };
 
@@ -91,7 +94,9 @@ namespace TESIS_OG.Services.InsumoService
               ? "Disponible"
               : (i.Estado ?? "Disponible"),
             IdUbicacion = i.IdUbicacion,
-            CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null
+            CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
+            Color = i.Color,
+            TipoTela = i.TipoTela
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();
@@ -135,6 +140,8 @@ namespace TESIS_OG.Services.InsumoService
               : (i.Estado ?? "Disponible"),
             IdUbicacion = i.IdUbicacion,
             CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
+            Color = i.Color,
+            TipoTela = i.TipoTela,
             DetalleStock = i.InsumoStocks.Select(s => new InsumoStockDTO
             {
                 IdInsumoStock = s.IdInsumoStock,
@@ -220,6 +227,8 @@ namespace TESIS_OG.Services.InsumoService
       insumo.IdProveedor = insumoDto.IdProveedor;
       insumo.IdUbicacion = insumoDto.IdUbicacion;
       insumo.Estado = NormalizarEstadoInsumo(insumoDto.Estado);
+      insumo.Color = string.IsNullOrWhiteSpace(insumoDto.Color) ? null : insumoDto.Color.Trim().ToUpperInvariant();
+      insumo.TipoTela = insumoDto.TipoTela?.Trim();
       insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
 
       await _context.SaveChangesAsync();
@@ -352,7 +361,9 @@ namespace TESIS_OG.Services.InsumoService
               ? "Disponible"
               : (i.Estado ?? "Disponible"),
             IdUbicacion = i.IdUbicacion,
-            CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null
+            CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
+            Color = i.Color,
+            TipoTela = i.TipoTela
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();
@@ -402,3 +413,4 @@ namespace TESIS_OG.Services.InsumoService
     }
   }
 }
+

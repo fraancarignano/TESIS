@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { OrdenCompraService } from '../../../orden-compra/services/orden-compra.service';
 import { UbicacionesService, Ubicacion } from '../../../ubicaciones/services/ubicaciones.service';
 import { ProyectosService } from '../../../proyectos/services/proyecto.service';
@@ -34,11 +35,20 @@ export class UbicacionTransferComponent implements OnInit {
     constructor(
         private ordenCompraService: OrdenCompraService,
         private ubicacionesService: UbicacionesService,
-        private proyectosService: ProyectosService
+        private proyectosService: ProyectosService,
+        private route: ActivatedRoute
     ) { }
 
     ngOnInit(): void {
         this.cargarDatos();
+
+        // Preseleccionar proyecto si viene por query param (desde notificaciones)
+        this.route.queryParams.subscribe(params => {
+            const idProyecto = Number(params['proyecto']);
+            if (idProyecto) {
+                this.idProyectoSeleccionado = idProyecto;
+            }
+        });
     }
 
     cargarDatos(): void {

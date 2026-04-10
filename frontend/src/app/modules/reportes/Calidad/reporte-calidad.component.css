@@ -169,3 +169,8 @@ th {
   .grafico-card.full { grid-column: span 1; }
 }
 
+
+.canvas-wrap-tall {
+  position: relative;
+  height: 340px;
+}

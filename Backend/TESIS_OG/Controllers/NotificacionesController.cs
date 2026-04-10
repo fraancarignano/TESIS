@@ -176,6 +176,136 @@ namespace TESIS_OG.Controllers
             return Ok(new { message = "Notificación marcada como leída." });
         }
 
+        // ============================================================
+        // SOLICITUDES DE MATERIAL POR PROYECTO
+        // ============================================================
+
+        [HttpPost("solicitudes-material")]
+        [RequiresPermission("Proyectos", "Crear")]
+        public async Task<IActionResult> CrearSolicitudMaterial([FromBody] CrearSolicitudMaterialDTO dto)
+        {
+            var idUsuario = ObtenerIdUsuarioDesdeToken();
+            if (!idUsuario.HasValue)
+                return Unauthorized(new { message = "No autenticado." });
+
+            if (dto.Materiales == null || dto.Materiales.Count == 0)
+                return BadRequest(new { message = "Debe incluir al menos un material." });
+
+            var hoy = DateOnly.FromDateTime(DateTime.Now);
+            var creadas = new List<SolicitudMaterialResponseDTO>();
+
+            foreach (var item in dto.Materiales)
+            {
+                var solicitud = new TESIS_OG.Models.SolicitudMaterialProyecto
+                {
+                    IdProyecto = dto.IdProyecto,
+                    NombreProyecto = dto.NombreProyecto,
+                    IdTipoInsumo = item.IdTipoInsumo,
+                    NombreTipoInsumo = item.NombreTipoInsumo,
+                    ColorSolicitado = item.ColorSolicitado,
+                    CantidadEstimada = item.CantidadEstimada,
+                    UnidadMedida = item.UnidadMedida,
+                    Mensaje = item.Mensaje,
+                    Estado = "Pendiente",
+                    IdUsuarioEmisor = idUsuario.Value,
+                    FechaSolicitud = hoy
+                };
+
+                _context.SolicitudMaterialProyectos.Add(solicitud);
+                await _context.SaveChangesAsync();
+
+                var emisor = await _context.Usuarios.AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.IdUsuario == idUsuario.Value);
+
+                creadas.Add(new SolicitudMaterialResponseDTO
+                {
+                    IdSolicitud = solicitud.IdSolicitud,
+                    IdProyecto = solicitud.IdProyecto,
+                    NombreProyecto = solicitud.NombreProyecto,
+                    NombreTipoInsumo = solicitud.NombreTipoInsumo,
+                    ColorSolicitado = solicitud.ColorSolicitado,
+                    CantidadEstimada = solicitud.CantidadEstimada,
+                    UnidadMedida = solicitud.UnidadMedida,
+                    Mensaje = solicitud.Mensaje,
+                    Estado = solicitud.Estado,
+                    UsuarioEmisor = emisor != null ? $"{emisor.NombreUsuario} {emisor.ApellidoUsuario}".Trim() : "",
+                    FechaSolicitud = solicitud.FechaSolicitud
+                });
+            }
+
+            return Ok(new { message = $"{creadas.Count} solicitud(es) creada(s).", solicitudes = creadas });
+        }
+
+        [HttpGet("solicitudes-material")]
+        [RequiresPermission("Notificaciones", "Ver")]
+        public async Task<ActionResult<List<SolicitudMaterialResponseDTO>>> ObtenerSolicitudesMaterial(
+            [FromQuery] string? estado = null)
+        {
+            var query = _context.SolicitudMaterialProyectos
+                .AsNoTracking()
+                .Include(s => s.IdUsuarioEmisorNavigation)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(estado))
+                query = query.Where(s => s.Estado == estado);
+
+            var items = await query
+                .OrderByDescending(s => s.FechaSolicitud)
+                .ThenByDescending(s => s.IdSolicitud)
+                .ToListAsync();
+
+            var result = items.Select(s => new SolicitudMaterialResponseDTO
+            {
+                IdSolicitud = s.IdSolicitud,
+                IdProyecto = s.IdProyecto,
+                NombreProyecto = s.NombreProyecto,
+                NombreTipoInsumo = s.NombreTipoInsumo,
+                ColorSolicitado = s.ColorSolicitado,
+                CantidadEstimada = s.CantidadEstimada,
+                UnidadMedida = s.UnidadMedida,
+                Mensaje = s.Mensaje,
+                Estado = s.Estado,
+                UsuarioEmisor = s.IdUsuarioEmisorNavigation != null
+                    ? $"{s.IdUsuarioEmisorNavigation.NombreUsuario} {s.IdUsuarioEmisorNavigation.ApellidoUsuario}".Trim()
+                    : "",
+                FechaSolicitud = s.FechaSolicitud,
+                FechaAtendida = s.FechaAtendida
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        [HttpGet("solicitudes-material/count")]
+        [RequiresPermission("Notificaciones", "Ver")]
+        public async Task<ActionResult<object>> ContarSolicitudesPendientes()
+        {
+            var count = await _context.SolicitudMaterialProyectos
+                .AsNoTracking()
+                .CountAsync(s => s.Estado == "Pendiente");
+
+            return Ok(new { total = count });
+        }
+
+        [HttpPost("solicitudes-material/{id:int}/atender")]
+        [RequiresPermission("Notificaciones", "Ver")]
+        public async Task<IActionResult> AtenderSolicitud(int id)
+        {
+            var idUsuario = ObtenerIdUsuarioDesdeToken();
+            if (!idUsuario.HasValue)
+                return Unauthorized(new { message = "No autenticado." });
+
+            var solicitud = await _context.SolicitudMaterialProyectos.FindAsync(id);
+            if (solicitud == null)
+                return NotFound(new { message = "Solicitud no encontrada." });
+
+            solicitud.Estado = "Atendida";
+            solicitud.FechaAtendida = DateOnly.FromDateTime(DateTime.Now);
+            solicitud.IdUsuarioAtiende = idUsuario.Value;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Solicitud marcada como atendida." });
+        }
+
         private static string NormalizarTipo(string? tipo)
         {
             var raw = (tipo ?? string.Empty).Trim().ToLowerInvariant();

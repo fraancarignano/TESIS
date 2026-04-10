@@ -50,6 +50,8 @@ export interface Insumo {
   codigoUbicacion?: string;
   nombreTipoInsumo?: string;
   estado?: string;
+  color?: string;
+  tipoTela?: string;
   proyectosAsignados?: ProyectoAsignado[];
   detalleStock?: InsumoStock[];
 }

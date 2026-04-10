@@ -86,6 +86,34 @@ actualizarProyecto(id: number, proyecto: any): Observable<any> {
 }
 
 /**
+ * Cambiar estado del proyecto
+ */
+cambiarEstado(id: number, estado: string): Observable<any> {
+  return this.http.patch<any>(`${this.apiUrl}/${id}/estado`, { estado }).pipe(
+    tap(() => this.obtenerProyectos().subscribe()),
+    catchError(this.handleError)
+  );
+}
+
+/**
+ * Verificar si todos los materiales están asignados al proyecto
+ */
+verificarMaterialesListos(id: number): Observable<{ listos: boolean; detalles: any[] }> {
+  return this.http.get<any>(`${this.apiUrl}/${id}/materiales-listos`).pipe(
+    catchError(this.handleError)
+  );
+}
+
+/**
+ * Asignar materiales al proyecto directamente desde stock global
+ */
+asignarMaterialesAlProyecto(idProyecto: number, materiales: { idInsumo: number; cantidad: number }[]): Observable<any> {
+  return this.http.post<any>(`${this.apiUrl}/${idProyecto}/asignar-materiales`, { materiales }).pipe(
+    catchError(this.handleError)
+  );
+}
+
+/**
  * Validar qué se puede editar según estado
  */
 validarEdicion(id: number): Observable<any> {

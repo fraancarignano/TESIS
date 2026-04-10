@@ -273,7 +273,10 @@ export class MuestraFormNuevoComponent implements OnInit {
 
     prenda.nombrePrenda = tipoPrenda?.nombrePrenda;
     prenda.nombreMaterial = tipoInsumo?.nombreTipo;
-    prenda.colorTela = insumoTela?.color;
+    // Solo sobreescribir colorTela si viene del insumo seleccionado (no borrar el ingresado manualmente)
+    if (insumoTela?.color) {
+      prenda.colorTela = insumoTela.color;
+    }
 
     if (this.indexPrendaEditando === -1) {
       this.prendasProyecto.push(prenda);
@@ -597,21 +600,6 @@ export class MuestraFormNuevoComponent implements OnInit {
   // ========================================
 
   guardar(): void {
-  if (!this.referenciaVisual.mockup) {
-    this.errorMensaje = 'El mockup es obligatorio';
-    return;
-  }
-
-  if (this.referenciaVisual.bordado.requerido && !this.referenciaVisual.bordado.descripcion.trim()) {
-    this.errorMensaje = 'Ingresa la descripción del bordado';
-    return;
-  }
-
-  if (this.referenciaVisual.estampado.requerido && !this.referenciaVisual.estampado.descripcion.trim()) {
-    this.errorMensaje = 'Ingresa la descripción del estampado';
-    return;
-  }
-
   if (this.formulario.invalid) {
     this.marcarCamposComoTocados();
     this.errorMensaje = 'Completa los campos obligatorios (*)';
@@ -692,6 +680,10 @@ export class MuestraFormNuevoComponent implements OnInit {
   }
 
   // ========== MODO CREACIÃ“N (código original) ==========
+  const referenciaBordado = this.prendasProyecto.find(p => p.bordadoDescripcion?.trim() || p.bordadoReferencia);
+  const referenciaEstampado = this.prendasProyecto.find(p => p.estampadoDescripcion?.trim() || p.estampadoReferencia);
+  const referenciaMockup = this.prendasProyecto.find(p => p.mockupReferencia);
+
   const dtoMuestra = {
     idCliente: Number(formValue.idCliente),
     nombreMuestra: formValue.nombreProyecto.trim(),
@@ -703,14 +695,14 @@ export class MuestraFormNuevoComponent implements OnInit {
     idUsuarioEncargado: formValue.idUsuarioEncargado
       ? Number(formValue.idUsuarioEncargado)
       : undefined,
-    mockupUrl: this.referenciaVisual.mockup,
-    bordadoRequerido: this.referenciaVisual.bordado.requerido,
-    bordadoDescripcion: this.referenciaVisual.bordado.descripcion?.trim() || undefined,
-    bordadoReferencia: this.referenciaVisual.bordado.imagen || undefined,
-    estampadoRequerido: this.referenciaVisual.estampado.requerido,
-    estampadoDescripcion: this.referenciaVisual.estampado.descripcion?.trim() || undefined,
-    estampadoReferencia: this.referenciaVisual.estampado.imagen || undefined,
-    otrosDetalle: this.referenciaVisual.otrosDetalle?.trim() || undefined,
+    mockupUrl: referenciaMockup?.mockupReferencia || undefined,
+    bordadoRequerido: this.prendasProyecto.some(p => p.tieneBordado),
+    bordadoDescripcion: referenciaBordado?.bordadoDescripcion?.trim() || undefined,
+    bordadoReferencia: referenciaBordado?.bordadoReferencia || undefined,
+    estampadoRequerido: this.prendasProyecto.some(p => p.tieneEstampado),
+    estampadoDescripcion: referenciaEstampado?.estampadoDescripcion?.trim() || undefined,
+    estampadoReferencia: referenciaEstampado?.estampadoReferencia || undefined,
+    otrosDetalle: undefined,
     paletaRgb: this.paletaRgbTexto,
     prendas: this.prendasProyecto.map((p, index) => ({
       idTipoPrenda: p.idTipoPrenda!,
@@ -718,7 +710,13 @@ export class MuestraFormNuevoComponent implements OnInit {
       colorTela: p.colorTela || undefined,
       tieneBordado: p.tieneBordado,
       tieneEstampado: p.tieneEstampado,
-      descripcionDiseno: p.descripcionDiseno?.trim() || undefined
+      descripcionDiseno: p.descripcionDiseno?.trim() || undefined,
+      mockupUrl: p.mockupReferencia || undefined,
+      bordadoDescripcion: p.bordadoDescripcion?.trim() || undefined,
+      bordadoReferencia: p.bordadoReferencia || undefined,
+      estampadoDescripcion: p.estampadoDescripcion?.trim() || undefined,
+      estampadoReferencia: p.estampadoReferencia || undefined,
+      otrosDetalle: p.otrosDetalleReferencia?.trim() || undefined
     }))
   };
 
@@ -852,6 +850,21 @@ export class MuestraFormNuevoComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
+  onReferenciaImagenPrendaChange(event: Event, prenda: PrendaFormulario, tipo: 'bordado' | 'estampado'): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (tipo === 'bordado') {
+        prenda.bordadoReferencia = String(reader.result || '');
+      } else {
+        prenda.estampadoReferencia = String(reader.result || '');
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
   onMockupChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -861,6 +874,21 @@ export class MuestraFormNuevoComponent implements OnInit {
       this.referenciaVisual.mockup = String(reader.result || '');
     };
     reader.readAsDataURL(file);
+  }
+
+  onMockupPrendaChange(event: Event, prenda: PrendaFormulario): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      prenda.mockupReferencia = String(reader.result || '');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  trackByPrendaId(index: number, prenda: PrendaFormulario): string {
+    return prenda.id || String(index);
   }
 
   private aplicarTalleDefecto(prenda: PrendaFormulario): void {

@@ -281,3 +281,6 @@
     padding-top: 0;
   }
 }
+
+.btn-modo { padding: 7px 16px; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; font-size: .85rem; color: #555; }
+.btn-modo.active { background: #1976d2; color: #fff; border-color: #1976d2; font-weight: 600; }

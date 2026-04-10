@@ -205,7 +205,8 @@
         <table class="tabla-detalles">
           <thead>
             <tr>
-              <th>Insumo</th>
+              <th>Material</th>
+              <th>Color</th>
               <th>Pedido</th>
               <th *ngIf="ordenSeleccionada.estado === 'Recibida'">Recibido</th>
               <th *ngIf="ordenSeleccionada.estado === 'Recibida'">Diferencia</th>
@@ -216,7 +217,13 @@
           </thead>
           <tbody>
             <tr *ngFor="let detalle of ordenSeleccionada.detalles">
-              <td>{{ detalle.nombreInsumo }}</td>
+              <td><strong>{{ detalle.nombreInsumo }}</strong></td>
+              <td>
+                <span *ngIf="detalle.colorInsumo" style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-size:.78rem;font-weight:600;">
+                  {{ detalle.colorInsumo }}
+                </span>
+                <span *ngIf="!detalle.colorInsumo" style="color:#bdbdbd;font-size:.82rem;">—</span>
+              </td>
               <td>{{ detalle.cantidad }}</td>
               <td *ngIf="ordenSeleccionada.estado === 'Recibida'">{{ detalle.cantidadRecibida }}</td>
               <td *ngIf="ordenSeleccionada.estado === 'Recibida'" [class.diferencia-pos]="detalle.diferencia > 0" [class.diferencia-neg]="detalle.diferencia < 0">
@@ -233,7 +240,7 @@
           </tbody>
           <tfoot>
             <tr>
-              <td [attr.colspan]="ordenSeleccionada.estado === 'Recibida' ? 6 : 3" class="text-right"><strong>TOTAL:</strong></td>
+              <td [attr.colspan]="ordenSeleccionada.estado === 'Recibida' ? 7 : 4" class="text-right"><strong>TOTAL:</strong></td>
               <td><strong>${{ ordenSeleccionada.totalOrden | number:'1.2-2' }}</strong></td>
             </tr>
           </tfoot>

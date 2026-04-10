@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using TESIS_OG.Data;
 using TESIS_OG.DTOs.Reportes;
 using TESIS_OG.DTOs.Reportes.Calidad;
+using TESIS_OG.Models;
 using TESIS_OG.DTOs.Reportes.Inventario;
 using TESIS_OG.Security;
 using TESIS_OG.Services.ReportesService;
@@ -774,6 +775,91 @@ namespace TESIS_OG.Controllers
             {
                 return StatusCode(500, new { message = "Error al obtener reporte de precisión de pedidos", error = ex.Message });
             }
+        }
+
+        /// <summary>
+        /// Reporte de calidad agrupado por taller confeccionista
+        /// </summary>
+        [HttpGet("calidad-por-taller")]
+        public async Task<ActionResult<List<CalidadPorTallerDTO>>> CalidadPorTaller(
+            int? idProyecto,
+            DateOnly? fechaInicio,
+            DateOnly? fechaFin)
+        {
+            try
+            {
+                var query = _context.ObservacionProyectos
+                    .Include(o => o.IdProyectoNavigation)
+                        .ThenInclude(p => p.DetalleTallerProyectos)
+                            .ThenInclude(dt => dt.IdTallerNavigation)
+                    .Where(o => o.Descripcion.Contains("[CONTROL_CALIDAD]"));
+
+                if (idProyecto.HasValue)
+                    query = query.Where(o => o.IdProyecto == idProyecto.Value);
+
+                if (fechaInicio.HasValue)
+                {
+                    var inicio = fechaInicio.Value.ToDateTime(TimeOnly.MinValue);
+                    query = query.Where(o => o.Fecha >= inicio);
+                }
+
+                if (fechaFin.HasValue)
+                {
+                    var fin = fechaFin.Value.ToDateTime(TimeOnly.MaxValue);
+                    query = query.Where(o => o.Fecha <= fin);
+                }
+
+                var observaciones = await query.ToListAsync();
+
+                var tallerMap = new Dictionary<int, CalidadPorTallerDTO>();
+
+                foreach (var obs in observaciones)
+                {
+                    var resultado = ExtraerResultadoCalidad(obs.Descripcion ?? string.Empty);
+                    var talleres = obs.IdProyectoNavigation?.DetalleTallerProyectos ?? new List<DetalleTallerProyecto>();
+
+                    if (!talleres.Any())
+                    {
+                        // Sin taller asignado → agrupar en "Sin taller"
+                        const int sinTallerId = 0;
+                        if (!tallerMap.ContainsKey(sinTallerId))
+                            tallerMap[sinTallerId] = new CalidadPorTallerDTO { IdTaller = 0, NombreTaller = "Sin taller asignado" };
+
+                        AcumularResultado(tallerMap[sinTallerId], resultado);
+                    }
+                    else
+                    {
+                        foreach (var dt in talleres)
+                        {
+                            var idT = dt.IdTaller;
+                            if (!tallerMap.ContainsKey(idT))
+                                tallerMap[idT] = new CalidadPorTallerDTO
+                                {
+                                    IdTaller = idT,
+                                    NombreTaller = dt.IdTallerNavigation?.NombreTaller ?? $"Taller {idT}"
+                                };
+
+                            AcumularResultado(tallerMap[idT], resultado);
+                        }
+                    }
+                }
+
+                foreach (var t in tallerMap.Values)
+                    t.TotalInspecciones = t.Aprobadas + t.Observadas + t.Rechazadas;
+
+                return Ok(tallerMap.Values.OrderByDescending(t => t.TotalInspecciones).ToList());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error al generar reporte de calidad por taller", error = ex.Message });
+            }
+        }
+
+        private static void AcumularResultado(CalidadPorTallerDTO dto, string resultado)
+        {
+            if (resultado.Equals("APROBADA", StringComparison.OrdinalIgnoreCase)) dto.Aprobadas++;
+            else if (resultado.Equals("OBSERVADA", StringComparison.OrdinalIgnoreCase)) dto.Observadas++;
+            else if (resultado.Equals("RECHAZADA", StringComparison.OrdinalIgnoreCase)) dto.Rechazadas++;
         }
 
         /// <summary>

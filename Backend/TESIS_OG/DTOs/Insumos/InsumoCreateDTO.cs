@@ -10,5 +10,7 @@ namespace TESIS_OG.DTOs.Insumos
     public int? IdProveedor { get; set; }
     public int? IdUbicacion { get; set; }
     public string? Estado { get; set; } = "Disponible";
+    public string? Color { get; set; }
+    public string? TipoTela { get; set; }
   }
 }

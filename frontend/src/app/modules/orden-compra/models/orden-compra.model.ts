@@ -19,6 +19,7 @@ export interface DetalleOrdenCompra {
   idDetalle?: number;
   idInsumo: number;
   nombreInsumo?: string;
+  colorInsumo?: string;
   cantidad: number;
   cantidadRecibida: number;
   diferencia: number;
@@ -37,10 +38,15 @@ export interface NuevaOrdenCompra {
 }
 
 export interface DetalleOrdenCompraDTO {
-  idInsumo: number;
+  idInsumo: number;       // 0 si es insumo nuevo
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
+  // Campos para insumo nuevo (solo cuando idInsumo === 0)
+  nuevoNombreInsumo?: string;
+  nuevoIdTipoInsumo?: number;
+  nuevoColor?: string;
+  nuevoUnidadMedida?: string;
 }
 
 export interface Proveedor {
@@ -55,4 +61,5 @@ export interface Insumo {
   stockActual: number;
   unidadMedida: string;
   idProveedor?: number;
+  color?: string;
 }

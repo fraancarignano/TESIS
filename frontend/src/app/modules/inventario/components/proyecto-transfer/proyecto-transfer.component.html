@@ -1,0 +1,208 @@
+<div class="pt-page">
+
+  <div class="pt-header">
+    <div class="breadcrumb"><span>Inventario</span><span class="sep">›</span><span class="active">Asignar Material a Proyecto</span></div>
+    <h1>Asignar Material a Proyecto</h1>
+  </div>
+
+  <div class="pt-alert" *ngIf="mensaje" [class.ok]="mensajeTipo === 'ok'" [class.error]="mensajeTipo === 'error'">
+    {{ mensaje }}
+  </div>
+
+  <!-- Selección de proyecto -->
+  <div class="pt-card">
+    <div class="pt-field">
+      <label>Proyecto *</label>
+      <select [(ngModel)]="idProyectoSeleccionado" (change)="onProyectoChange()" style="max-width:480px">
+        <option [ngValue]="null">Seleccionar proyecto...</option>
+        <option *ngFor="let p of proyectos" [ngValue]="p.idProyecto">
+          {{ p.nombreProyecto }} ({{ p.codigoProyecto }}) — {{ p.estado }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <ng-container *ngIf="idProyectoSeleccionado">
+
+    <div class="pt-loading" *ngIf="cargandoMateriales">
+      <div class="spinner"></div> Cargando materiales...
+    </div>
+
+    <ng-container *ngIf="!cargandoMateriales && materiales.length > 0">
+
+      <!-- MATERIALES CON STOCK SUFICIENTE DEL COLOR CORRECTO -->
+      <div class="pt-card" *ngIf="conStock.length > 0">
+        <div class="pt-section-header ok">
+          <div class="pt-section-title">
+            <span class="dot ok"></span>
+            Materiales disponibles ({{ conStock.length }})
+          </div>
+          <button class="btn-primary" (click)="asignarAlProyecto()" [disabled]="cargando">
+            {{ cargando ? 'Asignando...' : '✓ Asignar al proyecto' }}
+          </button>
+        </div>
+
+        <table class="pt-table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Color solicitado</th>
+              <th>Necesario</th>
+              <th>En stock</th>
+              <th>Cantidad a asignar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of conStock">
+              <td><strong>{{ m.nombreInsumo }}</strong><br><small class="text-muted">{{ m.tipoInsumo }}</small></td>
+              <td>
+                <span *ngIf="m.colorSolicitado" class="color-tag solicitado">{{ m.colorSolicitado }}</span>
+                <span *ngIf="!m.colorSolicitado" class="text-muted">Sin especificar</span>
+              </td>
+              <td>{{ m.cantidadNecesaria }} {{ m.unidadMedida }}</td>
+              <td class="text-ok">{{ m.stockDisponible }} {{ m.unidadMedida }}</td>
+              <td>
+                <input type="number" class="input-cant"
+                  [(ngModel)]="m.cantidadAAsignar"
+                  [min]="0" [max]="m.stockDisponible">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- MATERIALES SIN STOCK O COLOR INCORRECTO -->
+      <div class="pt-card" *ngIf="sinStock.length > 0">
+        <div class="pt-section-header warn">
+          <div class="pt-section-title">
+            <span class="dot warn"></span>
+            Sin stock del color solicitado ({{ sinStock.length }})
+          </div>
+          <button class="btn-oc" (click)="abrirPanelOC()">
+            + Generar Orden de Compra
+          </button>
+        </div>
+
+        <table class="pt-table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Color solicitado</th>
+              <th>Necesario</th>
+              <th>Stock disponible (ese color)</th>
+              <th>Faltante</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let m of sinStock">
+              <td><strong>{{ m.nombreInsumo }}</strong><br><small class="text-muted">{{ m.tipoInsumo }}</small></td>
+              <td>
+                <span *ngIf="m.colorSolicitado" class="color-tag solicitado">{{ m.colorSolicitado }}</span>
+                <span *ngIf="!m.colorSolicitado" class="text-muted">Sin especificar</span>
+              </td>
+              <td>{{ m.cantidadNecesaria }} {{ m.unidadMedida }}</td>
+              <td class="text-warn">{{ m.stockDisponible }} {{ m.unidadMedida }}</td>
+              <td class="text-error">{{ (m.cantidadNecesaria - m.stockDisponible) | number:'1.2-2' }} {{ m.unidadMedida }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </ng-container>
+
+    <div class="pt-empty" *ngIf="!cargandoMateriales && materiales.length === 0">
+      <p>Este proyecto no tiene materiales calculados.</p>
+    </div>
+
+    <!-- BANNER INICIAR PROYECTO -->
+    <div class="pt-card pt-iniciar" *ngIf="todosListos">
+      <div class="pt-iniciar-content">
+        <div>
+          <strong>✅ Todos los materiales están asignados</strong>
+          <p>Ya podés iniciar la producción.</p>
+        </div>
+        <button class="btn-iniciar" (click)="iniciarProyecto()" [disabled]="iniciandoProyecto">
+          {{ iniciandoProyecto ? 'Iniciando...' : '▶ Iniciar Proyecto' }}
+        </button>
+      </div>
+    </div>
+
+  </ng-container>
+
+
+  <!-- MODAL: GENERAR OC -->
+  <div class="pt-overlay" *ngIf="mostrarPanelOC" (click)="cerrarPanelOC()">
+    <div class="pt-modal" (click)="$event.stopPropagation()">
+      <div class="pt-modal-header">
+        <h2>Generar Orden de Compra</h2>
+        <button class="btn-close" (click)="cerrarPanelOC()">×</button>
+      </div>
+
+      <div class="pt-modal-body">
+        <p class="pt-modal-desc">
+          Materiales faltantes para <strong>{{ proyectoActual?.nombreProyecto }}</strong>.
+          Una vez recibida la OC y el stock ingresado, podrás asignarlos al proyecto.
+        </p>
+
+        <div class="pt-grid-2">
+          <div class="pt-field">
+            <label>Proveedor *</label>
+            <select [(ngModel)]="idProveedorOC">
+              <option [ngValue]="null">Seleccionar...</option>
+              <option *ngFor="let p of proveedores" [ngValue]="p.idProveedor">
+                {{ p.nombreProveedor || p.razonSocial }}
+              </option>
+            </select>
+          </div>
+          <div class="pt-field">
+            <label>Fecha entrega estimada</label>
+            <input type="date" [(ngModel)]="fechaEntregaOC">
+          </div>
+        </div>
+
+        <h3 class="pt-subtitulo">Materiales a pedir</h3>
+        <table class="pt-table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Color</th>
+              <th>Cantidad</th>
+              <th>Precio unitario</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of itemsOC">
+              <td>{{ item.nombreInsumo }}</td>
+              <td>
+                <input type="text" class="input-precio" [(ngModel)]="item.colorSolicitado"
+                  placeholder="Color..." style="width:130px">
+              </td>
+              <td>
+                <input type="number" class="input-cant" [(ngModel)]="item.cantidad" min="0.01" step="0.01">
+              </td>
+              <td>
+                <input type="number" class="input-precio" [(ngModel)]="item.precioUnitario" min="0" step="0.01" placeholder="0.00">
+              </td>
+              <td>{{ (item.cantidad * item.precioUnitario) | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4" class="text-right"><strong>Total:</strong></td>
+              <td><strong>{{ totalOC | number:'1.2-2' }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="pt-modal-footer">
+        <button class="btn-secondary" (click)="cerrarPanelOC()">Cancelar</button>
+        <button class="btn-primary" (click)="generarOrdenCompra()" [disabled]="generandoOC">
+          {{ generandoOC ? 'Generando...' : 'Generar OC' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

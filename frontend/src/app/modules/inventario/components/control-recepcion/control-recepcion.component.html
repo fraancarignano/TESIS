@@ -52,7 +52,8 @@
             <div class="orden-card-body">
                 <div class="insumos-preview">
                     <span *ngFor="let d of orden.detalles" class="insumo-chip">
-                        {{ d.nombreInsumo }} ({{ d.cantidad }})
+                        {{ d.nombreInsumo }}<span *ngIf="d.colorInsumo" class="chip-color"> — {{ d.colorInsumo }}</span>
+                        ({{ d.cantidad }})
                     </span>
                 </div>
             </div>
@@ -96,7 +97,8 @@
                 <table class="tabla-control">
                     <thead>
                         <tr>
-                            <th>Insumo</th>
+                            <th>Material</th>
+                            <th>Color</th>
                             <th>Pedido</th>
                             <th>Ya recibido</th>
                             <th>Faltante</th>
@@ -106,7 +108,11 @@
                     </thead>
                     <tbody>
                         <tr *ngFor="let det of detallesControl" [class.fila-satisfecha]="getFaltante(det.idInsumo) === 0 && getCantidadYaRecibida(det.idInsumo) > 0">
-                            <td>{{ getNombreInsumo(det.idInsumo) }}</td>
+                            <td><strong>{{ getNombreInsumo(det.idInsumo) }}</strong></td>
+                            <td>
+                                <span *ngIf="getColorInsumo(det.idInsumo)" class="badge-color">{{ getColorInsumo(det.idInsumo) }}</span>
+                                <span *ngIf="!getColorInsumo(det.idInsumo)" class="text-muted">—</span>
+                            </td>
                             <td class="text-center">{{ getCantidadSolicitada(det.idInsumo) }}</td>
                             <td class="text-center" [class.ya-recibido]="getCantidadYaRecibida(det.idInsumo) > 0">
                                 {{ getCantidadYaRecibida(det.idInsumo) }}
