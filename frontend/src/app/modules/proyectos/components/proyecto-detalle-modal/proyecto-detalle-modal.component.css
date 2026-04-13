@@ -2007,3 +2007,23 @@ select:disabled {
   font-size: 0.78rem;
   color: #333;
 }
+
+.btn-eliminar-def {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  background: #b71c1c;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-eliminar-def:hover:not(:disabled) {
+  background: #7f0000;
+  box-shadow: 0 4px 12px rgba(183, 28, 28, 0.35);
+}
+.btn-eliminar-def:disabled { opacity: 0.6; cursor: not-allowed; }

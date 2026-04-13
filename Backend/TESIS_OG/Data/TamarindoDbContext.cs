@@ -826,6 +826,8 @@ public partial class TamarindoDbContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasColumnName("nro_Orden");
+            entity.Property(e => e.IdProyecto)
+                .HasColumnName("IdProyecto");
             entity.Property(e => e.Descripcion)
                 .HasMaxLength(500)
                 .HasColumnName("Descripcion");

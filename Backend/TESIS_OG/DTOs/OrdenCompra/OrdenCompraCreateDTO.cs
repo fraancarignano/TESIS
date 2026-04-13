@@ -4,6 +4,7 @@
     {
         // NroOrden se genera automáticamente, no se recibe del cliente
         public int IdProveedor { get; set; }
+        public int? IdProyecto { get; set; }
         public string? Descripcion { get; set; }
         public DateOnly FechaSolicitud { get; set; }
         public DateOnly? FechaEntregaEstimada { get; set; }

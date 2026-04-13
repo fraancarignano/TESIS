@@ -11,5 +11,7 @@ namespace TESIS_OG.Services.InsumoService
     Task<bool> EliminarInsumoAsync(int id, int? idUsuario = null);
     Task<List<InsumoIndexDTO>> BuscarInsumosAsync(InsumoSearchDTO filtros);
     Task<bool> CambiarEstadoAsync(int id, string nuevoEstado, int? idUsuario = null);
+    Task<string?> EditarStockEntryAsync(int idInsumoStock, decimal nuevaCantidad);
+    Task<(bool ok, string mensaje)> DevolverStockAlGeneralAsync(int idInsumoStock);
   }
 }

@@ -6,6 +6,7 @@ import { NuevaOrdenCompra, DetalleOrdenCompraDTO, Proveedor, Insumo } from '../.
 import { AlertasService } from '../../../../core/services/alertas';
 import { InsumosService } from '../../../inventario/services/insumos.service';
 import { TipoInsumo } from '../../../inventario/models/insumo.model';
+import { ProyectosService } from '../../../proyectos/services/proyecto.service';
 
 @Component({
   selector: 'app-orden-compra-form',
@@ -19,11 +20,13 @@ export class OrdenCompraFormComponent implements OnInit {
   @Output() ordenCreada = new EventEmitter<void>();
 
   idProveedorSeleccionado?: number;
+  idProyectoSeleccionado?: number;
   descripcion = '';
   fechaSolicitud = '';
   fechaEntregaEstimada = '';
 
   proveedores: Proveedor[] = [];
+  proyectos: { idProyecto: number; nombreProyecto: string; codigoProyecto: string }[] = [];
   insumos: Insumo[] = [];
   insumosDisponibles: Insumo[] = [];
   tiposInsumo: TipoInsumo[] = [];
@@ -47,13 +50,26 @@ export class OrdenCompraFormComponent implements OnInit {
   constructor(
     private ordenCompraService: OrdenCompraService,
     private insumosService: InsumosService,
-    private alertas: AlertasService
+    private alertas: AlertasService,
+    private proyectosService: ProyectosService
   ) {}
 
   ngOnInit(): void {
     this.cargarProveedores();
     this.cargarInsumos();
+    this.cargarProyectos();
     this.fechaSolicitud = new Date().toISOString().split('T')[0];
+  }
+
+  cargarProyectos(): void {
+    this.proyectosService.obtenerProyectos().subscribe({
+      next: (data: any[]) => {
+        this.proyectos = data
+          .filter(p => p.estado !== 'Archivado' && p.estado !== 'Cancelado' && p.estado !== 'Finalizado')
+          .map(p => ({ idProyecto: p.idProyecto, nombreProyecto: p.nombreProyecto, codigoProyecto: p.codigoProyecto || '' }));
+      },
+      error: () => {}
+    });
   }
 
   cargarProveedores(): void {
@@ -157,6 +173,7 @@ export class OrdenCompraFormComponent implements OnInit {
 
     const nuevaOrden: NuevaOrdenCompra = {
       idProveedor: this.idProveedorSeleccionado,
+      idProyecto: this.idProyectoSeleccionado || undefined,
       descripcion: this.descripcion || undefined,
       fechaSolicitud: this.fechaSolicitud,
       fechaEntregaEstimada: this.fechaEntregaEstimada || undefined,

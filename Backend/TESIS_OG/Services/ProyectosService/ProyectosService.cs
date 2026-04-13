@@ -420,6 +420,111 @@ namespace TESIS_OG.Services.ProyectoService
             return true;
         }
 
+        public async Task<(bool ok, string mensaje)> EliminarProyectoDefinitivoAsync(int id)
+        {
+            var proyecto = await _context.Proyectos
+                .Include(p => p.InsumoStocks)
+                .FirstOrDefaultAsync(p => p.IdProyecto == id);
+
+            if (proyecto == null) return (false, "Proyecto no encontrado");
+
+            if (proyecto.Estado != "Anulado" && proyecto.Estado != "Archivado")
+                return (false, $"Solo se pueden eliminar proyectos Anulados o Archivados. Estado actual: {proyecto.Estado}");
+
+            try
+            {
+            // 1. Desasociar muestras (no se eliminan, solo se desvinculan)
+            var muestras = await _context.Muestras.Where(m => m.IdProyectoAsignado == id).ToListAsync();
+            foreach (var m in muestras) m.IdProyectoAsignado = null;
+
+            // Solicitudes de material
+            var solicitudes = await _context.SolicitudMaterialProyectos.Where(s => s.IdProyecto == id).ToListAsync();
+            _context.SolicitudMaterialProyectos.RemoveRange(solicitudes);
+
+            // 2. Devolver stock asignado al proyecto al stock general
+            var stocksDelProyecto = proyecto.InsumoStocks.Where(s => s.IdProyecto == id).ToList();
+            foreach (var stock in stocksDelProyecto)
+            {
+                var insumo = await _context.Insumos.FindAsync(stock.IdInsumo);
+                if (insumo != null)
+                {
+                    insumo.StockActual += stock.Cantidad;
+                    insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+
+                    var stockGeneral = await _context.InsumoStocks
+                        .FirstOrDefaultAsync(s => s.IdInsumo == stock.IdInsumo && s.IdProyecto == null);
+                    if (stockGeneral != null)
+                    {
+                        stockGeneral.Cantidad += stock.Cantidad;
+                        stockGeneral.FechaActualizacion = DateTime.Now;
+                    }
+                    else
+                    {
+                        _context.InsumoStocks.Add(new InsumoStock
+                        {
+                            IdInsumo = stock.IdInsumo,
+                            IdUbicacion = stock.IdUbicacion,
+                            Cantidad = stock.Cantidad,
+                            FechaActualizacion = DateTime.Now
+                        });
+                    }
+                }
+            }
+
+            _context.InsumoStocks.RemoveRange(stocksDelProyecto);
+            await _context.SaveChangesAsync();
+
+            // Eliminar relaciones que bloquean el DELETE
+            var observaciones = await _context.ObservacionProyectos.Where(o => o.IdProyecto == id).ToListAsync();
+            _context.ObservacionProyectos.RemoveRange(observaciones);
+
+            var materiales = await _context.MaterialCalculados.Where(m => m.IdProyecto == id).ToListAsync();
+            _context.MaterialCalculados.RemoveRange(materiales);
+
+            var avances = await _context.AvanceAreaProyectos.Where(a => a.IdProyecto == id).ToListAsync();
+            _context.AvanceAreaProyectos.RemoveRange(avances);
+
+            var scraps = await _context.Scraps.Where(s => s.IdProyecto == id).ToListAsync();
+            _context.Scraps.RemoveRange(scraps);
+
+            var movimientos2 = 0; // placeholder
+
+            // Tablas adicionales con FK al proyecto
+            var disenos = await _context.ProyectoDisenos.Where(d => d.IdProyecto == id).ToListAsync();
+            _context.ProyectoDisenos.RemoveRange(disenos);
+
+            var tallerDetalles = await _context.DetalleTallerProyectos.Where(d => d.IdProyecto == id).ToListAsync();
+            _context.DetalleTallerProyectos.RemoveRange(tallerDetalles);
+
+            var materialDetalles = await _context.DetalleMaterialProyectos.Where(d => d.IdProyecto == id).ToListAsync();
+            _context.DetalleMaterialProyectos.RemoveRange(materialDetalles);
+
+            // Prendas y talles
+            var prendas = await _context.ProyectoPrenda
+                .Include(pp => pp.PrendaTalles)
+                .Where(pp => pp.IdProyecto == id).ToListAsync();
+            foreach (var p in prendas)
+                _context.PrendaTalles.RemoveRange(p.PrendaTalles);
+            _context.ProyectoPrenda.RemoveRange(prendas);
+
+            // Despachos asociados
+            var despachos = await _context.Despachos.Where(d => d.IdProyecto == id).ToListAsync();
+            _context.Despachos.RemoveRange(despachos);
+
+            await _context.SaveChangesAsync();
+
+            _context.Proyectos.Remove(proyecto);
+            await _context.SaveChangesAsync();
+
+            return (true, "Proyecto eliminado correctamente");
+            }
+            catch (Exception ex)
+            {
+                var causa = ex.InnerException?.Message ?? ex.Message;
+                return (false, $"No se pudo eliminar el proyecto. Causa: {causa}");
+            }
+        }
+
         // ========================================
         // CÁLCULO DE MATERIALES
         // ========================================
@@ -452,7 +557,7 @@ namespace TESIS_OG.Services.ProyectoService
 
                 var cantidadNecesaria = prenda.CantidadTotal * config.CantidadPorUnidad;
 
-                // Buscar insumos del tipo solicitado con el color exacto (normalizado)
+                // Buscar insumos del tipo solicitado
                 var candidatos = await _context.Insumos
                   .Include(i => i.IdTipoInsumoNavigation)
                   .Where(i => i.IdTipoInsumo == prenda.IdTipoInsumoMaterial)
@@ -467,16 +572,26 @@ namespace TESIS_OG.Services.ProyectoService
                 if (!string.IsNullOrWhiteSpace(prenda.ColorSolicitado))
                 {
                     var colorNorm = NormalizarColor(prenda.ColorSolicitado);
-                    // Solo buscar insumos que coincidan exactamente con el color solicitado
                     var coincidencias = candidatos.Where(i => NormalizarColor(i.Color) == colorNorm).ToList();
                     insumo = coincidencias.FirstOrDefault();
-                    stockDisponible = coincidencias.Sum(i => i.StockActual);
+                    // Stock disponible = solo el stock general (no asignado a proyectos)
+                    if (insumo != null)
+                    {
+                        var stockGeneral = await _context.InsumoStocks
+                            .Where(s => coincidencias.Select(c => c.IdInsumo).Contains(s.IdInsumo) && s.IdProyecto == null)
+                            .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+                        stockDisponible = stockGeneral > 0 ? stockGeneral : coincidencias.Sum(i => i.StockActual);
+                    }
                 }
                 else
                 {
-                    // Sin color especificado: sumar todo el stock del tipo
                     insumo = candidatos.FirstOrDefault();
-                    stockDisponible = candidatos.Sum(i => i.StockActual);
+                    // Sin color: stock general de todos los insumos del tipo
+                    var idsInsumos = candidatos.Select(c => c.IdInsumo).ToList();
+                    var stockGeneral = await _context.InsumoStocks
+                        .Where(s => idsInsumos.Contains(s.IdInsumo) && s.IdProyecto == null)
+                        .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+                    stockDisponible = stockGeneral > 0 ? stockGeneral : candidatos.Sum(i => i.StockActual);
                 }
 
                 var tieneStock = stockDisponible >= cantidadNecesaria;
@@ -949,10 +1064,11 @@ namespace TESIS_OG.Services.ProyectoService
             var estadoActual = proyecto.Estado;
             var transicionesValidas = new Dictionary<string, List<string>>
             {
-                ["Pendiente"]   = new() { "En Proceso", "Archivado" },
+                ["Pendiente"]   = new() { "En Proceso", "Anulado", "Archivado" },
                 ["En Proceso"]  = new() { "Pausado", "Finalizado", "Archivado" },
-                ["Pausado"]     = new() { "En Proceso", "Archivado" },
+                ["Pausado"]     = new() { "En Proceso", "Pendiente", "Anulado", "Archivado" },
                 ["Finalizado"]  = new() { "Archivado" },
+                ["Anulado"]     = new() { },
                 ["Archivado"]   = new()
             };
 
@@ -960,8 +1076,9 @@ namespace TESIS_OG.Services.ProyectoService
                 !permitidos.Contains(nuevoEstado))
                 throw new InvalidOperationException($"No se puede cambiar de '{estadoActual}' a '{nuevoEstado}'");
 
-            // Si va a iniciar, verificar que todos los materiales estén asignados
-            if (nuevoEstado == "En Proceso")
+            // Si va a iniciar DESDE PENDIENTE, verificar que todos los materiales estén asignados
+            // Si viene de Pausado, los materiales ya estaban asignados — no revalidar
+            if (nuevoEstado == "En Proceso" && estadoActual == "Pendiente")
             {
                 var materiales = await _context.MaterialCalculados
                     .Where(m => m.IdProyecto == idProyecto)
@@ -1194,25 +1311,29 @@ namespace TESIS_OG.Services.ProyectoService
                 var colorSolicitado = mc.IdProyectoPrendaNavigation?.ColorTela;
                 var idTipoInsumo = mc.IdInsumoNavigation?.IdTipoInsumo ?? 0;
 
-                // Buscar el insumo correcto: mismo tipo + color solicitado normalizado
-                Insumo? insumoReal = null;
-                decimal stockReal = 0;
+                // Usar el insumo del MaterialCalculado directamente (es el insumo específico)
+                // Solo buscar alternativo por tipo+color si el insumo original tiene stock 0
+                Insumo? insumoReal = mc.IdInsumoNavigation;
+                decimal stockReal = insumoReal?.StockActual ?? 0;
 
-                if (!string.IsNullOrWhiteSpace(colorSolicitado))
+                // Si el insumo original no tiene stock, buscar por tipo+color como fallback
+                if (stockReal == 0 && !string.IsNullOrWhiteSpace(colorSolicitado))
                 {
                     var colorNorm = NormalizarColor(colorSolicitado);
-                    insumoReal = insumosPorTipo
-                        .Where(i => i.IdTipoInsumo == idTipoInsumo)
+                    var alternativo = insumosPorTipo
+                        .Where(i => i.IdTipoInsumo == idTipoInsumo && i.IdInsumo != (insumoReal?.IdInsumo ?? 0))
                         .FirstOrDefault(i => NormalizarColor(i.Color) == colorNorm);
-                    stockReal = insumoReal?.StockActual ?? 0;
+                    if (alternativo != null && alternativo.StockActual > 0)
+                    {
+                        insumoReal = alternativo;
+                        stockReal = alternativo.StockActual;
+                    }
                 }
-                else
+                else if (stockReal == 0 && string.IsNullOrWhiteSpace(colorSolicitado))
                 {
-                    // Sin color: sumar todo el stock del tipo
-                    stockReal = insumosPorTipo
-                        .Where(i => i.IdTipoInsumo == idTipoInsumo)
-                        .Sum(i => i.StockActual);
-                    insumoReal = insumosPorTipo.FirstOrDefault(i => i.IdTipoInsumo == idTipoInsumo);
+                    // Sin color: sumar todo el stock del tipo como fallback
+                    var totalTipo = insumosPorTipo.Where(i => i.IdTipoInsumo == idTipoInsumo).Sum(i => i.StockActual);
+                    if (totalTipo > stockReal) stockReal = totalTipo;
                 }
 
                 var cantidadFinal = mc.CantidadManual ?? mc.CantidadCalculada;

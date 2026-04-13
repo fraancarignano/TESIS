@@ -257,9 +257,9 @@
             <label>Color solicitado</label>
             <div *ngIf="insumosTelasFiltrados.length > 0">
               <select [(ngModel)]="prendaEditando.idInsumo" [ngModelOptions]="{standalone: true}" (change)="onInsumoColorChange()">
-                <option [value]="undefined">Seleccionar color en stock...</option>
+                <option [value]="undefined">Seleccionar insumo en stock...</option>
                 <option *ngFor="let insumo of insumosTelasFiltrados" [value]="insumo.idInsumo">
-                  {{ insumo.color || insumo.nombreInsumo }} — Stock: {{ insumo.stockActual }} {{ insumo.unidadMedida }}
+                  #{{ insumo.idInsumo }} {{ insumo.nombreInsumo }}{{ insumo.color ? ' — ' + insumo.color : '' }} — Stock: {{ insumo.stockActual }} {{ insumo.unidadMedida }}
                 </option>
               </select>
               <small>Si el color en stock no es el correcto, escribilo abajo.</small>

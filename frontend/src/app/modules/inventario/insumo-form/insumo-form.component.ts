@@ -133,22 +133,18 @@ export class InsumoFormComponent implements OnInit {
   }
 
   guardar(): void {
-    // Validaciones
     if (!this.formulario.nombreInsumo.trim()) {
       this.alertas.warning('Nombre requerido', 'El nombre del insumo es requerido');
       return;
     }
-
     if (this.formulario.idTipoInsumo === 0) {
       this.alertas.warning('Tipo requerido', 'Debe seleccionar un tipo de insumo');
       return;
     }
-
     if (!this.formulario.unidadMedida) {
       this.alertas.warning('Unidad requerida', 'Debe seleccionar una unidad de medida');
       return;
     }
-
     if (this.formulario.stockActual < 0) {
       this.alertas.warning('Stock inválido', 'El stock actual no puede ser negativo');
       return;
@@ -156,13 +152,14 @@ export class InsumoFormComponent implements OnInit {
 
     this.guardando = true;
 
-    const operacion = this.esEdicion
+    // Si tiene idInsumo es edición, sino es creación nueva
+    const operacion = this.formulario.idInsumo
       ? this.insumosService.actualizarInsumo(this.formulario)
       : this.insumosService.agregarInsumo(this.formulario);
 
     operacion.subscribe({
       next: () => {
-        const mensaje = this.esEdicion ? 'Insumo actualizado correctamente' : 'Insumo creado correctamente';
+        const mensaje = this.formulario.idInsumo ? 'Insumo actualizado correctamente' : 'Insumo creado correctamente';
         this.alertas.success('Exito', mensaje);
         this.cerrar.emit();
       },

@@ -77,6 +77,8 @@ namespace TESIS_OG.Services.InsumoService
           .Include(i => i.IdTipoInsumoNavigation)
           .Include(i => i.IdProveedorNavigation)
           .Include(i => i.IdUbicacionNavigation)
+          // Solo insumos con stock > 0 o con entradas en InsumoStock
+          .Where(i => i.StockActual > 0 || i.InsumoStocks.Any())
           .Select(i => new InsumoIndexDTO
           {
             IdInsumo = i.IdInsumo,
@@ -400,8 +402,7 @@ namespace TESIS_OG.Services.InsumoService
       return true;
     }
 
-    private static string NormalizarEstadoInsumo(string? estado)
-    {
+    private static string NormalizarEstadoInsumo(string? estado)    {
       if (string.IsNullOrWhiteSpace(estado))
         return "Disponible";
 
@@ -410,6 +411,93 @@ namespace TESIS_OG.Services.InsumoService
         return "Disponible";
 
       return estadoLimpio;
+    }
+
+    public async Task<string?> EditarStockEntryAsync(int idInsumoStock, decimal nuevaCantidad)
+    {
+      if (nuevaCantidad < 0) return "La cantidad no puede ser negativa";
+      var entry = await _context.InsumoStocks.FindAsync(idInsumoStock);
+      if (entry == null) return "Registro de stock no encontrado";
+      var insumo = await _context.Insumos.FindAsync(entry.IdInsumo);
+      if (insumo == null) return "Insumo no encontrado";
+
+      var diferencia = nuevaCantidad - entry.Cantidad;
+
+      if (diferencia > 0)
+      {
+        var stockGeneral = await _context.InsumoStocks
+            .Where(s => s.IdInsumo == entry.IdInsumo && s.IdProyecto == null)
+            .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+        if (stockGeneral < diferencia)
+          return $"Stock general insuficiente. Disponible: {stockGeneral}, Requerido: {diferencia}";
+
+        var entradaGeneral = await _context.InsumoStocks
+            .FirstOrDefaultAsync(s => s.IdInsumo == entry.IdInsumo && s.IdProyecto == null);
+        if (entradaGeneral != null)
+        {
+          entradaGeneral.Cantidad -= diferencia;
+          entradaGeneral.FechaActualizacion = DateTime.Now;
+          if (entradaGeneral.Cantidad <= 0) _context.InsumoStocks.Remove(entradaGeneral);
+        }
+      }
+      else if (diferencia < 0)
+      {
+        var entradaGeneral = await _context.InsumoStocks
+            .FirstOrDefaultAsync(s => s.IdInsumo == entry.IdInsumo && s.IdProyecto == null);
+        if (entradaGeneral != null)
+        {
+          entradaGeneral.Cantidad += Math.Abs(diferencia);
+          entradaGeneral.FechaActualizacion = DateTime.Now;
+        }
+        else
+        {
+          _context.InsumoStocks.Add(new InsumoStock
+          {
+            IdInsumo = entry.IdInsumo, IdUbicacion = entry.IdUbicacion,
+            Cantidad = Math.Abs(diferencia), FechaActualizacion = DateTime.Now
+          });
+        }
+      }
+
+      entry.Cantidad = nuevaCantidad;
+      entry.FechaActualizacion = DateTime.Now;
+      insumo.StockActual += diferencia;
+      if (insumo.StockActual < 0) insumo.StockActual = 0;
+      insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+      if (nuevaCantidad == 0) _context.InsumoStocks.Remove(entry);
+
+      await _context.SaveChangesAsync();
+      return null;
+    }
+
+    public async Task<(bool ok, string mensaje)> DevolverStockAlGeneralAsync(int idInsumoStock)
+    {
+      var entry = await _context.InsumoStocks.FindAsync(idInsumoStock);
+      if (entry == null) return (false, "Registro de stock no encontrado");
+      if (entry.IdProyecto == null) return (false, "Este registro ya es stock general");
+      var insumo = await _context.Insumos.FindAsync(entry.IdInsumo);
+      if (insumo == null) return (false, "Insumo no encontrado");
+
+      var entradaGeneral = await _context.InsumoStocks
+          .FirstOrDefaultAsync(s => s.IdInsumo == entry.IdInsumo && s.IdProyecto == null);
+      if (entradaGeneral != null)
+      {
+        entradaGeneral.Cantidad += entry.Cantidad;
+        entradaGeneral.FechaActualizacion = DateTime.Now;
+      }
+      else
+      {
+        _context.InsumoStocks.Add(new InsumoStock
+        {
+          IdInsumo = entry.IdInsumo, IdUbicacion = entry.IdUbicacion,
+          Cantidad = entry.Cantidad, FechaActualizacion = DateTime.Now
+        });
+      }
+
+      insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+      _context.InsumoStocks.Remove(entry);
+      await _context.SaveChangesAsync();
+      return (true, $"Se devolvieron {entry.Cantidad} unidades al stock general");
     }
   }
 }

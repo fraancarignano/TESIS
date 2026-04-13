@@ -86,6 +86,18 @@ namespace TESIS_OG.Controllers
         }
 
         /// <summary>
+        /// Verificar una orden de compra (Recibida → Verificada), lista para asignar a ubicación/proyecto
+        /// </summary>
+        [HttpPost("{id}/verificar")]
+        public async Task<IActionResult> VerificarOrden(int id)
+        {
+            var result = await _ordenCompraService.VerificarOrdenAsync(id);
+            if (result == null)
+                return BadRequest(new { message = "No se puede verificar. La orden debe estar en estado Recibida." });
+            return Ok(new { message = "Orden verificada correctamente.", data = result });
+        }
+
+        /// <summary>
         /// Anular una orden de compra (Pendiente o Aprobada → Anulada)
         /// </summary>
         [HttpPost("{id}/anular")]

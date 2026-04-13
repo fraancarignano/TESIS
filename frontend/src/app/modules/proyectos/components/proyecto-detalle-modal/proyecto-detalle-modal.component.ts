@@ -1121,20 +1121,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   async archivarProyecto(): Promise<void> {
     if (!this.proyecto.idProyecto) return;
-
-    const motivo = await this.alertas.pedirTexto(
-      '¿Archivar proyecto?',
-      'Escribí el motivo del archivado (se guardará en auditoría).',
-      'Archivar'
-    );
-
+    const motivo = await this.alertas.pedirTexto('¿Archivar proyecto?', 'Escribí el motivo del archivado.', 'Archivar');
     if (!motivo) return;
-
     this.procesandoArchivo = true;
-
     this.proyectosService.cambiarEstado(this.proyecto.idProyecto, 'Archivado').subscribe({
       next: () => {
-        console.log('? Proyecto archivado exitosamente');
         this.proyecto.estado = 'Archivado';
         this.procesandoArchivo = false;
         this.actualizado.emit();
@@ -1142,11 +1133,57 @@ export class ProyectoDetalleModalComponent implements OnInit {
         this.alertas.success('Proyecto archivado', 'El proyecto se archivó correctamente');
         this.cerrarModal();
       },
-      error: (err) => {
-        console.error('? Error al archivar proyecto:', err);
-        this.alertas.error('Error', 'No se pudo archivar el proyecto');
+      error: (err) => { this.alertas.error('Error', 'No se pudo archivar el proyecto'); this.procesandoArchivo = false; }
+    });
+  }
+
+  async suspenderProyecto(): Promise<void> {
+    if (!this.proyecto.idProyecto) return;
+    const confirmado = await this.alertas.confirmar('¿Suspender proyecto?', 'El proyecto pasará a "Pausado". Podés reanudarlo o anularlo después.', 'Sí, suspender');
+    if (!confirmado) return;
+    this.procesandoArchivo = true;
+    this.proyectosService.cambiarEstado(this.proyecto.idProyecto, 'Pausado').subscribe({
+      next: () => {
+        this.proyecto.estado = 'Pausado';
         this.procesandoArchivo = false;
-      }
+        this.actualizado.emit();
+        this.alertas.success('Proyecto suspendido', 'El proyecto fue pausado.');
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => { this.alertas.error('Error', err?.error?.message || 'No se pudo suspender'); this.procesandoArchivo = false; }
+    });
+  }
+
+  async anularProyecto(): Promise<void> {
+    if (!this.proyecto.idProyecto) return;
+    const confirmado = await this.alertas.confirmar('¿Anular proyecto?', 'El proyecto pasará a "Anulado". Luego podrás eliminarlo definitivamente (el stock vuelve al general).', 'Sí, anular');
+    if (!confirmado) return;
+    this.procesandoArchivo = true;
+    this.proyectosService.cambiarEstado(this.proyecto.idProyecto, 'Anulado').subscribe({
+      next: () => {
+        this.proyecto.estado = 'Anulado';
+        this.procesandoArchivo = false;
+        this.actualizado.emit();
+        this.alertas.success('Proyecto anulado', 'Ya podés eliminarlo definitivamente.');
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => { this.alertas.error('Error', err?.error?.message || 'No se pudo anular'); this.procesandoArchivo = false; }
+    });
+  }
+
+  async eliminarDefinitivo(): Promise<void> {
+    if (!this.proyecto.idProyecto) return;
+    const confirmado = await this.alertas.confirmar('¿Eliminar definitivamente?', `Se eliminará "${this.proyecto.nombreProyecto}" y el stock asignado volverá al general. No se puede deshacer.`, 'Sí, eliminar');
+    if (!confirmado) return;
+    this.procesandoArchivo = true;
+    this.proyectosService.eliminarProyectoDefinitivo(this.proyecto.idProyecto).subscribe({
+      next: () => {
+        this.procesandoArchivo = false;
+        this.actualizado.emit();
+        this.alertas.success('Proyecto eliminado', 'El proyecto fue eliminado y el stock devuelto al general.');
+        this.cerrarModal();
+      },
+      error: (err: any) => { this.alertas.error('Error', err?.error?.message || 'No se pudo eliminar'); this.procesandoArchivo = false; }
     });
   }
 
@@ -1181,7 +1218,22 @@ export class ProyectoDetalleModalComponent implements OnInit {
     });
   }
 
-  // ==================== MÉTODOS DE OBSERVACIONES ====================
+  async reanudarProyecto(): Promise<void> {
+    if (!this.proyecto.idProyecto) return;
+    const confirmado = await this.alertas.confirmar('¿Reanudar proyecto?', 'El proyecto volverá a estado "En Proceso".', 'Sí, reanudar');
+    if (!confirmado) return;
+    this.procesandoLiberacion = true;
+    this.proyectosService.cambiarEstado(this.proyecto.idProyecto, 'En Proceso').subscribe({
+      next: () => {
+        this.proyecto.estado = 'En Proceso';
+        this.procesandoLiberacion = false;
+        this.actualizado.emit();
+        this.alertas.success('Proyecto reanudado', 'El proyecto volvió a En Proceso.');
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => { this.alertas.error('Error', err?.error?.message || 'No se pudo reanudar'); this.procesandoLiberacion = false; }
+    });
+  }
 
   agregarObservacion(): void {
     if (!this.nuevaObservacion.trim() || !this.proyecto.idProyecto) return;

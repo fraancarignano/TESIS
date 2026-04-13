@@ -38,10 +38,18 @@ namespace TESIS_OG.Services.OrdenCompraService
                             ? null
                             : detalle.NuevoColor.Trim().ToUpperInvariant();
 
-                        // Buscar si ya existe un insumo con ese nombre + color
+                        // Buscar si ya existe un insumo con ese tipo + color (independiente del nombre)
                         var insumoExistente = await _context.Insumos.FirstOrDefaultAsync(i =>
-                            i.NombreInsumo.ToLower() == detalle.NuevoNombreInsumo.Trim().ToLower() &&
+                            i.IdTipoInsumo == detalle.NuevoIdTipoInsumo &&
                             (i.Color ?? "") == (colorNorm ?? ""));
+
+                        // Si no encontró por tipo+color, buscar por nombre+color (compatibilidad)
+                        if (insumoExistente == null && !string.IsNullOrWhiteSpace(detalle.NuevoNombreInsumo))
+                        {
+                            insumoExistente = await _context.Insumos.FirstOrDefaultAsync(i =>
+                                i.NombreInsumo.ToLower() == detalle.NuevoNombreInsumo.Trim().ToLower() &&
+                                (i.Color ?? "") == (colorNorm ?? ""));
+                        }
 
                         if (insumoExistente != null)
                         {
@@ -93,6 +101,7 @@ namespace TESIS_OG.Services.OrdenCompraService
                 {
                     NroOrden = nroOrden,
                     IdProveedor = ordenDto.IdProveedor,
+                    IdProyecto = ordenDto.IdProyecto,
                     Descripcion = ordenDto.Descripcion?.Trim(),
                     FechaSolicitud = ordenDto.FechaSolicitud,
                     FechaEntregaEstimada = ordenDto.FechaEntregaEstimada,
@@ -141,7 +150,18 @@ namespace TESIS_OG.Services.OrdenCompraService
 
             var result = new List<OrdenCompraIndexDTO>();
             foreach (var o in ordenes)
-                result.Add(await MapearOrdenAsync(o));
+            {
+                try
+                {
+                    result.Add(await MapearOrdenAsync(o));
+                }
+                catch (Exception ex)
+                {
+                    // Log error but continue with other orders
+                    Console.WriteLine($"Error mapeando orden ID {o.IdOrdenCompra}: {ex.Message}");
+                    // Opcionalmente agregar un DTO parcial o simplemente saltar
+                }
+            }
             return result;
         }
 
@@ -160,12 +180,21 @@ namespace TESIS_OG.Services.OrdenCompraService
         {
             // Obtener cantidades recibidas por insumo desde movimientos de inventario
             var movimientos = await _context.InventarioMovimientos
-                .Where(m => m.IdOrdenCompra == o.IdOrdenCompra && m.TipoMovimiento == "Entrada")
+                .Where(m => m.IdOrdenCompra == o.IdOrdenCompra && m.TipoMovimiento == "Entrada" && m.IdInsumo != null)
                 .GroupBy(m => m.IdInsumo)
                 .Select(g => new { IdInsumo = g.Key, TotalRecibido = g.Sum(m => m.Cantidad) })
                 .ToListAsync();
 
-            var recibidoMap = movimientos.ToDictionary(m => m.IdInsumo, m => m.TotalRecibido);
+            var recibidoMap = movimientos.ToDictionary(m => m.IdInsumo!.Value, m => m.TotalRecibido);
+
+            string? nombreProyecto = null;
+            if (o.IdProyecto.HasValue)
+            {
+                nombreProyecto = await _context.Proyectos
+                    .Where(p => p.IdProyecto == o.IdProyecto.Value)
+                    .Select(p => p.NombreProyecto)
+                    .FirstOrDefaultAsync();
+            }
 
             return new OrdenCompraIndexDTO
             {
@@ -173,6 +202,8 @@ namespace TESIS_OG.Services.OrdenCompraService
                 NroOrden = o.NroOrden,
                 IdProveedor = o.IdProveedor,
                 NombreProveedor = o.IdProveedorNavigation?.NombreProveedor,
+                IdProyecto = o.IdProyecto,
+                NombreProyecto = nombreProyecto,
                 Descripcion = o.Descripcion,
                 FechaSolicitud = o.FechaSolicitud,
                 FechaEntregaEstimada = o.FechaEntregaEstimada,
@@ -211,6 +242,7 @@ namespace TESIS_OG.Services.OrdenCompraService
             // Actualizar la orden
             orden.NroOrden = ordenDto.NroOrden;
             orden.IdProveedor = ordenDto.IdProveedor;
+            orden.IdProyecto = ordenDto.IdProyecto;
             orden.FechaSolicitud = ordenDto.FechaSolicitud;
             orden.FechaEntregaEstimada = ordenDto.FechaEntregaEstimada;
             orden.Estado = ordenDto.Estado;
@@ -239,8 +271,20 @@ namespace TESIS_OG.Services.OrdenCompraService
             return await ObtenerOrdenPorIdAsync(id);
         }
 
-        public async Task<OrdenCompraIndexDTO?> AnularOrdenAsync(int id)
+        public async Task<OrdenCompraIndexDTO?> VerificarOrdenAsync(int id)
         {
+            var orden = await _context.OrdenCompras.FirstOrDefaultAsync(o => o.IdOrdenCompra == id);
+            if (orden == null) return null;
+
+            // Solo se puede verificar si está Recibida
+            if (orden.Estado != "Recibida") return null;
+
+            orden.Estado = "Verificada";
+            await _context.SaveChangesAsync();
+            return await ObtenerOrdenPorIdAsync(id);
+        }
+
+        public async Task<OrdenCompraIndexDTO?> AnularOrdenAsync(int id)        {
             var orden = await _context.OrdenCompras.FirstOrDefaultAsync(o => o.IdOrdenCompra == id);
             if (orden == null) return null;
 

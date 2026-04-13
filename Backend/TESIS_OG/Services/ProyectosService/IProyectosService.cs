@@ -38,6 +38,7 @@ namespace TESIS_OG.Services.ProyectosService
         /// Elimina (archiva) un proyecto
         /// </summary>
         Task<bool> EliminarProyectoAsync(int id);
+        Task<(bool ok, string mensaje)> EliminarProyectoDefinitivoAsync(int id);
 
         // ========================================
         // BÚSQUEDA Y FILTROS

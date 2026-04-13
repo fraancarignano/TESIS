@@ -153,8 +153,26 @@ export class OrdenCompraComponent implements OnInit {
     });
   }
 
-  async anularOrden(orden: OrdenCompra, event?: Event): Promise<void> {
+  async verificarOrden(orden: OrdenCompra, event?: Event): Promise<void> {
     event?.stopPropagation();
+    const confirmado = await this.alertas.confirmar(
+      '¿Verificar orden de compra?',
+      `La orden ${orden.nroOrden} quedará verificada y lista para asignar a ubicación o proyecto.`,
+      'Sí, verificar'
+    );
+    if (!confirmado) return;
+
+    this.ordenCompraService.verificarOrden(orden.idOrdenCompra).subscribe({
+      next: () => {
+        this.alertas.success('Orden verificada', 'La orden está lista para ser asignada.');
+        this.cargarOrdenes();
+        this.cerrarDetalle();
+      },
+      error: () => this.alertas.error('Error', 'No se pudo verificar la orden.')
+    });
+  }
+
+  async anularOrden(orden: OrdenCompra, event?: Event): Promise<void> {    event?.stopPropagation();
 
     const confirmado = await this.alertas.confirmar(
       '¿Anular orden de compra?',
@@ -203,6 +221,7 @@ export class OrdenCompraComponent implements OnInit {
       'Aprobada': 'badge-aprobada',
       'PendienteControl': 'badge-pendiente-control',
       'Recibida': 'badge-recibida',
+      'Verificada': 'badge-verificada',
       'Cancelada': 'badge-cancelada',
       'Anulada': 'badge-anulada'
     };

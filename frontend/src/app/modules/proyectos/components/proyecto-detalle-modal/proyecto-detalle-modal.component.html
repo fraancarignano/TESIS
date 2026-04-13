@@ -905,14 +905,44 @@
 
     <!-- FOOTER CON BOTONES ARCHIVAR/LIBERAR -->
     <div class="modal-footer">
-      
 
-      <!-- Botón Liberar (solo para proyectos archivados) -->
+      <!-- Suspender (En Proceso) -->
       <ng-container *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">
-        <button *ngIf="proyecto.estado === 'Archivado'" class="btn-liberar" (click)="liberarProyecto()"
-          [disabled]="procesandoLiberacion">
+        <button *ngIf="proyecto.estado === 'En Proceso'" class="btn-archivar" (click)="suspenderProyecto()" [disabled]="procesandoArchivo">
+          <i class="fas" [ngClass]="procesandoArchivo ? 'fa-spinner fa-spin' : 'fa-pause-circle'"></i>
+          Suspender
+        </button>
+      </ng-container>
+
+      <!-- Anular (Pendiente o Pausado) -->
+      <ng-container *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">
+        <button *ngIf="proyecto.estado === 'Pendiente' || proyecto.estado === 'Pausado'" class="btn-archivar" (click)="anularProyecto()" [disabled]="procesandoArchivo">
+          <i class="fas" [ngClass]="procesandoArchivo ? 'fa-spinner fa-spin' : 'fa-ban'"></i>
+          Anular
+        </button>
+      </ng-container>
+
+      <!-- Eliminar definitivo (Anulado o Archivado) -->
+      <ng-container *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">
+        <button *ngIf="proyecto.estado === 'Anulado' || proyecto.estado === 'Archivado'" class="btn-eliminar-def" (click)="eliminarDefinitivo()" [disabled]="procesandoArchivo">
+          <i class="fas" [ngClass]="procesandoArchivo ? 'fa-spinner fa-spin' : 'fa-trash-alt'"></i>
+          Eliminar definitivamente
+        </button>
+      </ng-container>
+
+      <!-- Liberar (Archivado → Pendiente) -->
+      <ng-container *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">
+        <button *ngIf="proyecto.estado === 'Archivado'" class="btn-liberar" (click)="liberarProyecto()" [disabled]="procesandoLiberacion">
           <i class="fas" [ngClass]="procesandoLiberacion ? 'fa-spinner fa-spin' : 'fa-lock-open'"></i>
           {{ procesandoLiberacion ? 'Liberando...' : 'Liberar Proyecto' }}
+        </button>
+      </ng-container>
+
+      <!-- Reanudar (Pausado → En Proceso) -->
+      <ng-container *appHasPermission="{ modulo: 'Proyectos', accion: 'Editar' }">
+        <button *ngIf="proyecto.estado === 'Pausado'" class="btn-liberar" (click)="reanudarProyecto()" [disabled]="procesandoLiberacion">
+          <i class="fas" [ngClass]="procesandoLiberacion ? 'fa-spinner fa-spin' : 'fa-play-circle'"></i>
+          {{ procesandoLiberacion ? 'Reanudando...' : 'Reanudar Proyecto' }}
         </button>
       </ng-container>
     </div>

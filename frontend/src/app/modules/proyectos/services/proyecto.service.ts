@@ -151,6 +151,16 @@ export class ProyectosService {
   }
 
   /**
+   * Eliminar definitivamente un proyecto Anulado/Archivado
+   */
+  eliminarProyectoDefinitivo(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}/definitivo`).pipe(
+      tap(() => this.obtenerProyectos().subscribe()),
+      catchError(this.handleError)
+    );
+  }
+
+  /**
    * Agregar materiales al proyecto
    */
   agregarMateriales(id: number, materiales: MaterialAsignado[]): Observable<any> {

@@ -65,6 +65,18 @@
               />
             </div>
           </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="proyecto">Proyecto asociado (opcional)</label>
+              <select id="proyecto" [(ngModel)]="idProyectoSeleccionado" name="proyecto" [disabled]="cargando">
+                <option [ngValue]="undefined">Sin proyecto</option>
+                <option *ngFor="let p of proyectos" [ngValue]="p.idProyecto">
+                  {{ p.codigoProyecto }} — {{ p.nombreProyecto }}
+                </option>
+              </select>
+            </div>
+          </div>
         </div>
 
         <!-- Agregar Insumos -->

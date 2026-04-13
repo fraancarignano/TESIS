@@ -6,6 +6,8 @@
         public string NroOrden { get; set; } = null!;
         public int IdProveedor { get; set; }
         public string? NombreProveedor { get; set; }
+        public int? IdProyecto { get; set; }
+        public string? NombreProyecto { get; set; }
         public string? Descripcion { get; set; }
         public DateOnly FechaSolicitud { get; set; }
         public DateOnly? FechaEntregaEstimada { get; set; }

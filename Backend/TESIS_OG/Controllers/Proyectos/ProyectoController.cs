@@ -178,16 +178,36 @@ namespace TESIS_OG.Controllers
             try
             {
                 var eliminado = await _proyectoService.EliminarProyectoAsync(id);
-
                 if (!eliminado)
                     return NotFound(new { message = $"Proyecto con ID {id} no encontrado" });
-
                 return Ok(new { message = "Proyecto archivado correctamente" });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al eliminar proyecto {IdProyecto}", id);
                 return StatusCode(500, new { message = "Error al archivar el proyecto" });
+            }
+        }
+
+        /// <summary>
+        /// Elimina definitivamente un proyecto Anulado o Archivado, devolviendo el stock al general
+        /// </summary>
+        [HttpDelete("{id}/definitivo")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> EliminarProyectoDefinitivo(int id)
+        {
+            try
+            {
+                var (ok, mensaje) = await _proyectoService.EliminarProyectoDefinitivoAsync(id);
+                if (!ok) return BadRequest(new { message = mensaje });
+                return Ok(new { message = mensaje });
+            }
+            catch (Exception ex)
+            {
+                var causa = ex.InnerException?.Message ?? ex.Message;
+                _logger.LogError(ex, "Error al eliminar definitivamente proyecto {IdProyecto}", id);
+                return StatusCode(500, new { message = $"Error al eliminar el proyecto. Causa: {causa}" });
             }
         }
 
@@ -591,6 +611,19 @@ namespace TESIS_OG.Controllers
                         continue;
                     }
 
+                    // Si el insumo no tiene stock suficiente, buscar otro del mismo tipo+color que sí tenga
+                    if (insumo.StockActual < item.Cantidad && !string.IsNullOrWhiteSpace(insumo.Color))
+                    {
+                        var alternativo = await _context.Insumos
+                            .Where(i => i.IdTipoInsumo == insumo.IdTipoInsumo
+                                     && i.Color == insumo.Color
+                                     && i.IdInsumo != insumo.IdInsumo
+                                     && i.StockActual >= item.Cantidad)
+                            .FirstOrDefaultAsync();
+                        if (alternativo != null)
+                            insumo = alternativo;
+                    }
+
                     if (item.Cantidad <= 0)
                     {
                         resultados.Add(new { idInsumo = item.IdInsumo, error = $"Cantidad inválida: {item.Cantidad}" });
@@ -618,10 +651,27 @@ namespace TESIS_OG.Controllers
                     if (insumo.StockActual <= 0) { insumo.StockActual = 0; insumo.Estado = "Agotado"; }
                     else insumo.Estado = "En uso";
 
+                    // Descontar del InsumoStock "Stock General" (IdProyecto = null) de este insumo
+                    var stockGeneral = await _context.InsumoStocks
+                        .Where(s => s.IdInsumo == insumo.IdInsumo && s.IdProyecto == null)
+                        .OrderByDescending(s => s.Cantidad)
+                        .FirstOrDefaultAsync();
+
+                    int? idUbicacionHeredada = stockGeneral?.IdUbicacion;
+
+                    if (stockGeneral != null)
+                    {
+                        stockGeneral.Cantidad -= item.Cantidad;
+                        stockGeneral.FechaActualizacion = DateTime.Now;
+                        if (stockGeneral.Cantidad <= 0)
+                            _context.InsumoStocks.Remove(stockGeneral);
+                    }
+
                     _context.InsumoStocks.Add(new InsumoStock
                     {
-                        IdInsumo = item.IdInsumo,
+                        IdInsumo = insumo.IdInsumo,
                         IdProyecto = id,
+                        IdUbicacion = idUbicacionHeredada, // hereda la ubicación del stock general
                         Cantidad = item.Cantidad,
                         FechaActualizacion = DateTime.Now
                     });

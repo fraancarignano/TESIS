@@ -11,6 +11,8 @@ public partial class OrdenCompra
 
     public int IdProveedor { get; set; }
 
+    public int? IdProyecto { get; set; }
+
     public string? Descripcion { get; set; }
 
     public DateOnly FechaSolicitud { get; set; }

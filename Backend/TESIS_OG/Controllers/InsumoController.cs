@@ -99,6 +99,29 @@ namespace TESIS_OG.Controllers
 
       return Ok(new { message = "Estado actualizado exitosamente" });
     }
+
+    /// <summary>
+    /// Editar cantidad de un InsumoStock (ajusta stock general en consecuencia)
+    /// </summary>
+    [HttpPatch("stock/{idInsumoStock}")]
+    public async Task<IActionResult> EditarStockEntry(int idInsumoStock, [FromBody] EditarStockEntryRequest request)
+    {
+      var result = await _insumoService.EditarStockEntryAsync(idInsumoStock, request.NuevaCantidad);
+      if (result != null) // null = éxito, string = mensaje de error
+        return BadRequest(new { message = result });
+      return Ok(new { message = "Stock actualizado correctamente" });
+    }
+
+    /// <summary>
+    /// Devolver stock de un proyecto al stock general (eliminar la asignación)
+    /// </summary>
+    [HttpDelete("stock/{idInsumoStock}/devolver")]
+    public async Task<IActionResult> DevolverStockAlGeneral(int idInsumoStock)
+    {
+      var (ok, mensaje) = await _insumoService.DevolverStockAlGeneralAsync(idInsumoStock);
+      if (!ok) return BadRequest(new { message = mensaje });
+      return Ok(new { message = mensaje });
+    }
   }
 
   // Clase auxiliar para el request de cambio de estado
@@ -107,3 +130,8 @@ namespace TESIS_OG.Controllers
     public string NuevoEstado { get; set; } = null!;
   }
 }
+
+  public class EditarStockEntryRequest
+  {
+    public decimal NuevaCantidad { get; set; }
+  }

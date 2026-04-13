@@ -82,6 +82,7 @@ export type EstadoProyecto =
   | 'Despachado'
   | 'Cancelado'
   | 'Pausado'
+  | 'Anulado'
   | 'Archivado';
 
 export type PrioridadProyecto = 
@@ -274,7 +275,7 @@ export function calcularDiasRestantes(fechaFin?: string): number | undefined {
  * Verificar si está vencido
  */
 export function estaVencido(fechaFin?: string, estado?: EstadoProyecto): boolean {
-  if (!fechaFin || estado === 'Finalizado' || estado === 'Cancelado' || estado === 'Archivado') {
+  if (!fechaFin || estado === 'Finalizado' || estado === 'Cancelado' || estado === 'Archivado' || estado === 'Anulado') {
     return false;
   }
   
@@ -294,6 +295,7 @@ export function getEstadoColor(estado: EstadoProyecto): string {
     'Despachado': '#2e7d32',
     'Cancelado': '#ef5350',
     'Pausado': '#bdbdbd',
+    'Anulado': '#7b1fa2',
     'Archivado': '#9e9e9e'
   };
   return colores[estado] || '#9e9e9e';

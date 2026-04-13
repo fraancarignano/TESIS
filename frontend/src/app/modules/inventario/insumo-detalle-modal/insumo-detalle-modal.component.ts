@@ -1,17 +1,20 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { map } from 'rxjs/operators';
-import { Insumo } from '../models/insumo.model';
+import { Insumo, InsumoStock } from '../models/insumo.model';
 import { UbicacionDetalleModalComponent } from '../../ubicaciones/components/ubicacion-detalle-modal/ubicacion-detalle-modal.component';
 import { ProyectoDetalleModalComponent } from '../../proyectos/components/proyecto-detalle-modal/proyecto-detalle-modal.component';
 import { UbicacionesService, Ubicacion } from '../../ubicaciones/services/ubicaciones.service';
 import { ProyectosService } from '../../proyectos/services/proyecto.service';
 import { ProyectoVista, proyectoToVista } from '../../proyectos/models/proyecto.model';
+import { InsumosService } from '../services/insumos.service';
+import { AlertasService } from '../../../core/services/alertas';
 
 @Component({
   selector: 'app-insumo-detalle-modal',
   standalone: true,
-  imports: [CommonModule, UbicacionDetalleModalComponent, ProyectoDetalleModalComponent],
+  imports: [CommonModule, FormsModule, UbicacionDetalleModalComponent, ProyectoDetalleModalComponent],
   template: `
     <div class="modal-overlay" (click)="cerrar.emit()">
       <div class="modal-container" (click)="$event.stopPropagation()">
@@ -82,6 +85,7 @@ import { ProyectoVista, proyectoToVista } from '../../proyectos/models/proyecto.
                     <th>Proyecto</th>
                     <th>Cantidad</th>
                     <th>Ubicación</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -96,12 +100,36 @@ import { ProyectoVista, proyectoToVista } from '../../proyectos/models/proyecto.
                       </span>
                       <span *ngIf="!s.idProyecto" class="text-muted">Stock General</span>
                     </td>
-                    <td class="font-bold">{{ s.cantidad }} {{ insumo.unidadMedida }}</td>
+                    <td class="font-bold">
+                      <span *ngIf="editandoStock !== s.idInsumoStock">{{ s.cantidad }} {{ insumo.unidadMedida }}</span>
+                      <span *ngIf="editandoStock === s.idInsumoStock" style="display:flex;align-items:center;gap:6px;">
+                        <input type="number" [(ngModel)]="cantidadEditando" min="0" step="0.01"
+                          style="width:80px;padding:3px 6px;border:1px solid #ff6b35;border-radius:4px;font-size:.82rem;">
+                        <button (click)="guardarEdicionStock(s)" style="background:#ff6b35;color:white;border:none;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem;">✓</button>
+                        <button (click)="editandoStock = null" style="background:#f5f5f5;border:1px solid #ddd;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:.75rem;">✕</button>
+                      </span>
+                    </td>
                     <td>
                       <span *ngIf="s.idUbicacion" class="link-label" (click)="verDetalleUbicacion(s.idUbicacion)">
                         {{ s.codigoUbicacion }}
                       </span>
                       <span *ngIf="!s.idUbicacion" class="text-muted">-</span>
+                    </td>
+                    <td style="white-space:nowrap;">
+                      <!-- Editar cantidad (solo si está asignado a proyecto) -->
+                      <button *ngIf="s.idProyecto && editandoStock !== s.idInsumoStock"
+                        (click)="iniciarEdicionStock(s)"
+                        title="Editar cantidad"
+                        style="background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:.72rem;margin-right:4px;">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <!-- Devolver al stock general (solo si está asignado a proyecto) -->
+                      <button *ngIf="s.idProyecto"
+                        (click)="devolverAlGeneral(s)"
+                        title="Devolver al stock general"
+                        style="background:#fdecea;color:#c62828;border:1px solid #ef9a9a;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:.72rem;">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                      </button>
                     </td>
                   </tr>
                 </tbody>
@@ -227,37 +255,76 @@ import { ProyectoVista, proyectoToVista } from '../../proyectos/models/proyecto.
 export class InsumoDetalleModalComponent {
   @Input() insumo!: Insumo;
   @Output() cerrar = new EventEmitter<void>();
+  @Output() stockActualizado = new EventEmitter<void>();
 
   mostrarDetalleUbicacion = false;
   ubicacionSeleccionada: Ubicacion | null = null;
-
   mostrarDetalleProyecto = false;
   proyectoSeleccionado: ProyectoVista | null = null;
 
+  // Edición inline de stock
+  editandoStock: number | null = null;
+  cantidadEditando = 0;
+
   constructor(
     private ubicacionesService: UbicacionesService,
-    private proyectosService: ProyectosService
+    private proyectosService: ProyectosService,
+    private insumosService: InsumosService,
+    private alertas: AlertasService
   ) { }
 
   verDetalleUbicacion(idUbicacion: number): void {
     this.ubicacionesService.getUbicacion(idUbicacion).subscribe({
-      next: (u: Ubicacion) => {
-        this.ubicacionSeleccionada = u;
-        this.mostrarDetalleUbicacion = true;
-      },
+      next: (u: Ubicacion) => { this.ubicacionSeleccionada = u; this.mostrarDetalleUbicacion = true; },
       error: (err: any) => console.error('Error al cargar ubicación:', err)
     });
   }
 
   verDetalleProyecto(idProyecto: number): void {
-    this.proyectosService.obtenerProyectoPorId(idProyecto).pipe(
-      map(p => proyectoToVista(p))
-    ).subscribe({
-      next: (p: ProyectoVista) => {
-        this.proyectoSeleccionado = p;
-        this.mostrarDetalleProyecto = true;
-      },
+    this.proyectosService.obtenerProyectoPorId(idProyecto).pipe(map(p => proyectoToVista(p))).subscribe({
+      next: (p: ProyectoVista) => { this.proyectoSeleccionado = p; this.mostrarDetalleProyecto = true; },
       error: (err: any) => console.error('Error al cargar proyecto:', err)
+    });
+  }
+
+  iniciarEdicionStock(s: InsumoStock): void {
+    this.editandoStock = s.idInsumoStock;
+    this.cantidadEditando = s.cantidad;
+  }
+
+  guardarEdicionStock(s: InsumoStock): void {
+    if (this.cantidadEditando < 0) { this.alertas.error('Error', 'La cantidad no puede ser negativa'); return; }
+    this.insumosService.editarStockEntry(s.idInsumoStock, this.cantidadEditando).subscribe({
+      next: () => {
+        this.alertas.success('Stock actualizado', 'La cantidad fue actualizada correctamente.');
+        this.editandoStock = null;
+        this.recargarInsumo();
+      },
+      error: (err: any) => this.alertas.error('Error', err?.error?.message || 'No se pudo actualizar el stock')
+    });
+  }
+
+  async devolverAlGeneral(s: InsumoStock): Promise<void> {
+    const confirmado = await this.alertas.confirmar(
+      '¿Devolver al stock general?',
+      `Se devolverán ${s.cantidad} ${this.insumo.unidadMedida} del proyecto "${s.nombreProyecto}" al stock general.`,
+      'Sí, devolver'
+    );
+    if (!confirmado) return;
+    this.insumosService.devolverStockAlGeneral(s.idInsumoStock).subscribe({
+      next: () => {
+        this.alertas.success('Stock devuelto', 'El stock fue devuelto al general correctamente.');
+        this.recargarInsumo();
+      },
+      error: (err: any) => this.alertas.error('Error', err?.error?.message || 'No se pudo devolver el stock')
+    });
+  }
+
+  private recargarInsumo(): void {
+    if (!this.insumo.idInsumo) return;
+    this.insumosService.getInsumoById(this.insumo.idInsumo).subscribe({
+      next: (insumo) => { this.insumo = insumo; this.stockActualizado.emit(); },
+      error: () => {}
     });
   }
 
@@ -268,9 +335,6 @@ export class InsumoDetalleModalComponent {
 
   formatearFecha(fecha: string): string {
     if (!fecha) return '-';
-    const date = new Date(fecha);
-    return date.toLocaleDateString('es-AR', {
-      day: '2-digit', month: '2-digit', year: 'numeric'
-    });
+    return new Date(fecha).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 }

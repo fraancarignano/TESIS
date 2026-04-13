@@ -106,10 +106,21 @@ export class InsumosService {
   cambiarEstado(id: number, nuevoEstado: string): Observable<any> {
     const usuarioJson = localStorage.getItem('usuario');
     const idUsuario = usuarioJson ? JSON.parse(usuarioJson).idUsuario : null;
-
     const url = `${this.apiUrl}/${id}/estado${idUsuario ? `?idUsuario=${idUsuario}` : ''}`;
     return this.http.patch(url, { nuevoEstado }).pipe(
       tap(() => console.log('Estado cambiado:', { id, nuevoEstado })),
+      catchError(this.handleError)
+    );
+  }
+
+  editarStockEntry(idInsumoStock: number, nuevaCantidad: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/stock/${idInsumoStock}`, { nuevaCantidad }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  devolverStockAlGeneral(idInsumoStock: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/stock/${idInsumoStock}/devolver`).pipe(
       catchError(this.handleError)
     );
   }

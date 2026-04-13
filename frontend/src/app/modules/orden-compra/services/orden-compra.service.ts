@@ -43,6 +43,10 @@ export class OrdenCompraService {
     return this.http.post<any>(`${this.apiUrl}/${id}/anular`, {});
   }
 
+  verificarOrden(id: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/verificar`, {});
+  }
+
   eliminarOrden(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

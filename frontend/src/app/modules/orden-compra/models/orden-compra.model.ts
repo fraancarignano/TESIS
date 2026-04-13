@@ -3,12 +3,13 @@ export interface OrdenCompra {
   nroOrden: string;
   idProveedor: number;
   nombreProveedor?: string;
+  idProyecto?: number;
+  nombreProyecto?: string;
   descripcion?: string;
   fechaSolicitud: string;
   fechaEntregaEstimada?: string;
   estado: string;
   totalOrden: number;
-  // Control de Recepción
   fechaHabilitacionControl?: string;
   fechaRecepcionControl?: string;
   observacionControl?: string;
@@ -30,6 +31,7 @@ export interface DetalleOrdenCompra {
 
 export interface NuevaOrdenCompra {
   idProveedor: number;
+  idProyecto?: number;
   descripcion?: string;
   fechaSolicitud: string;
   fechaEntregaEstimada?: string;
@@ -38,11 +40,10 @@ export interface NuevaOrdenCompra {
 }
 
 export interface DetalleOrdenCompraDTO {
-  idInsumo: number;       // 0 si es insumo nuevo
+  idInsumo: number;
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
-  // Campos para insumo nuevo (solo cuando idInsumo === 0)
   nuevoNombreInsumo?: string;
   nuevoIdTipoInsumo?: number;
   nuevoColor?: string;

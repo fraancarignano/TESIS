@@ -187,11 +187,28 @@ namespace TESIS_OG.Controllers
             if (despacho.IdProyectoNavigation != null)
             {
                 despacho.IdProyectoNavigation.Estado = "Despachado";
-                // Optionally log an observation or history
+
+                // Eliminar los InsumoStocks del proyecto (el material fue consumido/despachado)
+                var stocksProyecto = await _context.InsumoStocks
+                    .Where(s => s.IdProyecto == despacho.IdProyecto)
+                    .ToListAsync();
+
+                foreach (var stock in stocksProyecto)
+                {
+                    // Descontar del StockActual global (el material salió del sistema)
+                    var insumo = await _context.Insumos.FindAsync(stock.IdInsumo);
+                    if (insumo != null)
+                    {
+                        insumo.StockActual -= stock.Cantidad;
+                        if (insumo.StockActual < 0) insumo.StockActual = 0;
+                        insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+                    }
+                }
+
+                _context.InsumoStocks.RemoveRange(stocksProyecto);
             }
 
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
     }
