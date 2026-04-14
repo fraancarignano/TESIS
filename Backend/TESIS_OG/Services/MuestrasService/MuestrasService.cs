@@ -137,6 +137,23 @@ namespace TESIS_OG.Services.MuestrasService
             return await ObtenerMuestraPorIdAsync(id);
         }
 
+        public async Task<bool> EliminarMuestraAsync(int id)
+        {
+            var muestra = await _context.Muestras
+                .Include(m => m.MuestraPrendas)
+                .Include(m => m.MuestraHistorials)
+                .FirstOrDefaultAsync(m => m.IdMuestra == id);
+
+            if (muestra == null) return false;
+
+            _context.MuestraPrendas.RemoveRange(muestra.MuestraPrendas);
+            _context.MuestraHistorials.RemoveRange(muestra.MuestraHistorials);
+            _context.Muestras.Remove(muestra);
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<bool> AsignarMuestraAProyectoAsync(int idMuestra, int idProyecto)
         {
             var muestra = await _context.Muestras.FirstOrDefaultAsync(m => m.IdMuestra == idMuestra);

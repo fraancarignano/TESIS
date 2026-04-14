@@ -24,6 +24,7 @@
           <th>Identificador</th>
           <th>Nombre</th>
           <th>Estado</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
@@ -41,6 +42,15 @@
             <span class="badge" [ngClass]="getEstadoClass(muestra.estado)">
               {{ muestra.estado }}
             </span>
+          </td>
+          <td class="td-acciones">
+            <button
+              type="button"
+              class="btn-borrar"
+              (click)="eliminarMuestra($event, muestra)"
+            >
+              Borrar
+            </button>
           </td>
         </tr>
       </tbody>

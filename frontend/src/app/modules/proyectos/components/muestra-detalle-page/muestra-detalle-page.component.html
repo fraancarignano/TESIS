@@ -191,6 +191,9 @@
     <button class="btn-danger" (click)="solicitarComentario('rechazo')" [disabled]="editando || !puedeRechazar">
       Rechazar muestra
     </button>
+    <button class="btn-danger" (click)="eliminarMuestra()" [disabled]="editando || loading">
+      Borrar muestra
+    </button>
     <button class="btn-aceptar" (click)="aceptarMuestra()" [disabled]="editando || !puedeAceptar">
       Aceptar muestra
     </button>

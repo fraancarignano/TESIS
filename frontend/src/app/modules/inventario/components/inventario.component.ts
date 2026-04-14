@@ -84,7 +84,7 @@ export class InventarioComponent implements OnInit {
   }
 
   cargarInsumos(): void {
-    this.insumosService.getInsumos().subscribe({
+    this.insumosService.getInsumosConStock().subscribe({
       next: (insumos) => {
         this.insumos = insumos;
       },
@@ -110,7 +110,7 @@ export class InventarioComponent implements OnInit {
       nombreInsumo: this.terminoBusqueda || undefined
     };
 
-    this.insumosService.buscarInsumos(searchDto).subscribe({
+    this.insumosService.buscarInsumosConStock(searchDto).subscribe({
       next: (insumos) => {
         this.insumos = insumos;
       },

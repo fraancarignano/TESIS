@@ -117,6 +117,27 @@ export class MuestraListComponent implements OnInit {
     });
   }
 
+  eliminarMuestra(event: MouseEvent, muestra: MuestraDetalle): void {
+    event.stopPropagation();
+
+    const id = muestra.idMuestra;
+    if (!id) return;
+
+    const confirmado = window.confirm(`¿Seguro que querés borrar la muestra "${muestra.nombreMuestra}"?`);
+    if (!confirmado) return;
+
+    this.muestrasService.eliminarMuestra(id).subscribe({
+      next: () => {
+        this.muestras = this.muestras.filter(m => m.idMuestra !== id);
+        this.alertas.success('Eliminada', 'La muestra se borró correctamente');
+      },
+      error: (err) => {
+        console.error('Error al eliminar muestra:', err);
+        this.alertas.error('Error', err.message || 'No se pudo borrar la muestra');
+      }
+    });
+  }
+
   trackByMuestra(index: number, muestra: MuestraDetalle): number {
     return muestra.idMuestra ?? index;
   }

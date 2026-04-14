@@ -67,6 +67,17 @@ export class MuestrasService {
     );
   }
 
+  eliminarMuestra(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`).pipe(
+      tap(() => {
+        const nuevasMuestras = this.muestrasSubject.value.filter(m => m.idMuestra !== id);
+        this.muestrasSubject.next(nuevasMuestras);
+        this.guardarCache(nuevasMuestras);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
   aceptarMuestra(id: number, comentario?: string): Observable<any> {
     const payload = comentario ? { comentario } : null;
     return this.http.put(`${this.apiUrl}/${id}/aceptar`, payload).pipe(

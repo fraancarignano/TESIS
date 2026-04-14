@@ -1080,6 +1080,8 @@ namespace TESIS_OG.Services.ProyectoService
             // Si viene de Pausado, los materiales ya estaban asignados — no revalidar
             if (nuevoEstado == "En Proceso" && estadoActual == "Pendiente")
             {
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
                 var materiales = await _context.MaterialCalculados
                     .Where(m => m.IdProyecto == idProyecto)
                     .ToListAsync();
@@ -1091,14 +1093,103 @@ namespace TESIS_OG.Services.ProyectoService
                         .Where(s => s.IdInsumo == mat.IdInsumo && s.IdProyecto == idProyecto)
                         .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
 
-                    if (stockAsignado < cantidadNecesaria)
+                    if (stockAsignado >= cantidadNecesaria)
+                        continue;
+
+                    var faltante = cantidadNecesaria - stockAsignado;
+                    var insumo = await _context.Insumos.FindAsync(mat.IdInsumo);
+
+                    if (insumo == null)
                     {
-                        var insumo = await _context.Insumos.FindAsync(mat.IdInsumo);
                         throw new InvalidOperationException(
-                            $"No se puede iniciar: falta asignar material '{insumo?.NombreInsumo ?? mat.IdInsumo.ToString()}'. " +
-                            $"Asignado: {stockAsignado}, Requerido: {cantidadNecesaria}");
+                            $"No se puede iniciar: el insumo #{mat.IdInsumo} no existe.");
                     }
+
+                    if (insumo.StockActual < faltante)
+                    {
+                        throw new InvalidOperationException(
+                            $"No se puede iniciar: falta asignar material '{insumo.NombreInsumo}'. " +
+                            $"Asignado: {stockAsignado}, Requerido: {cantidadNecesaria}, Disponible en stock general: {insumo.StockActual}");
+                    }
+
+                    var stocksGenerales = await _context.InsumoStocks
+                        .Where(s => s.IdInsumo == mat.IdInsumo && s.IdProyecto == null && s.Cantidad > 0)
+                        .OrderByDescending(s => s.Cantidad)
+                        .ToListAsync();
+
+                    decimal restantePorAsignar = faltante;
+                    int? idUbicacionHeredada = stocksGenerales.FirstOrDefault()?.IdUbicacion ?? insumo.IdUbicacion;
+
+                    foreach (var stockGeneral in stocksGenerales)
+                    {
+                        if (restantePorAsignar <= 0) break;
+
+                        var cantidadTomada = Math.Min(stockGeneral.Cantidad, restantePorAsignar);
+                        stockGeneral.Cantidad -= cantidadTomada;
+                        stockGeneral.FechaActualizacion = DateTime.Now;
+                        restantePorAsignar -= cantidadTomada;
+
+                        if (stockGeneral.Cantidad <= 0)
+                        {
+                            _context.InsumoStocks.Remove(stockGeneral);
+                        }
+                    }
+
+                    if (restantePorAsignar > 0)
+                    {
+                        // Si el stock global alcanzaba pero no estaba totalmente granularizado en Insumo_Stock,
+                        // completamos la asignación usando el stock consolidado del insumo.
+                        idUbicacionHeredada ??= insumo.IdUbicacion;
+                    }
+
+                    var stockProyecto = await _context.InsumoStocks
+                        .FirstOrDefaultAsync(s => s.IdInsumo == mat.IdInsumo && s.IdProyecto == idProyecto);
+
+                    if (stockProyecto == null)
+                    {
+                        stockProyecto = new InsumoStock
+                        {
+                            IdInsumo = mat.IdInsumo,
+                            IdProyecto = idProyecto,
+                            IdUbicacion = idUbicacionHeredada,
+                            Cantidad = faltante,
+                            FechaActualizacion = DateTime.Now
+                        };
+                        _context.InsumoStocks.Add(stockProyecto);
+                    }
+                    else
+                    {
+                        stockProyecto.Cantidad += faltante;
+                        stockProyecto.FechaActualizacion = DateTime.Now;
+                        if (!stockProyecto.IdUbicacion.HasValue && idUbicacionHeredada.HasValue)
+                            stockProyecto.IdUbicacion = idUbicacionHeredada;
+                    }
+
+                    insumo.StockActual -= faltante;
+                    if (insumo.StockActual < 0)
+                        insumo.StockActual = 0;
+                    insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+                    insumo.Estado = insumo.StockActual <= 0 ? "Agotado" : "En uso";
+
+                    var destino = $"Proyecto {proyecto.CodigoProyecto ?? idProyecto.ToString()}";
+                    var observacion = $"Asignación automática al iniciar proyecto {proyecto.NombreProyecto}";
+                    _context.InventarioMovimientos.Add(new InventarioMovimiento
+                    {
+                        IdInsumo = mat.IdInsumo,
+                        NombreInsumo = insumo.NombreInsumo,
+                        TipoMovimiento = "Asignacion",
+                        Cantidad = faltante,
+                        FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+                        Origen = "Stock General",
+                        Destino = destino.Length > 100 ? destino[..100] : destino,
+                        Observacion = observacion.Length > 100 ? observacion[..100] : observacion
+                    });
                 }
+
+                proyecto.Estado = nuevoEstado;
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
             }
 
             proyecto.Estado = nuevoEstado;

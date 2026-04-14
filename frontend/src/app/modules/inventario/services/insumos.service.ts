@@ -28,6 +28,16 @@ export class InsumosService {
     );
   }
 
+  getInsumosConStock(): Observable<Insumo[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/con-stock`).pipe(
+      map(items => items.map(item => this.mapToFrontend(item))),
+      tap(data => {
+        console.log('Insumos con stock obtenidos:', data);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
   /**
    * Obtener insumo por ID
    */
@@ -130,7 +140,16 @@ export class InsumosService {
    */
   buscarInsumos(filtros: any): Observable<any[]> {
     return this.http.post<any[]>(`${this.apiUrl}/buscar`, filtros).pipe(
+      map(items => items.map(item => this.mapToFrontend(item))),
       tap(data => console.log('Insumos encontrados:', data)),
+      catchError(this.handleError)
+    );
+  }
+
+  buscarInsumosConStock(filtros: any): Observable<Insumo[]> {
+    return this.http.post<any[]>(`${this.apiUrl}/buscar-con-stock`, filtros).pipe(
+      map(items => items.map(item => this.mapToFrontend(item))),
+      tap(data => console.log('Insumos con stock encontrados:', data)),
       catchError(this.handleError)
     );
   }

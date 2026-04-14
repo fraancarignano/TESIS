@@ -247,6 +247,27 @@ export class MuestraDetallePageComponent implements OnInit {
     this.mostrarModalHistorial = false;
   }
 
+  eliminarMuestra(): void {
+    const id = this.muestra?.idMuestra;
+    if (!id || this.editando) return;
+
+    const confirmado = window.confirm('¿Seguro que querés borrar esta muestra? Esta acción no se puede deshacer.');
+    if (!confirmado) return;
+
+    this.loading = true;
+    this.error = '';
+
+    this.muestrasService.eliminarMuestra(id).subscribe({
+      next: () => {
+        this.router.navigate(['/proyectos/muestras']);
+      },
+      error: (err) => {
+        this.error = err.message || 'No se pudo eliminar la muestra';
+        this.loading = false;
+      }
+    });
+  }
+
   get estadoActual(): string {
     return this.muestra?.estado || '-';
   }

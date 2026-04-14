@@ -101,6 +101,24 @@ namespace TESIS_OG.Controllers
             }
         }
 
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> EliminarMuestra(int id)
+        {
+            try
+            {
+                var ok = await _muestrasService.EliminarMuestraAsync(id);
+                if (!ok) return NotFound(new { message = $"Muestra con ID {id} no encontrada" });
+                return Ok(new { message = "Muestra eliminada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al eliminar muestra {IdMuestra}", id);
+                return StatusCode(500, new { message = "Error al eliminar la muestra" });
+            }
+        }
+
         [HttpPut("{id}/asignar-proyecto/{idProyecto}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

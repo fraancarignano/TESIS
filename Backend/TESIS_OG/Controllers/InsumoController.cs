@@ -39,6 +39,16 @@ namespace TESIS_OG.Controllers
     }
 
     /// <summary>
+    /// Obtener solo insumos con stock disponible o asignado
+    /// </summary>
+    [HttpGet("con-stock")]
+    public async Task<IActionResult> ObtenerInsumosConStock()
+    {
+      var insumos = await _insumoService.ObtenerInsumosConStockAsync();
+      return Ok(insumos);
+    }
+
+    /// <summary>
     /// Obtener un insumo por ID
     /// </summary>
     [HttpGet("{id}")]
@@ -84,6 +94,16 @@ namespace TESIS_OG.Controllers
     public async Task<IActionResult> BuscarInsumos([FromBody] InsumoSearchDTO filtros)
     {
       var insumos = await _insumoService.BuscarInsumosAsync(filtros);
+      return Ok(insumos);
+    }
+
+    /// <summary>
+    /// Buscar solo insumos con stock
+    /// </summary>
+    [HttpPost("buscar-con-stock")]
+    public async Task<IActionResult> BuscarInsumosConStock([FromBody] InsumoSearchDTO filtros)
+    {
+      var insumos = await _insumoService.BuscarInsumosConStockAsync(filtros);
       return Ok(insumos);
     }
 

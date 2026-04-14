@@ -8,6 +8,7 @@ namespace TESIS_OG.Services.MuestrasService
         Task<List<MuestraDetalleDTO>> ObtenerMuestrasAsync();
         Task<MuestraDetalleDTO?> ObtenerMuestraPorIdAsync(int id);
         Task<MuestraDetalleDTO?> ActualizarMuestraAsync(int id, MuestraActualizarDTO dto);
+        Task<bool> EliminarMuestraAsync(int id);
         Task<bool> AsignarMuestraAProyectoAsync(int idMuestra, int idProyecto);
         Task<bool> AceptarMuestraAsync(int idMuestra, string? comentario);
         Task<bool> RechazarMuestraAsync(int idMuestra, string comentario);

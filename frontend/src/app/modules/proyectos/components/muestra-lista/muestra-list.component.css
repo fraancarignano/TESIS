@@ -53,3 +53,23 @@
   color: #7a7a7a;
   font-size: 0.8rem;
 }
+
+.td-acciones {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.btn-borrar {
+  background: #fff1f0;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-borrar:hover {
+  background: #ffe3e0;
+}

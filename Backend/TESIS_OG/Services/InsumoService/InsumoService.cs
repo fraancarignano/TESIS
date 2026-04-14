@@ -77,7 +77,39 @@ namespace TESIS_OG.Services.InsumoService
           .Include(i => i.IdTipoInsumoNavigation)
           .Include(i => i.IdProveedorNavigation)
           .Include(i => i.IdUbicacionNavigation)
-          // Solo insumos con stock > 0 o con entradas en InsumoStock
+          .Select(i => new InsumoIndexDTO
+          {
+            IdInsumo = i.IdInsumo,
+            NombreInsumo = i.NombreInsumo,
+            IdTipoInsumo = i.IdTipoInsumo,
+            NombreTipoInsumo = i.IdTipoInsumoNavigation.NombreTipo,
+            UnidadMedida = i.UnidadMedida,
+            StockActual = i.StockActual,
+            StockMinimo = i.StockMinimo,
+            FechaActualizacion = i.FechaActualizacion,
+            IdProveedor = i.IdProveedor,
+            NombreProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.NombreProveedor : null,
+            CuitProveedor = i.IdProveedorNavigation != null ? i.IdProveedorNavigation.Cuit : null,
+            Estado = i.Estado != null && i.Estado.ToLower() == "pulenta"
+              ? "Disponible"
+              : (i.Estado ?? "Disponible"),
+            IdUbicacion = i.IdUbicacion,
+            CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
+            Color = i.Color,
+            TipoTela = i.TipoTela
+          })
+          .OrderByDescending(i => i.FechaActualizacion)
+          .ToListAsync();
+
+      return insumos;
+    }
+
+    public async Task<List<InsumoIndexDTO>> ObtenerInsumosConStockAsync()
+    {
+      var insumos = await _context.Insumos
+          .Include(i => i.IdTipoInsumoNavigation)
+          .Include(i => i.IdProveedorNavigation)
+          .Include(i => i.IdUbicacionNavigation)
           .Where(i => i.StockActual > 0 || i.InsumoStocks.Any())
           .Select(i => new InsumoIndexDTO
           {
@@ -305,6 +337,24 @@ namespace TESIS_OG.Services.InsumoService
           .Include(i => i.IdProveedorNavigation)
           .Include(i => i.IdUbicacionNavigation)
           .AsQueryable();
+
+      return await AplicarBusquedaAsync(query, filtros);
+    }
+
+    public async Task<List<InsumoIndexDTO>> BuscarInsumosConStockAsync(InsumoSearchDTO filtros)
+    {
+      var query = _context.Insumos
+          .Include(i => i.IdTipoInsumoNavigation)
+          .Include(i => i.IdProveedorNavigation)
+          .Include(i => i.IdUbicacionNavigation)
+          .Where(i => i.StockActual > 0 || i.InsumoStocks.Any())
+          .AsQueryable();
+
+      return await AplicarBusquedaAsync(query, filtros);
+    }
+
+    private async Task<List<InsumoIndexDTO>> AplicarBusquedaAsync(IQueryable<Insumo> query, InsumoSearchDTO filtros)
+    {
 
       // Aplicar filtros
       if (!string.IsNullOrEmpty(filtros.NombreInsumo))
