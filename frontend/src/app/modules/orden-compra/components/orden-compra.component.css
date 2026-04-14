@@ -717,3 +717,51 @@
   color: #1565c0;
   font-weight: 500;
 }
+
+/* Filtros OC */
+.filtros-oc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  background: white;
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  margin-bottom: 1rem;
+}
+
+.filtro-group { display: flex; flex-direction: column; gap: 4px; }
+.filtro-group label { font-size: 0.68rem; font-weight: 600; color: #666; text-transform: uppercase; }
+
+.filtro-select, .filtro-input {
+  padding: 7px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  transition: border-color 0.2s;
+  min-width: 130px;
+}
+.filtro-select:focus, .filtro-input:focus { outline: none; border-color: #ff6b35; }
+
+.filtro-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #555;
+  cursor: pointer;
+  padding-bottom: 2px;
+}
+
+.btn-limpiar-filtros {
+  background: #f4f4f5;
+  color: #444;
+  border: 1px solid #d4d4d8;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-limpiar-filtros:hover { background: #e4e4e7; }

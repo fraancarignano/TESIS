@@ -15,5 +15,6 @@ namespace TESIS_OG.Services.InsumoService
     Task<bool> CambiarEstadoAsync(int id, string nuevoEstado, int? idUsuario = null);
     Task<string?> EditarStockEntryAsync(int idInsumoStock, decimal nuevaCantidad);
     Task<(bool ok, string mensaje)> DevolverStockAlGeneralAsync(int idInsumoStock);
+    Task<int> AjustarPreciosMasivoAsync(List<int> idsInsumos, decimal porcentaje);
   }
 }

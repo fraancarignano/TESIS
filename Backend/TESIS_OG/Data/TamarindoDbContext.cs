@@ -500,6 +500,9 @@ public partial class TamarindoDbContext : DbContext
             entity.Property(e => e.RatioKgUnidad)
                 .HasColumnType("decimal(5, 3)")
                 .HasColumnName("ratio_Kg_Unidad");
+            entity.Property(e => e.PrecioUnitario)
+                .HasColumnType("decimal(12, 2)")
+                .HasColumnName("PrecioUnitario");
             entity.Property(e => e.StockActual)
                 .HasColumnType("decimal(9, 0)")
                 .HasColumnName("stock_Actual");

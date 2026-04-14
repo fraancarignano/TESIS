@@ -63,4 +63,5 @@ export interface Insumo {
   unidadMedida: string;
   idProveedor?: number;
   color?: string;
+  precioUnitario?: number;
 }

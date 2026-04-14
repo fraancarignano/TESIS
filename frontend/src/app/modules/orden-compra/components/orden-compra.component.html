@@ -7,7 +7,7 @@
     </div>
     <div class="toolbar">
       <div class="search-box">
-        <input type="text" [(ngModel)]="terminoBusqueda" placeholder="Buscar por número, proveedor o estado..." class="search-input" />
+        <input type="text" [(ngModel)]="terminoBusqueda" placeholder="Buscar por número, proveedor o proyecto..." class="search-input" />
       </div>
       <button class="btn-nuevo" (click)="abrirFormularioNuevo()" *appHasPermission="{ modulo: 'OrdenesCompra', accion: 'Crear' }">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -18,6 +18,38 @@
         Nueva Orden
       </button>
     </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros-oc">
+    <div class="filtro-group">
+      <label>Estado</label>
+      <select [(ngModel)]="filtroEstado" class="filtro-select">
+        <option value="">Todos los activos</option>
+        <option value="Verificada">Verificada</option>
+        <option value="PendienteControl">Pendiente Control</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="Aprobada">Aprobada</option>
+        <option value="Recibida">Recibida</option>
+        <option value="Anulada">Anulada</option>
+        <option value="Cancelada">Cancelada</option>
+      </select>
+    </div>
+    <div class="filtro-group">
+      <label>Desde</label>
+      <input type="date" [(ngModel)]="filtroFechaDesde" class="filtro-input">
+    </div>
+    <div class="filtro-group">
+      <label>Hasta</label>
+      <input type="date" [(ngModel)]="filtroFechaHasta" class="filtro-input">
+    </div>
+    <label class="filtro-check">
+      <input type="checkbox" [(ngModel)]="mostrarRecibidas">
+      Mostrar recibidas/anuladas
+    </label>
+    <button class="btn-limpiar-filtros" (click)="filtroEstado=''; filtroFechaDesde=''; filtroFechaHasta=''; mostrarRecibidas=false; terminoBusqueda=''">
+      Limpiar
+    </button>
   </div>
 
   <div *ngIf="loading" class="loading-container">

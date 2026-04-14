@@ -52,6 +52,7 @@ export interface Insumo {
   estado?: string;
   color?: string;
   tipoTela?: string;
+  precioUnitario?: number;
   proyectosAsignados?: ProyectoAsignado[];
   detalleStock?: InsumoStock[];
 }

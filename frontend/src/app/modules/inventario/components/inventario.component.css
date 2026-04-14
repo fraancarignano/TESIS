@@ -599,3 +599,56 @@ td {
   font-size: 12px;
   border: 1px solid #cfd8dc;
 }
+
+/* Ajuste masivo de precios */
+.ajuste-precios-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+}
+
+.sel-count {
+  font-weight: 600;
+  color: #b45309;
+  white-space: nowrap;
+}
+
+.input-pct {
+  width: 70px;
+  padding: 5px 8px;
+  border: 1px solid #d9d9d9;
+  border-radius: 5px;
+  font-size: 0.82rem;
+  text-align: center;
+}
+.input-pct:focus { outline: none; border-color: #ff6b35; }
+
+.btn-ajuste {
+  background: #ff6b35;
+  color: white;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-ajuste:hover:not(:disabled) { background: #f4511e; }
+.btn-ajuste:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-limpiar-sel {
+  background: #f4f4f5;
+  color: #555;
+  border: 1px solid #d4d4d8;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.btn-limpiar-sel:hover { background: #e4e4e7; }

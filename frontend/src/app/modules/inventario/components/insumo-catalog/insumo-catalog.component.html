@@ -7,19 +7,29 @@
         </div>
         <div class="header-main">
             <h1>Catálogo de Insumos</h1>
-            <button class="btn-nuevo" (click)="abrirNuevo()" *ngIf="!mostrarFormulario">
-                + Nuevo Insumo
-            </button>
+            <div class="header-actions">
+                <!-- Panel ajuste masivo -->
+                <div class="ajuste-panel" *ngIf="seleccionados.size > 0" (click)="$event.stopPropagation()">
+                    <span class="sel-count">{{ seleccionados.size }} seleccionado(s)</span>
+                    <input type="number" [(ngModel)]="porcentajeAjuste" placeholder="%" step="0.1" class="input-pct"
+                        title="Positivo = suba, negativo = rebaja">
+                    <button class="btn-ajuste" (click)="aplicarAjusteMasivo()" [disabled]="!porcentajeAjuste">Aplicar ajuste</button>
+                    <button class="btn-limpiar" (click)="limpiarSeleccion()">Limpiar</button>
+                </div>
+                <button class="btn-nuevo" (click)="abrirNuevo()" *ngIf="!mostrarFormulario">
+                    + Nuevo Insumo
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Formulario rápido -->
+    <!-- Formulario -->
     <div class="form-card" *ngIf="mostrarFormulario">
-        <h3>Definir Nuevo Insumo</h3>
+        <h3>{{ editandoInsumo ? 'Editar Insumo' : 'Definir Nuevo Insumo' }}</h3>
         <div class="form-grid">
             <div class="form-group">
                 <label>Nombre del Insumo *</label>
-                <input type="text" [(ngModel)]="nuevoInsumo.nombreInsumo" placeholder="Ej: Algodón">
+                <input type="text" [(ngModel)]="nuevoInsumo.nombreInsumo" placeholder="Ej: Algodón 1">
             </div>
             <div class="form-group">
                 <label>Color <small>(obligatorio para telas)</small></label>
@@ -27,7 +37,7 @@
                 <small>Se normalizará a mayúsculas. Cada color es un insumo distinto.</small>
             </div>
             <div class="form-group">
-                <label>Tipo de Insumo (Categoría) *</label>
+                <label>Tipo de Insumo *</label>
                 <select [(ngModel)]="nuevoInsumo.idTipoInsumo">
                     <option *ngFor="let t of tiposInsumo" [value]="t.idTipoInsumo">{{ t.nombreTipo }}</option>
                 </select>
@@ -38,6 +48,11 @@
                     <option value="">Seleccione...</option>
                     <option *ngFor="let u of unidadesMedida" [value]="u">{{ u }}</option>
                 </select>
+            </div>
+            <div class="form-group">
+                <label>Precio Unitario</label>
+                <input type="number" [(ngModel)]="nuevoInsumo.precioUnitario" placeholder="0.00" min="0" step="0.01">
+                <small>Precio de referencia. Se autocompleta en órdenes de compra.</small>
             </div>
             <div class="form-group">
                 <label>Tipo de Tela <small>(opcional)</small></label>
@@ -54,12 +69,12 @@
         <div class="form-actions">
             <button class="btn-cancelar" (click)="cancelar()">Cancelar</button>
             <button class="btn-guardar" (click)="guardar()" [disabled]="guardando">
-                {{ guardando ? 'Guardando...' : 'Registrar Insumo' }}
+                {{ guardando ? 'Guardando...' : (editandoInsumo ? 'Guardar cambios' : 'Registrar Insumo') }}
             </button>
         </div>
     </div>
 
-    <!-- Lista de Insumos -->
+    <!-- Lista -->
     <div class="list-card">
         <div class="list-header">
             <span>Insumos Definidos ({{ insumos.length }})</span>
@@ -70,17 +85,24 @@
             <table>
                 <thead>
                     <tr>
+                        <th>
+                            <input type="checkbox" [checked]="todosSeleccionados" (change)="toggleSeleccionTodos()" title="Seleccionar todos">
+                        </th>
                         <th>Nombre</th>
                         <th>Color</th>
                         <th>Tipo</th>
                         <th>Proveedor</th>
                         <th>Unidad</th>
+                        <th>Precio Unit.</th>
                         <th>Stock Actual</th>
                         <th style="text-align: right;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr *ngFor="let insumo of insumos">
+                        <td (click)="$event.stopPropagation()">
+                            <input type="checkbox" [checked]="seleccionados.has(insumo.idInsumo!)" (change)="toggleSeleccion(insumo)">
+                        </td>
                         <td class="nombre">{{ insumo.nombreInsumo }}</td>
                         <td>
                             <span *ngIf="insumo.color" style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-size:.78rem;font-weight:600;">
@@ -91,20 +113,29 @@
                         <td>{{ insumo.tipoInsumo?.nombreTipo || '-' }}</td>
                         <td>{{ insumo.nombreProveedor || '-' }}</td>
                         <td>{{ insumo.unidadMedida }}</td>
+                        <td>
+                            <span *ngIf="insumo.precioUnitario" style="font-weight:600;">
+                                ${{ insumo.precioUnitario | number:'1.2-2' }}
+                            </span>
+                            <span *ngIf="!insumo.precioUnitario" style="color:#bbb;font-size:.82rem;">Sin precio</span>
+                        </td>
                         <td>{{ insumo.stockActual }}</td>
                         <td class="acciones">
-                            <button class="btn-icon" (click)="eliminar(insumo.idInsumo!)" title="Eliminar">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path
-                                        d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                    </path>
+                            <button class="btn-icon btn-edit" (click)="abrirEditar(insumo)" title="Editar">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon btn-delete" (click)="eliminar(insumo.idInsumo!)" title="Eliminar">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                                 </svg>
                             </button>
                         </td>
                     </tr>
                     <tr *ngIf="insumos.length === 0 && !cargando">
-                        <td colspan="5" class="empty-list">No hay insumos definidos en el catálogo.</td>
+                        <td colspan="9" class="empty-list">No hay insumos definidos en el catálogo.</td>
                     </tr>
                 </tbody>
             </table>

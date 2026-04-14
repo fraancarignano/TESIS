@@ -18,6 +18,7 @@ namespace TESIS_OG.DTOs.Insumos
     public string? CodigoUbicacion { get; set; }
     public string? Color { get; set; }
     public string? TipoTela { get; set; }
+    public decimal? PrecioUnitario { get; set; }
         
     public List<ProyectoAsignadoDTO>? ProyectosAsignados { get; set; }
     public List<InsumoStockDTO> DetalleStock { get; set; } = new List<InsumoStockDTO>();

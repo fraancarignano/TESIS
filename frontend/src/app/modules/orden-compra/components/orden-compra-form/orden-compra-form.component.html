@@ -95,14 +95,52 @@
 
           <!-- MODO EXISTENTE -->
           <div class="form-row" *ngIf="modoAgregar === 'existente'">
-            <div class="form-group">
-              <label>Insumo</label>
-              <select [(ngModel)]="insumoSeleccionado" name="insumo" [disabled]="cargando">
-                <option [ngValue]="undefined">Seleccione un insumo</option>
-                <option *ngFor="let insumo of insumosDisponibles" [ngValue]="insumo.idInsumo">
-                  {{ insumo.nombreInsumo }}{{ insumo.color ? ' — ' + insumo.color : '' }} (Stock: {{ insumo.stockActual }} {{ insumo.unidadMedida }})
-                </option>
-              </select>
+            <div class="form-group" style="flex:2;">
+              <label>Buscar insumo por nombre o ID</label>
+              <div class="insumo-search-wrapper" (click)="$event.stopPropagation()">
+                <div class="insumo-search-inputs">
+                  <input
+                    type="number"
+                    [(ngModel)]="busquedaIdInsumo"
+                    name="busquedaId"
+                    placeholder="ID"
+                    class="input-id-insumo"
+                    [disabled]="cargando"
+                    (input)="onBusquedaIdChange()"
+                    min="1"
+                  >
+                  <input
+                    type="text"
+                    [(ngModel)]="busquedaNombreInsumo"
+                    name="busquedaNombre"
+                    placeholder="Escribí el nombre del insumo..."
+                    class="input-nombre-insumo"
+                    [disabled]="cargando"
+                    (input)="onBusquedaNombreChange()"
+                    (focus)="mostrarSugerencias = true"
+                    (blur)="ocultarSugerenciasDelay()"
+                    autocomplete="off"
+                  >
+                </div>
+                <!-- Insumo seleccionado -->
+                <div class="insumo-seleccionado-tag" *ngIf="insumoSeleccionadoObj">
+                  <span>#{{ insumoSeleccionadoObj.idInsumo }} {{ insumoSeleccionadoObj.nombreInsumo }}{{ insumoSeleccionadoObj.color ? ' — ' + insumoSeleccionadoObj.color : '' }}</span>
+                  <button type="button" (click)="limpiarInsumoSeleccionado()" class="btn-clear-insumo">✕</button>
+                </div>
+                <!-- Sugerencias -->
+                <div class="insumo-sugerencias" *ngIf="mostrarSugerencias && insumosFiltradosBusqueda.length > 0">
+                  <div
+                    class="sugerencia-item"
+                    *ngFor="let ins of insumosFiltradosBusqueda"
+                    (mousedown)="seleccionarInsumoDesdeSearch(ins)"
+                  >
+                    <span class="sug-id">#{{ ins.idInsumo }}</span>
+                    <span class="sug-nombre">{{ ins.nombreInsumo }}</span>
+                    <span class="sug-color" *ngIf="ins.color">{{ ins.color }}</span>
+                    <span class="sug-precio" *ngIf="ins.precioUnitario">${{ ins.precioUnitario | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="form-group form-group-small">
               <label>Cantidad</label>

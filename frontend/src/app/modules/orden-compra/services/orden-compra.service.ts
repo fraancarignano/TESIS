@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { OrdenCompra, NuevaOrdenCompra, Proveedor, Insumo } from '../models/orden-compra.model';
 import { OrdenCompraReceiveDTO } from '../models/orden-compra-receive.model';
 import { environment } from '../../../../environments/environment';
@@ -80,6 +81,16 @@ export class OrdenCompraService {
 
   // Insumos
   obtenerInsumos(): Observable<Insumo[]> {
-    return this.http.get<Insumo[]>(this.insumoUrl);
+    return this.http.get<any[]>(this.insumoUrl).pipe(
+      map(items => items.map(i => ({
+        idInsumo: i.idInsumo,
+        nombreInsumo: i.nombreInsumo,
+        stockActual: i.stockActual,
+        unidadMedida: i.unidadMedida,
+        idProveedor: i.idProveedor,
+        color: i.color,
+        precioUnitario: i.precioUnitario ?? undefined
+      } as Insumo)))
+    );
   }
 }

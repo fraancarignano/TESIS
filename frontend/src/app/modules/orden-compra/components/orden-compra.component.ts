@@ -26,6 +26,22 @@ export class OrdenCompraComponent implements OnInit {
   error = false;
   terminoBusqueda = '';
 
+  // Filtros
+  filtroEstado = '';
+  filtroFechaDesde = '';
+  filtroFechaHasta = '';
+  mostrarRecibidas = false;
+
+  readonly ORDEN_ESTADOS: Record<string, number> = {
+    'Verificada': 0,
+    'PendienteControl': 1,
+    'Pendiente': 2,
+    'Aprobada': 3,
+    'Recibida': 4,
+    'Anulada': 5,
+    'Cancelada': 6
+  };
+
   constructor(
     private ordenCompraService: OrdenCompraService,
     private alertas: AlertasService,
@@ -56,16 +72,45 @@ export class OrdenCompraComponent implements OnInit {
   }
 
   get ordenesFiltradas(): OrdenCompra[] {
-    if (!this.terminoBusqueda) {
-      return this.ordenes;
+    let result = this.ordenes;
+
+    // Por defecto ocultar Recibidas y Anuladas
+    if (!this.mostrarRecibidas) {
+      result = result.filter(o => o.estado !== 'Recibida' && o.estado !== 'Anulada' && o.estado !== 'Cancelada');
     }
 
-    const termino = this.terminoBusqueda.toLowerCase();
-    return this.ordenes.filter(o =>
-      o.nroOrden.toLowerCase().includes(termino) ||
-      o.nombreProveedor?.toLowerCase().includes(termino) ||
-      o.estado.toLowerCase().includes(termino)
-    );
+    // Filtro por estado
+    if (this.filtroEstado) {
+      result = result.filter(o => o.estado === this.filtroEstado);
+    }
+
+    // Filtro por texto
+    if (this.terminoBusqueda) {
+      const t = this.terminoBusqueda.toLowerCase();
+      result = result.filter(o =>
+        o.nroOrden.toLowerCase().includes(t) ||
+        (o.nombreProveedor || '').toLowerCase().includes(t) ||
+        (o.nombreProyecto || '').toLowerCase().includes(t)
+      );
+    }
+
+    // Filtro por fecha desde
+    if (this.filtroFechaDesde) {
+      result = result.filter(o => o.fechaSolicitud >= this.filtroFechaDesde);
+    }
+
+    // Filtro por fecha hasta
+    if (this.filtroFechaHasta) {
+      result = result.filter(o => o.fechaSolicitud <= this.filtroFechaHasta);
+    }
+
+    // Orden: Verificada → PendienteControl → Pendiente → resto
+    return result.sort((a, b) => {
+      const pa = this.ORDEN_ESTADOS[a.estado] ?? 99;
+      const pb = this.ORDEN_ESTADOS[b.estado] ?? 99;
+      if (pa !== pb) return pa - pb;
+      return b.fechaSolicitud.localeCompare(a.fechaSolicitud);
+    });
   }
 
   abrirFormularioNuevo(): void {

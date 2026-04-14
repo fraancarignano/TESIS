@@ -284,3 +284,88 @@
 
 .btn-modo { padding: 7px 16px; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; font-size: .85rem; color: #555; }
 .btn-modo.active { background: #1976d2; color: #fff; border-color: #1976d2; font-weight: 600; }
+
+/* Buscador inteligente de insumos */
+.insumo-search-wrapper { position: relative; }
+
+.insumo-search-inputs {
+  display: flex;
+  gap: 6px;
+}
+
+.input-id-insumo {
+  width: 70px;
+  padding: 8px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.input-id-insumo:focus { outline: none; border-color: #ff6b35; }
+
+.input-nombre-insumo {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  transition: border-color 0.2s;
+}
+.input-nombre-insumo:focus { outline: none; border-color: #ff6b35; }
+
+.insumo-seleccionado-tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  color: #1b5e20;
+  font-weight: 600;
+  margin-top: 5px;
+}
+
+.btn-clear-insumo {
+  background: none;
+  border: none;
+  color: #c62828;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.insumo-sugerencias {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 100;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.sugerencia-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background 0.15s;
+}
+.sugerencia-item:hover { background: #fff8f5; }
+.sugerencia-item:last-child { border-bottom: none; }
+
+.sug-id { color: #9e9e9e; font-family: monospace; font-size: 0.72rem; min-width: 32px; }
+.sug-nombre { font-weight: 600; color: #1a1a1a; flex: 1; }
+.sug-color { background: #e3f2fd; color: #1565c0; padding: 1px 7px; border-radius: 8px; font-size: 0.72rem; font-weight: 600; }
+.sug-precio { color: #2e7d32; font-weight: 600; font-size: 0.78rem; margin-left: auto; }

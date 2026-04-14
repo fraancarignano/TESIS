@@ -8,6 +8,7 @@ import { UbicacionesService, Ubicacion } from '../../../ubicaciones/services/ubi
 import { ProyectosService } from '../../../proyectos/services/proyecto.service';
 import { ProyectosServiceNuevo } from '../../../proyectos/services/proyectos-nuevo.service';
 import { NotificacionesService } from '../../../../core/services/notificaciones.service';
+import { InsumosService } from '../../services/insumos.service';
 import { OrdenCompra } from '../../../orden-compra/models/orden-compra.model';
 import { Proyecto } from '../../../proyectos/models/proyecto.model';
 import { Insumo } from '../../models/insumo.model';
@@ -88,12 +89,18 @@ export class UbicacionTransferComponent implements OnInit {
   fechaEntregaOC = '';
   generandoOC = false;
 
+  // Mapa de precios por idInsumo (cargado del catálogo)
+  private preciosInsumo: Map<number, number> = new Map();
+  // Mapa de precios por tipo+color para insumos nuevos
+  private preciosPorTipoColor: Map<string, number> = new Map();
+
   constructor(
     private ordenCompraService: OrdenCompraService,
     private ubicacionesService: UbicacionesService,
     private proyectosService: ProyectosService,
     private proyectosServiceNuevo: ProyectosServiceNuevo,
     private notificacionesService: NotificacionesService,
+    private insumosService: InsumosService,
     private alertas: AlertasService,
     private route: ActivatedRoute
   ) {}
@@ -112,6 +119,21 @@ export class UbicacionTransferComponent implements OnInit {
 
   cargarDatos(): void {
     this.cargando = true;
+    // Cargar precios del catálogo
+    this.insumosService.getInsumos().subscribe({
+      next: (insumos) => {
+        this.preciosInsumo.clear();
+        this.preciosPorTipoColor.clear();
+        insumos.forEach(i => {
+          if (i.idInsumo && i.precioUnitario) {
+            this.preciosInsumo.set(i.idInsumo, i.precioUnitario);
+            // Indexar también por tipo+color para insumos nuevos
+            const key = `${i.idTipoInsumo}_${(i.color || '').toUpperCase()}`;
+            if (!this.preciosPorTipoColor.has(key)) this.preciosPorTipoColor.set(key, i.precioUnitario);
+          }
+        });
+      }
+    });
     forkJoin({
       ordenes: this.ordenCompraService.obtenerOrdenes(),
       ubicaciones: this.ubicacionesService.getUbicaciones(),
@@ -300,15 +322,26 @@ export class UbicacionTransferComponent implements OnInit {
 
   abrirPanelOC(): void {
     if (!this.sinStock.length) { this.mostrarMensaje('No hay materiales faltantes', 'error'); return; }
-    this.itemsOC = this.sinStock.map(m => ({
-      idInsumo: m.colorSolicitado ? 0 : m.idInsumo,
-      nombreInsumo: m.tipoInsumo || m.nombreInsumo,
-      colorSolicitado: m.colorSolicitado || '',
-      cantidad: Math.max(0.01, m.cantidadNecesaria - m.stockDisponible),
-      precioUnitario: 0,
-      nuevoIdTipoInsumo: m.colorSolicitado ? (m.idTipoInsumo || undefined) : undefined,
-      nuevoUnidadMedida: m.unidadMedida
-    }));
+    this.itemsOC = this.sinStock.map(m => {
+      let precio = 0;
+      if (!m.colorSolicitado && m.idInsumo > 0) {
+        // Insumo existente sin color → buscar por ID
+        precio = this.preciosInsumo.get(m.idInsumo) ?? 0;
+      } else if (m.colorSolicitado && m.idTipoInsumo > 0) {
+        // Insumo con color → buscar por tipo+color
+        const key = `${m.idTipoInsumo}_${m.colorSolicitado.toUpperCase()}`;
+        precio = this.preciosPorTipoColor.get(key) ?? 0;
+      }
+      return {
+        idInsumo: m.colorSolicitado ? 0 : m.idInsumo,
+        nombreInsumo: m.tipoInsumo || m.nombreInsumo,
+        colorSolicitado: m.colorSolicitado || '',
+        cantidad: Math.max(0.01, m.cantidadNecesaria - m.stockDisponible),
+        precioUnitario: precio,
+        nuevoIdTipoInsumo: m.colorSolicitado ? (m.idTipoInsumo || undefined) : undefined,
+        nuevoUnidadMedida: m.unidadMedida
+      };
+    });
     this.idProveedorOC = null;
     this.fechaEntregaOC = '';
     this.mostrarPanelOC = true;

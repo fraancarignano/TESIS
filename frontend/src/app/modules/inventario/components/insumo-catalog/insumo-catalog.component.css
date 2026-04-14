@@ -218,3 +218,26 @@ td {
     color: #94a3b8;
     font-style: italic;
 }
+
+.header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.ajuste-panel {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+}
+.sel-count { font-weight: 600; color: #b45309; white-space: nowrap; }
+.input-pct { width: 65px; padding: 4px 7px; border: 1px solid #d9d9d9; border-radius: 5px; font-size: 0.82rem; text-align: center; }
+.btn-ajuste { background: #ff6b35; color: white; border: none; padding: 5px 12px; border-radius: 5px; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+.btn-ajuste:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-limpiar { background: #f4f4f5; color: #555; border: 1px solid #d4d4d8; padding: 5px 10px; border-radius: 5px; font-size: 0.78rem; cursor: pointer; }
+
+.btn-edit { color: #1565c0; background: #e3f2fd; border: 1px solid #90caf9; }
+.btn-edit:hover { background: #bbdefb; }
+.btn-delete { color: #c62828; background: #fdecea; border: 1px solid #ef9a9a; }
+.btn-delete:hover { background: #ffcdd2; }

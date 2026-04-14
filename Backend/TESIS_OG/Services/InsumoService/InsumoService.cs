@@ -48,6 +48,7 @@ namespace TESIS_OG.Services.InsumoService
         Estado = NormalizarEstadoInsumo(insumoDto.Estado),
         Color = string.IsNullOrWhiteSpace(insumoDto.Color) ? null : insumoDto.Color.Trim().ToUpperInvariant(),
         TipoTela = insumoDto.TipoTela?.Trim(),
+        PrecioUnitario = insumoDto.PrecioUnitario,
         FechaActualizacion = DateOnly.FromDateTime(DateTime.Now)
       };
 
@@ -96,7 +97,8 @@ namespace TESIS_OG.Services.InsumoService
             IdUbicacion = i.IdUbicacion,
             CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
             Color = i.Color,
-            TipoTela = i.TipoTela
+            TipoTela = i.TipoTela,
+            PrecioUnitario = i.PrecioUnitario
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();
@@ -130,7 +132,8 @@ namespace TESIS_OG.Services.InsumoService
             IdUbicacion = i.IdUbicacion,
             CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
             Color = i.Color,
-            TipoTela = i.TipoTela
+            TipoTela = i.TipoTela,
+            PrecioUnitario = i.PrecioUnitario
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();
@@ -263,6 +266,7 @@ namespace TESIS_OG.Services.InsumoService
       insumo.Estado = NormalizarEstadoInsumo(insumoDto.Estado);
       insumo.Color = string.IsNullOrWhiteSpace(insumoDto.Color) ? null : insumoDto.Color.Trim().ToUpperInvariant();
       insumo.TipoTela = insumoDto.TipoTela?.Trim();
+      insumo.PrecioUnitario = insumoDto.PrecioUnitario;
       insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
 
       await _context.SaveChangesAsync();
@@ -415,7 +419,8 @@ namespace TESIS_OG.Services.InsumoService
             IdUbicacion = i.IdUbicacion,
             CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
             Color = i.Color,
-            TipoTela = i.TipoTela
+            TipoTela = i.TipoTela,
+            PrecioUnitario = i.PrecioUnitario
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();
@@ -548,6 +553,26 @@ namespace TESIS_OG.Services.InsumoService
       _context.InsumoStocks.Remove(entry);
       await _context.SaveChangesAsync();
       return (true, $"Se devolvieron {entry.Cantidad} unidades al stock general");
+    }
+
+    public async Task<int> AjustarPreciosMasivoAsync(List<int> idsInsumos, decimal porcentaje)
+    {
+      var insumos = await _context.Insumos
+          .Where(i => idsInsumos.Contains(i.IdInsumo))
+          .ToListAsync();
+
+      foreach (var insumo in insumos)
+      {
+        if (insumo.PrecioUnitario.HasValue && insumo.PrecioUnitario > 0)
+        {
+          var factor = 1 + (porcentaje / 100m);
+          insumo.PrecioUnitario = Math.Round(insumo.PrecioUnitario.Value * factor, 2);
+        }
+        insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
+      }
+
+      await _context.SaveChangesAsync();
+      return insumos.Count;
     }
   }
 }

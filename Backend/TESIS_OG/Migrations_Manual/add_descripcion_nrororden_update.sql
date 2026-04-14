@@ -8,3 +8,6 @@ ALTER TABLE Orden_Compra ADD Descripcion NVARCHAR(500) NULL;
 ALTER TABLE Orden_Compra ADD IdProyecto INT NULL;
 
 -- Agregar estado "Verificada" es solo un valor de string, no requiere cambio de schema
+
+-- Agregar precio unitario al insumo base
+ALTER TABLE Insumo ADD PrecioUnitario DECIMAL(12, 2) NULL;

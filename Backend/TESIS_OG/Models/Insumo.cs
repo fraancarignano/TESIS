@@ -29,6 +29,8 @@ public partial class Insumo
 
     public decimal? RatioKgUnidad { get; set; }
 
+    public decimal? PrecioUnitario { get; set; }
+
     public int? IdUbicacion { get; set; }
 
     public virtual ICollection<DetalleMaterialProyecto> DetalleMaterialProyectos { get; set; } = new List<DetalleMaterialProyecto>();

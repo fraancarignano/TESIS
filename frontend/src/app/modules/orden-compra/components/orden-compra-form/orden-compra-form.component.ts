@@ -36,8 +36,61 @@ export class OrdenCompraFormComponent implements OnInit {
   // Modo agregar: 'existente' | 'nuevo'
   modoAgregar: 'existente' | 'nuevo' = 'existente';
   insumoSeleccionado?: number;
+  insumoSeleccionadoObj?: Insumo;
   cantidadInsumo = 1;
   precioUnitarioInsumo = 0;
+
+  // Buscador inteligente
+  busquedaNombreInsumo = '';
+  busquedaIdInsumo?: number;
+  mostrarSugerencias = false;
+
+  get insumosFiltradosBusqueda(): Insumo[] {
+    const termNombre = this.busquedaNombreInsumo.trim().toLowerCase();
+    const termId = this.busquedaIdInsumo;
+    if (!termNombre && !termId) return [];
+    return this.insumosDisponibles.filter(i => {
+      if (termId) return i.idInsumo === termId;
+      return i.nombreInsumo.toLowerCase().includes(termNombre) ||
+             (i.color || '').toLowerCase().includes(termNombre);
+    }).slice(0, 10);
+  }
+
+  onBusquedaNombreChange(): void {
+    this.insumoSeleccionado = undefined;
+    this.insumoSeleccionadoObj = undefined;
+    this.mostrarSugerencias = true;
+  }
+
+  onBusquedaIdChange(): void {
+    if (this.busquedaIdInsumo) {
+      const found = this.insumosDisponibles.find(i => i.idInsumo === this.busquedaIdInsumo);
+      if (found) { this.seleccionarInsumoDesdeSearch(found); return; }
+    }
+    this.insumoSeleccionado = undefined;
+    this.insumoSeleccionadoObj = undefined;
+  }
+
+  seleccionarInsumoDesdeSearch(insumo: Insumo): void {
+    this.insumoSeleccionado = insumo.idInsumo;
+    this.insumoSeleccionadoObj = insumo;
+    this.busquedaNombreInsumo = '';
+    this.busquedaIdInsumo = undefined;
+    this.mostrarSugerencias = false;
+    if (insumo.precioUnitario) this.precioUnitarioInsumo = insumo.precioUnitario;
+  }
+
+  limpiarInsumoSeleccionado(): void {
+    this.insumoSeleccionado = undefined;
+    this.insumoSeleccionadoObj = undefined;
+    this.busquedaNombreInsumo = '';
+    this.busquedaIdInsumo = undefined;
+    this.precioUnitarioInsumo = 0;
+  }
+
+  ocultarSugerenciasDelay(): void {
+    setTimeout(() => { this.mostrarSugerencias = false; }, 200);
+  }
   // Campos insumo nuevo
   nuevoNombre = '';
   nuevoIdTipo?: number;
@@ -89,6 +142,13 @@ export class OrdenCompraFormComponent implements OnInit {
     });
   }
 
+  onInsumoChange(): void {
+    if (!this.insumoSeleccionado) { this.precioUnitarioInsumo = 0; return; }
+    const insumo = this.insumos.find(i => i.idInsumo === this.insumoSeleccionado);
+    if (insumo?.precioUnitario) {
+      this.precioUnitarioInsumo = insumo.precioUnitario;
+    }
+  }
   agregarInsumo(): void {
     if (this.cantidadInsumo <= 0 || this.precioUnitarioInsumo <= 0) {
       this.alertas.error('Datos incompletos', 'Cantidad y precio deben ser mayores a 0');
@@ -99,8 +159,7 @@ export class OrdenCompraFormComponent implements OnInit {
       if (!this.insumoSeleccionado) {
         this.alertas.error('Datos incompletos', 'Seleccioná un insumo');
         return;
-      }
-      if (this.detalles.find(d => d.idInsumo === this.insumoSeleccionado)) {
+      }      if (this.detalles.find(d => d.idInsumo === this.insumoSeleccionado)) {
         this.alertas.error('Duplicado', 'Este insumo ya fue agregado');
         return;
       }
@@ -136,6 +195,9 @@ export class OrdenCompraFormComponent implements OnInit {
 
     // Reset campos
     this.insumoSeleccionado = undefined;
+    this.insumoSeleccionadoObj = undefined;
+    this.busquedaNombreInsumo = '';
+    this.busquedaIdInsumo = undefined;
     this.cantidadInsumo = 1;
     this.precioUnitarioInsumo = 0;
     this.nuevoNombre = '';

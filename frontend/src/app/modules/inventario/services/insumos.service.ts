@@ -21,9 +21,6 @@ export class InsumosService {
   getInsumos(): Observable<Insumo[]> {
     return this.http.get<any[]>(this.apiUrl).pipe(
       map(items => items.map(item => this.mapToFrontend(item))),
-      tap(data => {
-        console.log('Insumos obtenidos:', data);
-      }),
       catchError(this.handleError)
     );
   }
@@ -31,9 +28,6 @@ export class InsumosService {
   getInsumosConStock(): Observable<Insumo[]> {
     return this.http.get<any[]>(`${this.apiUrl}/con-stock`).pipe(
       map(items => items.map(item => this.mapToFrontend(item))),
-      tap(data => {
-        console.log('Insumos con stock obtenidos:', data);
-      }),
       catchError(this.handleError)
     );
   }
@@ -135,6 +129,12 @@ export class InsumosService {
     );
   }
 
+  ajustarPreciosMasivo(idsInsumos: number[], porcentajeAjuste: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/precios/ajuste-masivo`, { idsInsumos, porcentajeAjuste }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   /**
    * Buscar insumos con filtros
    */
@@ -182,6 +182,7 @@ export class InsumosService {
       estado: this.normalizarEstado(data.estado),
       color: data.color || undefined,
       tipoTela: data.tipoTela || undefined,
+      precioUnitario: data.precioUnitario ?? undefined,
       detalleStock: data.detalleStock || [],
       proyectosAsignados: data.proyectosAsignados || []
     };
@@ -201,7 +202,8 @@ export class InsumosService {
       idUbicacion: insumo.idUbicacion,
       estado: this.normalizarEstado(insumo.estado),
       color: insumo.color?.trim().toUpperCase() || undefined,
-      tipoTela: insumo.tipoTela?.trim() || undefined
+      tipoTela: insumo.tipoTela?.trim() || undefined,
+      precioUnitario: insumo.precioUnitario ?? undefined
     };
   }
 

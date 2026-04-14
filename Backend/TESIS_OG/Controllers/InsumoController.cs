@@ -108,6 +108,16 @@ namespace TESIS_OG.Controllers
     }
 
     /// <summary>
+    /// Actualización masiva de precios por porcentaje
+    /// </summary>
+    [HttpPost("precios/ajuste-masivo")]
+    public async Task<IActionResult> AjustarPreciosMasivo([FromBody] AjustePreciosMasivoRequest request)
+    {
+      var result = await _insumoService.AjustarPreciosMasivoAsync(request.IdsInsumos, request.PorcentajeAjuste);
+      return Ok(new { message = $"Precios actualizados: {result} insumos" });
+    }
+
+    /// <summary>
     /// Cambiar el estado de un insumo
     /// </summary>
     [HttpPatch("{id}/estado")]
@@ -154,4 +164,11 @@ namespace TESIS_OG.Controllers
   public class EditarStockEntryRequest
   {
     public decimal NuevaCantidad { get; set; }
+  }
+
+  public class AjustePreciosMasivoRequest
+  {
+    public List<int> IdsInsumos { get; set; } = new();
+    /// <summary>Porcentaje: positivo = suba, negativo = rebaja. Ej: 10 = +10%, -5 = -5%</summary>
+    public decimal PorcentajeAjuste { get; set; }
   }

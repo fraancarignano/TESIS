@@ -38,6 +38,52 @@ export class InventarioComponent implements OnInit {
   insumoDropdownAbierto: number | null = null;
   estadosDisponibles = ['Disponible', 'En uso', 'A designar', 'Agotado'];
 
+  // Selección múltiple para ajuste de precios
+  seleccionados = new Set<number>();
+  porcentajeAjuste: number | null = null;
+
+  get todosSeleccionados(): boolean {
+    return this.insumosFiltrados.length > 0 &&
+      this.insumosFiltrados.every(i => this.seleccionados.has(i.idInsumo!));
+  }
+
+  toggleSeleccion(insumo: Insumo): void {
+    if (this.seleccionados.has(insumo.idInsumo!)) this.seleccionados.delete(insumo.idInsumo!);
+    else this.seleccionados.add(insumo.idInsumo!);
+  }
+
+  toggleSeleccionTodos(): void {
+    if (this.todosSeleccionados) this.limpiarSeleccion();
+    else this.insumosFiltrados.forEach(i => this.seleccionados.add(i.idInsumo!));
+  }
+
+  limpiarSeleccion(): void {
+    this.seleccionados.clear();
+    this.porcentajeAjuste = null;
+  }
+
+  aplicarAjusteMasivo(): void {
+    if (!this.porcentajeAjuste || this.seleccionados.size === 0) return;
+    const ids = Array.from(this.seleccionados);
+    const pct = this.porcentajeAjuste;
+    const signo = pct > 0 ? `+${pct}%` : `${pct}%`;
+    this.alertas.confirmar(
+      '¿Aplicar ajuste de precios?',
+      `Se aplicará un ajuste de ${signo} a ${ids.length} insumo(s). Solo afecta insumos que ya tienen precio cargado.`,
+      'Sí, aplicar'
+    ).then(confirmado => {
+      if (!confirmado) return;
+      this.insumosService.ajustarPreciosMasivo(ids, pct).subscribe({
+        next: (res: any) => {
+          this.alertas.success('Precios actualizados', `Se actualizaron ${res.message}`);
+          this.limpiarSeleccion();
+          this.cargarInsumos();
+        },
+        error: () => this.alertas.error('Error', 'No se pudieron actualizar los precios')
+      });
+    });
+  }
+
   // Confirmacion de cambio de estado
   confirmacion: {
     visible: boolean;
