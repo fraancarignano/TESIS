@@ -173,7 +173,7 @@ export class InsumoCatalogComponent implements OnInit {
         });
     }
     eliminar(id: number): void {
-        this.alertas.confirmar('¿Eliminar esta definición de insumo?', 'Sí, eliminar').then(confirm => {
+        this.alertas.confirmar('¿Eliminar esta definición de insumo?', undefined, 'Sí, eliminar').then(confirm => {
             if (confirm) {
                 this.insumosService.eliminarInsumo(id).subscribe({
                     next: () => {

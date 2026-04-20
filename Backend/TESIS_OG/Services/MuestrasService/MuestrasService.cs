@@ -256,6 +256,15 @@ namespace TESIS_OG.Services.MuestrasService
                     descripcionLogo = !string.IsNullOrWhiteSpace(muestra.BordadoDescripcion) ? muestra.BordadoDescripcion : null;
                 }
 
+                string? imagenBordado = prendaMuestra?.TieneBordado == true && !string.IsNullOrWhiteSpace(muestra.BordadoReferencia)
+                    ? muestra.BordadoReferencia : null;
+                string? descripcionBordado = prendaMuestra?.TieneBordado == true && !string.IsNullOrWhiteSpace(muestra.BordadoDescripcion)
+                    ? muestra.BordadoDescripcion : null;
+                string? imagenEstampado = prendaMuestra?.TieneEstampado == true && !string.IsNullOrWhiteSpace(muestra.EstampadoReferencia)
+                    ? muestra.EstampadoReferencia : null;
+                string? descripcionEstampado = prendaMuestra?.TieneEstampado == true && !string.IsNullOrWhiteSpace(muestra.EstampadoDescripcion)
+                    ? muestra.EstampadoDescripcion : null;
+
                 // Actualizar flags en prenda del proyecto
                 if (prendaMuestra != null)
                 {
@@ -271,6 +280,10 @@ namespace TESIS_OG.Services.MuestrasService
                     if (!string.IsNullOrWhiteSpace(descripcionMockup)) disenoExistente.DescripcionMockup = descripcionMockup;
                     if (!string.IsNullOrWhiteSpace(imagenLogo)) disenoExistente.ImagenLogo = imagenLogo;
                     if (!string.IsNullOrWhiteSpace(descripcionLogo)) disenoExistente.DescripcionLogo = descripcionLogo;
+                    if (!string.IsNullOrWhiteSpace(imagenBordado)) disenoExistente.ImagenBordado = imagenBordado;
+                    if (!string.IsNullOrWhiteSpace(descripcionBordado)) disenoExistente.DescripcionBordado = descripcionBordado;
+                    if (!string.IsNullOrWhiteSpace(imagenEstampado)) disenoExistente.ImagenEstampado = imagenEstampado;
+                    if (!string.IsNullOrWhiteSpace(descripcionEstampado)) disenoExistente.DescripcionEstampado = descripcionEstampado;
                     disenoExistente.FechaModificacion = DateTime.UtcNow;
                 }
                 else
@@ -283,6 +296,10 @@ namespace TESIS_OG.Services.MuestrasService
                         DescripcionMockup = descripcionMockup,
                         ImagenLogo = imagenLogo,
                         DescripcionLogo = descripcionLogo,
+                        ImagenBordado = imagenBordado,
+                        DescripcionBordado = descripcionBordado,
+                        ImagenEstampado = imagenEstampado,
+                        DescripcionEstampado = descripcionEstampado,
                         FechaCreacion = DateTime.UtcNow
                     });
                 }

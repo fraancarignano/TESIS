@@ -239,7 +239,7 @@ namespace TESIS_OG.Controllers
               NivelCriticidad =
                 i.StockActual <= 0 ? "Agotado" :
                 (!i.StockMinimo.HasValue || i.StockMinimo <= 0) ? "Normal" :
-                (i.StockActual / i.StockMinimo <= 0.3m) ? "CrÃ­tico" :
+                (i.StockActual / i.StockMinimo <= 0.3m) ? "Crí­tico" :
                 (i.StockActual / i.StockMinimo <= 0.8m) ? "Bajo" :
                 (i.StockActual / i.StockMinimo <= 1m) ? "Alerta" :
                 "Normal",

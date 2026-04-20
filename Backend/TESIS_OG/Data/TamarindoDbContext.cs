@@ -95,6 +95,7 @@ public partial class TamarindoDbContext : DbContext
     public virtual DbSet<UsuarioArea> UsuarioAreas { get; set; }
     public virtual DbSet<UsuarioPermiso> UsuarioPermisos { get; set; }
     public virtual DbSet<Despacho> Despachos { get; set; }
+    public virtual DbSet<CalidadIncidencia> CalidadIncidencias { get; set; }
 
     public virtual DbSet<VwMaterialesProyecto> VwMaterialesProyectos { get; set; }
 
@@ -791,7 +792,7 @@ public partial class TamarindoDbContext : DbContext
 
             entity.Property(e => e.IdObservacion).HasColumnName("id_Observacion");
             entity.Property(e => e.Descripcion)
-                .HasMaxLength(200)
+                .HasColumnType("varchar(max)")
                 .IsUnicode(false)
                 .HasColumnName("descripcion");
             entity.Property(e => e.Fecha)
@@ -1552,6 +1553,10 @@ public partial class TamarindoDbContext : DbContext
             entity.Property(e => e.DescripcionLogo).HasMaxLength(500).IsUnicode(false).HasColumnName("descripcion_Logo");
             entity.Property(e => e.ImagenMockup).HasColumnName("imagen_Mockup").HasColumnType("varchar(max)").IsUnicode(false);
             entity.Property(e => e.DescripcionMockup).HasMaxLength(500).IsUnicode(false).HasColumnName("descripcion_Mockup");
+            entity.Property(e => e.ImagenBordado).HasColumnName("imagen_Bordado").HasColumnType("varchar(max)").IsUnicode(false);
+            entity.Property(e => e.DescripcionBordado).HasMaxLength(500).IsUnicode(false).HasColumnName("descripcion_Bordado");
+            entity.Property(e => e.ImagenEstampado).HasColumnName("imagen_Estampado").HasColumnType("varchar(max)").IsUnicode(false);
+            entity.Property(e => e.DescripcionEstampado).HasMaxLength(500).IsUnicode(false).HasColumnName("descripcion_Estampado");
             entity.Property(e => e.IdUsuarioCreacion).HasColumnName("id_Usuario_Creacion");
             entity.Property(e => e.FechaCreacion).HasColumnType("datetime").HasColumnName("fecha_Creacion");
             entity.Property(e => e.IdUsuarioModificacion).HasColumnName("id_Usuario_Modificacion");
@@ -1566,6 +1571,81 @@ public partial class TamarindoDbContext : DbContext
                 .HasForeignKey(d => d.IdPrenda)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ProyectoDiseno_Prenda");
+        });
+
+        modelBuilder.Entity<CalidadIncidencia>(entity =>
+        {
+            entity.HasKey(e => e.IdCalidadIncidencia).HasName("PK_CalidadIncidencia");
+
+            entity.ToTable("CalidadIncidencia");
+
+            entity.Property(e => e.IdCalidadIncidencia).HasColumnName("id_CalidadIncidencia");
+            entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            entity.Property(e => e.IdTaller).HasColumnName("id_Taller");
+            entity.Property(e => e.IdUsuarioRegistro).HasColumnName("id_UsuarioRegistro");
+            entity.Property(e => e.FechaDeteccion)
+                .HasDefaultValueSql("GETDATE()")
+                .HasColumnType("datetime")
+                .HasColumnName("fecha_Deteccion");
+
+            entity.Property(e => e.NombrePrenda)
+                .HasMaxLength(120)
+                .IsUnicode(false)
+                .HasColumnName("nombre_Prenda");
+
+            entity.Property(e => e.Talle)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("talle");
+
+            entity.Property(e => e.CriterioId)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("criterio_Id");
+
+            entity.Property(e => e.CriterioNombre)
+                .HasMaxLength(160)
+                .IsUnicode(false)
+                .HasColumnName("criterio_Nombre");
+
+            entity.Property(e => e.Cantidad).HasColumnName("cantidad");
+
+            entity.Property(e => e.DetalleFalla)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("detalle_Falla");
+
+            entity.Property(e => e.Estado)
+                .HasMaxLength(30)
+                .IsUnicode(false)
+                .HasDefaultValue("PENDIENTE")
+                .HasColumnName("estado");
+
+            entity.Property(e => e.FechaEnvioTaller)
+                .HasColumnType("datetime")
+                .HasColumnName("fecha_EnvioTaller");
+
+            entity.Property(e => e.FechaReingreso)
+                .HasColumnType("datetime")
+                .HasColumnName("fecha_Reingreso");
+
+            entity.Property(e => e.FechaCierre)
+                .HasColumnType("datetime")
+                .HasColumnName("fecha_Cierre");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany()
+                .HasForeignKey(d => d.IdProyecto)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CalidadIncidencia_Proyecto");
+
+            entity.HasOne(d => d.IdTallerNavigation).WithMany()
+                .HasForeignKey(d => d.IdTaller)
+                .HasConstraintName("FK_CalidadIncidencia_Taller");
+
+            entity.HasOne(d => d.IdUsuarioRegistroNavigation).WithMany()
+                .HasForeignKey(d => d.IdUsuarioRegistro)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_CalidadIncidencia_UsuarioRegistro");
         });
 
         OnModelCreatingPartial(modelBuilder);

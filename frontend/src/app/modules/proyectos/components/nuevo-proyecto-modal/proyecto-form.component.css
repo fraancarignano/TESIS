@@ -390,8 +390,9 @@ small {
   border-radius: 10px;
   padding: 0.65rem;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: stretch;
   transition: all 0.2s;
 }
 
@@ -474,7 +475,7 @@ small {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  flex: 1;
+  width: 100%;
 }
 
 .prenda-detalles strong {
@@ -872,6 +873,34 @@ small {
 /* MATERIALES ADICIONALES */
 /* ============================================ */
 
+.badge-opcional {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-toggle-materiales {
+  border: none;
+  background: transparent;
+  color: #1976d2;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.btn-toggle-materiales:hover {
+  background: #e3f2fd;
+}
+
 .materiales-input-group {
   margin-bottom: 24px;
   padding: 20px;
@@ -893,6 +922,11 @@ small {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+.materiales-input-group .input-row {
+  flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 .flex-1 {
@@ -1175,6 +1209,16 @@ small {
   padding-top: 0.9rem;
   border-top: 3px solid #f0f0f0;
   margin-top: 1rem;
+}
+
+.form-hint-error {
+  margin-top: 0.7rem;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ffcdd2;
+  background: #ffebee;
+  color: #c62828;
+  font-size: 0.9rem;
 }
 
 .btn-secondary-large,

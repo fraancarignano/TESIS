@@ -26,7 +26,7 @@ import { ProyectoDetalleModalComponent } from '../proyecto-detalle-modal/proyect
         [proyecto]="proyecto"
         [modoPantallaCompleta]="true"
         (cerrar)="volver()"
-        (actualizado)="recargar()">
+        (actualizado)="recargar(true)">
       </app-proyecto-detalle-modal>
     </section>
   `,

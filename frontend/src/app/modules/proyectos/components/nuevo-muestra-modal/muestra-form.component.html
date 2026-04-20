@@ -5,7 +5,7 @@
   <div class="modal-container-large" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2><i class="fas fa-folder-plus"></i> Nueva Muestra</h2>
-      <button class="btn-close" (click)="cancelar()">Ã—</button>
+      <button class="btn-close" (click)="cancelar()">X</button>
     </div>
 
     <div class="modal-body-scroll">
@@ -34,7 +34,7 @@
   <form [formGroup]="formulario" (ngSubmit)="guardar()">
     
     <!-- ============================================ -->
-    <!-- SECCIÃ“N 1: DATOS GENERALES -->
+    <!-- SECCIí“N 1: DATOS GENERALES -->
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
@@ -52,7 +52,7 @@
             </option>
           </select>
           <span class="cliente-selected" *ngIf="nombreCliente">
-            âœ“ {{ nombreCliente }}
+             {{ nombreCliente }}
           </span>
           <span class="error-msg" *ngIf="formulario.get('idCliente')?.invalid && formulario.get('idCliente')?.touched">Selecciona un cliente</span>
         </div>
@@ -80,18 +80,18 @@
         </div>
       </div>
 
-      <div class="grid-3" *ngIf="clienteSeleccionado">
+      <div class="grid-3" *ngIf="clienteSeleccionadoVista as cliente">
         <div class="field">
-          <label>TelÃƒÂ©fono</label>
-          <input type="text" [value]="clienteSeleccionado.telefono" disabled>
+          <label>Teléfono</label>
+          <input type="text" [value]="cliente.telefono || ''" disabled>
         </div>
         <div class="field">
           <label>Email</label>
-          <input type="text" [value]="clienteSeleccionado.email" disabled>
+          <input type="text" [value]="cliente.email || ''" disabled>
         </div>
         <div class="field">
-          <label>DirecciÃƒÂ³n</label>
-          <input type="text" [value]="clienteSeleccionado.direccion || '-'" disabled>
+          <label>Dirección</label>
+          <input type="text" [value]="cliente.direccion || '-'" disabled>
         </div>
       </div>
 
@@ -103,28 +103,28 @@
           <span class="error-msg" *ngIf="formulario.get('fechaInicio')?.invalid && formulario.get('fechaInicio')?.touched">Requerida</span>
         </div>
 
-        <!-- Fecha LÃ­mite -->
+        <!-- Fecha Lí­mite -->
         <div class="field">
-          <label>Fecha LÃ­mite</label>
+          <label>Fecha Lí­mite</label>
           <input type="date"
             formControlName="fechaFin"
             [min]="fechaMinima">
         </div>
       </div>
 
-      <!-- DescripciÃ³n -->
+      <!-- Descripcií³n -->
       <div class="field">
-        <label>DescripciÃ³n de la Muestra</label>
+        <label>Descripción de la Muestra</label>
         <textarea 
           formControlName="descripcion" 
           rows="2" 
-          placeholder="DescripciÃ³n general de la muestra..."
+          placeholder="Descripción general de la muestra..."
         ></textarea>
       </div>
     </div>
 
     <!-- ============================================ -->
-    <!-- SECCIÃ“N 2: PRENDAS DEL PROYECTO -->
+    <!-- SECCIí“N 2: PRENDAS DEL PROYECTO -->
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
@@ -151,6 +151,7 @@
                 class="btn-edit-mini" 
                 (click)="editarPrenda(prenda, i)"
                 title="Editar"
+                aria-label="Editar"
               >
                 <i class="fas fa-edit"></i>
                 <span class="btn-text">Editar</span>
@@ -160,13 +161,14 @@
                 class="btn-delete-mini" 
                 (click)="eliminarPrenda(i)"
                 title="Eliminar"
+                aria-label="Eliminar"
               >
                 <i class="fas fa-trash"></i>
                 <span class="btn-text">Eliminar</span>
               </button>
             </div>
           </div>
-          
+
           <div class="prenda-detalles">
             <div class="detalle-item">
               <i class="fas fa-tshirt"></i>
@@ -195,7 +197,7 @@
     </div>
 
         <!-- ============================================ -->
-    <!-- SECCIÃ“N: REFERENCIA VISUAL -->
+    <!-- SECCIí“N: REFERENCIA VISUAL -->
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
@@ -222,11 +224,31 @@
             <div class="field">
               <label>Paleta de color</label>
               <div class="paleta-picker-row">
-                <input type="color" [(ngModel)]="paletaHex" [ngModelOptions]="{standalone: true}" class="paleta-picker-input">
+                <input type="color" [(ngModel)]="prenda.paletaColorActual" [ngModelOptions]="{standalone: true}" class="paleta-picker-input">
+                <button
+                  type="button"
+                  class="btn-add-mini"
+                  (click)="agregarColorAPaleta(prenda)"
+                  title="Agregar color"
+                  aria-label="Agregar color"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
                 <div class="paleta-codes">
-                  <strong>{{ paletaHex }}</strong>
-                  <span>{{ paletaRgbTexto }}</span>
+                  <strong>{{ prenda.paletaColorActual || '#000000' }}</strong>
+                  <span>{{ paletaRgbTextoPara(prenda.paletaColorActual || '#000000') }}</span>
                 </div>
+              </div>
+
+              <div class="paleta-preview" *ngIf="prenda.paletaColores?.length">
+                <span class="material-chip" *ngFor="let c of prenda.paletaColores">
+                  <span class="color-swatch" [style.background]="c"></span>
+                  <span class="material-nombre">{{ c }}</span>
+                  <button type="button" class="btn-remove-mini" (click)="quitarColorDePaleta(prenda, c)" aria-label="Quitar color">&times;</button>
+                </span>
               </div>
             </div>
           </div>
@@ -292,7 +314,7 @@
           <h3>
             {{ indexPrendaEditando === -1 ? ' Agregar Prenda' : ' Editar Prenda' }}
           </h3>
-          <button type="button" class="btn-close-sm" (click)="confirmarCerrarModalPrenda()">Ã—</button>
+          <button type="button" class="btn-close-sm" (click)="confirmarCerrarModalPrenda()">—</button>
         </div>
 
         <div class="modal-prenda-body">
@@ -301,8 +323,8 @@
             <label>Tipo de Prenda *</label>
             <div class="input-row">
               <select [(ngModel)]="prendaEditando.idTipoPrenda" [ngModelOptions]="{standalone: true}" class="flex-2">
-                <option [value]="undefined">Seleccionar...</option>
-                <option *ngFor="let tipo of tiposPrenda" [value]="tipo.idTipoPrenda">
+                <option [ngValue]="undefined">Seleccionar...</option>
+                <option *ngFor="let tipo of tiposPrenda" [ngValue]="tipo.idTipoPrenda">
                   {{ tipo.nombrePrenda }}
                 </option>
               </select>
@@ -330,12 +352,12 @@
               [ngModelOptions]="{standalone: true}"
               (change)="onTipoMaterialChange()"
             >
-              <option [value]="undefined">Seleccionar tipo de tela...</option>
-              <option *ngFor="let tipoInsumo of tiposInsumoTelas" [value]="tipoInsumo.idTipoInsumo">
+              <option [ngValue]="undefined">Seleccionar tipo de tela...</option>
+              <option *ngFor="let tipoInsumo of tiposInsumoTelas" [ngValue]="tipoInsumo.idTipoInsumo">
                 {{ tipoInsumo.nombreTipo }}
               </option>
             </select>
-            <small>Ej: AlgodÃ³n, Lycra, Polyester, etc.</small>
+            <small>Ej: Algodí³n, Lycra, Polyester, etc.</small>
           </div>
           <!-- Color/Variante (referencial) -->
           <div class="field">
@@ -394,7 +416,7 @@
       <div class="modal-prenda" (click)="$event.stopPropagation()">
         <div class="modal-prenda-header">
           <h3>Nuevo Tipo de Prenda</h3>
-          <button type="button" class="btn-close-sm" (click)="cancelarModalTipoPrenda()">Ã—</button>
+          <button type="button" class="btn-close-sm" (click)="cancelarModalTipoPrenda()">-</button>
         </div>
 
         <div class="modal-prenda-body">
@@ -455,7 +477,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- FOOTER: BOTONES DE ACCIÃ“N -->
+    <!-- FOOTER: BOTONES DE ACCIí“N -->
     <!-- ============================================ -->
     <div class="form-footer">
       <button 
@@ -469,7 +491,7 @@
       <button 
         type="submit" 
         class="btn-primary-large" 
-        [disabled]="cargando || formulario.invalid || prendasProyecto.length === 0"
+        [disabled]="cargando"
       >
         <span *ngIf="!cargando">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

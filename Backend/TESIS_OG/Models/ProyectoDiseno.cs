@@ -18,6 +18,14 @@ public partial class ProyectoDiseno
 
     public string? DescripcionMockup { get; set; }
 
+    public string? ImagenBordado { get; set; }
+
+    public string? DescripcionBordado { get; set; }
+
+    public string? ImagenEstampado { get; set; }
+
+    public string? DescripcionEstampado { get; set; }
+
     public int? IdUsuarioCreacion { get; set; }
 
     public DateTime? FechaCreacion { get; set; }

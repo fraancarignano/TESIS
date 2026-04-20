@@ -411,14 +411,15 @@ small {
   border-radius: 10px;
   padding: 0.65rem;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-items: stretch;
   transition: all 0.2s;
 }
 
 .prenda-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
@@ -495,7 +496,8 @@ small {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  flex: 1;
+  margin-top: 6px;
+  width: 100%;
 }
 
 .prenda-detalles strong {

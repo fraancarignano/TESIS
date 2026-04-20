@@ -309,28 +309,56 @@ export class ProyectoListComponent implements OnInit {
     });
   }
 
-  async eliminarProyecto(proyecto: Proyecto): Promise<void> {
+  async archivarProyecto(proyecto: Proyecto, event: Event): Promise<void> {
+    event.stopPropagation();
     if (!proyecto.idProyecto) {
       this.alertas.error('Error', 'Proyecto sin ID valido');
       return;
     }
 
     const confirmado = await this.alertas.confirmar(
-      'Eliminar proyecto?',
-      `Se eliminara el proyecto "${proyecto.nombreProyecto}". Esta accion no se puede deshacer.`,
-      'Si, eliminar'
+      'Archivar proyecto?',
+      `El proyecto "${proyecto.nombreProyecto}" pasara a estado Archivado. Podras eliminarlo definitivamente despues.`,
+      'Si, archivar'
     );
 
     if (!confirmado) return;
 
     this.proyectosService.eliminarProyecto(proyecto.idProyecto).subscribe({
       next: () => {
-        this.alertas.success('Proyecto eliminado', 'El proyecto se elimino correctamente');
+        this.alertas.success('Proyecto archivado', 'El proyecto fue archivado correctamente');
         this.cargarProyectos();
       },
       error: (err) => {
-        console.error('Error al eliminar:', err);
-        this.alertas.error('Error', 'No se pudo eliminar el proyecto');
+        console.error('Error al archivar:', err);
+        this.alertas.error('Error', 'No se pudo archivar el proyecto');
+      }
+    });
+  }
+
+  async eliminarDefinitivo(proyecto: Proyecto, event: Event): Promise<void> {
+    event.stopPropagation();
+    if (!proyecto.idProyecto) {
+      this.alertas.error('Error', 'Proyecto sin ID valido');
+      return;
+    }
+
+    const confirmado = await this.alertas.confirmar(
+      'Eliminar definitivamente?',
+      `Esta accion eliminara el proyecto "${proyecto.nombreProyecto}" de forma permanente y no se puede deshacer.`,
+      'Si, eliminar definitivamente'
+    );
+
+    if (!confirmado) return;
+
+    this.proyectosService.eliminarProyectoDefinitivo(proyecto.idProyecto).subscribe({
+      next: () => {
+        this.alertas.success('Proyecto eliminado', 'El proyecto fue eliminado definitivamente');
+        this.proyectos = this.proyectos.filter(p => p.idProyecto !== proyecto.idProyecto);
+      },
+      error: (err) => {
+        console.error('Error al eliminar definitivamente:', err);
+        this.alertas.error('Error', err?.error?.message || 'No se pudo eliminar el proyecto');
       }
     });
   }

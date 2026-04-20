@@ -306,10 +306,24 @@ export class UbicacionTransferComponent implements OnInit {
       aAsignar.map(m => ({ idInsumo: m.idInsumo, cantidad: m.cantidadAAsignar }))
     ).subscribe({
       next: (res: any) => {
-        this.mostrarMensaje('Materiales asignados correctamente.', 'ok');
+        const detalle = Array.isArray(res?.detalle) ? res.detalle : [];
+        const errores = detalle.filter((d: any) => !!d?.error);
+        const omitidos = detalle.filter((d: any) => typeof d?.info === 'string' && d.info.toLowerCase().includes('omit'));
+
+        if (errores.length > 0) {
+          this.mostrarMensaje(errores[0]?.error || 'No se pudieron asignar algunos materiales', 'error');
+        } else if (detalle.length > 0 && omitidos.length === detalle.length) {
+          this.mostrarMensaje('Materiales ya estaban asignados.', 'ok');
+        } else {
+          this.mostrarMensaje('Materiales asignados correctamente.', 'ok');
+        }
         this.cargando = false;
-        if (this.idSolicitudOrigen) {
-          this.notificacionesService.atenderSolicitud(this.idSolicitudOrigen).subscribe();
+        const solicitudId = this.idSolicitudOrigen;
+        if (solicitudId) {
+          this.notificacionesService.atenderSolicitud(solicitudId).subscribe({
+            next: () => { this.idSolicitudOrigen = null; },
+            error: () => {}
+          });
         }
         this.cargarMateriales();
       },
@@ -397,7 +411,10 @@ export class UbicacionTransferComponent implements OnInit {
   }
 
   iniciarProyecto(): void {
-    if (!this.todosListos) return;
+    if (!this.todosListos) {
+      this.mostrarMensaje('Imposible iniciar proyecto, falta de materiales', 'error');
+      return;
+    }
     this.iniciandoProyecto = true;
     this.proyectosServiceNuevo.cambiarEstado(Number(this.idProyectoSeleccionado), 'En Proceso').subscribe({
       next: () => {

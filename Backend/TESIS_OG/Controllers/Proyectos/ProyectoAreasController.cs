@@ -314,7 +314,11 @@ namespace TESIS_OG.Controllers
                     ImagenLogo = d.ImagenLogo,
                     DescripcionLogo = d.DescripcionLogo,
                     ImagenMockup = d.ImagenMockup,
-                    DescripcionMockup = d.DescripcionMockup
+                    DescripcionMockup = d.DescripcionMockup,
+                    ImagenBordado = d.ImagenBordado,
+                    DescripcionBordado = d.DescripcionBordado,
+                    ImagenEstampado = d.ImagenEstampado,
+                    DescripcionEstampado = d.DescripcionEstampado
                 }).ToList()
             };
 
@@ -339,6 +343,10 @@ namespace TESIS_OG.Controllers
                     diseno.DescripcionLogo = prendaRequest.DescripcionLogo;
                     diseno.ImagenMockup = prendaRequest.ImagenMockup;
                     diseno.DescripcionMockup = prendaRequest.DescripcionMockup;
+                    diseno.ImagenBordado = prendaRequest.ImagenBordado;
+                    diseno.DescripcionBordado = prendaRequest.DescripcionBordado;
+                    diseno.ImagenEstampado = prendaRequest.ImagenEstampado;
+                    diseno.DescripcionEstampado = prendaRequest.DescripcionEstampado;
                     diseno.FechaModificacion = DateTime.Now;
                     diseno.IdUsuarioModificacion = idUsuario;
                 }
@@ -352,6 +360,10 @@ namespace TESIS_OG.Controllers
                         DescripcionLogo = prendaRequest.DescripcionLogo,
                         ImagenMockup = prendaRequest.ImagenMockup,
                         DescripcionMockup = prendaRequest.DescripcionMockup,
+                        ImagenBordado = prendaRequest.ImagenBordado,
+                        DescripcionBordado = prendaRequest.DescripcionBordado,
+                        ImagenEstampado = prendaRequest.ImagenEstampado,
+                        DescripcionEstampado = prendaRequest.DescripcionEstampado,
                         FechaCreacion = DateTime.Now,
                         IdUsuarioCreacion = idUsuario
                     });

@@ -1049,8 +1049,9 @@ namespace TESIS_OG.Services.ProyectoService
                 await _context.SaveChangesAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.Error.WriteLine($"[ERROR] AgregarObservacion proyecto {idProyecto}: {ex.Message}");
                 return false;
             }
         }
@@ -1403,21 +1404,25 @@ namespace TESIS_OG.Services.ProyectoService
                 var idTipoInsumo = mc.IdInsumoNavigation?.IdTipoInsumo ?? 0;
 
                 // Usar el insumo del MaterialCalculado directamente (es el insumo específico)
-                // Solo buscar alternativo por tipo+color si el insumo original tiene stock 0
                 Insumo? insumoReal = mc.IdInsumoNavigation;
                 decimal stockReal = insumoReal?.StockActual ?? 0;
 
-                // Si el insumo original no tiene stock, buscar por tipo+color como fallback
-                if (stockReal == 0 && !string.IsNullOrWhiteSpace(colorSolicitado))
+                // Con color solicitado: siempre priorizar un insumo del mismo tipo con ese color.
+                // Si no existe ese color en el tipo, considerar stockReal = 0 para no “pedir cualquier color”.
+                if (!string.IsNullOrWhiteSpace(colorSolicitado))
                 {
                     var colorNorm = NormalizarColor(colorSolicitado);
                     var alternativo = insumosPorTipo
-                        .Where(i => i.IdTipoInsumo == idTipoInsumo && i.IdInsumo != (insumoReal?.IdInsumo ?? 0))
+                        .Where(i => i.IdTipoInsumo == idTipoInsumo)
                         .FirstOrDefault(i => NormalizarColor(i.Color) == colorNorm);
-                    if (alternativo != null && alternativo.StockActual > 0)
+                    if (alternativo != null)
                     {
                         insumoReal = alternativo;
                         stockReal = alternativo.StockActual;
+                    }
+                    else
+                    {
+                        stockReal = 0;
                     }
                 }
                 else if (stockReal == 0 && string.IsNullOrWhiteSpace(colorSolicitado))
@@ -1451,7 +1456,8 @@ namespace TESIS_OG.Services.ProyectoService
                     NombrePrenda = mc.IdProyectoPrendaNavigation?.IdTipoPrendaNavigation?.NombrePrenda,
                     ColorInsumo = insumoReal?.Color,
                     ColorSolicitado = colorSolicitado,
-                    ColorCoincide = tieneStockReal || string.IsNullOrWhiteSpace(colorSolicitado)
+                    ColorCoincide = string.IsNullOrWhiteSpace(colorSolicitado)
+                                   || NormalizarColor(insumoReal?.Color) == NormalizarColor(colorSolicitado)
                 };
             }).ToList();
 

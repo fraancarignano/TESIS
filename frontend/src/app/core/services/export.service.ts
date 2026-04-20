@@ -32,11 +32,23 @@ export interface PlanillaConfeccionExport {
     inicio?: string;
     limite?: string;
   };
-  corteResumen: { etiqueta: string; prendas: number }[];
-  materiales: { nombre: string; cantidad: number; unidad: string }[];
+  corteDistribucion: { talle: string; cantidad: number }[];
+  diseno: {
+    nombrePrenda: string;
+    materialBase: string;
+    cantidadTotal: number;
+    descripcionDiseno?: string;
+    tieneBordado: boolean;
+    tieneEstampado: boolean;
+    imagenMockup?: string;
+    descripcionMockup?: string;
+    imagenBordado?: string;
+    descripcionBordado?: string;
+    imagenEstampado?: string;
+    descripcionEstampado?: string;
+  }[];
   instrucciones?: string;
   observaciones?: string;
-  disenoNotas?: string;
 }
 
 @Injectable({
@@ -717,29 +729,86 @@ export class ExportService {
 
     y = Math.max(yLeft, yRight) + 6;
 
-    addSectionTitle('Diseno (referencias)');
-    const disenoTexto = data.disenoNotas || 'Pendiente de integracion';
-    const disenoLines = doc.splitTextToSize(disenoTexto, contentWidth - 4);
-    doc.setFontSize(9);
-    doc.setTextColor(70);
-    doc.text(disenoLines, marginX + 2, y + 2);
-    y += 6 + disenoLines.length * 4;
+    addSectionTitle('Diseno');
+    if (data.diseno && data.diseno.length > 0) {
+      for (const prenda of data.diseno) {
+        // Fila de info de la prenda
+        const tags: string[] = [];
+        if (prenda.tieneBordado) tags.push('Bordado');
+        if (prenda.tieneEstampado) tags.push('Estampado');
+        const tagStr = tags.length ? ` [${tags.join(', ')}]` : '';
 
-    addSectionTitle('Corte (prendas cortadas)');
-    const corteBody = data.corteResumen.length
-      ? data.corteResumen.map(item => [item.etiqueta || 'Tela', String(item.prendas ?? 0)])
+        y = addTableAt(
+          [['Prenda', 'Material', 'Cantidad', 'Tipo']],
+          [[
+            prenda.nombrePrenda || '-',
+            prenda.materialBase || '-',
+            String(prenda.cantidadTotal ?? 0),
+            tagStr || '-'
+          ]],
+          marginX, y, contentWidth
+        ) + 2;
+
+        if (prenda.descripcionDiseno) {
+          const lines = doc.splitTextToSize(`Descripción: ${prenda.descripcionDiseno}`, contentWidth - 4);
+          doc.setFontSize(8);
+          doc.setTextColor(80);
+          doc.text(lines, marginX + 2, y + 2);
+          y += 4 + lines.length * 3.5;
+        }
+
+        // Imágenes en fila (mockup, bordado, estampado)
+        const imgs: { label: string; src: string; desc?: string }[] = [];
+        if (prenda.imagenMockup) imgs.push({ label: 'Mockup', src: prenda.imagenMockup, desc: prenda.descripcionMockup });
+        if (prenda.imagenBordado) imgs.push({ label: 'Bordado', src: prenda.imagenBordado, desc: prenda.descripcionBordado });
+        if (prenda.imagenEstampado) imgs.push({ label: 'Estampado', src: prenda.imagenEstampado, desc: prenda.descripcionEstampado });
+
+        if (imgs.length > 0) {
+          const imgW = 45;
+          const imgH = 45;
+          const gap = 6;
+          const totalW = imgs.length * imgW + (imgs.length - 1) * gap;
+          let imgX = marginX + (contentWidth - totalW) / 2;
+
+          // Verificar espacio en página
+          if (y + imgH + 14 > doc.internal.pageSize.getHeight() - 15) {
+            doc.addPage();
+            y = 14;
+          }
+
+          for (const img of imgs) {
+            try {
+              doc.addImage(img.src, 'JPEG', imgX, y, imgW, imgH);
+            } catch {
+              try { doc.addImage(img.src, 'PNG', imgX, y, imgW, imgH); } catch { /* skip */ }
+            }
+            doc.setFontSize(7);
+            doc.setTextColor(60);
+            doc.text(img.label, imgX + imgW / 2, y + imgH + 3, { align: 'center' });
+            if (img.desc) {
+              const descLines = doc.splitTextToSize(img.desc, imgW + 4);
+              doc.setFontSize(6.5);
+              doc.setTextColor(100);
+              doc.text(descLines, imgX + imgW / 2, y + imgH + 6, { align: 'center' });
+            }
+            imgX += imgW + gap;
+          }
+          y += imgH + 14;
+        }
+        y += 3;
+      }
+    } else {
+      doc.setFontSize(9);
+      doc.setTextColor(120);
+      doc.text('Sin datos de diseño cargados.', marginX + 2, y + 2);
+      y += 8;
+    }
+
+    addSectionTitle('Corte - Distribucion por talles');
+    const corteBody = data.corteDistribucion && data.corteDistribucion.length
+      ? data.corteDistribucion.map(item => [item.talle || '-', String(item.cantidad ?? 0)])
       : [['Sin datos', '-']];
-    y = addTableAt([['Tela / Color', 'Prendas']], corteBody, marginX, y, contentWidth) + 6;
-
-    addSectionTitle('Materiales enviados al taller');
-    const materialesBody = data.materiales.length
-      ? data.materiales.map(m => [
-        m.nombre || 'Material',
-        m.cantidad !== undefined ? String(m.cantidad) : '-',
-        m.unidad || '-'
-      ])
-      : [['Sin materiales', '-', '-']];
-    y = addTableAt([['Material', 'Cantidad', 'Unidad']], materialesBody, marginX, y, contentWidth) + 6;
+    y = addTableAt([['Talle', 'Cantidad']], corteBody, marginX, y, contentWidth / 2) + 6;
 
     addSectionTitle('Instrucciones al taller');
     const instrucciones = data.instrucciones?.trim() || '-';

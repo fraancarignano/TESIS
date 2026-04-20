@@ -329,6 +329,14 @@
   background: #ffebee;
 }
 
+.btn-archive {
+  color: #e65100;
+}
+
+.btn-archive:hover {
+  background: #fff3e0;
+}
+
 .btn-assign {
   color: #6a1b9a;
 }

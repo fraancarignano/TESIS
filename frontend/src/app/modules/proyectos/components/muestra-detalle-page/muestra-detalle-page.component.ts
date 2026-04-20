@@ -21,6 +21,10 @@ export class MuestraDetallePageComponent implements OnInit {
   error = '';
   editando = false;
 
+  mostrarModalImagen = false;
+  imagenModalUrl = '';
+  imagenModalNombre = 'imagen';
+
   mostrarModalComentario = false;
   mostrarModalHistorial = false;
   comentario = '';
@@ -50,6 +54,37 @@ export class MuestraDetallePageComponent implements OnInit {
       paletaRgb: ['']
     });
     this.form.disable();
+  }
+
+  get ultimaActualizacionFecha(): Date | null {
+    if (!this.muestra) return null;
+
+    const historial = this.muestra.historial || [];
+    const fechasHistorial = historial
+      .map(item => new Date(item.fecha))
+      .filter(d => !Number.isNaN(d.getTime()));
+
+    const fechaBase = new Date(this.muestra.fechaCreacion);
+    const fechaCreacionValida = !Number.isNaN(fechaBase.getTime());
+
+    return fechasHistorial.length
+      ? new Date(Math.max(...fechasHistorial.map(d => d.getTime())))
+      : (fechaCreacionValida ? fechaBase : null);
+  }
+
+  abrirImagen(url: string | null | undefined, nombre: string): void {
+    const src = (url || '').trim();
+    if (!src) return;
+
+    this.imagenModalUrl = src;
+    this.imagenModalNombre = nombre || 'imagen';
+    this.mostrarModalImagen = true;
+  }
+
+  cerrarImagen(): void {
+    this.mostrarModalImagen = false;
+    this.imagenModalUrl = '';
+    this.imagenModalNombre = 'imagen';
   }
 
   ngOnInit(): void {
@@ -213,6 +248,10 @@ export class MuestraDetallePageComponent implements OnInit {
     this.muestrasService.aceptarMuestra(id).subscribe({
       next: () => {
         this.cargarMuestra(id);
+        const irACrear = window.confirm('Muestra aceptada. Â¿QuerÃ©s ir ahora a crear el proyecto?');
+        if (irACrear) {
+          this.router.navigate(['/proyectos/crear'], { queryParams: { muestra: id } });
+        }
       },
       error: (err) => {
         this.error = err.message || 'No se pudo aprobar la muestra';

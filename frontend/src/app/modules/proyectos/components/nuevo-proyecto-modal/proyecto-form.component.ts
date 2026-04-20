@@ -1,7 +1,7 @@
 import { Component, Output, EventEmitter, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProyectosServiceNuevo } from '../../services/proyectos-nuevo.service';
 import { MuestrasService } from '../../services/muestra.service';
@@ -74,6 +74,11 @@ export class ProyectoFormNuevoComponent implements OnInit {
   insumosTelasFiltrados: InsumoFormulario[] = [];
   muestrasAprobadas: MuestraDetalle[] = [];
 
+  private muestraQueryId?: number;
+  private muestraQueryAplicada = false;
+  private datosFormularioCargados = false;
+  private muestrasCargadas = false;
+
   // Prendas del proyecto
   prendasProyecto: PrendaFormulario[] = [];
   prendaEditando?: PrendaFormulario;
@@ -96,6 +101,61 @@ export class ProyectoFormNuevoComponent implements OnInit {
 
   // Materiales manuales (hilos, accesorios)
   materialesManuales: MaterialManualFormulario[] = [];
+  idTipoHiloSeleccionado?: number;
+  idTipoAccesorioSeleccionado?: number;
+  insumosHilosFiltrados: InsumoFormulario[] = [];
+  insumosAccesoriosFiltrados: InsumoFormulario[] = [];
+  materialesAdicionalesExpandido = false;
+
+  private prendaTieneTelaAsignada(prenda: PrendaFormulario): boolean {
+    if (!prenda.idTipoInsumoMaterial) return false;
+
+    const idInsumo = Number(prenda.idInsumo);
+    const tieneInsumoEnStock = !!idInsumo && this.insumosTelas.some(i => i.idInsumo === idInsumo);
+    const tieneColorSolicitado = !!(prenda.colorTela || '').trim();
+
+    return tieneInsumoEnStock || tieneColorSolicitado;
+  }
+
+  private getNombrePrendaParaMensaje(prenda: PrendaFormulario, index: number): string {
+    const nombre =
+      (prenda.nombrePrenda || '').trim() ||
+      this.tiposPrenda.find(t => t.idTipoPrenda === prenda.idTipoPrenda)?.nombrePrenda ||
+      `Prenda ${index + 1}`;
+
+    return nombre;
+  }
+
+  get prendasSinTelaResumen(): string {
+    const faltantes = this.prendasProyecto
+      .map((p, idx) => ({ p, idx }))
+      .filter(x => !this.prendaTieneTelaAsignada(x.p))
+      .map(x => this.getNombrePrendaParaMensaje(x.p, x.idx));
+
+    if (faltantes.length === 0) return '';
+    if (faltantes.length <= 4) return faltantes.join(', ');
+
+    const primeros = faltantes.slice(0, 4).join(', ');
+    return `${primeros} y ${faltantes.length - 4} más`;
+  }
+
+  get mensajeFaltaAsignarTelas(): string {
+    const resumen = this.prendasSinTelaResumen;
+    if (!resumen) return '';
+
+    return `No se puede crear el proyecto: falta asignar la tela en ${resumen}. ` +
+      `Seleccioná un insumo en stock o escribí el color solicitado.`;
+  }
+
+  get faltaAsignarTelas(): boolean {
+    return this.prendasProyecto.some(p => !this.prendaTieneTelaAsignada(p));
+  }
+
+  get puedeGuardarProyecto(): boolean {
+    // En edición no bloquear por telas (solo aplica a "iniciar/crear" proyecto)
+    const faltanTelas = this.modoEdicion ? false : this.faltaAsignarTelas;
+    return !this.cargando && this.formulario.valid && this.prendasProyecto.length > 0 && !faltanTelas;
+  }
 
   // Preview de materiales calculados
   materialesCalculados?: CalculoMaterialesResponse;
@@ -105,6 +165,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
     private fb: FormBuilder,
     private proyectosService: ProyectosServiceNuevo,
     private muestrasService: MuestrasService,
+    private route: ActivatedRoute,
     private router: Router,
     private alertas: AlertasService,
     private notificacionesService: NotificacionesService
@@ -115,6 +176,12 @@ export class ProyectoFormNuevoComponent implements OnInit {
   ngOnInit(): void {
   this.cargarDatosFormulario();
   this.cargarMuestrasAprobadas();
+
+  this.route.queryParamMap.subscribe(params => {
+    const id = Number(params.get('muestra'));
+    this.muestraQueryId = id > 0 ? id : undefined;
+    this.aplicarMuestraDesdeQuerySiCorresponde();
+  });
   
   // ========== NUEVO: Detectar modo edición ==========
   if (this.modoEdicion && this.proyectoAEditar) {
@@ -150,9 +217,13 @@ export class ProyectoFormNuevoComponent implements OnInit {
     this.muestrasService.obtenerMuestras().subscribe({
       next: (data) => {
         this.muestrasAprobadas = (data || []).filter(m => (m.estado || '').toLowerCase() === 'aprobada');
+        this.muestrasCargadas = true;
+        this.aplicarMuestraDesdeQuerySiCorresponde();
       },
       error: () => {
         this.muestrasAprobadas = [];
+        this.muestrasCargadas = true;
+        this.aplicarMuestraDesdeQuerySiCorresponde();
       }
     });
   }
@@ -270,7 +341,12 @@ export class ProyectoFormNuevoComponent implements OnInit {
         this.insumosHilos = filtrarInsumosPorCategoria(datos.insumos, 'Hilo');
         this.insumosAccesorios = filtrarInsumosPorCategoria(datos.insumos, 'Accesorio');
 
+        this.onTipoHiloChange();
+        this.onTipoAccesorioChange();
+
         this.cargando = false;
+        this.datosFormularioCargados = true;
+        this.aplicarMuestraDesdeQuerySiCorresponde();
 
         // ========== NUEVO: Si es modo edición, precargar datos ==========
           if (this.modoEdicion && this.proyectoAEditar) {
@@ -284,6 +360,16 @@ export class ProyectoFormNuevoComponent implements OnInit {
         this.cargando = false;
       }
     });
+  }
+
+  private aplicarMuestraDesdeQuerySiCorresponde(): void {
+    if (this.muestraQueryAplicada) return;
+    if (!this.muestraQueryId) return;
+    if (!this.datosFormularioCargados || !this.muestrasCargadas) return;
+
+    this.muestraQueryAplicada = true;
+    this.formulario.patchValue({ idMuestraAprobada: this.muestraQueryId });
+    void this.onMuestraSeleccionada();
   }
 
   // ========================================
@@ -313,6 +399,28 @@ export class ProyectoFormNuevoComponent implements OnInit {
     if (insumo?.color) {
       this.prendaEditando!.colorTela = insumo.color;
     }
+  }
+
+  onTipoHiloChange(): void {
+    if (!this.idTipoHiloSeleccionado) {
+      this.insumosHilosFiltrados = this.insumosHilos;
+      return;
+    }
+
+    this.insumosHilosFiltrados = this.insumosHilos.filter(
+      i => i.idTipoInsumo === Number(this.idTipoHiloSeleccionado)
+    );
+  }
+
+  onTipoAccesorioChange(): void {
+    if (!this.idTipoAccesorioSeleccionado) {
+      this.insumosAccesoriosFiltrados = this.insumosAccesorios;
+      return;
+    }
+
+    this.insumosAccesoriosFiltrados = this.insumosAccesorios.filter(
+      i => i.idTipoInsumo === Number(this.idTipoAccesorioSeleccionado)
+    );
   }
 
   // ========================================
@@ -600,6 +708,88 @@ export class ProyectoFormNuevoComponent implements OnInit {
     }
   }
 
+  agregarMaterialManualFlexible(
+    idTipoInsumoStr: string | number | undefined | null,
+    idInsumoStr: string | number | undefined | null,
+    detalleStr: string,
+    cantidadStr: string | number,
+    categoria: 'Hilo' | 'Accesorio'
+  ): void {
+    const idTipoInsumo = Number(idTipoInsumoStr);
+    const idInsumoSeleccionado = Number(idInsumoStr);
+    const cantidad = Number(cantidadStr);
+    const detalle = (detalleStr || '').trim();
+
+    if (cantidad <= 0) {
+      this.errorMensaje = 'Ingresa una cantidad > 0';
+      setTimeout(() => (this.errorMensaje = ''), 3000);
+      return;
+    }
+
+    // Si hay insumo seleccionado, asignar directo
+    if (idInsumoSeleccionado) {
+      const insumo = this.insumos.find(i => i.idInsumo === idInsumoSeleccionado);
+      if (!insumo) return;
+
+      const clave = `${insumo.idInsumo}|${detalle.toLowerCase()}`;
+      const existe = this.materialesManuales.find(
+        m => `${Number(m.idInsumo)}|${(m.observaciones || '').trim().toLowerCase()}` === clave
+      );
+
+      if (existe) {
+        existe.cantidad += cantidad;
+        return;
+      }
+
+      this.materialesManuales.push({
+        id: generarIdTemporal(),
+        idInsumo: insumo.idInsumo,
+        nombreInsumo: insumo.nombreInsumo,
+        categoria: categoria,
+        cantidad,
+        unidadMedida: insumo.unidadMedida,
+        stockActual: insumo.stockActual,
+        observaciones: detalle || undefined
+      });
+
+      return;
+    }
+
+    // Sin insumo seleccionado: permitir "tipear" y mandar a OC (fallback similar a telas)
+    if (!idTipoInsumo || !detalle) {
+      this.errorMensaje = 'Selecciona un tipo y escribe un detalle (nombre/color), y cantidad > 0';
+      setTimeout(() => (this.errorMensaje = ''), 3000);
+      return;
+    }
+
+    const tipo = (categoria === 'Hilo' ? this.tiposInsumoHilos : this.tiposInsumoAccesorios)
+      .find(t => t.idTipoInsumo === idTipoInsumo);
+
+    const nombre = tipo ? `${tipo.nombreTipo} — ${detalle}` : detalle;
+
+    const clave = `${idTipoInsumo}|${detalle.toLowerCase()}`;
+    const existe = this.materialesManuales.find(
+      m => `${Number(m.idInsumo)}|${(m.observaciones || '').trim().toLowerCase()}` === clave
+    );
+
+    if (existe) {
+      existe.cantidad += cantidad;
+      return;
+    }
+
+    this.materialesManuales.push({
+      id: generarIdTemporal(),
+      // Igual que en telas: si no hay stock / insumo, usamos el id del tipo como referencia
+      idInsumo: idTipoInsumo,
+      nombreInsumo: nombre,
+      categoria: categoria,
+      cantidad,
+      unidadMedida: 'Unidades',
+      stockActual: 0,
+      observaciones: detalle
+    });
+  }
+
   eliminarMaterialManual(index: number): void {
     this.materialesManuales.splice(index, 1);
   }
@@ -726,6 +916,11 @@ export class ProyectoFormNuevoComponent implements OnInit {
     }
   }
 
+  if (!this.modoEdicion && this.faltaAsignarTelas) {
+    this.errorMensaje = this.mensajeFaltaAsignarTelas;
+    return;
+  }
+
   this.cargando = true;
   this.errorMensaje = '';
 
@@ -766,7 +961,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
               idInsumo: m.idInsumo!,
               cantidad: m.cantidad,
               unidadMedida: m.unidadMedida!,
-              observaciones: undefined
+              observaciones: m.observaciones?.trim() || undefined
             }))
           : undefined
     };
@@ -818,7 +1013,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
             idInsumo: m.idInsumo!,
             cantidad: m.cantidad,
             unidadMedida: m.unidadMedida!,
-            observaciones: undefined
+            observaciones: m.observaciones?.trim() || undefined
           }))
         : undefined
   };

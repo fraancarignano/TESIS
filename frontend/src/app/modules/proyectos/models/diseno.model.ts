@@ -45,6 +45,10 @@ export interface ProyectoDisenoDetallePrenda {
   descripcionLogo?: string | null;
   imagenMockup?: string | null;
   descripcionMockup?: string | null;
+  imagenBordado?: string | null;
+  descripcionBordado?: string | null;
+  imagenEstampado?: string | null;
+  descripcionEstampado?: string | null;
 }
 
 export interface ProyectoDisenoPayload {
@@ -58,4 +62,8 @@ export interface ProyectoDisenoPayloadPrenda {
   descripcionLogo?: string;
   imagenMockup: string;
   descripcionMockup?: string;
+  imagenBordado?: string;
+  descripcionBordado?: string;
+  imagenEstampado?: string;
+  descripcionEstampado?: string;
 }

@@ -5,7 +5,7 @@
   <div class="modal-container-large" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2><i class="fas fa-folder-plus"></i> Nuevo Proyecto</h2>
-      <button class="btn-close" (click)="cancelar()">Ã—</button>
+      <button class="btn-close" (click)="cancelar()">—</button>
     </div>
 
     <div class="modal-body-scroll">
@@ -34,7 +34,7 @@
   <form [formGroup]="formulario" (ngSubmit)="guardar()">
     
     <!-- ============================================ -->
-    <!-- SECCIÃ“N 1: DATOS GENERALES -->
+    <!-- SECCIí“N 1: DATOS GENERALES -->
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
@@ -63,7 +63,7 @@
             </option>
           </select>
           <span class="cliente-selected" *ngIf="nombreCliente">
-            âœ“ {{ nombreCliente }}
+             {{ nombreCliente }}
           </span>
         </div>
 
@@ -95,9 +95,9 @@
           <input type="date" formControlName="fechaInicio">
         </div>
 
-        <!-- Fecha LÃ­mite -->
+        <!-- Fecha Lí­mite -->
         <div class="field">
-          <label>Fecha LÃ­mite</label>
+          <label>Fecha Lí­mite</label>
           <input type="date"
             formControlName="fechaFin"
             [min]="fechaMinima">
@@ -118,7 +118,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SECCIÃ“N 2: PRENDAS DEL PROYECTO -->
+    <!-- SECCIí“N 2: PRENDAS DEL PROYECTO -->
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
@@ -206,7 +206,7 @@
           <h3>
             {{ indexPrendaEditando === -1 ? ' Agregar Prenda' : ' Editar Prenda' }}
           </h3>
-          <button type="button" class="btn-close-sm" (click)="confirmarCerrarModalPrenda()">Ã—</button>
+          <button type="button" class="btn-close-sm" (click)="confirmarCerrarModalPrenda()">—</button>
         </div>
 
         <div class="modal-prenda-body">
@@ -305,7 +305,7 @@
               </span>
             </button>
             <small *ngIf="prendaEditando.tallesDistribuidos.length > 0" class="text-success">
-              âœ“ Talles distribuidos: {{ getTallesSeparados(prendaEditando.tallesDistribuidos) }}
+               Talles distribuidos: {{ getTallesSeparados(prendaEditando.tallesDistribuidos) }}
             </small>
           </div>
 
@@ -329,7 +329,7 @@
       <div class="modal-prenda" (click)="$event.stopPropagation()">
         <div class="modal-prenda-header">
           <h3>Nuevo Tipo de Prenda</h3>
-          <button type="button" class="btn-close-sm" (click)="cancelarModalTipoPrenda()">Ã—</button>
+          <button type="button" class="btn-close-sm" (click)="cancelarModalTipoPrenda()">—</button>
         </div>
 
         <div class="modal-prenda-body">
@@ -378,13 +378,13 @@
       </div>
     </div>
     <!-- ============================================ -->
-    <!-- MODAL: DISTRIBUCIÃ“N DE TALLES -->
+    <!-- MODAL: DISTRIBUCIí“N DE TALLES -->
     <!-- ============================================ -->
     <div class="modal-overlay-inner" *ngIf="mostrarModalTalles" (click)="cerrarModalTalles()">
       <div class="modal-talles" (click)="$event.stopPropagation()">
         <div class="modal-talles-header">
           <h3>Distribuir por Talles</h3>
-          <button type="button" class="btn-close-sm" (click)="cerrarModalTalles()">Ã—</button>
+          <button type="button" class="btn-close-sm" (click)="cerrarModalTalles()">—</button>
         </div>
 
         <div class="modal-talles-info">
@@ -442,30 +442,62 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- SECCIÃ“N 3: MATERIALES ADICIONALES -->
+    <!-- SECCIí“N 3: MATERIALES ADICIONALES -->
     <!-- ============================================ -->
     <div class="seccion">
       <div class="seccion-header">
-        <h3>Materiales Adicionales (Hilos y Accesorios)</h3>
+        <h3>
+          Materiales Adicionales (Hilos y Accesorios)
+          <span class="badge-opcional">Opcional</span>
+        </h3>
+        <button
+          type="button"
+          class="btn-toggle-materiales"
+          (click)="materialesAdicionalesExpandido = !materialesAdicionalesExpandido"
+          [attr.aria-expanded]="materialesAdicionalesExpandido"
+        >
+          {{ materialesAdicionalesExpandido ? 'Contraer' : 'Agregar materiales' }}
+        </button>
       </div>
 
       <p class="seccion-descripcion">
-        Los materiales de tela se calculan automÃ¡ticamente segÃºn las prendas. 
-        AquÃ­ puedes agregar hilos y accesorios manualmente.
+        Los materiales de tela se calculan automí¡ticamente segíºn las prendas. 
+        Aquí­ puedes agregar hilos y accesorios manualmente.
       </p>
 
+      <div *ngIf="materialesAdicionalesExpandido">
       <!-- Agregar Hilos -->
       <div class="materiales-input-group">
         <h4>Hilos</h4>
         <div class="input-row">
-          <select #selectHilo class="flex-2">
-            <option value="">Seleccionar hilo...</option>
-            <option *ngFor="let hilo of insumosHilos" [value]="hilo.idInsumo">
-              {{ hilo.nombreInsumo }} 
+          <select
+            [(ngModel)]="idTipoHiloSeleccionado"
+            [ngModelOptions]="{standalone: true}"
+            class="flex-2"
+            (change)="onTipoHiloChange()"
+          >
+            <option [value]="undefined">Tipo de hilo...</option>
+            <option *ngFor="let tipo of tiposInsumoHilos" [value]="tipo.idTipoInsumo">
+              {{ tipo.nombreTipo }}
+            </option>
+          </select>
+
+          <select #selectHilo class="flex-2" [disabled]="!idTipoHiloSeleccionado">
+            <option value="">Sin stock / pedir a compra...</option>
+            <option *ngFor="let hilo of insumosHilosFiltrados" [value]="hilo.idInsumo">
+              {{ hilo.nombreInsumo }}
               <span *ngIf="hilo.color">({{ hilo.color }})</span>
               - Stock: {{ hilo.stockActual }} {{ hilo.unidadMedida }}
             </option>
           </select>
+
+          <input
+            type="text"
+            #detalleHilo
+            placeholder="Detalle (si no hay stock)"
+            class="flex-2"
+            [disabled]="!idTipoHiloSeleccionado"
+          >
           <input 
             type="number" 
             #cantHilo 
@@ -476,7 +508,7 @@
           <button 
             type="button" 
             class="btn-add-mini" 
-            (click)="agregarMaterialManual(selectHilo.value, cantHilo.value, 'Hilo'); selectHilo.value=''; cantHilo.value=''"
+            (click)="agregarMaterialManualFlexible(idTipoHiloSeleccionado, selectHilo.value, detalleHilo.value, cantHilo.value, 'Hilo'); selectHilo.value=''; detalleHilo.value=''; cantHilo.value=''"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -490,12 +522,32 @@
       <div class="materiales-input-group">
         <h4>Accesorios</h4>
         <div class="input-row">
-          <select #selectAccesorio class="flex-2">
-            <option value="">Seleccionar accesorio...</option>
-            <option *ngFor="let accesorio of insumosAccesorios" [value]="accesorio.idInsumo">
+          <select
+            [(ngModel)]="idTipoAccesorioSeleccionado"
+            [ngModelOptions]="{standalone: true}"
+            class="flex-2"
+            (change)="onTipoAccesorioChange()"
+          >
+            <option [value]="undefined">Tipo de accesorio...</option>
+            <option *ngFor="let tipo of tiposInsumoAccesorios" [value]="tipo.idTipoInsumo">
+              {{ tipo.nombreTipo }}
+            </option>
+          </select>
+
+          <select #selectAccesorio class="flex-2" [disabled]="!idTipoAccesorioSeleccionado">
+            <option value="">Sin stock / pedir a compra...</option>
+            <option *ngFor="let accesorio of insumosAccesoriosFiltrados" [value]="accesorio.idInsumo">
               {{ accesorio.nombreInsumo }} - Stock: {{ accesorio.stockActual }} {{ accesorio.unidadMedida }}
             </option>
           </select>
+
+          <input
+            type="text"
+            #detalleAccesorio
+            placeholder="Detalle (si no hay stock)"
+            class="flex-2"
+            [disabled]="!idTipoAccesorioSeleccionado"
+          >
           <input 
             type="number" 
             #cantAccesorio 
@@ -506,7 +558,7 @@
           <button 
             type="button" 
             class="btn-add-mini" 
-            (click)="agregarMaterialManual(selectAccesorio.value, cantAccesorio.value, 'Accesorio'); selectAccesorio.value=''; cantAccesorio.value=''"
+            (click)="agregarMaterialManualFlexible(idTipoAccesorioSeleccionado, selectAccesorio.value, detalleAccesorio.value, cantAccesorio.value, 'Accesorio'); selectAccesorio.value=''; detalleAccesorio.value=''; cantAccesorio.value=''"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -542,12 +594,12 @@
             (click)="eliminarMaterialManual(i)"
             title="Eliminar"
           >
-            Ã—
+            —
           </button>
         </div>
       </div>
+      </div>
     </div>
-
     <!-- ============================================ -->
     <!-- PREVIEW DE MATERIALES -->
     <!-- ============================================ -->
@@ -575,7 +627,7 @@
         <p>Haz clic en "Calcular Materiales" para ver un preview de todos los materiales necesarios y verificar el stock disponible antes de crear el proyecto.</p>
       </div>
 
-      <!-- Resultado del cÃ¡lculo -->
+      <!-- Resultado del cí¡lculo -->
       <div class="preview-content" *ngIf="materialesCalculados">
         
         <!-- Alertas -->
@@ -696,7 +748,7 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- FOOTER: BOTONES DE ACCIÃ“N -->
+    <!-- FOOTER: BOTONES DE ACCIí“N -->
     <!-- ============================================ -->
     <div class="form-footer">
       <button 
@@ -710,7 +762,7 @@
       <button 
         type="submit" 
         class="btn-primary-large" 
-        [disabled]="cargando || formulario.invalid || prendasProyecto.length === 0"
+        [disabled]="!puedeGuardarProyecto"
       >
         <span *ngIf="!cargando">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -727,6 +779,10 @@
           Guardando...
         </span>
       </button>
+    </div>
+
+    <div class="form-hint-error" *ngIf="!modoEdicion && faltaAsignarTelas">
+      {{ mensajeFaltaAsignarTelas }}
     </div>
 
   </form>

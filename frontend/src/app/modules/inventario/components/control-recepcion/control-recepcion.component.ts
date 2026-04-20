@@ -119,7 +119,7 @@ export class ControlRecepcionComponent implements OnInit {
         const confirmado = await this.alertas.confirmar(
             '¿Confirmar control de recepción?',
             `Se actualizará el stock con las cantidades ingresadas y la orden quedará como "Recibida".`,
-            'Sí, confirmar'
+            'Confirmar'
         );
         if (!confirmado) return;
 

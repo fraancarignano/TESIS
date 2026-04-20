@@ -55,6 +55,10 @@ namespace TESIS_OG.DTOs.Proyectos
         public string? DescripcionLogo { get; set; }
         public string? ImagenMockup { get; set; }
         public string? DescripcionMockup { get; set; }
+        public string? ImagenBordado { get; set; }
+        public string? DescripcionBordado { get; set; }
+        public string? ImagenEstampado { get; set; }
+        public string? DescripcionEstampado { get; set; }
     }
 
     public class ProyectoDisenoPayloadDTO
@@ -70,5 +74,9 @@ namespace TESIS_OG.DTOs.Proyectos
         public string? DescripcionLogo { get; set; }
         public string? ImagenMockup { get; set; }
         public string? DescripcionMockup { get; set; }
+        public string? ImagenBordado { get; set; }
+        public string? DescripcionBordado { get; set; }
+        public string? ImagenEstampado { get; set; }
+        public string? DescripcionEstampado { get; set; }
     }
 }

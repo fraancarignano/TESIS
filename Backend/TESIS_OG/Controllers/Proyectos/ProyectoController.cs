@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using TESIS_OG.Data;
 using TESIS_OG.DTOs.Proyectos;
 using TESIS_OG.DTOs.Configuracion;
@@ -97,7 +99,7 @@ namespace TESIS_OG.Controllers
         }
 
         /// <summary>
-        /// Obtiene un listado liviano de proyectos (para carga inicial rÃ¡pida)
+        /// Obtiene un listado liviano de proyectos (para carga inicial rí¡pida)
         /// </summary>
         [HttpGet("resumen")]
         [ProducesResponseType(typeof(List<ProyectoListaDTO>), StatusCodes.Status200OK)]
@@ -614,14 +616,16 @@ namespace TESIS_OG.Controllers
                     // Si el insumo no tiene stock suficiente, buscar otro del mismo tipo+color que sí tenga
                     if (insumo.StockActual < item.Cantidad && !string.IsNullOrWhiteSpace(insumo.Color))
                     {
-                        var alternativo = await _context.Insumos
+                        var colorNorm = NormalizarColor(insumo.Color);
+                        var candidatos = await _context.Insumos
                             .Where(i => i.IdTipoInsumo == insumo.IdTipoInsumo
-                                     && i.Color == insumo.Color
                                      && i.IdInsumo != insumo.IdInsumo
-                                     && i.StockActual >= item.Cantidad)
-                            .FirstOrDefaultAsync();
-                        if (alternativo != null)
-                            insumo = alternativo;
+                                     && i.StockActual >= item.Cantidad
+                                     && i.Color != null && i.Color != "")
+                            .ToListAsync();
+
+                        var alternativo = candidatos.FirstOrDefault(i => NormalizarColor(i.Color) == colorNorm);
+                        if (alternativo != null) insumo = alternativo;
                     }
 
                     if (item.Cantidad <= 0)
@@ -631,11 +635,29 @@ namespace TESIS_OG.Controllers
                     }
 
                     // Idempotencia: si ya fue asignado, omitir
-                    var yaAsignado = await _context.InsumoStocks
-                        .AnyAsync(s => s.IdInsumo == item.IdInsumo && s.IdProyecto == id);
+                    bool yaAsignado;
+                    if (!string.IsNullOrWhiteSpace(insumo.Color))
+                    {
+                        var colorNorm = NormalizarColor(insumo.Color);
+                        var candidatos = await _context.Insumos
+                            .Where(i => i.IdTipoInsumo == insumo.IdTipoInsumo && i.Color != null && i.Color != "")
+                            .Select(i => new { i.IdInsumo, i.Color })
+                            .ToListAsync();
+
+                        var idsEquivalentes = candidatos
+                            .Where(i => NormalizarColor(i.Color) == colorNorm)
+                            .Select(i => i.IdInsumo)
+                            .ToList();
+
+                        yaAsignado = await _context.InsumoStocks.AnyAsync(s => s.IdProyecto == id && idsEquivalentes.Contains(s.IdInsumo));
+                    }
+                    else
+                    {
+                        yaAsignado = await _context.InsumoStocks.AnyAsync(s => s.IdInsumo == insumo.IdInsumo && s.IdProyecto == id);
+                    }
                     if (yaAsignado)
                     {
-                        resultados.Add(new { idInsumo = item.IdInsumo, nombre = insumo.NombreInsumo, info = "Ya estaba asignado, omitido" });
+                        resultados.Add(new { idInsumo = insumo.IdInsumo, nombre = insumo.NombreInsumo, info = "Ya estaba asignado, omitido" });
                         continue;
                     }
 
@@ -680,7 +702,7 @@ namespace TESIS_OG.Controllers
                     var observacion = $"Asignado al proyecto {proyecto.NombreProyecto}";
                     _context.InventarioMovimientos.Add(new InventarioMovimiento
                     {
-                        IdInsumo = item.IdInsumo,
+                        IdInsumo = insumo.IdInsumo,
                         NombreInsumo = insumo.NombreInsumo,
                         TipoMovimiento = "Asignacion",
                         Cantidad = item.Cantidad,
@@ -690,7 +712,16 @@ namespace TESIS_OG.Controllers
                         Observacion = observacion.Length > 100 ? observacion[..100] : observacion
                     });
 
-                    resultados.Add(new { idInsumo = item.IdInsumo, nombre = insumo.NombreInsumo, color = insumo.Color, stockAntes, stockDespues = insumo.StockActual, cantidad = item.Cantidad });
+                    resultados.Add(new
+                    {
+                        idInsumoSolicitado = item.IdInsumo,
+                        idInsumoAsignado = insumo.IdInsumo,
+                        nombre = insumo.NombreInsumo,
+                        color = insumo.Color,
+                        stockAntes,
+                        stockDespues = insumo.StockActual,
+                        cantidad = item.Cantidad
+                    });
                 }
 
                 await _context.SaveChangesAsync();
@@ -719,6 +750,8 @@ namespace TESIS_OG.Controllers
 
                 var materiales = await _context.MaterialCalculados
                     .Include(mc => mc.IdInsumoNavigation)
+                        .ThenInclude(i => i != null ? i.IdTipoInsumoNavigation : null)
+                    .Include(mc => mc.IdProyectoPrendaNavigation)
                     .Where(mc => mc.IdProyecto == id)
                     .ToListAsync();
 
@@ -731,9 +764,57 @@ namespace TESIS_OG.Controllers
                 foreach (var mat in materiales)
                 {
                     var cantidadNecesaria = mat.CantidadManual ?? mat.CantidadCalculada;
-                    var stockAsignado = await _context.InsumoStocks
-                        .Where(s => s.IdInsumo == mat.IdInsumo && s.IdProyecto == id)
-                        .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+
+                    var idTipoInsumo = mat.IdInsumoNavigation?.IdTipoInsumo ?? 0;
+                    var colorSolicitado = mat.IdProyectoPrendaNavigation?.ColorTela;
+                    var colorParaMatch = !string.IsNullOrWhiteSpace(colorSolicitado)
+                        ? colorSolicitado
+                        : mat.IdInsumoNavigation?.Color;
+
+                    decimal stockAsignado;
+                    if (idTipoInsumo > 0)
+                    {
+                        // Con color solicitado → contar por tipo+color; sin color → contar por tipo (cualquier insumo del tipo)
+                        if (!string.IsNullOrWhiteSpace(colorParaMatch))
+                        {
+                            var colorNorm = NormalizarColor(colorParaMatch);
+                            var idsEquivalentes = await _context.Insumos
+                                .Where(i => i.IdTipoInsumo == idTipoInsumo && i.Color != null && i.Color != "")
+                                .Select(i => new { i.IdInsumo, i.Color })
+                                .ToListAsync();
+
+                            var ids = idsEquivalentes
+                                .Where(i => NormalizarColor(i.Color) == colorNorm)
+                                .Select(i => i.IdInsumo)
+                                .ToList();
+
+                            stockAsignado = ids.Count == 0
+                                ? 0
+                                : await _context.InsumoStocks
+                                    .Where(s => s.IdProyecto == id && ids.Contains(s.IdInsumo))
+                                    .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+                        }
+                        else
+                        {
+                            var idsTipo = await _context.Insumos
+                                .Where(i => i.IdTipoInsumo == idTipoInsumo)
+                                .Select(i => i.IdInsumo)
+                                .ToListAsync();
+
+                            stockAsignado = idsTipo.Count == 0
+                                ? 0
+                                : await _context.InsumoStocks
+                                    .Where(s => s.IdProyecto == id && idsTipo.Contains(s.IdInsumo))
+                                    .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+                        }
+                    }
+                    else
+                    {
+                        // Fallback: por insumo exacto
+                        stockAsignado = await _context.InsumoStocks
+                            .Where(s => s.IdInsumo == mat.IdInsumo && s.IdProyecto == id)
+                            .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+                    }
 
                     var listo = stockAsignado >= cantidadNecesaria;
                     if (!listo) todosListos = false;
@@ -741,7 +822,10 @@ namespace TESIS_OG.Controllers
                     detalles.Add(new
                     {
                         idInsumo = mat.IdInsumo,
-                        nombreInsumo = mat.IdInsumoNavigation?.NombreInsumo,
+                        idTipoInsumo,
+                        nombreInsumo = mat.IdInsumoNavigation?.IdTipoInsumoNavigation?.NombreTipo
+                                      ?? mat.IdInsumoNavigation?.NombreInsumo,
+                        colorSolicitado,
                         colorInsumo = mat.IdInsumoNavigation?.Color,
                         cantidadNecesaria,
                         stockAsignado,
@@ -822,6 +906,20 @@ namespace TESIS_OG.Controllers
                 ?? User.FindFirstValue("sub");
 
             return int.TryParse(raw, out var idUsuario) ? idUsuario : null;
+        }
+
+        private static string NormalizarColor(string? color)
+        {
+            if (string.IsNullOrWhiteSpace(color)) return "";
+
+            var normalized = color.Trim().ToUpperInvariant().Normalize(NormalizationForm.FormD);
+            var sb = new StringBuilder(normalized.Length);
+            foreach (var ch in normalized)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark)
+                    sb.Append(ch);
+            }
+            return sb.ToString();
         }
     }
 

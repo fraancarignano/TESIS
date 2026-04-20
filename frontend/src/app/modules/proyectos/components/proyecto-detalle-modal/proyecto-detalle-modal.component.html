@@ -78,6 +78,21 @@
             </ng-template>
           </div>
           <div class="info-item">
+            <label>Materiales asignados</label>
+            <ng-container *ngIf="proyecto.idProyecto; else sinProyectoMateriales">
+              <a
+                class="info-link"
+                [routerLink]="['/inventario/asignar-proyecto']"
+                [queryParams]="{ proyecto: proyecto.idProyecto }">
+                Ver materiales
+                <ng-container *ngIf="(proyecto.materiales?.length || 0) > 0">({{ proyecto.materiales?.length || 0 }})</ng-container>
+              </a>
+            </ng-container>
+            <ng-template #sinProyectoMateriales>
+              <span>-</span>
+            </ng-template>
+          </div>
+          <div class="info-item">
             <label>Tipo de prenda</label>
             <span>{{ proyecto.tipoPrenda || 'No especificado' }}</span>
           </div>
@@ -92,14 +107,6 @@
             <span class="badge estado-badge" [style.background-color]="proyecto.estadoColor || '#9e9e9e'">
               {{ proyecto.estado }}
             </span>
-          </div>
-          <div class="info-item">
-            <label>Encargado</label>
-            <span>{{ proyecto.nombreEncargado || 'Sin asignar' }}</span>
-          </div>
-          <div class="info-item">
-            <label>Estacion</label>
-            <span>{{ proyecto.tipoEstacion || 'Sin definir' }}</span>
           </div>
           <div class="info-item">
             <label>Area actual</label>
@@ -303,9 +310,10 @@
                   </div>
                 </div>
 
-                <div class="calidad-alerta" *ngIf="criteriosNoCumplen > 0">
+                <div class="calidad-alerta calidad-alerta-warning" *ngIf="criteriosNoCumplen > 0">
                   <i class="fas fa-exclamation-triangle"></i>
-                  {{ criteriosNoCumplen }} criterio(s) marcados como "No cumple".
+                  <strong>{{ criteriosNoCumplen }} criterio(s) marcados como "No cumple".</strong>
+                  <span>Al guardar, las prendas se registrarán para devolución a taller.</span>
                 </div>
                 <div class="calidad-alerta" *ngIf="tieneExcesoEnTallesActuales">
                   <i class="fas fa-exclamation-triangle"></i>
@@ -329,6 +337,81 @@
                     <i class="fas fa-eraser"></i>
                     Limpiar
                   </button>
+                </div>
+
+                <div class="calidad-incidencias">
+                  <div class="calidad-header">
+                    <h4><i class="fas fa-clipboard-list"></i> Prendas que no aprueban calidad</h4>
+                    <span class="calidad-resumen">
+                      Prendas con criterios rechazados
+                    </span>
+                  </div>
+
+                  <!-- Lista de prendas rechazadas -->
+                  <div class="prendas-rechazadas-lista" *ngIf="prendasRechazadas.length > 0">
+                    <div class="prenda-rechazada-item" *ngFor="let prenda of prendasRechazadas">
+                      <div class="prenda-rechazada-header">
+                        <div class="prenda-info">
+                          <strong>{{ prenda.nombrePrenda }} - Talle {{ prenda.talle }}</strong>
+                          <span class="cantidad-badge">{{ prenda.cantidad }} unidad(es)</span>
+                        </div>
+                        <div class="prenda-estado">
+                          <span class="estado-badge" 
+                                [class.estado-pendiente]="prenda.estado === 'PENDIENTE'"
+                                [class.estado-en-taller]="prenda.estado === 'EN_TALLER'"
+                                [class.estado-reingresada]="prenda.estado === 'REINGRESADA'">
+                            {{ textoEstadoPrendaRechazada(prenda.estado) }}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div class="criterios-rechazados">
+                        <div class="criterio-rechazado" *ngFor="let criterio of prenda.criteriosRechazados">
+                          <i class="fas fa-times-circle"></i>
+                          <span class="criterio-nombre">{{ criterio.nombre }}</span>
+                          <span class="criterio-obs" *ngIf="criterio.observacion">{{ criterio.observacion }}</span>
+                        </div>
+                      </div>
+
+                      <div class="prenda-acciones">
+                        <button
+                          type="button"
+                          class="btn-devolver-taller"
+                          *ngIf="prenda.estado === 'PENDIENTE'"
+                          (click)="devolverPrendaATaller(prenda)"
+                          [disabled]="!puedeEditarFormularioCalidad || procesandoPrenda[prenda.id]">
+                          <i class="fas" [ngClass]="procesandoPrenda[prenda.id] ? 'fa-spinner fa-spin' : 'fa-truck'"></i>
+                          Devolver a taller
+                        </button>
+                        
+                        <button
+                          type="button"
+                          class="btn-recibir-prenda"
+                          *ngIf="prenda.estado === 'EN_TALLER'"
+                          (click)="recibirPrendaDeTaller(prenda)"
+                          [disabled]="!puedeEditarFormularioCalidad || procesandoPrenda[prenda.id]">
+                          <i class="fas" [ngClass]="procesandoPrenda[prenda.id] ? 'fa-spinner fa-spin' : 'fa-box-open'"></i>
+                          Recibir y controlar
+                        </button>
+
+                        <button
+                          type="button"
+                          class="btn-aprobar-prenda"
+                          *ngIf="prenda.estado === 'REINGRESADA'"
+                          (click)="aprobarPrendaReingresada(prenda)"
+                          [disabled]="!puedeEditarFormularioCalidad || procesandoPrenda[prenda.id]">
+                          <i class="fas" [ngClass]="procesandoPrenda[prenda.id] ? 'fa-spinner fa-spin' : 'fa-check-circle'"></i>
+                          Aprobar prenda
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="calidad-alerta" *ngIf="prendasRechazadas.length === 0">
+                    <i class="fas fa-check-circle"></i>
+                    No hay prendas rechazadas. Todas las prendas inspeccionadas cumplen con los criterios de calidad.
+                  </div>
+
                 </div>
               </div>
 
@@ -477,17 +560,19 @@
                 </div>
 
                 <div class="calidad-actions">
-                  <button type="button" class="btn-guardar-inspeccion" (click)="guardarCorteReal()" [disabled]="!puedeGuardarCorteReal || guardandoCorteReal">
-                    <i class="fas" [ngClass]="guardandoCorteReal ? 'fa-spinner fa-spin' : 'fa-save'"></i>
-                    {{ guardandoCorteReal ? 'Guardando...' : 'Guardar parte de corte' }}
-                  </button>
+                  <!-- vacío: el botón guardar corte se muestra junto al btn continuar -->
                 </div>
               </div>
               <div *ngIf="esAreaDiseno" class="diseno-form">
                 <!-- Banner de sincronización con muestra -->
                 <div class="muestra-sync-banner" *ngIf="proyecto.idMuestra">
                   <div class="banner-content">
-                    <i class="fas fa-sync-alt anim-sync" [class.fa-spin]="loadingSync"></i>
+                    <svg class="anim-sync" [class.spinning]="loadingSync" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21.5 2v6h-6"></path>
+                      <path d="M2.5 12A10 10 0 0 1 18.5 4.5L21.5 8"></path>
+                      <path d="M2.5 22v-6h6"></path>
+                      <path d="M21.5 12A10 10 0 0 1 5.5 19.5L2.5 16"></path>
+                    </svg>
                     <div class="banner-text">
                       <span class="banner-title">Muestra Asociada: {{ proyecto.nombreMuestra }}</span>
                       <span class="banner-subtitle">Este proyecto tiene una muestra vinculada. Puedes importar sus mockups y descripciones.</span>
@@ -512,11 +597,7 @@
                     <span class="plan-label">Proyecto</span>
                     <strong>{{ proyecto.nombreProyecto || 'Sin definir' }}</strong>
                   </div>
-                  <div class="plan-card">
-                    <span class="plan-label">Dueño / Encargado</span>
-                    <strong>{{ proyecto.nombreEncargado || 'Sin asignar' }}</strong>
-                  </div>
-                  <div class="plan-card">
+                  <div class="plan-card plan-card-wide">
                     <span class="plan-label">Qué hay que hacer</span>
                     <strong>{{ proyecto.descripcion || 'Sin descripción general' }}</strong>
                   </div>
@@ -545,9 +626,9 @@
                       <textarea [ngModel]="prenda.descripcionDiseno" rows="2" disabled></textarea>
                     </div>
 
-                    <div class="editor-grid" *ngIf="necesitaLogoDiseno(prenda)">
+                    <!-- <div class="editor-grid" *ngIf="necesitaLogoDiseno(prenda)">
                       <div class="form-group">
-                        <label>Imagen del logo</label>
+                        <label>{{ prenda.tieneBordado ? 'Imagen del bordado' : 'Imagen del logo' }}</label>
                         <input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" [disabled]="!puedeEditarFormularioDiseno"
                           (change)="onArchivoDisenoSeleccionado($event, prenda, 'logo')">
                         <small>JPG o PNG, hasta 5 MB.</small>
@@ -555,19 +636,19 @@
                           <img [src]="disenoPrendasMap[prenda.idProyectoPrenda].imagenLogo" alt="Logo diseño">
                           <button type="button" class="btn-limpiar-inspeccion" *ngIf="puedeEditarFormularioDiseno"
                             (click)="limpiarImagenDiseno(prenda.idProyectoPrenda, 'logo')">
-                            Quitar logo
+                            Quitar
                           </button>
                         </div>
                       </div>
 
                       <div class="form-group">
-                        <label>Descripción del logo</label>
+                        <label>{{ prenda.tieneBordado ? 'Descripción del bordado' : 'Descripción del logo' }}</label>
                         <textarea [ngModel]="disenoPrendasMap[prenda.idProyectoPrenda]?.descripcionLogo || ''"
                           (ngModelChange)="disenoPrendasMap[prenda.idProyectoPrenda].descripcionLogo = $event" rows="3"
                           placeholder="Ej: Logo en pecho izquierdo, 8x8 cm"
                           [disabled]="!puedeEditarFormularioDiseno"></textarea>
                       </div>
-                    </div>
+                    </div> -->
 
                     <div class="editor-grid">
                       <div class="form-group">
@@ -592,14 +673,59 @@
                           [disabled]="!puedeEditarFormularioDiseno"></textarea>
                       </div>
                     </div>
+
+                    <!-- Bordado -->
+                    <div class="editor-grid" *ngIf="prenda.tieneBordado">
+                      <div class="form-group">
+                        <label>Imagen de referencia (bordado)</label>
+                        <input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" [disabled]="!puedeEditarFormularioDiseno"
+                          (change)="onArchivoDisenoSeleccionado($event, prenda, 'bordado')">
+                        <small>JPG o PNG, hasta 5 MB.</small>
+                        <div class="diseno-preview" *ngIf="disenoPrendasMap[prenda.idProyectoPrenda]?.imagenBordado">
+                          <img [src]="disenoPrendasMap[prenda.idProyectoPrenda].imagenBordado" alt="Ref. bordado">
+                          <button type="button" class="btn-limpiar-inspeccion" *ngIf="puedeEditarFormularioDiseno"
+                            (click)="limpiarImagenDiseno(prenda.idProyectoPrenda, 'bordado')">
+                            Quitar imagen
+                          </button>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <label>Descripción del bordado</label>
+                        <textarea [ngModel]="disenoPrendasMap[prenda.idProyectoPrenda]?.descripcionBordado || ''"
+                          (ngModelChange)="disenoPrendasMap[prenda.idProyectoPrenda].descripcionBordado = $event" rows="3"
+                          placeholder="Ej: Logo en pecho izquierdo, 8x8 cm"
+                          [disabled]="!puedeEditarFormularioDiseno"></textarea>
+                      </div>
+                    </div>
+
+                    <!-- Estampado -->
+                    <div class="editor-grid" *ngIf="prenda.tieneEstampado">
+                      <div class="form-group">
+                        <label>Imagen de referencia (estampado)</label>
+                        <input type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" [disabled]="!puedeEditarFormularioDiseno"
+                          (change)="onArchivoDisenoSeleccionado($event, prenda, 'estampado')">
+                        <small>JPG o PNG, hasta 5 MB.</small>
+                        <div class="diseno-preview" *ngIf="disenoPrendasMap[prenda.idProyectoPrenda]?.imagenEstampado">
+                          <img [src]="disenoPrendasMap[prenda.idProyectoPrenda].imagenEstampado" alt="Ref. estampado">
+                          <button type="button" class="btn-limpiar-inspeccion" *ngIf="puedeEditarFormularioDiseno"
+                            (click)="limpiarImagenDiseno(prenda.idProyectoPrenda, 'estampado')">
+                            Quitar imagen
+                          </button>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <label>Descripción del estampado</label>
+                        <textarea [ngModel]="disenoPrendasMap[prenda.idProyectoPrenda]?.descripcionEstampado || ''"
+                          (ngModelChange)="disenoPrendasMap[prenda.idProyectoPrenda].descripcionEstampado = $event" rows="3"
+                          placeholder="Ej: Estampado full front, colores CMYK"
+                          [disabled]="!puedeEditarFormularioDiseno"></textarea>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 <div class="calidad-actions" *ngIf="puedeEditarFormularioDiseno">
-                  <button type="button" class="btn-guardar-inspeccion" (click)="guardarDiseno()" [disabled]="guardandoDiseno">
-                    <i class="fas" [ngClass]="guardandoDiseno ? 'fa-spinner fa-spin' : 'fa-save'"></i>
-                    {{ guardandoDiseno ? 'Guardando...' : 'Guardar diseño' }}
-                  </button>
+                  <!-- vacío: el botón confirmar diseño se muestra junto al btn continuar -->
                 </div>
               </div>
 
@@ -639,31 +765,83 @@
                   </div>
                 </div>
 
+                <!-- RESUMEN DISEÑO (solo lectura) -->
                 <div class="confeccion-bloque">
-                  <h5>Diseño (referencias)</h5>
-                  <div class="bloque-lista">
-                    <span>Archivos de diseño: pendiente de integración</span>
-                  </div>
-                </div>
+                  <h5>Diseño</h5>
+                  <div *ngIf="disenoResumenPrendas.length; else sinDisenoResumen">
+                    <div *ngFor="let prenda of disenoResumenPrendas" class="pdf-prenda-bloque">
 
-                <div class="confeccion-bloque">
-                  <h5>Corte (prendas cortadas)</h5>
-                  <div class="bloque-lista" *ngIf="resumenCortePorTela.length; else sinCorteResumen">
-                    <div *ngFor="let item of resumenCortePorTela">
-                      {{ item.etiqueta }}: <strong>{{ item.prendas }}</strong>
+                      <!-- Encabezado prenda -->
+                      <div class="pdf-prenda-titulo">
+                        <strong>{{ prenda.nombrePrenda }}</strong>
+                        <span class="pdf-meta">{{ prenda.materialBase || 'Sin material' }} · {{ prenda.cantidadTotal }} uds</span>
+                        <span class="plan-tag" *ngIf="prenda.tieneBordado">Bordado</span>
+                        <span class="plan-tag" *ngIf="prenda.tieneEstampado">Estampado</span>
+                      </div>
+
+                      <!-- Descripción del diseño -->
+                      <p class="pdf-descripcion" *ngIf="prenda.descripcionDiseno">{{ prenda.descripcionDiseno }}</p>
+
+                      <!-- Imágenes en fila compacta -->
+                      <div class="pdf-imagenes-row" *ngIf="disenoPrendasMap[prenda.idProyectoPrenda]?.imagenMockup || disenoPrendasMap[prenda.idProyectoPrenda]?.imagenLogo || disenoPrendasMap[prenda.idProyectoPrenda]?.imagenEstampado">
+                        <div class="pdf-imagen-item" *ngIf="disenoPrendasMap[prenda.idProyectoPrenda]?.imagenMockup">
+                          <img [src]="disenoPrendasMap[prenda.idProyectoPrenda].imagenMockup" alt="Mockup" class="pdf-img-preview">
+                          <span class="pdf-img-label">Mockup</span>
+                          <span class="pdf-img-desc" *ngIf="disenoPrendasMap[prenda.idProyectoPrenda]?.descripcionMockup">{{ disenoPrendasMap[prenda.idProyectoPrenda].descripcionMockup }}</span>
+                        </div>
+                        <div class="pdf-imagen-item" *ngIf="disenoPrendasMap[prenda.idProyectoPrenda]?.imagenLogo">
+                          <img [src]="disenoPrendasMap[prenda.idProyectoPrenda].imagenLogo" alt="Bordado/Logo" class="pdf-img-preview">
+                          <span class="pdf-img-label">{{ prenda.tieneBordado ? 'Bordado' : 'Logo' }}</span>
+                          <span class="pdf-img-desc" *ngIf="disenoPrendasMap[prenda.idProyectoPrenda]?.descripcionLogo">{{ disenoPrendasMap[prenda.idProyectoPrenda].descripcionLogo }}</span>
+                        </div>
+                        <div class="pdf-imagen-item" *ngIf="disenoPrendasMap[prenda.idProyectoPrenda]?.imagenEstampado">
+                          <img [src]="disenoPrendasMap[prenda.idProyectoPrenda].imagenEstampado" alt="Estampado" class="pdf-img-preview">
+                          <span class="pdf-img-label">Estampado</span>
+                          <span class="pdf-img-desc" *ngIf="disenoPrendasMap[prenda.idProyectoPrenda]?.descripcionEstampado">{{ disenoPrendasMap[prenda.idProyectoPrenda].descripcionEstampado }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <ng-template #sinCorteResumen><span>Sin datos de corte cargados.</span></ng-template>
+                  <ng-template #sinDisenoResumen><span>Sin datos de diseño cargados.</span></ng-template>
                 </div>
 
+                <!-- RESUMEN CORTE (solo lectura) -->
                 <div class="confeccion-bloque">
-                  <h5>Materiales del proyecto</h5>
-                  <div class="bloque-lista" *ngIf="proyecto.materiales?.length; else sinMaterialesProyecto">
-                    <div *ngFor="let mat of proyecto.materiales">
-                      {{ mat.nombreInsumo }}: {{ mat.cantidadAsignada }} {{ mat.unidadMedida }}
+                  <h5>Corte</h5>
+                  <div class="corte-kpis" style="margin-bottom: 0.5rem;">
+                    <span class="kpi kpi-total">Pedido: {{ cortePlan.pedidoTotalPrendas }}</span>
+                    <span class="kpi kpi-total">Distribuido: {{ totalDistribucionCorte }}</span>
+                  </div>
+                  <div class="plan-tags" style="margin-bottom: 0.5rem;">
+                    <div class="plan-tag-group" *ngIf="cortePlan.prendas.length">
+                      <span class="plan-label">Prendas</span>
+                      <div class="plan-tags-list">
+                        <span class="plan-tag" *ngFor="let p of cortePlan.prendas">{{ p }}</span>
+                      </div>
+                    </div>
+                    <div class="plan-tag-group" *ngIf="cortePlan.colores.length">
+                      <span class="plan-label">Colores</span>
+                      <div class="plan-tags-list">
+                        <span class="plan-tag" *ngFor="let c of cortePlan.colores">{{ c }}</span>
+                      </div>
+                    </div>
+                    <div class="plan-tag-group" *ngIf="cortePlan.telasAsignadas.length">
+                      <span class="plan-label">Telas</span>
+                      <div class="plan-tags-list">
+                        <span class="plan-tag" *ngFor="let t of cortePlan.telasAsignadas">{{ t }}</span>
+                      </div>
                     </div>
                   </div>
-                  <ng-template #sinMaterialesProyecto><span>No hay materiales cargados.</span></ng-template>
+                  <div *ngIf="cortePlan.distribucionTalles.length">
+                    <div class="corte-distribucion-header"><strong>Distribución por talles</strong></div>
+                    <div class="corte-distribucion-row" *ngFor="let item of cortePlan.distribucionTalles">
+                      <input type="text" [ngModel]="item.talle" disabled>
+                      <input type="number" [ngModel]="item.cantidad" disabled>
+                    </div>
+                  </div>
+                  <div *ngIf="!cortePlan.distribucionTalles.length">
+                    <span>Sin datos de corte cargados.</span>
+                  </div>
                 </div>
 
                 <div class="form-group">
@@ -677,11 +855,7 @@
                 </div>
 
                 <div class="calidad-actions">
-                  <button type="button" class="btn-guardar-inspeccion" (click)="guardarConfeccion()" [disabled]="!puedeGuardarConfeccion || guardandoConfeccion">
-                    <i class="fas" [ngClass]="guardandoConfeccion ? 'fa-spinner fa-spin' : 'fa-save'"></i>
-                    {{ guardandoConfeccion ? 'Guardando...' : 'Guardar planilla' }}
-                  </button>
-                  <button type="button" class="btn-mini" (click)="imprimirPlanillaConfeccion()" [disabled]="!planillaConfeccionLista">Exportar PDF</button>
+                  <!-- vacío: el botón guardar planilla se muestra junto al btn continuar -->
                 </div>
 
                 <div class="confeccion-bloque">
@@ -761,16 +935,47 @@
               </div>
 
               <!-- BOTÓN DE CONTINUAR / FINALIZAR -->
-              <button *ngIf="!estaCompleta(areaSeleccionada)" class="btn-continuar" [class.btn-finalizar]="esUltimaArea"
-                (click)="continuarSiguienteArea()"
-                [disabled]="procesandoArea || !puedeContinuarAreaSeleccionada() || !puedeContinuarControlCalidad">
-                <i class="fas"
-                  [ngClass]="procesandoArea ? 'fa-spinner fa-spin' : (esUltimaArea ? 'fa-flag-checkered' : 'fa-arrow-right')"></i>
-                <span *ngIf="!procesandoArea">
-                  {{ esUltimaArea ? 'Finalizar Proyecto' : 'Continuar a ' + siguienteArea?.nombreCorto }}
-                </span>
-                <span *ngIf="procesandoArea">Procesando...</span>
-              </button>
+              <div class="area-actions-row">
+                <!-- Confirmar diseño: solo en área diseño y si puede editar -->
+                <button *ngIf="esAreaDiseno && puedeEditarFormularioDiseno && !estaCompleta(areaSeleccionada)"
+                  type="button" class="btn-guardar-inspeccion btn-area-action"
+                  (click)="guardarDiseno()" [disabled]="guardandoDiseno">
+                  <i class="fas" [ngClass]="guardandoDiseno ? 'fa-spinner fa-spin' : 'fa-check-circle'"></i>
+                  {{ guardandoDiseno ? 'Guardando...' : 'Confirmar diseño' }}
+                </button>
+
+                <!-- Guardar corte: solo en área corte -->
+                <button *ngIf="esAreaCorte && !estaCompleta(areaSeleccionada)"
+                  type="button" class="btn-guardar-inspeccion btn-area-action"
+                  (click)="guardarCorteReal()" [disabled]="!puedeGuardarCorteReal || guardandoCorteReal">
+                  <i class="fas" [ngClass]="guardandoCorteReal ? 'fa-spinner fa-spin' : 'fa-save'"></i>
+                  {{ guardandoCorteReal ? 'Guardando...' : 'Guardar parte de corte' }}
+                </button>
+
+                <!-- Guardar planilla confección -->
+                <button *ngIf="esAreaConfeccion && !estaCompleta(areaSeleccionada)"
+                  type="button" class="btn-guardar-inspeccion btn-area-action"
+                  (click)="guardarConfeccion()" [disabled]="!puedeGuardarConfeccion || guardandoConfeccion">
+                  <i class="fas" [ngClass]="guardandoConfeccion ? 'fa-spinner fa-spin' : 'fa-file-pdf'"></i>
+                  {{ guardandoConfeccion ? 'Guardando...' : 'Guardar y exportar PDF' }}
+                </button>
+
+                <button *ngIf="!estaCompleta(areaSeleccionada)" class="btn-continuar btn-area-action" [class.btn-finalizar]="esUltimaArea"
+                  (click)="continuarSiguienteArea()"
+                  [disabled]="procesandoArea || !puedeContinuarAreaSeleccionada() || !puedeContinuarControlCalidad || (esAreaDiseno && !disenoGuardado)">
+                  <i class="fas"
+                    [ngClass]="procesandoArea ? 'fa-spinner fa-spin' : (esUltimaArea ? 'fa-flag-checkered' : 'fa-arrow-right')"></i>
+                  <span *ngIf="!procesandoArea">
+                    {{ esUltimaArea ? 'Finalizar Proyecto' : 'Continuar a ' + siguienteArea?.nombreCorto }}
+                  </span>
+                  <span *ngIf="procesandoArea">Procesando...</span>
+                </button>
+              </div>
+
+              <small *ngIf="esAreaDiseno && !disenoGuardado && puedeEditarFormularioDiseno && !estaCompleta(areaSeleccionada)"
+                style="display:block; margin-top: .35rem; color: #9e9e9e;">
+                Debes confirmar el diseño antes de continuar.
+              </small>
 
               <small *ngIf="!tienePermisoAreaSeleccionada()" style="display:block; margin-top: .35rem; color: #9e9e9e;">
                 No tenés permisos para notificar avance en esta área o no está asignada a tu usuario.

@@ -274,6 +274,8 @@ export interface PrendaFormulario {
   estampadoDescripcion?: string;
   estampadoReferencia?: string;
   otrosDetalleReferencia?: string;
+  paletaColorActual?: string; // HEX para el picker
+  paletaColores?: string[]; // lista de HEX elegidos
   tallesDistribuidos: TalleDistribuido[];
   mostrarModalTalles?: boolean;
 }
@@ -292,6 +294,7 @@ export interface MaterialManualFormulario {
   cantidad: number;
   unidadMedida?: string;
   stockActual?: number;
+  observaciones?: string;
 }
 
 // ============================================

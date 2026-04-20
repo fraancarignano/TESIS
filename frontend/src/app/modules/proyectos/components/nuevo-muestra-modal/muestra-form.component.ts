@@ -1,8 +1,10 @@
-import { Component, Output, EventEmitter, OnInit, Input } from '@angular/core';
+import { Component, Output, EventEmitter, OnInit, Input, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject, of } from 'rxjs';
+import { catchError, distinctUntilChanged, switchMap, takeUntil } from 'rxjs/operators';
 import { ProyectosServiceNuevo } from '../../services/proyectos-nuevo.service';
 import { MuestrasService } from '../../services/muestra.service';
 import {
@@ -27,6 +29,7 @@ import {
   CalculoMaterialesResponse
 } from '../../models/nuevo-proyecto.model';
 import { Cliente } from '../../../clientes/models/cliente.model';
+import { ClientesService } from '../../../clientes/services/clientes.service';
 
 @Component({
   selector: 'app-muestra-form-nuevo',
@@ -35,7 +38,7 @@ import { Cliente } from '../../../clientes/models/cliente.model';
   templateUrl: './muestra-form.component.html',
   styleUrls: ['./muestra-form.component.css']
 })
-export class MuestraFormNuevoComponent implements OnInit {
+export class MuestraFormNuevoComponent implements OnInit, OnDestroy {
   @Input() esModal: boolean = false;
   @Input() modoEdicion: boolean = false;
   @Input() proyectoAEditar?: any;
@@ -53,9 +56,10 @@ export class MuestraFormNuevoComponent implements OnInit {
   permitirEdicionPrendas: boolean = true;
   mensajeRestriccion: string = '';
 
-  // Datos del formulario (catÃ¡logos)
+  // Datos del formulario (catí¡logos)
   datosFormulario?: FormularioProyectoInicializacion;
   clientes: Cliente[] = [];
+  private clienteDetalleSeleccionado?: Cliente;
   tiposPrenda: TipoPrenda[] = [];
   talles: Talle[] = [];
   tiposInsumo: TipoInsumo[] = [];
@@ -106,10 +110,13 @@ export class MuestraFormNuevoComponent implements OnInit {
   };
   paletaHex = '#000000';
 
+  private readonly destroy$ = new Subject<void>();
+
   constructor(
     private fb: FormBuilder,
     private proyectosService: ProyectosServiceNuevo,
     private muestrasService: MuestrasService,
+    private clientesService: ClientesService,
     private router: Router
   ) {
     this.crearFormulario();
@@ -117,6 +124,7 @@ export class MuestraFormNuevoComponent implements OnInit {
 
   ngOnInit(): void {
   this.cargarDatosFormulario();
+  this.suscribirseACambiosDeCliente();
   
   // ========== NUEVO: Detectar modo edición ==========
   if (this.modoEdicion && this.proyectoAEditar) {
@@ -131,8 +139,13 @@ export class MuestraFormNuevoComponent implements OnInit {
   this.fechaMinima = manana.toISOString().split('T')[0];
 }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   // ========================================
-  // INICIALIZACIÃ“N
+  // INICIALIZACIí“N
   // ========================================
 
   private crearFormulario(): void {
@@ -145,6 +158,34 @@ export class MuestraFormNuevoComponent implements OnInit {
       fechaFin: [''],
       idUsuarioEncargado: ['']
     });
+  }
+
+  private suscribirseACambiosDeCliente(): void {
+    const control = this.formulario.get('idCliente');
+    if (!control) return;
+
+    control.valueChanges
+      .pipe(
+        distinctUntilChanged(),
+        switchMap((idCliente) => {
+          if (!idCliente) {
+            this.clienteDetalleSeleccionado = undefined;
+            return of(undefined);
+          }
+
+          return this.clientesService.obtenerClientePorId(Number(idCliente)).pipe(
+            catchError((err) => {
+              console.warn('No se pudo cargar el detalle del cliente:', err);
+              this.clienteDetalleSeleccionado = undefined;
+              return of(undefined);
+            })
+          );
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((cliente) => {
+        if (cliente) this.clienteDetalleSeleccionado = cliente;
+      });
   }
 
   private setearFechaInicioPorDefecto(): void {
@@ -168,7 +209,7 @@ export class MuestraFormNuevoComponent implements OnInit {
         this.usuarios = datos.usuarios;
         this.prioridades = datos.prioridades;
 
-        // Filtrar por categorÃ­as
+        // Filtrar por categorí­as
         this.tiposInsumoTelas = filtrarTiposInsumoPorCategoria(datos.tiposInsumo, 'Tela');
         this.tiposInsumoHilos = filtrarTiposInsumoPorCategoria(datos.tiposInsumo, 'Hilo');
         this.tiposInsumoAccesorios = filtrarTiposInsumoPorCategoria(datos.tiposInsumo, 'Accesorio');
@@ -212,7 +253,7 @@ export class MuestraFormNuevoComponent implements OnInit {
   }
 
   // ========================================
-  // GESTIÃ“N DE PRENDAS
+  // GESTIí“N DE PRENDAS
   // ========================================
 
   agregarPrenda(): void {
@@ -221,6 +262,8 @@ export class MuestraFormNuevoComponent implements OnInit {
       cantidadTotal: 1,
       tieneBordado: false,
       tieneEstampado: false,
+      paletaColorActual: '#000000',
+      paletaColores: [],
       tallesDistribuidos: [],
       mostrarModalTalles: false
     };
@@ -234,7 +277,13 @@ export class MuestraFormNuevoComponent implements OnInit {
   }
 
   editarPrenda(prenda: PrendaFormulario, index: number): void {
-    this.prendaEditando = { ...prenda };
+    this.prendaEditando = {
+      ...prenda,
+      idTipoPrenda: prenda.idTipoPrenda ? Number(prenda.idTipoPrenda as any) : undefined,
+      idTipoInsumoMaterial: prenda.idTipoInsumoMaterial ? Number(prenda.idTipoInsumoMaterial as any) : undefined,
+      idInsumo: prenda.idInsumo ? Number(prenda.idInsumo as any) : undefined,
+      paletaColores: (prenda.paletaColores || []).slice()
+    };
     this.indexPrendaEditando = index;
     this.prendaEditandoSnapshot = this.clonarPrenda(this.prendaEditando);
     
@@ -247,6 +296,11 @@ export class MuestraFormNuevoComponent implements OnInit {
 
   guardarPrenda(prenda: PrendaFormulario): void {
     this.aplicarTalleDefecto(prenda);
+
+    // Normalizar IDs (ngModel en <select> puede devolver string)
+    prenda.idTipoPrenda = prenda.idTipoPrenda ? Number(prenda.idTipoPrenda) : undefined;
+    prenda.idTipoInsumoMaterial = prenda.idTipoInsumoMaterial ? Number(prenda.idTipoInsumoMaterial) : undefined;
+    prenda.idInsumo = prenda.idInsumo ? Number(prenda.idInsumo) : undefined;
 
     if (!prenda.idTipoPrenda || !prenda.idTipoInsumoMaterial || prenda.cantidadTotal <= 0) {
       this.errorMensaje = 'Completa todos los campos obligatorios de la prenda';
@@ -271,8 +325,8 @@ export class MuestraFormNuevoComponent implements OnInit {
     const tipoInsumo = this.tiposInsumo.find(ti => ti.idTipoInsumo === prenda.idTipoInsumoMaterial);
     const insumoTela = this.insumosTelas.find(ins => ins.idInsumo === prenda.idInsumo);
 
-    prenda.nombrePrenda = tipoPrenda?.nombrePrenda;
-    prenda.nombreMaterial = tipoInsumo?.nombreTipo;
+    prenda.nombrePrenda = tipoPrenda?.nombrePrenda || prenda.nombrePrenda;
+    prenda.nombreMaterial = tipoInsumo?.nombreTipo || prenda.nombreMaterial;
     // Solo sobreescribir colorTela si viene del insumo seleccionado (no borrar el ingresado manualmente)
     if (insumoTela?.color) {
       prenda.colorTela = insumoTela.color;
@@ -341,6 +395,7 @@ export class MuestraFormNuevoComponent implements OnInit {
     if (!prenda) return undefined;
     return {
       ...prenda,
+      paletaColores: (prenda.paletaColores || []).slice(),
       tallesDistribuidos: (prenda.tallesDistribuidos || []).map(t => ({ ...t }))
     };
   }
@@ -403,7 +458,7 @@ export class MuestraFormNuevoComponent implements OnInit {
   }
 
   // ========================================
-  // DISTRIBUCIÃ“N DE TALLES
+  // DISTRIBUCIí“N DE TALLES
   // ========================================
 
   abrirModalTalles(): void {
@@ -472,7 +527,7 @@ export class MuestraFormNuevoComponent implements OnInit {
     const cantidad = Number(cantidadStr);
 
     if (!idInsumo || cantidad <= 0) {
-      this.errorMensaje = 'Selecciona un insumo vÃ¡lido y cantidad > 0';
+      this.errorMensaje = 'Selecciona un insumo ví¡lido y cantidad > 0';
       setTimeout(() => (this.errorMensaje = ''), 3000);
       return;
     }
@@ -626,7 +681,7 @@ export class MuestraFormNuevoComponent implements OnInit {
 
   const formValue = this.formulario.getRawValue(); // getRawValue incluye campos deshabilitados
 
-  // ========== MODO EDICIÃ“N ==========
+  // ========== MODO EDICIí“N ==========
   if (this.modoEdicion && this.proyectoAEditar) {
     const dtoActualizacion = {
       idProyecto: this.proyectoAEditar.idProyecto,
@@ -676,13 +731,18 @@ export class MuestraFormNuevoComponent implements OnInit {
       }
     });
     
-    return; // Salir despuÃ©s de actualizar
+    return; // Salir despuí©s de actualizar
   }
 
-  // ========== MODO CREACIÃ“N (código original) ==========
+  // ========== MODO CREACIí“N (código original) ==========
   const referenciaBordado = this.prendasProyecto.find(p => p.bordadoDescripcion?.trim() || p.bordadoReferencia);
   const referenciaEstampado = this.prendasProyecto.find(p => p.estampadoDescripcion?.trim() || p.estampadoReferencia);
   const referenciaMockup = this.prendasProyecto.find(p => p.mockupReferencia);
+  const paletaGlobal = Array.from(
+    new Set(
+      this.prendasProyecto.flatMap(p => (p.paletaColores || []).filter(Boolean))
+    )
+  ).join(', ');
 
   const dtoMuestra = {
     idCliente: Number(formValue.idCliente),
@@ -703,7 +763,7 @@ export class MuestraFormNuevoComponent implements OnInit {
     estampadoDescripcion: referenciaEstampado?.estampadoDescripcion?.trim() || undefined,
     estampadoReferencia: referenciaEstampado?.estampadoReferencia || undefined,
     otrosDetalle: undefined,
-    paletaRgb: this.paletaHex,
+    paletaRgb: paletaGlobal || this.paletaHex,
     prendas: this.prendasProyecto.map((p, index) => ({
       idTipoPrenda: p.idTipoPrenda!,
       idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
@@ -783,21 +843,22 @@ export class MuestraFormNuevoComponent implements OnInit {
   }
 
   get nombreCliente(): string {
-    const idCliente = this.formulario.get('idCliente')?.value;
-    if (!idCliente) return '';
-    const cliente = this.clientes.find(c => c.idCliente === Number(idCliente));
-    return cliente?.nombreCompleto || '';
+    return this.clienteSeleccionadoVista?.nombreCompleto || '';
   }
 
-  getNombreTipoPrenda(idTipoPrenda?: number): string {
-    if (!idTipoPrenda) return '';
-    const tipo = this.tiposPrenda.find(tp => tp.idTipoPrenda === idTipoPrenda);
+  getNombreTipoPrenda(idTipoPrenda?: number | string): string {
+    if (idTipoPrenda === undefined || idTipoPrenda === null || idTipoPrenda === ('' as any)) return '';
+    const id = Number(idTipoPrenda);
+    if (!id) return '';
+    const tipo = this.tiposPrenda.find(tp => tp.idTipoPrenda === id);
     return tipo?.nombrePrenda || '';
   }
 
-  getNombreTipoInsumo(idTipoInsumo?: number): string {
-    if (!idTipoInsumo) return '';
-    const tipo = this.tiposInsumo.find(ti => ti.idTipoInsumo === idTipoInsumo);
+  getNombreTipoInsumo(idTipoInsumo?: number | string): string {
+    if (idTipoInsumo === undefined || idTipoInsumo === null || idTipoInsumo === ('' as any)) return '';
+    const id = Number(idTipoInsumo);
+    if (!id) return '';
+    const tipo = this.tiposInsumo.find(ti => ti.idTipoInsumo === id);
     return tipo?.nombreTipo || '';
   }
 
@@ -810,7 +871,7 @@ export class MuestraFormNuevoComponent implements OnInit {
     const disenos = [];
     if (prenda.tieneBordado) disenos.push('Bordado');
     if (prenda.tieneEstampado) disenos.push('Estampado');
-    return disenos.length > 0 ? disenos.join(' + ') : 'Sin diseÃ±o';
+    return disenos.length > 0 ? disenos.join(' + ') : 'Sin diseí±o';
   }
 
   get clienteSeleccionado(): Cliente | undefined {
@@ -819,15 +880,37 @@ export class MuestraFormNuevoComponent implements OnInit {
     return this.clientes.find(c => c.idCliente === Number(idCliente));
   }
 
-  get paletaRgbTexto(): string {
-    const hex = this.paletaHex.replace('#', '');
-    const r = parseInt(hex.substring(0, 2), 16);
-    const g = parseInt(hex.substring(2, 4), 16);
-    const b = parseInt(hex.substring(4, 6), 16);
+  get clienteSeleccionadoVista(): Cliente | undefined {
+    return this.clienteDetalleSeleccionado || this.clienteSeleccionado;
+  }
+
+  paletaRgbTextoPara(hex: string): string {
+    const limpio = (hex || '#000000').replace('#', '');
+    if (limpio.length !== 6) return 'rgb(0, 0, 0)';
+    const r = parseInt(limpio.substring(0, 2), 16);
+    const g = parseInt(limpio.substring(2, 4), 16);
+    const b = parseInt(limpio.substring(4, 6), 16);
+    if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return 'rgb(0, 0, 0)';
     return `rgb(${r}, ${g}, ${b})`;
   }
 
   normalizarPaletaRgb(): void { /* no-op, mantenido por compatibilidad */ }
+
+  agregarColorAPaleta(prenda: PrendaFormulario): void {
+    if (!prenda.paletaColores) prenda.paletaColores = [];
+    if (!prenda.paletaColorActual) prenda.paletaColorActual = '#000000';
+
+    const color = String(prenda.paletaColorActual || '').trim().toUpperCase();
+    if (!color) return;
+    if (!prenda.paletaColores.includes(color)) {
+      prenda.paletaColores.push(color);
+    }
+  }
+
+  quitarColorDePaleta(prenda: PrendaFormulario, color: string): void {
+    if (!prenda.paletaColores?.length) return;
+    prenda.paletaColores = prenda.paletaColores.filter(c => c !== color);
+  }
 
   onReferenciaImagenChange(event: Event, tipo: 'bordado' | 'estampado'): void {
     const input = event.target as HTMLInputElement;
@@ -900,7 +983,7 @@ export class MuestraFormNuevoComponent implements OnInit {
   }
 
   /**
-   * Configurar quÃ© campos se pueden editar segÃºn el estado
+   * Configurar quí© campos se pueden editar segíºn el estado
    */
   private configurarEdicionSegunEstado(): void {
     if (this.estadoProyecto === 'Finalizado' || this.estadoProyecto === 'Archivado') {
@@ -912,7 +995,7 @@ export class MuestraFormNuevoComponent implements OnInit {
     if (this.estadoProyecto === 'En Proceso' || this.estadoProyecto === 'Pausado') {
       this.permitirEdicionCompleta = false;
       this.permitirEdicionPrendas = true;
-      this.mensajeRestriccion = 'âš ï¸ La muestra estÃ¡ en producción. Puedes editar: nombre, descripción, prioridad, fecha fin, encargado, cantidades de prendas y materiales manuales.';
+      this.mensajeRestriccion = 'âš ï¸ La muestra estí¡ en producción. Puedes editar: nombre, descripción, prioridad, fecha fin, encargado, cantidades de prendas y materiales manuales.';
       
       // Deshabilitar campos que no se pueden editar
       this.formulario.get('idCliente')?.disable();
@@ -930,7 +1013,7 @@ export class MuestraFormNuevoComponent implements OnInit {
   private precargarDatos(): void {
     if (!this.proyectoAEditar) return;
     
-    // Precargar datos bÃ¡sicos del formulario
+    // Precargar datos bí¡sicos del formulario
     this.formulario.patchValue({
       idCliente: this.proyectoAEditar.idCliente,
       nombreProyecto: this.proyectoAEditar.nombreProyecto,

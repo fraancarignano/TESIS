@@ -2,8 +2,10 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { MaterialProyecto, ObservacionProyecto, ProyectoVista } from '../../models/proyecto.model';
 import { ProyectosService } from '../../services/proyecto.service';
+import { ProyectosServiceNuevo } from '../../services/proyectos-nuevo.service';
 import { DisenoService } from '../../services/diseno.service';
 import { MuestrasService } from '../../services/muestra.service';
 import { AlertasService } from '../../../../core/services/alertas';
@@ -26,6 +28,13 @@ import {
 } from '../../constants/areas.constants';
 import { ProyectoDisenoDetalle, ProyectoDisenoPayload } from '../../models/diseno.model';
 import { DespachoService } from '../../../despachos/services/despacho.service';
+import {
+  CalidadIncidencia,
+  CalidadIncidenciaEstado,
+  CalidadIncidenciasService,
+  CalidadIncidenciaResumen,
+  CrearCalidadIncidencia
+} from '../../services/calidad-incidencias.service';
 
 @Component({
   selector: 'app-proyecto-detalle-modal',
@@ -52,6 +61,23 @@ export class ProyectoDetalleModalComponent implements OnInit {
   criteriosCalidad: CriterioCalidadUI[] = CRITERIOS_CALIDAD_INICIALES.map(c => ({ ...c }));
   inspeccionPorTalleActual: Record<string, number> = {};
   guardandoInspeccionCalidad = false;
+  incidenciasCalidad: CalidadIncidencia[] = [];
+  resumenIncidenciasPorTalle: CalidadIncidenciaResumen[] = [];
+  prendasRechazadas: PrendaRechazada[] = [];
+  procesandoPrenda: Record<string, boolean> = {};
+  cargandoIncidenciasCalidad = false;
+  cargandoResumenIncidencias = false;
+  guardandoIncidenciaCalidad = false;
+  actualizandoEstadoIncidencia: Record<number, boolean> = {};
+  incidenciaForm: CrearCalidadIncidencia = {
+    idTaller: null,
+    nombrePrenda: '',
+    talle: '',
+    criterioId: '',
+    criterioNombre: '',
+    cantidad: 1,
+    detalleFalla: ''
+  };
   private _historialInspeccionesCalidad: ObservacionProyecto[] = [];
   private _seguimientoTalles: SeguimientoTalle[] = [];
   private _acumuladoGuardadoPorTalle: Record<string, number> = {};
@@ -74,6 +100,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
   tallerSeleccionado: Taller | null = null;
   cargandoTalleres = false;
   guardandoDiseno = false;
+  disenoGuardado = false;
   cargandoDiseno = false;
   disenoDetalle: ProyectoDisenoDetalle | null = null;
   disenoObservacionesGenerales = '';
@@ -92,6 +119,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   constructor(
     private proyectosService: ProyectosService,
+    private proyectosServiceNuevo: ProyectosServiceNuevo,
     private disenoService: DisenoService,
     private alertas: AlertasService,
     private permissionService: PermissionService,
@@ -100,7 +128,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private talleresService: TalleresService,
     private muestrasService: MuestrasService,
-    private despachoService: DespachoService
+    private despachoService: DespachoService,
+    private calidadIncidenciasService: CalidadIncidenciasService
   ) { }
 
   ngOnInit(): void {
@@ -120,6 +149,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.inicializarFormularioConfeccion();
     this.refrescarHistorialRecepcionesConfeccion();
     this.recalcularRecepcionesConfeccion();
+    if (this.esAreaControlCalidad) {
+      this.inicializarIncidenciaCalidadForm();
+      this.cargarIncidenciasCalidad();
+      this.cargarResumenIncidenciasPorTalle();
+    }
     this.inicializarResumenDisenoPrendas();
     this.cargarTalleres();
     this.cargarDisenoArea();
@@ -166,6 +200,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
   seleccionarArea(area: AreaProduccion): void {
     this.areaSeleccionada = area;
     this.observacionArea = '';
+    this.disenoGuardado = false;
     this.reiniciarFormularioCalidad();
     this.refrescarHistorialInspeccionesCalidad();
     this.refrescarHistorialPlanesCorte();
@@ -177,9 +212,186 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.inicializarFormularioConfeccion();
     this.refrescarHistorialRecepcionesConfeccion();
     this.recalcularRecepcionesConfeccion();
+    if (this.esAreaControlCalidad) {
+      this.inicializarIncidenciaCalidadForm();
+      this.cargarIncidenciasCalidad();
+      this.cargarResumenIncidenciasPorTalle();
+    }
     if (area.campo === 'avanceDiseno' && !this.disenoPrendas.length) {
       this.cargarDisenoArea();
     }
+  }
+
+  get puedeGestionarIncidenciasCalidad(): boolean {
+    return this.esAreaControlCalidad && this.puedeEditarFormularioCalidad;
+  }
+
+  textoEstadoIncidencia(estado: string): string {
+    const e = (estado || '').toUpperCase().trim();
+    if (e === 'PENDIENTE') return 'Pendiente';
+    if (e === 'EN_TALLER') return 'En taller';
+    if (e === 'REINGRESADA') return 'Reingresada';
+    if (e === 'CERRADA') return 'Cerrada';
+    return estado;
+  }
+
+  private inicializarIncidenciaCalidadForm(): void {
+    const prendas = this.obtenerPrendasProyecto();
+    const talles = this.seguimientoTalles.map(t => t.talle).filter(Boolean);
+    const criterio = this.criteriosCalidad.find(c => c.resultado === 'no_cumple') ?? this.criteriosCalidad[0];
+
+    this.incidenciaForm = {
+      idTaller: this.confeccion?.idTaller ?? null,
+      nombrePrenda: prendas[0] ?? '',
+      talle: talles[0] ?? 'GENERAL',
+      criterioId: criterio?.id ?? '',
+      criterioNombre: criterio?.nombre ?? '',
+      cantidad: 1,
+      detalleFalla: ''
+    };
+  }
+
+  cargarIncidenciasCalidad(): void {
+    if (!this.proyecto?.idProyecto) return;
+    this.cargandoIncidenciasCalidad = true;
+    this.calidadIncidenciasService.listar(this.proyecto.idProyecto).subscribe({
+      next: (items) => {
+        this.incidenciasCalidad = items ?? [];
+        this.cargandoIncidenciasCalidad = false;
+        this.convertirIncidenciasAPrendasRechazadas();
+      },
+      error: (err) => {
+        console.error('Error al cargar incidencias de calidad:', err);
+        this.incidenciasCalidad = [];
+        this.cargandoIncidenciasCalidad = false;
+      }
+    });
+  }
+
+  convertirIncidenciasAPrendasRechazadas(): void {
+    // Convertir incidencias del backend a prendas rechazadas
+    const prendasMap = new Map<string, PrendaRechazada>();
+
+    this.incidenciasCalidad
+      .filter(inc => inc.estado !== 'CERRADA') // Solo las no cerradas
+      .forEach(inc => {
+        const key = `${inc.nombrePrenda}-${inc.talle}`;
+        
+        if (!prendasMap.has(key)) {
+          prendasMap.set(key, {
+            id: key,
+            nombrePrenda: inc.nombrePrenda,
+            talle: inc.talle,
+            cantidad: inc.cantidad,
+            estado: inc.estado as any,
+            criteriosRechazados: [],
+            idCalidadIncidencia: inc.idCalidadIncidencia
+          });
+        }
+
+        const prenda = prendasMap.get(key)!;
+        
+        // Agregar criterios rechazados
+        const criterios = inc.criterioNombre.split(',').map(c => c.trim());
+        const detalles = inc.detalleFalla ? inc.detalleFalla.split(';').map(d => d.trim()) : [];
+        
+        criterios.forEach((criterio, index) => {
+          if (!prenda.criteriosRechazados.some(c => c.nombre === criterio)) {
+            prenda.criteriosRechazados.push({
+              nombre: criterio,
+              observacion: detalles[index] || ''
+            });
+          }
+        });
+      });
+
+    this.prendasRechazadas = Array.from(prendasMap.values());
+  }
+
+  cargarResumenIncidenciasPorTalle(): void {
+    if (!this.proyecto?.idProyecto) return;
+    this.cargandoResumenIncidencias = true;
+    this.calidadIncidenciasService.obtenerResumenPorTalle(this.proyecto.idProyecto, true).subscribe({
+      next: (resumen) => {
+        this.resumenIncidenciasPorTalle = resumen ?? [];
+        this.cargandoResumenIncidencias = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar resumen de incidencias:', err);
+        this.resumenIncidenciasPorTalle = [];
+        this.cargandoResumenIncidencias = false;
+      }
+    });
+  }
+
+  onCriterioIncidenciaChange(criterioId: string): void {
+    const criterio = this.criteriosCalidad.find(c => c.id === criterioId);
+    this.incidenciaForm.criterioId = criterioId;
+    this.incidenciaForm.criterioNombre = criterio?.nombre ?? this.incidenciaForm.criterioNombre;
+  }
+
+  registrarIncidenciaCalidad(): void {
+    if (!this.proyecto?.idProyecto) return;
+    if (!this.puedeGestionarIncidenciasCalidad) return;
+
+    const payload: CrearCalidadIncidencia = {
+      idTaller: this.incidenciaForm.idTaller ?? null,
+      nombrePrenda: (this.incidenciaForm.nombrePrenda ?? '').trim(),
+      talle: (this.incidenciaForm.talle ?? '').trim(),
+      criterioId: (this.incidenciaForm.criterioId ?? '').trim(),
+      criterioNombre: (this.incidenciaForm.criterioNombre ?? '').trim(),
+      cantidad: Math.max(1, Math.floor(Number(this.incidenciaForm.cantidad) || 0)),
+      detalleFalla: (this.incidenciaForm.detalleFalla ?? '').toString().trim() || null
+    };
+
+    if (!payload.nombrePrenda) {
+      this.alertas.error('Prenda requerida', 'Seleccioná la prenda.');
+      return;
+    }
+    if (!payload.talle) {
+      this.alertas.error('Talle requerido', 'Seleccioná el talle.');
+      return;
+    }
+    if (!payload.criterioId || !payload.criterioNombre) {
+      this.alertas.error('Criterio requerido', 'Seleccioná el criterio de falla.');
+      return;
+    }
+
+    this.guardandoIncidenciaCalidad = true;
+    this.calidadIncidenciasService.crear(this.proyecto.idProyecto, payload).subscribe({
+      next: (creada) => {
+        this.incidenciasCalidad.unshift(creada);
+        this.guardandoIncidenciaCalidad = false;
+        this.inicializarIncidenciaCalidadForm();
+        this.cargarResumenIncidenciasPorTalle(); // Actualizar resumen
+        this.alertas.success('Registrado', 'La prenda con falla quedó registrada para reproceso.');
+      },
+      error: (err) => {
+        console.error('Error al registrar incidencia de calidad:', err);
+        this.guardandoIncidenciaCalidad = false;
+        this.alertas.error('Error', 'No se pudo registrar la incidencia de calidad.');
+      }
+    });
+  }
+
+  cambiarEstadoIncidencia(incidencia: CalidadIncidencia, estado: CalidadIncidenciaEstado): void {
+    if (!this.proyecto?.idProyecto) return;
+    if (!this.puedeGestionarIncidenciasCalidad) return;
+    if (!incidencia?.idCalidadIncidencia) return;
+
+    this.actualizandoEstadoIncidencia[incidencia.idCalidadIncidencia] = true;
+    this.calidadIncidenciasService.cambiarEstado(this.proyecto.idProyecto, incidencia.idCalidadIncidencia, estado).subscribe({
+      next: () => {
+        incidencia.estado = estado;
+        this.actualizandoEstadoIncidencia[incidencia.idCalidadIncidencia] = false;
+        this.cargarResumenIncidenciasPorTalle(); // Actualizar resumen
+      },
+      error: (err) => {
+        console.error('Error al actualizar estado de incidencia:', err);
+        this.actualizandoEstadoIncidencia[incidencia.idCalidadIncidencia] = false;
+        this.alertas.error('Error', 'No se pudo actualizar el estado.');
+      }
+    });
   }
 
   async sincronizarConMuestra(): Promise<void> {
@@ -396,6 +608,41 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return Array.from(mapa.entries()).map(([etiqueta, prendas]) => ({ etiqueta, prendas }));
   }
 
+  /**
+   * Prendas con falla agrupadas por talle, solo las pendientes de recontrol
+   * (estado PENDIENTE o EN_TALLER = todavía no reingresaron)
+   */
+  get fallasPendientesPorTalle(): { talle: string; items: { prenda: string; criterio: string; cantidad: number; detalle?: string | null; estado: string }[] }[] {
+    const activas = this.incidenciasCalidad.filter(i => {
+      const e = (i.estado || '').toUpperCase();
+      return e === 'PENDIENTE' || e === 'EN_TALLER';
+    });
+
+    const mapaT = new Map<string, typeof activas>();
+    for (const inc of activas) {
+      const talle = (inc.talle || 'GENERAL').trim();
+      if (!mapaT.has(talle)) mapaT.set(talle, []);
+      mapaT.get(talle)!.push(inc);
+    }
+
+    return Array.from(mapaT.entries()).map(([talle, lista]) => ({
+      talle,
+      items: lista.map(i => ({
+        prenda: i.nombrePrenda,
+        criterio: i.criterioNombre,
+        cantidad: i.cantidad,
+        detalle: i.detalleFalla,
+        estado: i.estado
+      }))
+    }));
+  }
+
+  get totalFallasPendientes(): number {
+    return this.incidenciasCalidad
+      .filter(i => { const e = (i.estado || '').toUpperCase(); return e === 'PENDIENTE' || e === 'EN_TALLER'; })
+      .reduce((acc, i) => acc + (Number(i.cantidad) || 0), 0);
+  }
+
   get materialesTotales(): number {
     return (this.proyecto.materiales ?? []).length;
   }
@@ -449,16 +696,6 @@ export class ProyectoDetalleModalComponent implements OnInit {
   imprimirPlanillaConfeccion(): void {
     if (!this.planillaConfeccionLista) return;
 
-    const telas = this.obtenerTelasProyecto()
-      .map(t => t.codigoTela ? `${t.nombreInsumo} (${t.codigoTela})` : t.nombreInsumo)
-      .filter(t => (t || '').trim().length > 0);
-
-    const materiales = (this.proyecto.materiales ?? []).map(m => ({
-      nombre: (m.nombreInsumo || 'Material').trim(),
-      cantidad: Number(m.cantidadAsignada) || 0,
-      unidad: (m.unidadMedida || '').trim()
-    }));
-
     const datos: PlanillaConfeccionExport = {
       titulo: `Planilla Confeccion - ${this.proyecto.nombreProyecto || 'Proyecto'}`,
       proyecto: {
@@ -468,7 +705,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
         pedidoTotal: Number(this.cortePlan.pedidoTotalPrendas || this.proyecto.cantidadTotal || 0),
         prendas: this.obtenerPrendasProyecto(),
         colores: this.obtenerColoresProyecto(),
-        telas
+        telas: this.obtenerTelasProyecto()
+          .map(t => t.codigoTela ? `${t.nombreInsumo} (${t.codigoTela})` : t.nombreInsumo)
+          .filter(t => (t || '').trim().length > 0)
       },
       taller: {
         nombre: this.confeccion.nombreTaller || this.tallerSeleccionado?.nombreTaller || '',
@@ -483,11 +722,29 @@ export class ProyectoDetalleModalComponent implements OnInit {
         inicio: this.confeccion.fechaInicio || '',
         limite: this.confeccion.fechaLimite || ''
       },
-      corteResumen: this.resumenCortePorTela,
-      materiales,
+      corteDistribucion: this.cortePlan.distribucionTalles.map(t => ({
+        talle: t.talle || '-',
+        cantidad: Number(t.cantidad) || 0
+      })),
+      diseno: this.disenoResumenPrendas.map(prenda => {
+        const form = this.getDisenoForm(prenda.idProyectoPrenda);
+        return {
+          nombrePrenda: prenda.nombrePrenda,
+          materialBase: prenda.materialBase || '',
+          cantidadTotal: prenda.cantidadTotal,
+          descripcionDiseno: prenda.descripcionDiseno || undefined,
+          tieneBordado: prenda.tieneBordado,
+          tieneEstampado: prenda.tieneEstampado,
+          imagenMockup: form.imagenMockup?.trim() || undefined,
+          descripcionMockup: form.descripcionMockup?.trim() || undefined,
+          imagenBordado: form.imagenLogo?.trim() || undefined,
+          descripcionBordado: form.descripcionLogo?.trim() || undefined,
+          imagenEstampado: form.imagenEstampado?.trim() || undefined,
+          descripcionEstampado: form.descripcionEstampado?.trim() || undefined
+        };
+      }),
       instrucciones: this.confeccion.instrucciones || '',
-      observaciones: this.confeccion.observaciones || '',
-      disenoNotas: 'Archivos de diseno: pendiente de integracion'
+      observaciones: this.confeccion.observaciones || ''
     };
 
     try {
@@ -664,7 +921,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
       imagenLogo: '',
       descripcionLogo: '',
       imagenMockup: '',
-      descripcionMockup: ''
+      descripcionMockup: '',
+      imagenBordado: '',
+      descripcionBordado: '',
+      imagenEstampado: '',
+      descripcionEstampado: ''
     };
   }
 
@@ -681,7 +942,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return item.idProyectoPrenda;
   }
 
-  async onArchivoDisenoSeleccionado(event: Event, prenda: DisenoResumenPrenda, tipo: 'logo' | 'mockup'): Promise<void> {
+  async onArchivoDisenoSeleccionado(event: Event, prenda: DisenoResumenPrenda, tipo: 'logo' | 'mockup' | 'bordado' | 'estampado'): Promise<void> {
     if (!this.puedeEditarFormularioDiseno) return;
 
     const input = event.target as HTMLInputElement;
@@ -706,23 +967,20 @@ export class ProyectoDetalleModalComponent implements OnInit {
     const base64 = await this.archivoABase64(file);
     const form = this.getDisenoForm(prenda.idProyectoPrenda);
 
-    if (tipo === 'logo') {
-      form.imagenLogo = base64;
-    } else {
-      form.imagenMockup = base64;
-    }
+    if (tipo === 'logo') form.imagenLogo = base64;
+    else if (tipo === 'mockup') form.imagenMockup = base64;
+    else if (tipo === 'bordado') form.imagenBordado = base64;
+    else if (tipo === 'estampado') form.imagenEstampado = base64;
 
     input.value = '';
   }
 
-  limpiarImagenDiseno(idProyectoPrenda: number, tipo: 'logo' | 'mockup'): void {
+  limpiarImagenDiseno(idProyectoPrenda: number, tipo: 'logo' | 'mockup' | 'bordado' | 'estampado'): void {
     if (!this.puedeEditarFormularioDiseno) return;
     const form = this.getDisenoForm(idProyectoPrenda);
-    if (tipo === 'logo') {
-      form.imagenLogo = '';
-      form.descripcionLogo = '';
-      return;
-    }
+    if (tipo === 'logo') { form.imagenLogo = ''; form.descripcionLogo = ''; return; }
+    if (tipo === 'bordado') { form.imagenBordado = ''; form.descripcionBordado = ''; return; }
+    if (tipo === 'estampado') { form.imagenEstampado = ''; form.descripcionEstampado = ''; return; }
 
     form.imagenMockup = '';
     form.descripcionMockup = '';
@@ -753,7 +1011,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
             imagenLogo: form.imagenLogo?.trim() || undefined,
             descripcionLogo: form.descripcionLogo?.trim() || undefined,
             imagenMockup: form.imagenMockup.trim(),
-            descripcionMockup: form.descripcionMockup?.trim() || undefined
+            descripcionMockup: form.descripcionMockup?.trim() || undefined,
+            imagenBordado: form.imagenBordado?.trim() || undefined,
+            descripcionBordado: form.descripcionBordado?.trim() || undefined,
+            imagenEstampado: form.imagenEstampado?.trim() || undefined,
+            descripcionEstampado: form.descripcionEstampado?.trim() || undefined
           };
         })
       };
@@ -764,6 +1026,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
           this.guardandoDiseno = false;
           this.disenoDetalle = detalle;
           this.disenoObservacionesGenerales = detalle.observacionesGenerales ?? this.disenoObservacionesGenerales;
+          this.disenoGuardado = true;
           this.alertas.success('Diseño guardado', 'Se registraron las imágenes y descripciones del área.');
           resolve(true);
         },
@@ -803,7 +1066,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
           imagenLogo: '',
           descripcionLogo: '',
           imagenMockup: '',
-          descripcionMockup: ''
+          descripcionMockup: '',
+          imagenBordado: '',
+          descripcionBordado: '',
+          imagenEstampado: '',
+          descripcionEstampado: ''
         }));
         this.disenoPrendasMap = this.disenoPrendas.reduce((acc, item) => {
           acc[item.idProyectoPrenda] = item;
@@ -820,6 +1087,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
               form.descripcionLogo = item.descripcionLogo ?? '';
               form.imagenMockup = item.imagenMockup ?? '';
               form.descripcionMockup = item.descripcionMockup ?? '';
+              form.imagenBordado = item.imagenBordado ?? '';
+              form.descripcionBordado = item.descripcionBordado ?? '';
+              form.imagenEstampado = item.imagenEstampado ?? '';
+              form.descripcionEstampado = item.descripcionEstampado ?? '';
             });
             this.cargandoDiseno = false;
           },
@@ -841,7 +1112,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
           imagenLogo: '',
           descripcionLogo: '',
           imagenMockup: '',
-          descripcionMockup: ''
+          descripcionMockup: '',
+          imagenBordado: '',
+          descripcionBordado: '',
+          imagenEstampado: '',
+          descripcionEstampado: ''
         }));
         this.disenoPrendasMap = this.disenoPrendas.reduce((acc, item) => {
           acc[item.idProyectoPrenda] = item;
@@ -858,6 +1133,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
               form.descripcionLogo = item.descripcionLogo ?? '';
               form.imagenMockup = item.imagenMockup ?? '';
               form.descripcionMockup = item.descripcionMockup ?? '';
+              form.imagenBordado = item.imagenBordado ?? '';
+              form.descripcionBordado = item.descripcionBordado ?? '';
+              form.imagenEstampado = item.imagenEstampado ?? '';
+              form.descripcionEstampado = item.descripcionEstampado ?? '';
             });
             this.cargandoDiseno = false;
           },
@@ -880,8 +1159,12 @@ export class ProyectoDetalleModalComponent implements OnInit {
         return `La prenda "${prenda.nombrePrenda}" necesita un mockup.`;
       }
 
-      if (this.necesitaLogoDiseno(prenda) && !form.imagenLogo?.trim()) {
-        return `La prenda "${prenda.nombrePrenda}" necesita imagen de logo porque tiene bordado o estampado.`;
+      if (prenda.tieneBordado && !form.imagenLogo?.trim()) {
+        return `La prenda "${prenda.nombrePrenda}" necesita imagen de bordado.`;
+      }
+
+      if (prenda.tieneEstampado && !form.imagenEstampado?.trim()) {
+        return `La prenda "${prenda.nombrePrenda}" necesita imagen de estampado.`;
       }
     }
 
@@ -1299,6 +1582,30 @@ export class ProyectoDetalleModalComponent implements OnInit {
     if (!this.proyecto.idProyecto) return;
     if (this.proyecto.estado !== 'Pendiente') return;
 
+    try {
+      const verificacion = await firstValueFrom(
+        this.proyectosServiceNuevo.verificarMaterialesListos(this.proyecto.idProyecto)
+      );
+      if (verificacion && verificacion.listos === false) {
+        console.warn('[materiales-listos]', verificacion);
+        const detalles = Array.isArray((verificacion as any).detalles) ? (verificacion as any).detalles : [];
+        const primeroFaltante = detalles.find((d: any) => d && d.listo === false) || detalles[0];
+        const nombre = primeroFaltante?.nombreInsumo ? String(primeroFaltante.nombreInsumo) : 'material';
+        const colorMostrable = primeroFaltante?.colorSolicitado || primeroFaltante?.colorInsumo;
+        const color = colorMostrable ? ` (${colorMostrable})` : '';
+        const asignado = primeroFaltante?.stockAsignado ?? null;
+        const necesario = primeroFaltante?.cantidadNecesaria ?? null;
+        const extra =
+          asignado !== null && necesario !== null
+            ? `: ${nombre}${color} (${asignado}/${necesario})`
+            : '';
+        this.alertas.error('Error', `Imposible iniciar proyecto, falta de materiales${extra}`);
+        return;
+      }
+    } catch {
+      // Si no se puede verificar, intentamos igual y dejamos que el backend valide.
+    }
+
     const confirmado = await this.alertas.confirmar(
       '¿Iniciar proyecto?',
       'El proyecto pasará a estado "En Proceso" y se habilitarán los avances.',
@@ -1316,9 +1623,43 @@ export class ProyectoDetalleModalComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al iniciar proyecto:', err);
-        this.alertas.error('Error', 'No se pudo iniciar el proyecto');
+        const detalle = this.extraerMensajeError(err);
+        const detalleLower = (detalle || '').toLowerCase();
+        const esFaltaMateriales =
+          detalleLower.includes('material') &&
+          (
+            detalleLower.includes('falta') ||
+            detalleLower.includes('faltan') ||
+            detalleLower.includes('sin') ||
+            /no\s+.*asign/.test(detalleLower) ||
+            /no\s+.*material/.test(detalleLower)
+          );
+
+        if (esFaltaMateriales) {
+          this.alertas.error('Error', 'Imposible iniciar proyecto, falta de materiales');
+          return;
+        }
+        const mensaje =
+          detalle && detalle !== 'No se pudo iniciar el proyecto'
+            ? `No se pudo iniciar el proyecto: ${detalle}`
+            : 'No se pudo iniciar el proyecto';
+        this.alertas.error('Error', mensaje);
       }
     });
+  }
+
+  private extraerMensajeError(err: any): string {
+    if (err?.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error.message) return err.error.message;
+      if (err.error.title) return err.error.title;
+      if (err.error.errors) {
+        const errores = Object.values(err.error.errors).flat() as string[];
+        if (errores.length > 0) return errores.join(' | ');
+      }
+    }
+
+    return err?.message || 'No se pudo iniciar el proyecto';
   }
 
   cerrarModal(): void {
@@ -1709,6 +2050,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
         this.refrescarHistorialConfeccion();
         this.planillaConfeccionGuardada = true;
         this.alertas.success('Confeccion guardada', 'Se registraron los datos del taller y la recepcion.');
+        // Exportar PDF automáticamente al guardar
+        setTimeout(() => this.imprimirPlanillaConfeccion(), 300);
       },
       error: (err) => {
         console.error('Error al guardar confeccion:', err);
@@ -1842,16 +2185,190 @@ export class ProyectoDetalleModalComponent implements OnInit {
           descripcion
         });
 
-        this.guardandoInspeccionCalidad = false;
-        this.refrescarHistorialInspeccionesCalidad();
-        this.reiniciarFormularioCalidad();
-        this.recalcularSeguimientoTalles();
-        this.alertas.success('Inspección guardada', 'La inspección de calidad se guardó correctamente.');
+        // Guardar prendas rechazadas en el backend
+        this.guardarPrendasRechazadasEnBackend(cantidadesTalle).then(() => {
+          this.guardandoInspeccionCalidad = false;
+          this.refrescarHistorialInspeccionesCalidad();
+          this.reiniciarFormularioCalidad();
+          this.recalcularSeguimientoTalles();
+          this.cargarIncidenciasCalidad(); // Recargar incidencias
+          this.alertas.success('Inspección guardada', 'La inspección de calidad se guardó correctamente.');
+        }).catch(err => {
+          console.error('Error al guardar prendas rechazadas:', err);
+          this.guardandoInspeccionCalidad = false;
+          this.alertas.warning('Guardado parcial', 'La inspección se guardó pero hubo un error al registrar las prendas rechazadas.');
+        });
       },
       error: (err) => {
         console.error('Error al guardar inspección de calidad:', err);
         this.guardandoInspeccionCalidad = false;
         this.alertas.error('Error', 'No se pudo guardar la inspección de calidad');
+      }
+    });
+  }
+
+  async guardarPrendasRechazadasEnBackend(cantidadesTalle: Record<string, number>): Promise<void> {
+    if (!this.proyecto?.idProyecto) return;
+
+    const criteriosRechazados = this.criteriosCalidad.filter(c => c.resultado === 'no_cumple');
+    
+    if (criteriosRechazados.length === 0) {
+      // No hay prendas rechazadas, solo recargar la lista
+      this.cargarIncidenciasCalidad();
+      return;
+    }
+
+    // Obtener prendas del proyecto
+    const prendas = this.obtenerPrendasProyecto();
+    const promesas: Promise<any>[] = [];
+
+    // Crear una incidencia por cada combinación prenda-talle que tenga cantidad inspeccionada
+    for (const prenda of prendas) {
+      for (const [talle, cantidad] of Object.entries(cantidadesTalle)) {
+        if (cantidad > 0) {
+          const payload: CrearCalidadIncidencia = {
+            idTaller: this.confeccion.idTaller ?? null,
+            nombrePrenda: prenda,
+            talle: talle,
+            criterioId: criteriosRechazados.map(c => c.id).join('|'),
+            criterioNombre: criteriosRechazados.map(c => c.nombre).join(', '),
+            cantidad: cantidad,
+            detalleFalla: criteriosRechazados
+              .map(c => `${c.nombre}${c.observacion ? ': ' + c.observacion : ''}`)
+              .join('; ')
+          };
+
+          const promesa = firstValueFrom(
+            this.calidadIncidenciasService.crear(this.proyecto.idProyecto, payload)
+          );
+          promesas.push(promesa);
+        }
+      }
+    }
+
+    // Esperar a que todas las incidencias se creen
+    await Promise.all(promesas);
+  }
+
+  detectarPrendasRechazadas(): void {
+    // Detectar prendas con criterios que no cumplen
+    const prendasRechazadas: PrendaRechazada[] = [];
+    const criteriosRechazados = this.criteriosCalidad.filter(c => c.resultado === 'no_cumple');
+    
+    if (criteriosRechazados.length === 0) {
+      this.prendasRechazadas = [];
+      return;
+    }
+
+    // Obtener prendas y talles del proyecto
+    const prendas = this.obtenerPrendasProyecto();
+    const talles = this.seguimientoTalles.map(t => t.talle);
+
+    // Crear una prenda rechazada por cada combinación prenda-talle con criterios rechazados
+    prendas.forEach(prenda => {
+      talles.forEach(talle => {
+        const cantidad = this.inspeccionPorTalleActual[talle] || 0;
+        if (cantidad > 0) {
+          const id = `${prenda}-${talle}-${Date.now()}`;
+          prendasRechazadas.push({
+            id,
+            nombrePrenda: prenda,
+            talle,
+            cantidad,
+            estado: 'PENDIENTE',
+            criteriosRechazados: criteriosRechazados.map(c => ({
+              nombre: c.nombre,
+              observacion: c.observacion || ''
+            }))
+          });
+        }
+      });
+    });
+
+    this.prendasRechazadas = prendasRechazadas;
+  }
+
+  textoEstadoPrendaRechazada(estado: string): string {
+    if (estado === 'PENDIENTE') return 'Pendiente de envío';
+    if (estado === 'EN_TALLER') return 'En taller';
+    if (estado === 'REINGRESADA') return 'Reingresada - Pendiente control';
+    return estado;
+  }
+
+  async devolverPrendaATaller(prenda: PrendaRechazada): Promise<void> {
+    if (!this.proyecto?.idProyecto || !prenda.idCalidadIncidencia) return;
+    
+    const confirmar = await this.alertas.confirmar(
+      'Devolver a taller',
+      `¿Confirmar devolución de ${prenda.cantidad} ${prenda.nombrePrenda} talle ${prenda.talle} al taller?`
+    );
+
+    if (!confirmar) return;
+
+    this.procesandoPrenda[prenda.id] = true;
+    this.calidadIncidenciasService.cambiarEstado(this.proyecto.idProyecto, prenda.idCalidadIncidencia, 'EN_TALLER').subscribe({
+      next: () => {
+        this.procesandoPrenda[prenda.id] = false;
+        this.cargarIncidenciasCalidad(); // Recargar lista
+        this.cargarResumenIncidenciasPorTalle();
+        this.alertas.success('Enviado', 'La prenda fue enviada al taller.');
+      },
+      error: (err) => {
+        console.error('Error al devolver prenda:', err);
+        this.procesandoPrenda[prenda.id] = false;
+        this.alertas.error('Error', 'No se pudo enviar la prenda al taller.');
+      }
+    });
+  }
+
+  async recibirPrendaDeTaller(prenda: PrendaRechazada): Promise<void> {
+    if (!this.proyecto?.idProyecto || !prenda.idCalidadIncidencia) return;
+
+    const confirmar = await this.alertas.confirmar(
+      'Recibir prenda',
+      `¿Confirmar recepción de ${prenda.cantidad} ${prenda.nombrePrenda} talle ${prenda.talle} del taller?`
+    );
+
+    if (!confirmar) return;
+
+    this.procesandoPrenda[prenda.id] = true;
+    this.calidadIncidenciasService.cambiarEstado(this.proyecto.idProyecto, prenda.idCalidadIncidencia, 'REINGRESADA').subscribe({
+      next: () => {
+        this.procesandoPrenda[prenda.id] = false;
+        this.cargarIncidenciasCalidad(); // Recargar lista
+        this.cargarResumenIncidenciasPorTalle();
+        this.alertas.success('Recibido', 'La prenda fue recibida. Realizar control de calidad nuevamente.');
+      },
+      error: (err) => {
+        console.error('Error al recibir prenda:', err);
+        this.procesandoPrenda[prenda.id] = false;
+        this.alertas.error('Error', 'No se pudo recibir la prenda.');
+      }
+    });
+  }
+
+  async aprobarPrendaReingresada(prenda: PrendaRechazada): Promise<void> {
+    if (!this.proyecto?.idProyecto || !prenda.idCalidadIncidencia) return;
+
+    const confirmar = await this.alertas.confirmar(
+      'Aprobar prenda',
+      `¿Confirmar que ${prenda.cantidad} ${prenda.nombrePrenda} talle ${prenda.talle} ahora cumple con los criterios de calidad?`
+    );
+
+    if (!confirmar) return;
+
+    this.procesandoPrenda[prenda.id] = true;
+    this.calidadIncidenciasService.cambiarEstado(this.proyecto.idProyecto, prenda.idCalidadIncidencia, 'CERRADA').subscribe({
+      next: () => {
+        this.procesandoPrenda[prenda.id] = false;
+        this.cargarIncidenciasCalidad(); // Recargar lista
+        this.cargarResumenIncidenciasPorTalle();
+        this.alertas.success('Aprobado', 'La prenda fue aprobada y cerrada.');
+      },
+      error: (err) => {
+        console.error('Error al aprobar prenda:', err);
+        this.procesandoPrenda[prenda.id] = false;
+        this.alertas.error('Error', 'No se pudo aprobar la prenda.');
       }
     });
   }
@@ -2217,7 +2734,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
       `obs=${this.codificarToken(this.confeccion.observaciones || '-')}`
     ].join(' ');
 
-    return this.limitarLongitudObservacion(resumen, 200);
+    return this.limitarLongitudObservacion(resumen, 2000);
   }
 
   private refrescarHistorialConfeccion(): void {
@@ -2500,7 +3017,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return { ...this._acumuladoGuardadoPorTalle };
   }
 
-  private obtenerPrendasProyecto(): string[] {
+  obtenerPrendasProyecto(): string[] {
     const prendas = (this.proyecto as any)?.prendas;
     if (Array.isArray(prendas)) {
       const nombres = prendas
@@ -2722,6 +3239,16 @@ interface CriterioCalidadUI {
   observacion: string;
 }
 
+interface PrendaRechazada {
+  id: string;
+  nombrePrenda: string;
+  talle: string;
+  cantidad: number;
+  estado: 'PENDIENTE' | 'EN_TALLER' | 'REINGRESADA';
+  criteriosRechazados: { nombre: string; observacion: string }[];
+  idCalidadIncidencia?: number;
+}
+
 interface SeguimientoTalle {
   talle: string;
   objetivo: number;
@@ -2853,6 +3380,10 @@ interface DisenoPrendaForm {
   descripcionLogo: string;
   imagenMockup: string;
   descripcionMockup: string;
+  imagenBordado: string;
+  descripcionBordado: string;
+  imagenEstampado: string;
+  descripcionEstampado: string;
 }
 
 const CRITERIOS_CALIDAD_INICIALES: CriterioCalidadUI[] = [
