@@ -42,6 +42,7 @@
                 <div class="orden-info">
                     <strong class="nro-orden">{{ orden.nroOrden }}</strong>
                     <span class="proveedor">{{ orden.nombreProveedor }}</span>
+                    <span class="descripcion-orden" *ngIf="orden.descripcion">{{ orden.descripcion }}</span>
                 </div>
                 <div class="orden-meta">
                     <span class="fecha">Habilitado: {{ formatearFecha(orden.fechaHabilitacionControl || '') }}</span>

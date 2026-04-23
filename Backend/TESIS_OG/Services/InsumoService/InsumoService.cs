@@ -98,7 +98,13 @@ namespace TESIS_OG.Services.InsumoService
             CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
             Color = i.Color,
             TipoTela = i.TipoTela,
-            PrecioUnitario = i.PrecioUnitario
+            PrecioUnitario = i.PrecioUnitario,
+            ProyectosAsignados = i.InsumoStocks
+                .Where(s => s.IdProyecto != null)
+                .Select(s => s.IdProyecto)
+                .Distinct()
+                .Select(id => new ProyectoAsignadoDTO { IdProyecto = id!.Value })
+                .ToList()
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();
@@ -108,6 +114,21 @@ namespace TESIS_OG.Services.InsumoService
 
     public async Task<List<InsumoIndexDTO>> ObtenerInsumosConStockAsync()
     {
+      // FIX MASIVO Y DINÁMICO: Antes de retornar, nos aseguramos que el campo StockActual de TODOS coincida con la suma de sus InsumoStocks
+      // Esto resuelve permanentemente los casos donde quedó stock "fantasma" o mal calculado
+      var insumosDb = await _context.Insumos.Include(i => i.InsumoStocks).ToListAsync();
+      var cambios = false;
+      foreach (var item in insumosDb)
+      {
+        var realSum = item.InsumoStocks.Sum(s => s.Cantidad);
+        if (item.StockActual != realSum)
+        {
+          item.StockActual = realSum;
+          cambios = true;
+        }
+      }
+      if (cambios) await _context.SaveChangesAsync();
+
       var insumos = await _context.Insumos
           .Include(i => i.IdTipoInsumoNavigation)
           .Include(i => i.IdProveedorNavigation)
@@ -133,7 +154,13 @@ namespace TESIS_OG.Services.InsumoService
             CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
             Color = i.Color,
             TipoTela = i.TipoTela,
-            PrecioUnitario = i.PrecioUnitario
+            PrecioUnitario = i.PrecioUnitario,
+            ProyectosAsignados = i.InsumoStocks
+                .Where(s => s.IdProyecto != null)
+                .Select(s => s.IdProyecto)
+                .Distinct()
+                .Select(id => new ProyectoAsignadoDTO { IdProyecto = id!.Value })
+                .ToList()
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();
@@ -279,22 +306,34 @@ namespace TESIS_OG.Services.InsumoService
 
           if (stockEntry == null)
           {
-              stockEntry = new InsumoStock
+              // Solo crear si hay stock que anotar
+              if (insumoDto.StockActual > 0)
               {
-                  IdInsumo = id,
-                  IdUbicacion = insumo.IdUbicacion.Value,
-                  Cantidad = insumo.StockActual,
-                  FechaActualizacion = DateTime.Now
-              };
-              _context.InsumoStocks.Add(stockEntry);
+                  stockEntry = new InsumoStock
+                  {
+                      IdInsumo = id,
+                      IdUbicacion = insumo.IdUbicacion.Value,
+                      Cantidad = insumoDto.StockActual,
+                      FechaActualizacion = DateTime.Now
+                  };
+                  _context.InsumoStocks.Add(stockEntry);
+              }
           }
           else
           {
-              stockEntry.Cantidad = insumo.StockActual;
+              stockEntry.Cantidad = insumoDto.StockActual;
               stockEntry.FechaActualizacion = DateTime.Now;
+              if (stockEntry.Cantidad <= 0) _context.InsumoStocks.Remove(stockEntry);
           }
           await _context.SaveChangesAsync();
       }
+
+      // Recalcular StockActual como la suma real de todos los InsumoStocks del insumo
+      var stockTotal = await _context.InsumoStocks
+          .Where(s => s.IdInsumo == id)
+          .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+      insumo.StockActual = stockTotal;
+      await _context.SaveChangesAsync();
 
       return await ObtenerInsumoPorIdAsync(id);
     }
@@ -420,7 +459,13 @@ namespace TESIS_OG.Services.InsumoService
             CodigoUbicacion = i.IdUbicacionNavigation != null ? i.IdUbicacionNavigation.Codigo : null,
             Color = i.Color,
             TipoTela = i.TipoTela,
-            PrecioUnitario = i.PrecioUnitario
+            PrecioUnitario = i.PrecioUnitario,
+            ProyectosAsignados = i.InsumoStocks
+                .Where(s => s.IdProyecto != null)
+                .Select(s => s.IdProyecto)
+                .Distinct()
+                .Select(id => new ProyectoAsignadoDTO { IdProyecto = id!.Value })
+                .ToList()
           })
           .OrderByDescending(i => i.FechaActualizacion)
           .ToListAsync();
@@ -516,13 +561,77 @@ namespace TESIS_OG.Services.InsumoService
 
       entry.Cantidad = nuevaCantidad;
       entry.FechaActualizacion = DateTime.Now;
-      insumo.StockActual += diferencia;
-      if (insumo.StockActual < 0) insumo.StockActual = 0;
-      insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
       if (nuevaCantidad == 0) _context.InsumoStocks.Remove(entry);
+      await _context.SaveChangesAsync();
+
+      // RECALCULO TOTAL
+      var total = await _context.InsumoStocks.Where(s => s.IdInsumo == entry.IdInsumo).SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+      insumo.StockActual = total;
+      insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
 
       await _context.SaveChangesAsync();
       return null;
+    }
+
+    public async Task<(bool ok, string mensaje)> AgregarStockGeneralAsync(int idInsumo, decimal cantidad, int? idUbicacion, int? idUsuario)
+    {
+      if (cantidad <= 0) return (false, "La cantidad debe ser mayor a 0");
+
+      var insumo = await _context.Insumos.FindAsync(idInsumo);
+      if (insumo == null) return (false, "Insumo no encontrado");
+
+      // Verificar ubicación si se proporciona
+      if (idUbicacion.HasValue)
+      {
+        var ubicExiste = await _context.Ubicacions.AnyAsync(u => u.IdUbicacion == idUbicacion.Value);
+        if (!ubicExiste) return (false, "Ubicación no encontrada");
+      }
+
+      int? idUbicFinal = idUbicacion ?? insumo.IdUbicacion;
+
+      // Buscar entrada de stock general existente
+      var entradaGeneral = await _context.InsumoStocks
+          .FirstOrDefaultAsync(s => s.IdInsumo == idInsumo && s.IdProyecto == null &&
+              (idUbicFinal == null || s.IdUbicacion == idUbicFinal));
+
+      if (entradaGeneral != null)
+      {
+        entradaGeneral.Cantidad += cantidad;
+        entradaGeneral.FechaActualizacion = DateTime.Now;
+      }
+      else
+      {
+        _context.InsumoStocks.Add(new InsumoStock
+        {
+          IdInsumo = idInsumo,
+          IdUbicacion = idUbicFinal,
+          Cantidad = cantidad,
+          FechaActualizacion = DateTime.Now
+        });
+      }
+
+      // Registrar movimiento
+      var movimiento = new InventarioMovimiento
+      {
+        IdInsumo = idInsumo,
+        NombreInsumo = insumo.NombreInsumo,
+        TipoMovimiento = "Ingreso",
+        Cantidad = cantidad,
+        FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+        Origen = "Ingreso manual",
+        Destino = idUbicFinal.HasValue ? "Ubicación " + idUbicFinal : "Sin Ubicación",
+        Observacion = "Ingreso de stock manual",
+        IdUsuario = idUsuario
+      };
+      _context.InventarioMovimientos.Add(movimiento);
+      await _context.SaveChangesAsync();
+
+      // RECALCULO TOTAL
+      var realTotal = await _context.InsumoStocks.Where(s => s.IdInsumo == idInsumo).SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+      insumo.StockActual = realTotal;
+      await _context.SaveChangesAsync();
+
+      return (true, $"Se agregaron {cantidad} {insumo.UnidadMedida} al stock de {insumo.NombreInsumo}");
     }
 
     public async Task<(bool ok, string mensaje)> DevolverStockAlGeneralAsync(int idInsumoStock)
@@ -552,6 +661,12 @@ namespace TESIS_OG.Services.InsumoService
       insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
       _context.InsumoStocks.Remove(entry);
       await _context.SaveChangesAsync();
+
+      // RECALCULO TOTAL
+      var stockTotal = await _context.InsumoStocks.Where(s => s.IdInsumo == entry.IdInsumo).SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+      insumo.StockActual = stockTotal;
+      await _context.SaveChangesAsync();
+
       return (true, $"Se devolvieron {entry.Cantidad} unidades al stock general");
     }
 

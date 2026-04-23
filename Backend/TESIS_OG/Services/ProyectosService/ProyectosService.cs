@@ -869,7 +869,7 @@ namespace TESIS_OG.Services.ProyectoService
 
             var insumosRaw = await _context.Insumos
              .Include(i => i.IdTipoInsumoNavigation)
-             .Where(i => i.Estado == "Disponible" || i.Estado == "A designar")
+             // Traer todos los insumos del catálogo sin filtrar por estado ni stock
              .Select(i => new
              {
                  i.IdInsumo,
@@ -1441,8 +1441,10 @@ namespace TESIS_OG.Services.ProyectoService
                     // Usar el insumo real (con el color correcto) si existe, sino el original
                     IdInsumo = insumoReal?.IdInsumo ?? mc.IdInsumo,
                     IdTipoInsumo = idTipoInsumo,
-                    NombreInsumo = mc.IdInsumoNavigation?.IdTipoInsumoNavigation?.NombreTipo
-                                   ?? mc.IdInsumoNavigation?.NombreInsumo ?? "",
+                    // Nombre del insumo específico, no el tipo
+                    NombreInsumo = insumoReal?.NombreInsumo
+                                   ?? mc.IdInsumoNavigation?.NombreInsumo
+                                   ?? mc.IdInsumoNavigation?.IdTipoInsumoNavigation?.NombreTipo ?? "",
                     TipoInsumo = mc.IdInsumoNavigation?.IdTipoInsumoNavigation?.NombreTipo ?? "",
                     TipoCalculo = mc.TipoCalculo,
                     CantidadCalculada = mc.CantidadCalculada,

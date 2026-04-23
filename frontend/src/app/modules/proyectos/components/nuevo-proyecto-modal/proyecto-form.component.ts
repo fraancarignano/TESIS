@@ -72,6 +72,62 @@ export class ProyectoFormNuevoComponent implements OnInit {
   usuarios: UsuarioSimple[] = [];
   prioridades: string[] = ['baja', 'media', 'alta'];
   insumosTelasFiltrados: InsumoFormulario[] = [];
+  // Buscador inteligente de material
+  busquedaMaterialNombre = '';
+  busquedaMaterialId?: number;
+  mostrarSugerenciasMaterial = false;
+
+  get insumosTelasBusqueda(): InsumoFormulario[] {
+    if (!this.prendaEditando?.idTipoInsumoMaterial) return [];
+    const base = this.insumosTelas.filter(
+      i => i.idTipoInsumo === Number(this.prendaEditando!.idTipoInsumoMaterial)
+    );
+    const termNombre = this.busquedaMaterialNombre.trim().toLowerCase();
+    const termId = this.busquedaMaterialId;
+    if (!termNombre && !termId) return base.slice(0, 8);
+    return base.filter(i => {
+      if (termId) return i.idInsumo === termId;
+      return i.nombreInsumo.toLowerCase().includes(termNombre) ||
+             (i.color || '').toLowerCase().includes(termNombre);
+    }).slice(0, 10);
+  }
+
+  onBusquedaMaterialNombreChange(): void {
+    this.prendaEditando!.idInsumo = undefined;
+    this.mostrarSugerenciasMaterial = true;
+  }
+
+  onBusquedaMaterialIdChange(): void {
+    if (this.busquedaMaterialId) {
+      const found = this.insumosTelas.find(i => i.idInsumo === this.busquedaMaterialId);
+      if (found) { this.seleccionarMaterial(found); return; }
+    }
+    this.prendaEditando!.idInsumo = undefined;
+  }
+
+  seleccionarMaterial(insumo: InsumoFormulario): void {
+    this.prendaEditando!.idInsumo = insumo.idInsumo;
+    this.prendaEditando!.colorTela = insumo.color || undefined;
+    this.busquedaMaterialNombre = '';
+    this.busquedaMaterialId = undefined;
+    this.mostrarSugerenciasMaterial = false;
+  }
+
+  limpiarMaterialSeleccionado(): void {
+    this.prendaEditando!.idInsumo = undefined;
+    this.prendaEditando!.colorTela = undefined;
+    this.busquedaMaterialNombre = '';
+    this.busquedaMaterialId = undefined;
+  }
+
+  ocultarSugerenciasMaterialDelay(): void {
+    setTimeout(() => { this.mostrarSugerenciasMaterial = false; }, 200);
+  }
+
+  getMaterialSeleccionadoObj(): InsumoFormulario | undefined {
+    if (!this.prendaEditando?.idInsumo) return undefined;
+    return this.insumosTelas.find(i => i.idInsumo === Number(this.prendaEditando!.idInsumo));
+  }
   muestrasAprobadas: MuestraDetalle[] = [];
 
   private muestraQueryId?: number;
@@ -377,11 +433,12 @@ export class ProyectoFormNuevoComponent implements OnInit {
   // ========================================
 
   onTipoMaterialChange(): void {
-    
     if (!this.prendaEditando?.idTipoInsumoMaterial) {
       this.insumosTelasFiltrados = [];
       this.prendaEditando!.idInsumo = undefined;
       this.prendaEditando!.colorTela = undefined;
+      this.busquedaMaterialNombre = '';
+      this.busquedaMaterialId = undefined;
       return;
     }
 
@@ -391,6 +448,8 @@ export class ProyectoFormNuevoComponent implements OnInit {
 
     this.prendaEditando!.idInsumo = undefined;
     this.prendaEditando!.colorTela = undefined;
+    this.busquedaMaterialNombre = '';
+    this.busquedaMaterialId = undefined;
   }
 
   onInsumoColorChange(): void {

@@ -337,23 +337,28 @@ export class UbicacionTransferComponent implements OnInit {
   abrirPanelOC(): void {
     if (!this.sinStock.length) { this.mostrarMensaje('No hay materiales faltantes', 'error'); return; }
     this.itemsOC = this.sinStock.map(m => {
+      // Buscar precio: primero por ID directo, luego por tipo+color
       let precio = 0;
-      if (!m.colorSolicitado && m.idInsumo > 0) {
-        // Insumo existente sin color → buscar por ID
+      if (m.idInsumo > 0) {
         precio = this.preciosInsumo.get(m.idInsumo) ?? 0;
-      } else if (m.colorSolicitado && m.idTipoInsumo > 0) {
-        // Insumo con color → buscar por tipo+color
+      }
+      if (precio === 0 && m.colorSolicitado && m.idTipoInsumo > 0) {
         const key = `${m.idTipoInsumo}_${m.colorSolicitado.toUpperCase()}`;
         precio = this.preciosPorTipoColor.get(key) ?? 0;
       }
+
+      // Si el insumo existe en el catálogo (idInsumo > 0), usarlo directamente
+      // Solo crear insumo nuevo (idInsumo=0) si realmente no existe
+      const esInsumoExistente = m.idInsumo > 0;
+
       return {
-        idInsumo: m.colorSolicitado ? 0 : m.idInsumo,
-        nombreInsumo: m.tipoInsumo || m.nombreInsumo,
+        idInsumo: esInsumoExistente ? m.idInsumo : 0,
+        nombreInsumo: m.nombreInsumo || m.tipoInsumo,  // nombre específico del insumo, no el tipo
         colorSolicitado: m.colorSolicitado || '',
         cantidad: Math.max(0.01, m.cantidadNecesaria - m.stockDisponible),
         precioUnitario: precio,
-        nuevoIdTipoInsumo: m.colorSolicitado ? (m.idTipoInsumo || undefined) : undefined,
-        nuevoUnidadMedida: m.unidadMedida
+        nuevoIdTipoInsumo: !esInsumoExistente ? (m.idTipoInsumo || undefined) : undefined,
+        nuevoUnidadMedida: !esInsumoExistente ? m.unidadMedida : undefined
       };
     });
     this.idProveedorOC = null;

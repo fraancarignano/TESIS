@@ -129,6 +129,15 @@ export class InsumosService {
     );
   }
 
+  agregarStock(idInsumo: number, cantidad: number, idUbicacion?: number): Observable<any> {
+    const usuarioJson = localStorage.getItem('usuario');
+    const idUsuario = usuarioJson ? JSON.parse(usuarioJson).idUsuario : null;
+    const url = `${this.apiUrl}/${idInsumo}/agregar-stock${idUsuario ? `?idUsuario=${idUsuario}` : ''}`;
+    return this.http.post(url, { cantidad, idUbicacion }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   ajustarPreciosMasivo(idsInsumos: number[], porcentajeAjuste: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/precios/ajuste-masivo`, { idsInsumos, porcentajeAjuste }).pipe(
       catchError(this.handleError)

@@ -252,26 +252,52 @@
             <small>Ej: Algodón, Lycra, Polyester, etc.</small>
           </div>
 
-          <!-- Color/Variante de Tela -->
+          <!-- Material solicitado (buscador inteligente) -->
           <div class="field" *ngIf="prendaEditando.idTipoInsumoMaterial">
-            <label>Color solicitado</label>
-            <div *ngIf="insumosTelasFiltrados.length > 0">
-              <select [(ngModel)]="prendaEditando.idInsumo" [ngModelOptions]="{standalone: true}" (change)="onInsumoColorChange()">
-                <option [value]="undefined">Seleccionar insumo en stock...</option>
-                <option *ngFor="let insumo of insumosTelasFiltrados" [value]="insumo.idInsumo">
-                  #{{ insumo.idInsumo }} {{ insumo.nombreInsumo }}{{ insumo.color ? ' — ' + insumo.color : '' }} — Stock: {{ insumo.stockActual }} {{ insumo.unidadMedida }}
-                </option>
-              </select>
-              <small>Si el color en stock no es el correcto, escribilo abajo.</small>
+            <label>Material solicitado</label>
+            <div class="material-search-wrapper" (click)="$event.stopPropagation()">
+              <div class="material-search-inputs">
+                <input
+                  type="number"
+                  [(ngModel)]="busquedaMaterialId"
+                  [ngModelOptions]="{standalone: true}"
+                  placeholder="ID"
+                  class="input-id-material"
+                  (input)="onBusquedaMaterialIdChange()"
+                  min="1"
+                >
+                <input
+                  type="text"
+                  [(ngModel)]="busquedaMaterialNombre"
+                  [ngModelOptions]="{standalone: true}"
+                  placeholder="Buscar por nombre o color..."
+                  class="input-nombre-material"
+                  (input)="onBusquedaMaterialNombreChange()"
+                  (focus)="mostrarSugerenciasMaterial = true"
+                  (blur)="ocultarSugerenciasMaterialDelay()"
+                  autocomplete="off"
+                >
+              </div>
+              <!-- Insumo seleccionado -->
+              <div class="material-seleccionado-tag" *ngIf="getMaterialSeleccionadoObj()">
+                <span>#{{ getMaterialSeleccionadoObj()!.idInsumo }} {{ getMaterialSeleccionadoObj()!.nombreInsumo }}{{ getMaterialSeleccionadoObj()!.color ? ' — ' + getMaterialSeleccionadoObj()!.color : '' }}</span>
+                <button type="button" (click)="limpiarMaterialSeleccionado()" class="btn-clear-material">✕</button>
+              </div>
+              <!-- Sugerencias -->
+              <div class="material-sugerencias" *ngIf="mostrarSugerenciasMaterial && insumosTelasBusqueda.length > 0">
+                <div
+                  class="sugerencia-item-mat"
+                  *ngFor="let ins of insumosTelasBusqueda"
+                  (mousedown)="seleccionarMaterial(ins)"
+                >
+                  <span class="sug-id">#{{ ins.idInsumo }}</span>
+                  <span class="sug-nombre">{{ ins.nombreInsumo }}</span>
+                  <span class="sug-color" *ngIf="ins.color">{{ ins.color }}</span>
+                  <span class="sug-stock">{{ ins.stockActual }} {{ ins.unidadMedida }}</span>
+                </div>
+              </div>
             </div>
-            <input
-              type="text"
-              [(ngModel)]="prendaEditando.colorTela"
-              [ngModelOptions]="{standalone: true}"
-              placeholder="Ej: Azul marino, Blanco, Rojo..."
-              style="margin-top: 6px;"
-            >
-            <small>Este color se enviará a inventario para gestionar la transferencia.</small>
+            <small>Seleccioná el insumo específico del catálogo. Si no existe, crealo primero en Gestión de Insumos.</small>
           </div>
 
           <!-- Cantidad Total -->

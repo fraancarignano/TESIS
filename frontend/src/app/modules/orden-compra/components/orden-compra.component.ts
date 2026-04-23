@@ -74,9 +74,14 @@ export class OrdenCompraComponent implements OnInit {
   get ordenesFiltradas(): OrdenCompra[] {
     let result = this.ordenes;
 
-    // Por defecto ocultar Recibidas y Anuladas
+    // Por defecto mostrar solo activas (ocultar Recibida, Anulada, Cancelada, Ingresada)
     if (!this.mostrarRecibidas) {
-      result = result.filter(o => o.estado !== 'Recibida' && o.estado !== 'Anulada' && o.estado !== 'Cancelada');
+      result = result.filter(o =>
+        o.estado !== 'Recibida' &&
+        o.estado !== 'Anulada' &&
+        o.estado !== 'Cancelada' &&
+        o.estado !== 'Ingresada'
+      );
     }
 
     // Filtro por estado

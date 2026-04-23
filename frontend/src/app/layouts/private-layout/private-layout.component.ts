@@ -21,6 +21,7 @@ export class PrivateLayoutComponent implements OnInit, OnDestroy {
   proyectoAbierto = false;
   usuariosAbierto = false;
   inventarioAbierto = false;
+  ordenesAbierto = false;
   notificacionesStockCount = 0;
   public mostrarSidebar = true;
   private timer?: any;
@@ -107,6 +108,10 @@ export class PrivateLayoutComponent implements OnInit, OnDestroy {
 
   toggleInventario(): void {
     this.inventarioAbierto = !this.inventarioAbierto;
+  }
+
+  toggleOrdenes(): void {
+    this.ordenesAbierto = !this.ordenesAbierto;
   }
 
   private actualizarSidebar(url: string): void {

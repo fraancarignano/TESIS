@@ -600,6 +600,21 @@ td {
   border: 1px solid #cfd8dc;
 }
 
+.badge-proyectos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  border-radius: 12px;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 /* Ajuste masivo de precios */
 .ajuste-precios-panel {
   display: flex;

@@ -65,10 +65,6 @@
             *appHasPermission="{ modulo: 'Inventario', accion: 'Historial' }">
             <span class="text">Historial de Movimientos</span>
           </a>
-          <a routerLink="/inventario/control-recepcion" routerLinkActive="active" class="nav-item sub"
-            *appHasPermission="{ modulo: 'Inventario', accion: 'Recepcionar' }">
-            <span class="text">Control Recepción</span>
-          </a>
         </div>
       </div>
 
@@ -124,10 +120,20 @@
         </div>
       </div>
 
-      <a routerLink="/ordenes" routerLinkActive="active" class="nav-item"
-        *appHasPermission="{ modulo: 'OrdenesCompra', accion: 'Recepcionar' }">
+      <a routerLink="/ordenes" routerLinkActive="active" class="nav-item parent" [class.active]="ordenesAbierto" (click)="toggleOrdenes()">
         <span class="text">Ordenes de Compra</span>
+        <span class="chevron" [class.open]="ordenesAbierto">▾</span>
       </a>
+      <div class="submenu" [class.open]="ordenesAbierto">
+        <a routerLink="/ordenes" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item sub"
+          *appHasPermission="{ modulo: 'OrdenesCompra', accion: 'Recepcionar' }">
+          <span class="text">Listado de Órdenes</span>
+        </a>
+        <a routerLink="/ordenes/control-recepcion" routerLinkActive="active" class="nav-item sub"
+          *appHasPermission="{ modulo: 'Inventario', accion: 'Recepcionar' }">
+          <span class="text">Control Recepción</span>
+        </a>
+      </div>
 
       <a routerLink="/despacho" routerLinkActive="active" class="nav-item"
         *appHasPermission="{ modulo: 'Despachos', accion: 'Ver' }">

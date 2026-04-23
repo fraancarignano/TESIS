@@ -18,29 +18,23 @@ export class InsumoFormComponent implements OnInit {
   @Input() insumo: Insumo | null = null;
   @Output() cerrar = new EventEmitter<void>();
 
-  formulario: Insumo = {
-    nombreInsumo: '',
-    idTipoInsumo: 0,
-    unidadMedida: '',
-    stockActual: 0,
-    stockMinimo: 0,
-    fechaActualizacion: new Date().toISOString().split('T')[0],
-    estado: 'Disponible'
-  };
+  // Datos para el ingreso de stock
+  idSeleccionado: number | null = null;
+  insumoSeleccionado: Insumo | null = null;
+  cantidad = 0;
+  idUbicacion: number | undefined;
 
-  tiposInsumo: TipoInsumo[] = [];
-  proveedores: Proveedor[] = [];
-  ubicaciones: Ubicacion[] = [];
-
-  // Autocomplete
+  // Catálogo para búsqueda
   insumosCatalogo: Insumo[] = [];
   insumosFiltrados: Insumo[] = [];
-  mostrarResultados = false;
-  busquedaInsumo = '';
+  ubicaciones: Ubicacion[] = [];
 
-  esEdicion = false;
+  // Búsqueda
+  busquedaNombre = '';
+  busquedaId: string = '';
+  mostrarResultados = false;
+
   guardando = false;
-  esInsumoDeCatalogo = false;
 
   constructor(
     private insumosService: InsumosService,
@@ -50,30 +44,17 @@ export class InsumoFormComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    // Cargar tipos de insumo y proveedores
-    this.insumosService.getTiposInsumo().subscribe({
-      next: (tipos) => this.tiposInsumo = tipos,
-      error: (error: any) => console.error('Error al cargar tipos:', error)
-    });
-
-    this.insumosService.getProveedores().subscribe({
-      next: (proveedores) => this.proveedores = proveedores,
-      error: (error: any) => console.error('Error al cargar proveedores:', error)
-    });
-
+    // Cargar ubicaciones
     this.ubicacionesService.getUbicaciones().subscribe({
       next: (ubicaciones) => this.ubicaciones = ubicaciones,
       error: (error: any) => console.error('Error al cargar ubicaciones:', error)
     });
 
+    // Cargar catálogo completo para búsqueda inteligente
     this.cargarCatalogo();
 
     if (this.insumo) {
-      this.esEdicion = true;
-      this.formulario = { ...this.insumo };
-      this.busquedaInsumo = this.formulario.nombreInsumo;
-      // Si el insumo ya tiene ID, lo tratamos como algo que viene de una definición existente
-      this.esInsumoDeCatalogo = true;
+      this.seleccionarInsumo(this.insumo);
     }
   }
 
@@ -87,39 +68,50 @@ export class InsumoFormComponent implements OnInit {
   }
 
   onSearchChange(): void {
-    if (!this.busquedaInsumo.trim()) {
+    if (!this.busquedaNombre.trim()) {
       this.insumosFiltrados = [];
       this.mostrarResultados = false;
       return;
     }
 
-    const term = this.busquedaInsumo.toLowerCase();
+    const term = this.busquedaNombre.toLowerCase();
     this.insumosFiltrados = this.insumosCatalogo.filter(i =>
-      i.nombreInsumo.toLowerCase().includes(term)
+      i.nombreInsumo.toLowerCase().includes(term) ||
+      i.idInsumo?.toString().includes(term)
     );
     this.mostrarResultados = this.insumosFiltrados.length > 0;
+  }
 
-    // Al escribir, actualizamos el nombre en el formulario
-    this.formulario.nombreInsumo = this.busquedaInsumo;
+  onIdChange(): void {
+    if (!this.busquedaId.trim()) {
+      this.limpiarSeleccion();
+      return;
+    }
+
+    const id = parseInt(this.busquedaId);
+    const encontrado = this.insumosCatalogo.find(i => i.idInsumo === id);
+    if (encontrado) {
+      this.seleccionarInsumo(encontrado);
+    } else {
+      this.insumoSeleccionado = null;
+      this.idSeleccionado = null;
+    }
   }
 
   seleccionarInsumo(insumo: Insumo): void {
-    this.formulario = {
-      ...this.formulario,
-      idInsumo: insumo.idInsumo,
-      nombreInsumo: insumo.nombreInsumo,
-      idTipoInsumo: insumo.idTipoInsumo,
-      unidadMedida: insumo.unidadMedida,
-      stockMinimo: insumo.stockMinimo || 0,
-      idProveedor: insumo.idProveedor,
-      estado: insumo.estado || 'Disponible'
-    };
-
-    // Si seleccionamos uno existente, se convierte en una edición técnica para el backend
-    this.esEdicion = true;
-    this.esInsumoDeCatalogo = true;
-    this.busquedaInsumo = insumo.nombreInsumo;
+    this.insumoSeleccionado = insumo;
+    this.idSeleccionado = insumo.idInsumo || null;
+    this.busquedaNombre = insumo.nombreInsumo;
+    this.busquedaId = insumo.idInsumo?.toString() || '';
     this.mostrarResultados = false;
+    this.idUbicacion = insumo.idUbicacion;
+  }
+
+  limpiarSeleccion(): void {
+    this.insumoSeleccionado = null;
+    this.idSeleccionado = null;
+    this.busquedaNombre = '';
+    this.busquedaId = '';
   }
 
   irAGestionDeInsumos(): void {
@@ -127,45 +119,26 @@ export class InsumoFormComponent implements OnInit {
     this.router.navigate(['/inventario/catalogo']);
   }
 
-  stockBajo(): boolean {
-    if (!this.formulario.stockMinimo) return false;
-    return this.formulario.stockActual < this.formulario.stockMinimo;
-  }
-
   guardar(): void {
-    if (!this.formulario.nombreInsumo.trim()) {
-      this.alertas.warning('Nombre requerido', 'El nombre del insumo es requerido');
+    if (!this.idSeleccionado) {
+      this.alertas.warning('Insumo requerido', 'Debe seleccionar un insumo válido del catálogo');
       return;
     }
-    if (this.formulario.idTipoInsumo === 0) {
-      this.alertas.warning('Tipo requerido', 'Debe seleccionar un tipo de insumo');
-      return;
-    }
-    if (!this.formulario.unidadMedida) {
-      this.alertas.warning('Unidad requerida', 'Debe seleccionar una unidad de medida');
-      return;
-    }
-    if (this.formulario.stockActual < 0) {
-      this.alertas.warning('Stock inválido', 'El stock actual no puede ser negativo');
+    if (this.cantidad <= 0) {
+      this.alertas.warning('Cantidad inválida', 'Debe ingresar una cantidad mayor a 0');
       return;
     }
 
     this.guardando = true;
 
-    // Si tiene idInsumo es edición, sino es creación nueva
-    const operacion = this.formulario.idInsumo
-      ? this.insumosService.actualizarInsumo(this.formulario)
-      : this.insumosService.agregarInsumo(this.formulario);
-
-    operacion.subscribe({
-      next: () => {
-        const mensaje = this.formulario.idInsumo ? 'Insumo actualizado correctamente' : 'Insumo creado correctamente';
-        this.alertas.success('Exito', mensaje);
+    this.insumosService.agregarStock(this.idSeleccionado, this.cantidad, this.idUbicacion).subscribe({
+      next: (res) => {
+        this.alertas.success('Exito', res.message || 'Stock agregado correctamente');
         this.cerrar.emit();
       },
       error: (error: any) => {
         console.error('Error al guardar:', error);
-        this.alertas.error('Error', 'Error al guardar el insumo. Verifique los datos.');
+        this.alertas.error('Error', error?.error?.message || 'Error al guardar el stock');
         this.guardando = false;
       }
     });

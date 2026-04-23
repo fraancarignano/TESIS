@@ -187,6 +187,12 @@ export const routes: Routes = [
         loadComponent: () => import('./modules/orden-compra/components/orden-compra.component').then(m => m.OrdenCompraComponent)
       },
       {
+        path: 'ordenes/control-recepcion',
+        canActivate: [permissionGuard],
+        data: { permission: { modulo: 'Inventario', accion: 'Recepcionar' } },
+        loadComponent: () => import('./modules/inventario/components/control-recepcion/control-recepcion.component').then(m => m.ControlRecepcionComponent)
+      },
+      {
         path: 'notificaciones',
         canActivate: [permissionGuard],
         data: { permission: { modulo: 'Notificaciones', accion: 'Ver' } },

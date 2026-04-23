@@ -152,6 +152,23 @@ namespace TESIS_OG.Controllers
       if (!ok) return BadRequest(new { message = mensaje });
       return Ok(new { message = mensaje });
     }
+
+    /// <summary>
+    /// Agregar stock manual a un insumo existente (sin proyecto)
+    /// </summary>
+    [HttpPost("{id}/agregar-stock")]
+    public async Task<IActionResult> AgregarStock(int id, [FromBody] AgregarStockRequest request, [FromQuery] int? idUsuario = null)
+    {
+      var (ok, mensaje) = await _insumoService.AgregarStockGeneralAsync(id, request.Cantidad, request.IdUbicacion, idUsuario);
+      if (!ok) return BadRequest(new { message = mensaje });
+      return Ok(new { message = mensaje });
+    }
+  }
+
+  public class AgregarStockRequest
+  {
+    public decimal Cantidad { get; set; }
+    public int? IdUbicacion { get; set; }
   }
 
   // Clase auxiliar para el request de cambio de estado

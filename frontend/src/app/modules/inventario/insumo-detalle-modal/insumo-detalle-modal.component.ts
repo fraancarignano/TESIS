@@ -116,8 +116,8 @@ import { AlertasService } from '../../../core/services/alertas';
                       <span *ngIf="!s.idUbicacion" class="text-muted">-</span>
                     </td>
                     <td style="white-space:nowrap;">
-                      <!-- Editar cantidad (solo si está asignado a proyecto) -->
-                      <button *ngIf="s.idProyecto && editandoStock !== s.idInsumoStock"
+                      <!-- Editar cantidad (stock general o de proyecto) -->
+                      <button *ngIf="editandoStock !== s.idInsumoStock"
                         (click)="iniciarEdicionStock(s)"
                         title="Editar cantidad"
                         style="background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:.72rem;margin-right:4px;">

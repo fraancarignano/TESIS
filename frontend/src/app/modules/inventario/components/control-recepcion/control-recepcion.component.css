@@ -437,3 +437,11 @@
 .chip-color { color: #1565c0; font-weight: 600; }
 .badge-color { display: inline-block; background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 10px; font-size: .78rem; font-weight: 600; }
 .text-muted { color: #bdbdbd; font-size: .82rem; }
+
+.descripcion-orden {
+    display: block;
+    font-size: 0.78rem;
+    color: #666;
+    margin-top: 3px;
+    font-style: italic;
+}
