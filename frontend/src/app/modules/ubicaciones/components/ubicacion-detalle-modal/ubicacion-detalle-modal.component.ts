@@ -109,7 +109,7 @@ import { Insumo } from '../../../inventario/models/insumo.model';
                     <td>{{ proy.fechaIngreso | date:'dd/MM/yyyy HH:mm' }}</td>
                     <td>
                       <button class="btn-ver-detalle" (click)="verDetalleProyecto(proy.idProyecto)">
-                        <i class="fas fa-external-link-alt"></i> Ver Control
+                         Ver Control
                       </button>
                     </td>
                   </tr>
@@ -121,6 +121,61 @@ import { Insumo } from '../../../inventario/models/insumo.model';
               <div class="alert alert-info">
                  Esta ubicación de despacho está vacía. No tiene proyectos asignados actualmente.
               </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN DE SCRAP (Para ubicaciones tipo SCRP) -->
+          <div class="insumos-seccion scrap-seccion" *ngIf="esUbicacionScrap">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h3>Inventario de Scrap ({{ scraps.length }} registros)</h3>
+              <span class="badge-scrap">ZONA SCRP</span>
+            </div>
+            
+            <div class="scrap-kpis" *ngIf="scraps.length > 0">
+              <div class="kpi-card">
+                <span class="kpi-label">Total acumulado</span>
+                <span class="kpi-valor">{{ totalScrapKg | number:'1.2-2' }} kg</span>
+              </div>
+              <div class="kpi-card">
+                <span class="kpi-label">Proyectos involucrados</span>
+                <span class="kpi-valor">{{ proyectosConScrap }}</span>
+              </div>
+            </div>
+
+            <div class="loading-spinner" *ngIf="cargando">
+              Cargando registros de scrap...
+            </div>
+
+            <div class="tabla-container" *ngIf="!cargando && scraps.length > 0">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Proyecto</th>
+                    <th>Material</th>
+                    <th>Cantidad</th>
+                    <th>Motivo</th>
+                    <th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let s of scraps">
+                    <td>
+                      <div class="d-flex flex-column">
+                        <span class="badge-proyecto">{{ s.codigoProyecto || '#' + s.idProyecto }}</span>
+                        <small class="text-muted">{{ s.nombreProyecto }}</small>
+                      </div>
+                    </td>
+                    <td class="fw-bold">{{ s.nombreInsumo }}</td>
+                    <td>{{ s.cantidadKg | number:'1.2-2' }} kg</td>
+                    <td><span class="badge-motivo">{{ s.motivo || 'Corte' }}</span></td>
+                    <td>{{ s.fechaRegistro | date:'dd/MM/yyyy' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="sin-resultados" *ngIf="!cargando && scraps.length === 0">
+              No hay remanentes de scrap registrados en esta ubicación.
             </div>
           </div>
         </div>
@@ -318,6 +373,65 @@ import { Insumo } from '../../../inventario/models/insumo.model';
       border: 1px solid #ffe0b2;
     }
 
+    .badge-scrap {
+      background: #f3e5f5;
+      color: #7b1fa2;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 800;
+      border: 1px solid #e1bee7;
+    }
+
+    .scrap-kpis {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      border: 1px solid #eee;
+    }
+
+    .kpi-label {
+      display: block;
+      font-size: 11px;
+      color: #78909c;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .kpi-valor {
+      display: block;
+      font-size: 20px;
+      font-weight: 800;
+      color: #263238;
+    }
+
+    .badge-proyecto {
+      background: #e1f5fe;
+      color: #0288d1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      width: fit-content;
+    }
+
+    .badge-motivo {
+      background: #eceff1;
+      color: #546e7a;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
     .font-bold {
       font-weight: 700;
       color: #263238;
@@ -341,13 +455,29 @@ export class UbicacionDetalleModalComponent implements OnInit {
 
   insumos: any[] = [];
   proyectos: any[] = [];
+  scraps: any[] = [];
   cargando = true;
 
   get esUbicacionDespacho(): boolean {
-    // Más robusto: case-insensitive y soporta variaciones del código
+    if (this.ubicacion.tipo) return this.ubicacion.tipo === 'Despacho';
     if (!this.ubicacion.codigo) return false;
     const code = this.ubicacion.codigo.toUpperCase();
     return code.startsWith('DES') || code.includes('-DES');
+  }
+
+  get esUbicacionScrap(): boolean {
+    if (this.ubicacion.tipo) return this.ubicacion.tipo === 'Scrap';
+    if (!this.ubicacion.codigo) return false;
+    const code = this.ubicacion.codigo.toUpperCase();
+    return code.startsWith('SCRP');
+  }
+
+  get totalScrapKg(): number {
+    return this.scraps.reduce((acc, s) => acc + (s.cantidadKg || 0), 0);
+  }
+
+  get proyectosConScrap(): number {
+    return new Set(this.scraps.map(s => s.idProyecto)).size;
   }
 
   constructor(private ubicacionesService: UbicacionesService) { }
@@ -356,6 +486,8 @@ export class UbicacionDetalleModalComponent implements OnInit {
     if (this.ubicacion.idUbicacion) {
       if (this.esUbicacionDespacho) {
         this.cargarProyectos();
+      } else if (this.esUbicacionScrap) {
+        this.cargarScraps();
       } else {
         this.cargarInsumos();
       }
@@ -385,6 +517,20 @@ export class UbicacionDetalleModalComponent implements OnInit {
       },
       error: (err: any) => {
         console.error('Error al cargar proyectos de la ubicación:', err);
+        this.cargando = false;
+      }
+    });
+  }
+
+  cargarScraps(): void {
+    this.cargando = true;
+    this.ubicacionesService.getScrapsPorUbicacion(this.ubicacion.idUbicacion!).subscribe({
+      next: (res) => {
+        this.scraps = res;
+        this.cargando = false;
+      },
+      error: (err: any) => {
+        console.error('Error al cargar scraps de la ubicación:', err);
         this.cargando = false;
       }
     });

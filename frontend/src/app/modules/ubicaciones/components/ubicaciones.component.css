@@ -294,3 +294,130 @@ tr:last-child td {
     min-width: 760px;
   }
 }
+
+/* Badge Tipos */
+.badge-tipo {
+  font-size: 0.65rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-tipo[data-tipo="Rack"] {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.badge-tipo[data-tipo="Despacho"] {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.badge-tipo[data-tipo="Scrap"] {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.badge-tipo[data-tipo="Virtual"] {
+  background: #e8f5e green; /* Fallback visually distinct */
+  color: #2e7d32;
+  background: #e8f5e9;
+}
+
+.text-muted {
+  color: #999;
+}
+
+/* Tabs */
+.tabs-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+    border-bottom: 2px solid #eee;
+    padding: 0 0.5rem;
+}
+
+.tab-btn {
+    padding: 0.8rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #666;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tab-btn:hover {
+    color: #ff5722;
+    background: rgba(255, 87, 34, 0.05);
+}
+
+.tab-btn.active {
+    color: #ff5722;
+    border-bottom-color: #ff5722;
+}
+
+/* Scrap Inventory Styles */
+.scrap-inventory table th {
+    background: #673ab7; /* Purple for variety */
+}
+
+.scrap-header-stats {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.2rem;
+    background: #fdfdfd;
+}
+
+.stat-card {
+    background: white;
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+.stat-label {
+    font-size: 0.72rem;
+    color: #888;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #673ab7;
+}
+
+.scrap-value {
+    font-weight: 700;
+    color: #7b1fa2;
+}
+
+.badge-proyectos {
+    background: #e1bee7;
+    color: #4a148c;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.loader-inline {
+    padding: 1.5rem;
+    font-style: italic;
+    color: #673ab7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}

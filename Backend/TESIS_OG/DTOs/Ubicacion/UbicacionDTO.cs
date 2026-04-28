@@ -6,6 +6,8 @@ namespace TESIS_OG.DTOs.Ubicacion
     {
         public int IdUbicacion { get; set; }
         public string Codigo { get; set; } = null!;
+        public string? Nombre { get; set; }
+        public string? Tipo { get; set; }
         public int Rack { get; set; }
         public int Division { get; set; }
         public int Espacio { get; set; }
@@ -15,6 +17,8 @@ namespace TESIS_OG.DTOs.Ubicacion
     public class UbicacionCreateDTO
     {
         public string Codigo { get; set; } = null!;
+        public string? Nombre { get; set; }
+        public string? Tipo { get; set; }
         public int Rack { get; set; }
         public int Division { get; set; }
         public int Espacio { get; set; }
@@ -24,6 +28,8 @@ namespace TESIS_OG.DTOs.Ubicacion
     public class UbicacionEditDTO
     {
         public string Codigo { get; set; } = null!;
+        public string? Nombre { get; set; }
+        public string? Tipo { get; set; }
         public int Rack { get; set; }
         public int Division { get; set; }
         public int Espacio { get; set; }

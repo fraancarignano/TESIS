@@ -1,5 +1,6 @@
 using TESIS_OG.DTOs.Proyectos;
 using TESIS_OG.DTOs.Configuracion;
+using TESIS_OG.DTOs.Ubicacion;
 
 namespace TESIS_OG.Services.ProyectosService
 {
@@ -101,6 +102,7 @@ namespace TESIS_OG.Services.ProyectosService
         // ========================================
 
         Task<bool> RegistrarScrapAsync(int idProyecto, RegistrarScrapDTO scrapDto);
+        Task<List<ScrapProyectoDTO>> ObtenerScrapsProyectoAsync(int idProyecto);
 
         // ========================================
         // OBSERVACIONES (MANTENER COMPATIBILIDAD)

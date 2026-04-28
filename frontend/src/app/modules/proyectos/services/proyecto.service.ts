@@ -209,6 +209,12 @@ export class ProyectosService {
     );
   }
 
+  obtenerScrapsProyecto(id: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/${id}/scraps`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   /**
    * Agregar observación
    */

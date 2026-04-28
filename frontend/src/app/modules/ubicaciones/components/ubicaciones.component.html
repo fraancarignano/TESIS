@@ -20,26 +20,40 @@
         </div>
     </div>
 
-    <div class="tabla-ubicaciones">
+    <div class="tabs-container">
+        <button class="tab-btn" [class.active]="tabActiva === 'listado'" (click)="setTab('listado')">
+            <i class="fas fa-map-marker-alt"></i> Ubicaciones
+        </button>
+        <button class="tab-btn" [class.active]="tabActiva === 'scrap'" (click)="setTab('scrap')">
+            <i class="fas fa-recycle"></i> Inventario de Scrap
+        </button>
+    </div>
+
+    <div class="tabla-ubicaciones" *ngIf="tabActiva === 'listado'">
         <table>
             <thead>
                 <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
                     <th>Codigo</th>
-                    <th>Rack</th>
-                    <th>Division</th>
-                    <th>Espacio</th>
+                    <th>Rack / Div / Esp</th>
                     <th>Descripcion</th>
                     <th style="text-align: right;" *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Gestionar' }">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let u of ubicaciones">
+                    <td><strong>{{ u.nombre || '-' }}</strong></td>
+                    <td><span class="badge-tipo" [attr.data-tipo]="u.tipo">{{ u.tipo || 'Rack' }}</span></td>
                     <td>
                         <span class="codigo-link" (click)="abrirDetalle(u)">{{ u.codigo }}</span>
                     </td>
-                    <td>{{ u.rack }}</td>
-                    <td>{{ u.division }}</td>
-                    <td>{{ u.espacio === 1 ? 'Abajo (1)' : 'Arriba (2)' }}</td>
+                    <td>
+                      <ng-container *ngIf="u.tipo === 'Rack' || !u.tipo">
+                        R{{ u.rack }} - D{{ u.division }} - E{{ u.espacio }}
+                      </ng-container>
+                      <span *ngIf="u.tipo !== 'Rack' && u.tipo" class="text-muted">N/A</span>
+                    </td>
                     <td>{{ u.descripcion || '-' }}</td>
                     <td class="td-acciones" *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Gestionar' }">
                         <div class="acciones">
@@ -78,6 +92,55 @@
             </tbody>
         </table>
     </div>
+
+    <div class="tabla-ubicaciones scrap-inventory" *ngIf="tabActiva === 'scrap'">
+        <div class="scrap-header-stats">
+            <div class="stat-card">
+                <span class="stat-label">Insumos con Scrap</span>
+                <span class="stat-value">{{ inventarioScrap.length }}</span>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Insumo</th>
+                    <th>Cantidad Total (kg)</th>
+                    <th>Proyectos involucrados</th>
+                    <th>Último registro</th>
+                    <th style="text-align: right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let s of inventarioScrap">
+                    <td><strong>{{ s.nombreInsumo }}</strong></td>
+                    <td>
+                        <span class="scrap-value">{{ s.cantidadTotalKg | number:'1.2-2' }} kg</span>
+                    </td>
+                    <td>
+                        <span class="badge-proyectos">{{ s.cantidadProyectos }} {{ s.cantidadProyectos === 1 ? 'Proyecto' : 'Proyectos' }}</span>
+                    </td>
+                    <td>{{ s.ultimoRegistro | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td class="td-acciones">
+                        <button class="btn-icon" title="Ver detalles (Próximamente)" disabled>
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+                <tr *ngIf="inventarioScrap.length === 0 && !cargandoScrap">
+                    <td colspan="5" class="sin-resultados">
+                        <h3>No hay scrap acumulado registrado</h3>
+                        <p>El scrap aparecerá aquí a medida que se registre en el área de Corte.</p>
+                    </td>
+                </tr>
+                <tr *ngIf="cargandoScrap">
+                    <td colspan="5" class="sin-resultados">
+                        <div class="loader-inline">Cargando inventario de scrap...</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <app-ubicacion-detalle-modal *ngIf="mostrarDetalle" [ubicacion]="ubicacionDetalle!" (cerrar)="cerrarDetalle()"
@@ -100,33 +163,50 @@
         </div>
 
         <form (ngSubmit)="guardar()" class="form-grid">
-            <div class="form-group">
-                <label>Rack</label>
-                <input type="number" [(ngModel)]="nuevaUbicacion.rack" name="rack" (change)="generarCodigo()" min="1">
+            <div class="form-group full-width">
+                <label>Nombre de la ubicación</label>
+                <input type="text" [(ngModel)]="nuevaUbicacion.nombre" name="nombre" required placeholder="Ej: Estante A1, Zona Scrap...">
             </div>
 
             <div class="form-group">
-                <label>Division</label>
-                <input type="number" [(ngModel)]="nuevaUbicacion.division" name="division" (change)="generarCodigo()"
-                    min="1">
-            </div>
-
-            <div class="form-group">
-                <label>Espacio</label>
-                <select [(ngModel)]="nuevaUbicacion.espacio" name="espacio" (change)="generarCodigo()">
-                    <option [ngValue]="1">Abajo (01)</option>
-                    <option [ngValue]="2">Arriba (02)</option>
+                <label>Tipo</label>
+                <select [(ngModel)]="nuevaUbicacion.tipo" name="tipo" (change)="onTipoChange()">
+                    <option value="Rack">Rack (almacenamiento)</option>
+                    <option value="Despacho">Zona Despacho</option>
+                    <option value="Scrap">Zona Scrap / Remanentes</option>
+                    <option value="Virtual">Virtual</option>
+                    <option value="Otro">Otro</option>
                 </select>
             </div>
 
-            <div class="form-group full-width">
-                <label>Codigo Generado</label>
-                <input type="text" [(ngModel)]="nuevaUbicacion.codigo" name="codigo" readonly class="input-readonly">
+            <div class="form-group">
+                <label>Código</label>
+                <input type="text" [(ngModel)]="nuevaUbicacion.codigo" name="codigo" [readonly]="nuevaUbicacion.tipo === 'Rack'" [class.input-readonly]="nuevaUbicacion.tipo === 'Rack'">
             </div>
 
+            <ng-container *ngIf="nuevaUbicacion.tipo === 'Rack'">
+                <div class="form-group">
+                    <label>N° Rack</label>
+                    <input type="number" [(ngModel)]="nuevaUbicacion.rack" name="rack" (change)="generarCodigo()" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label>N° División</label>
+                    <input type="number" [(ngModel)]="nuevaUbicacion.division" name="division" (change)="generarCodigo()" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label>N° Espacio</label>
+                    <select [(ngModel)]="nuevaUbicacion.espacio" name="espacio" (change)="generarCodigo()">
+                        <option [ngValue]="1">Abajo (01)</option>
+                        <option [ngValue]="2">Arriba (02)</option>
+                    </select>
+                </div>
+            </ng-container>
+
             <div class="form-group full-width">
-                <label>Descripcion (Opcional)</label>
-                <textarea [(ngModel)]="nuevaUbicacion.descripcion" name="descripcion" rows="3"></textarea>
+                <label>Descripción (Opcional)</label>
+                <textarea [(ngModel)]="nuevaUbicacion.descripcion" name="descripcion" rows="2"></textarea>
             </div>
 
             <div class="modal-actions">

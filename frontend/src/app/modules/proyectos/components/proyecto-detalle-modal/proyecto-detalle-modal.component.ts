@@ -1,4 +1,4 @@
-﻿import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -35,6 +35,16 @@ import {
   CalidadIncidenciaResumen,
   CrearCalidadIncidencia
 } from '../../services/calidad-incidencias.service';
+
+export interface TendidaForm {
+  idInsumo: number;
+  nombreInsumo?: string;
+  largoCm: number;
+  anchoCm: number;
+  capas: number;
+  areaTotalM2: number;
+  porcentajeAprovechamiento: number;
+}
 
 @Component({
   selector: 'app-proyecto-detalle-modal',
@@ -86,7 +96,12 @@ export class ProyectoDetalleModalComponent implements OnInit {
   private _historialPlanesCorte: ObservacionProyecto[] = [];
   guardandoCorteReal = false;
   corteReal: CorteRealForm = this.crearCorteRealVacio();
-  private _historialCortesReales: ObservacionProyecto[] = [];
+  public _historialCortesReales: ObservacionProyecto[] = [];
+  public isEditingCorte = false;
+
+  public editarCorte(): void {
+    this.isEditingCorte = true;
+  }
   confeccion: ConfeccionForm = this.crearConfeccionVacio();
   guardandoConfeccion = false;
   planillaConfeccionGuardada = false;
@@ -108,6 +123,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
   disenoPrendasMap: Record<number, DisenoPrendaForm> = {};
   disenoResumenPrendas: DisenoResumenPrenda[] = [];
   loadingSync = false;
+  tendidas: TendidaForm[] = [];
+  historialScrap: any[] = [];
+  materialesCorte: any[] = [];
 
   // Observaciones generales
   nuevaObservacion: string = '';
@@ -157,6 +175,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.inicializarResumenDisenoPrendas();
     this.cargarTalleres();
     this.cargarDisenoArea();
+    if (this.esAreaCorte) {
+      this.cargarMaterialesCorte();
+      this.cargarHistorialScrap();
+    }
   }
 
   // ==================== GETTERS ====================
@@ -217,8 +239,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
       this.cargarIncidenciasCalidad();
       this.cargarResumenIncidenciasPorTalle();
     }
-    if (area.campo === 'avanceDiseno' && !this.disenoPrendas.length) {
-      this.cargarDisenoArea();
+    if (area.campo === 'avanceCorte') {
+      this.cargarMaterialesCorte();
+      this.cargarHistorialScrap();
     }
   }
 
@@ -498,6 +521,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
   get puedeEditarFormularioCorte(): boolean {
     if (!this.esAreaCorte) return false;
     if (!this.puedeGestionarAvance) return false;
+    // Si ya hay un corte guardado, solo es editable si está en modo edición
+    const ultimo = this.obtenerUltimoCorteReal();
+    if (ultimo && !this.isEditingCorte) return false;
     return true;
   }
 
@@ -1959,6 +1985,44 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   guardarCorteReal(): void {
     if (!this.proyecto.idProyecto || !this.puedeGuardarCorteReal) return;
+
+    const totalPrendas = this.totalPrendasCorteReal;
+    const cantidadObjetivo = this.proyecto.cantidadTotal || 0;
+
+    // VALIDACIONES ESTRICTAS FRONTEND
+    // Si el total excedió la cantidad solicitada, bloqueamos SIEMPRE, incluso si no está cerrado
+    // para evitar que se guarde basura.
+    if (totalPrendas > cantidadObjetivo) {
+       this.alertas.error('Validación de Cantidad', `El total de prendas cortadas (${totalPrendas}) no puede superar la cantidad solicitada en el proyecto (${cantidadObjetivo}).`);
+       return;
+    }
+
+    for (const tela of this.corteReal.detalleTelas) {
+       // 1. Validar Scrap vs Tela Usada
+       if (Number(tela.scrapKg) > Number(tela.telaUsadaKg)) {
+          this.alertas.error('Error de Scrap', `El scrap de ${tela.nombreInsumo} no puede ser mayor a la tela usada (${tela.telaUsadaKg} kg).`);
+          return;
+       }
+       
+       // 2. Validar Tela Usada vs Asignada al proyecto
+       const matProyecto = (this.proyecto.materiales || []).find(m => m.idInsumo === tela.idInsumo);
+       const asignada = matProyecto?.cantidadAsignada || 0;
+       if (asignada > 0 && Number(tela.telaUsadaKg) > asignada) {
+          this.alertas.error('Validación de Tela', `La tela usada para ${tela.nombreInsumo} (${tela.telaUsadaKg} kg) supera la cantidad asignada al proyecto (${asignada} kg). Verificá los datos.`);
+          return;
+       }
+
+       // 3. Validar Prendas (siempre, no solo si está cerrado)
+       if (Number(tela.telaUsadaKg) > 0 && Number(tela.prendasCortadas) <= 0) {
+          this.alertas.error('Error de Carga', `Si usaste tela en ${tela.nombreInsumo}, debes indicar cuántas prendas se cortaron.`);
+          return;
+       }
+    }
+
+    if (this.tendidas.length === 0) {
+       // Solo aviso, no bloquea
+    }
+
     const idUsuario = this.obtenerIdUsuarioActual();
     if (!idUsuario) {
       this.alertas.error('Usuario requerido', 'No se pudo identificar el usuario actual.');
@@ -1974,25 +2038,20 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.guardandoCorteReal = true;
     this.proyectosService.agregarObservacion(this.proyecto.idProyecto, dto).subscribe({
       next: () => {
+        // Actualizar localmente las observaciones para que el refresh funcione sin recargar
         if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
         this.proyecto.observaciones.unshift({
           idObservacion: Date.now(),
           idUsuario,
-          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Usuario',
-          fecha: new Date().toISOString(),
-          descripcion: this.nuevaObservacion.trim()
-        });
-        if (!this.proyecto.observaciones) this.proyecto.observaciones = [];
-        this.proyecto.observaciones.unshift({
-          idObservacion: Date.now(),
-          idUsuario,
-          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Corte',
+          nombreUsuario: this.obtenerNombreUsuarioActual() || 'Corte (Auto)',
           fecha: new Date().toISOString(),
           descripcion
         });
+
         this.guardandoCorteReal = false;
+        this.isEditingCorte = false;
         this.refrescarHistorialCorteReal();
-        this.alertas.success('Corte registrado', 'Se guardó el parte de corte real.');
+        this.alertas.success('Corte registrado', 'Se guardó el parte de corte real y se actualizó el avance.');
 
         // Registrar scrap en la tabla Scrap por cada tela con scrap > 0
         const telasConScrap = this.corteReal.detalleTelas.filter(t => Number(t.scrapKg) > 0 && t.idInsumo > 0);
@@ -2002,8 +2061,13 @@ export class ProyectoDetalleModalComponent implements OnInit {
             cantidadScrap: Number(tela.scrapKg),
             motivo: 'Corte',
             areaOcurrencia: 'Corte'
-          }).subscribe();
+          }).subscribe({
+            next: () => this.cargarHistorialScrap()
+          });
         }
+        
+        // Limpiar tendidas tras guardado exitoso
+        // No limpiamos localmente para que se vea, pero si el modal se cierra y abre, se recargará del token
       },
       error: (err) => {
         console.error('Error al guardar corte real:', err);
@@ -2011,6 +2075,56 @@ export class ProyectoDetalleModalComponent implements OnInit {
         this.alertas.error('Error', 'No se pudo guardar el parte de corte real');
       }
     });
+  }
+
+  // ==================== MÉTODOS DE CORTE MEJORADO (TENDIDAS) ====================
+
+  cargarMaterialesCorte(): void {
+    if (!this.proyecto.idProyecto) return;
+    this.proyectosService.obtenerProyectoPorId(this.proyecto.idProyecto).subscribe({
+      next: (proy) => {
+        this.materialesCorte = proy.materiales || [];
+        // Sincronizar detalleTelas si están vacíos
+        if (this.corteReal.detalleTelas.length === 0) {
+           this.inicializarFormularioCorteReal();
+        }
+      }
+    });
+  }
+
+  cargarHistorialScrap(): void {
+    if (!this.proyecto.idProyecto) return;
+    this.proyectosService.obtenerScrapsProyecto(this.proyecto.idProyecto).subscribe({
+      next: (res) => this.historialScrap = res || [],
+      error: (err) => console.error('Error al cargar historial scrap:', err)
+    });
+  }
+
+  agregarTendida(): void {
+    const matDefault = this.materialesCorte[0];
+    this.tendidas.push({
+      idInsumo: matDefault?.idInsumo || 0,
+      nombreInsumo: matDefault?.nombreInsumo || '',
+      largoCm: 0,
+      anchoCm: 0,
+      capas: 1,
+      areaTotalM2: 0,
+      porcentajeAprovechamiento: 85 // Promedio estándar
+    });
+  }
+
+  eliminarTendida(index: number): void {
+    this.tendidas.splice(index, 1);
+  }
+
+  onTendidaTelaChange(t: TendidaForm): void {
+    const mat = this.materialesCorte.find(m => m.idInsumo === Number(t.idInsumo));
+    if (mat) t.nombreInsumo = mat.nombreInsumo;
+  }
+
+  calcularAreaTendida(t: TendidaForm): void {
+    // Area (m2) = (Largo * Ancho * Capas) / 10000
+    t.areaTotalM2 = (t.largoCm * t.anchoCm * t.capas) / 10000;
   }
 
   guardarConfeccion(): void {
@@ -2561,6 +2675,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
       pesoRealKg: 0,
       pesoTizaKg: 0,
       capas: 0,
+      scrapKg: 0,
       prendasCortadas: 0,
       restoKg: 0,
       fallaKg: 0,
@@ -2569,7 +2684,6 @@ export class ProyectoDetalleModalComponent implements OnInit {
       capasTeoricas: 0,
       referenciaExterna: '',
       observacionExterna: '',
-      estadoEjecucion: 'PENDIENTE',
       detalleTelas: [],
       observacionesCorte: ''
     };
@@ -2593,6 +2707,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
     if (ultimo) {
       const detalle = ultimo.detalleTelas.length > 0 ? ultimo.detalleTelas : base.detalleTelas;
       this.corteReal = { ...base, ...ultimo, detalleTelas: detalle };
+      this.tendidas = ultimo.tendidas || [];
       if (!this.corteReal.corteNumero.trim()) {
         this.corteReal.corteNumero = this.generarCorteNumero();
       }
@@ -2882,11 +2997,17 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   private construirResumenCorteReal(): string {
     const detalleTelas = this.serializarDetalleTelas();
+    
+    // Serializar tendidas
+    const tendidasStr = this.tendidas
+      .map(t => `${t.idInsumo}:${t.largoCm}:${t.anchoCm}:${t.capas}:${t.porcentajeAprovechamiento}`)
+      .join('|');
+
     const totalTela = this.totalTelaUsadaCorteReal;
     const totalScrap = this.totalScrapCorteReal;
     const totalPrendas = this.totalPrendasCorteReal;
 
-    const resumen = [
+    const parts = [
       '[CORTE_REAL]',
       `cn=${this.codificarToken(this.corteReal.corteNumero)}`,
       `fc=${this.corteReal.fechaCorte || '-'}`,
@@ -2894,12 +3015,13 @@ export class ProyectoDetalleModalComponent implements OnInit {
       `sc=${totalScrap}`,
       `pc=${totalPrendas}`,
       `rs=${this.codificarToken(this.corteReal.responsable)}`,
-      `es=${this.corteReal.estadoEjecucion}`,
       `tl=${this.codificarToken(detalleTelas || '-')}`,
+      `tend=${this.codificarToken(tendidasStr || '-')}`,
       `ob=${this.codificarToken(this.corteReal.observacionesCorte || '-')}`
-    ].join(' ');
+    ];
 
-    return this.limitarLongitudObservacion(resumen, 200);
+    const resumen = parts.join(' ');
+    return this.limitarLongitudObservacion(resumen, 3000);
   }
 
   private refrescarHistorialCorteReal(): void {
@@ -2913,6 +3035,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return this.extraerCorteRealDeObservacion(this._historialCortesReales[0].descripcion ?? '');
   }
 
+
+
   private extraerCorteRealDeObservacion(texto: string): CorteRealForm | null {
     if (!texto.includes('[CORTE_REAL]')) return null;
 
@@ -2924,23 +3048,23 @@ export class ProyectoDetalleModalComponent implements OnInit {
       map.set(token.substring(0, idx), token.substring(idx + 1));
     });
 
-    const estadoRaw = map.get('es') ?? 'PENDIENTE';
-    const estado: EstadoCorteReal =
-      estadoRaw === 'EN_EJECUCION' || estadoRaw === 'CERRADO' ? estadoRaw : 'PENDIENTE';
-
     const detalleRaw = this.decodificarToken(map.get('tl') ?? '');
     const detalleTelas = this.deserializarDetalleTelas(detalleRaw);
+
+    const tendRaw = this.decodificarToken(map.get('tend') ?? '');
+    const tendidas = this.deserializarTendidas(tendRaw);
 
     return {
       corteNumero: this.decodificarToken(map.get('cn') ?? ''),
       fechaCorte: (map.get('fc') ?? '-') === '-' ? '' : (map.get('fc') ?? ''),
       partidaTela: '',
       responsable: this.decodificarToken(map.get('rs') ?? ''),
-      telaUsadaKg: 0,
+      telaUsadaKg: Number(map.get('tu')) || 0,
+      scrapKg: Number(map.get('sc')) || 0,
+      prendasCortadas: Number(map.get('pc')) || 0,
       pesoRealKg: 0,
       pesoTizaKg: 0,
       capas: 0,
-      prendasCortadas: 0,
       restoKg: 0,
       fallaKg: 0,
       utilizableKg: 0,
@@ -2948,10 +3072,30 @@ export class ProyectoDetalleModalComponent implements OnInit {
       capasTeoricas: 0,
       referenciaExterna: '',
       observacionExterna: '',
-      estadoEjecucion: estado,
       detalleTelas,
+      tendidas,
       observacionesCorte: this.decodificarToken(map.get('ob') ?? '')
     };
+  }
+
+  private deserializarTendidas(raw: string): TendidaForm[] {
+    if (!raw || raw === '-') return [];
+    return raw.split('|').filter(Boolean).map(item => {
+      const [id, largo, ancho, capas, aprox] = item.split(':');
+      const t: TendidaForm = {
+        idInsumo: Number(id),
+        largoCm: Number(largo) || 0,
+        anchoCm: Number(ancho) || 0,
+        capas: Number(capas) || 0,
+        porcentajeAprovechamiento: Number(aprox) || 0,
+        areaTotalM2: 0
+      };
+      this.calcularAreaTendida(t);
+      // Intentar recuperar nombre
+      const mat = this.materialesCorte.find(m => m.idInsumo === t.idInsumo);
+      if (mat) t.nombreInsumo = mat.nombreInsumo;
+      return t;
+    });
   }
 
   private codificarToken(value: string): string {
@@ -3288,7 +3432,7 @@ interface CorteTelaResumen {
   codigoTela: string;
 }
 
-type EstadoCorteReal = 'PENDIENTE' | 'EN_EJECUCION' | 'CERRADO';
+
 type EstadoRecepcionConfeccion = 'PENDIENTE' | 'PARCIAL' | 'COMPLETA';
 
 interface CorteRealForm {
@@ -3300,6 +3444,7 @@ interface CorteRealForm {
   pesoRealKg: number;
   pesoTizaKg: number;
   capas: number;
+  scrapKg: number;
   prendasCortadas: number;
   restoKg: number;
   fallaKg: number;
@@ -3308,8 +3453,8 @@ interface CorteRealForm {
   capasTeoricas: number;
   referenciaExterna: string;
   observacionExterna: string;
-  estadoEjecucion: EstadoCorteReal;
   detalleTelas: CorteRealTela[];
+  tendidas?: TendidaForm[];
   observacionesCorte: string;
 }
 

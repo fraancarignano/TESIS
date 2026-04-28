@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TESIS_OG.Data;
 using TESIS_OG.DTOs.Configuracion;
 using TESIS_OG.DTOs.Proyectos;
+using TESIS_OG.DTOs.Ubicacion;
 using TESIS_OG.Models;
 using TESIS_OG.Services.ProyectosService;
 
@@ -243,6 +244,8 @@ namespace TESIS_OG.Services.ProyectoService
               .Include(p => p.MaterialCalculados)
                 .ThenInclude(mc => mc.IdInsumoNavigation)
                   .ThenInclude(i => i.IdTipoInsumoNavigation)
+              .Include(p => p.ObservacionProyectos)
+                  .ThenInclude(o => o.IdUsuarioNavigation)
               .FirstOrDefaultAsync(p => p.IdProyecto == id);
 
             if (proyecto == null) return null;
@@ -569,37 +572,39 @@ namespace TESIS_OG.Services.ProyectoService
                 Insumo? insumo = null;
                 decimal stockDisponible = 0;
 
-                if (!string.IsNullOrWhiteSpace(prenda.ColorSolicitado))
+                if (prenda.IdInsumo.HasValue && prenda.IdInsumo.Value > 0)
+                {
+                    insumo = await _context.Insumos
+                        .Include(i => i.IdTipoInsumoNavigation)
+                        .FirstOrDefaultAsync(i => i.IdInsumo == prenda.IdInsumo.Value);
+                }
+
+                if (insumo == null && !string.IsNullOrWhiteSpace(prenda.ColorSolicitado))
                 {
                     var colorNorm = NormalizarColor(prenda.ColorSolicitado);
-                    var coincidencias = candidatos.Where(i => NormalizarColor(i.Color) == colorNorm).ToList();
-                    insumo = coincidencias.FirstOrDefault();
-                    // Stock disponible = solo el stock general (no asignado a proyectos)
-                    if (insumo != null)
-                    {
-                        var stockGeneral = await _context.InsumoStocks
-                            .Where(s => coincidencias.Select(c => c.IdInsumo).Contains(s.IdInsumo) && s.IdProyecto == null)
-                            .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
-                        stockDisponible = stockGeneral > 0 ? stockGeneral : coincidencias.Sum(i => i.StockActual);
-                    }
+                    insumo = candidatos.FirstOrDefault(i => NormalizarColor(i.Color) == colorNorm);
                 }
-                else
+
+                if (insumo == null)
                 {
                     insumo = candidatos.FirstOrDefault();
-                    // Sin color: stock general de todos los insumos del tipo
-                    var idsInsumos = candidatos.Select(c => c.IdInsumo).ToList();
-                    var stockGeneral = await _context.InsumoStocks
-                        .Where(s => idsInsumos.Contains(s.IdInsumo) && s.IdProyecto == null)
+                }
+
+                if (insumo != null)
+                {
+                    // Stock disponible = SOLO el stock general (no asignado a proyectos)
+                    stockDisponible = await _context.InsumoStocks
+                        .Where(s => s.IdInsumo == insumo.IdInsumo && s.IdProyecto == null)
                         .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
-                    stockDisponible = stockGeneral > 0 ? stockGeneral : candidatos.Sum(i => i.StockActual);
                 }
 
                 var tieneStock = stockDisponible >= cantidadNecesaria;
+                var nombreAMostrar = insumo?.NombreInsumo ?? tipoInsumoNombre;
 
                 response.MaterialesCalculados.Add(new MaterialCalculadoPreviewDTO
                 {
                     IdInsumo = insumo?.IdInsumo ?? 0,
-                    NombreInsumo = tipoInsumoNombre,
+                    NombreInsumo = nombreAMostrar,
                     TipoInsumo = tipoInsumoNombre,
                     TipoCalculo = "Auto",
                     CantidadNecesaria = cantidadNecesaria,
@@ -608,7 +613,8 @@ namespace TESIS_OG.Services.ProyectoService
                     TieneStockSuficiente = tieneStock,
                     Faltante = tieneStock ? null : cantidadNecesaria - stockDisponible,
                     Color = insumo?.Color,
-                    ColorSolicitado = string.IsNullOrWhiteSpace(prenda.ColorSolicitado) ? null : prenda.ColorSolicitado
+                    ColorSolicitado = string.IsNullOrWhiteSpace(prenda.ColorSolicitado) ? null : prenda.ColorSolicitado,
+                    PrecioUnitario = insumo?.PrecioUnitario
                 });
 
                 if (!tieneStock)
@@ -619,9 +625,9 @@ namespace TESIS_OG.Services.ProyectoService
                     response.Alertas.Add(new AlertaCalculoDTO
                     {
                         Tipo = stockDisponible == 0 ? "SinStock" : "StockInsuficiente",
-                        Mensaje = $"Stock insuficiente de {tipoInsumoNombre}{colorMsg}. Necesario: {cantidadNecesaria} {config.UnidadMedida}, Disponible: {stockDisponible} {config.UnidadMedida}",
+                        Mensaje = $"Stock insuficiente de {nombreAMostrar}{colorMsg}. Necesario: {cantidadNecesaria} {config.UnidadMedida}, Disponible: {stockDisponible} {config.UnidadMedida}",
                         IdInsumo = insumo?.IdInsumo.ToString(),
-                        NombreInsumo = tipoInsumoNombre
+                        NombreInsumo = nombreAMostrar
                     });
                 }
             }
@@ -1001,6 +1007,28 @@ namespace TESIS_OG.Services.ProyectoService
         {
             try
             {
+                // Seed-on-demand: buscar la ubicación de tipo Scrap
+                var ubicacionScrp = await _context.Ubicacions
+                    .FirstOrDefaultAsync(u => u.Tipo == "Scrap" || u.Codigo == "SCRP" || u.Codigo == "SCRP-01");
+
+                if (ubicacionScrp == null)
+                {
+                    ubicacionScrp = new Ubicacion
+                    {
+                        Codigo = "SCRP",
+                        Nombre = "Depósito General de Scrap",
+                        Tipo = "Scrap",
+                        Rack = 0,
+                        Division = 0,
+                        Espacio = 0,
+                        Descripcion = "Área general para remanentes de producción"
+                    };
+                    _context.Ubicacions.Add(ubicacionScrp);
+                    await _context.SaveChangesAsync();
+                }
+
+                var idUbicacion = scrapDto.IdUbicacion ?? ubicacionScrp.IdUbicacion;
+
                 var scrap = new Scrap
                 {
                     IdProyecto = idProyecto,
@@ -1008,29 +1036,66 @@ namespace TESIS_OG.Services.ProyectoService
                     CantidadScrap = scrapDto.CantidadScrap,
                     Motivo = scrapDto.Motivo,
                     Destino = scrapDto.Destino,
+                    AreaOcurrencia = scrapDto.AreaOcurrencia,
+                    CostoScrap = scrapDto.CostoScrap,
+                    IdUbicacion = idUbicacion,
                     FechaRegistro = DateTime.Now
                 };
 
                 _context.Scraps.Add(scrap);
 
+                // Recalcular ScrapTotal como suma real de kg (no como costo)
                 var proyecto = await _context.Proyectos.FindAsync(idProyecto);
                 if (proyecto != null)
                 {
-                    proyecto.ScrapTotal = (proyecto.ScrapTotal ?? 0) + (scrapDto.CostoScrap ?? 0);
+                    var totalScrapExistente = await _context.Scraps
+                        .Where(s => s.IdProyecto == idProyecto)
+                        .SumAsync(s => (decimal?)s.CantidadScrap) ?? 0;
+                    var nuevoTotal = totalScrapExistente + scrapDto.CantidadScrap;
 
-                    if (proyecto.CostoMaterialEstimado > 0)
-                    {
-                        proyecto.ScrapPorcentaje = (proyecto.ScrapTotal / proyecto.CostoMaterialEstimado) * 100;
-                    }
+                    proyecto.ScrapTotal = nuevoTotal;
+
+                    // ScrapPorcentaje = scrap acumulado / total tela asignada al proyecto
+                    var totalTelaAsignada = await _context.MaterialCalculados
+                        .Where(m => m.IdProyecto == idProyecto)
+                        .SumAsync(m => (decimal?)(m.CantidadManual ?? m.CantidadCalculada)) ?? 0;
+
+                    proyecto.ScrapPorcentaje = totalTelaAsignada > 0
+                        ? Math.Round((nuevoTotal / totalTelaAsignada) * 100, 2)
+                        : 0;
                 }
 
                 await _context.SaveChangesAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Console.Error.WriteLine($"[ERROR] RegistrarScrapAsync para proyecto {idProyecto}: {ex.Message}");
+                if (ex.InnerException != null) 
+                    Console.Error.WriteLine($"[INNER ERROR] {ex.InnerException.Message}");
                 return false;
             }
+        }
+
+        public async Task<List<ScrapProyectoDTO>> ObtenerScrapsProyectoAsync(int idProyecto)
+        {
+            return await _context.Scraps
+                .Include(s => s.IdInsumoNavigation)
+                .Include(s => s.IdUbicacionNavigation)
+                .Where(s => s.IdProyecto == idProyecto)
+                .OrderByDescending(s => s.FechaRegistro)
+                .Select(s => new ScrapProyectoDTO
+                {
+                    IdScrap = s.IdScrap,
+                    IdInsumo = s.IdInsumo,
+                    NombreInsumo = s.IdInsumoNavigation.NombreInsumo,
+                    CantidadKg = s.CantidadScrap,
+                    Motivo = s.Motivo,
+                    AreaOcurrencia = s.AreaOcurrencia,
+                    FechaRegistro = s.FechaRegistro,
+                    NombreUbicacion = s.IdUbicacionNavigation != null ? s.IdUbicacionNavigation.Nombre : null
+                })
+                .ToListAsync();
         }
 
         public async Task<bool> AgregarObservacionAsync(int idProyecto, AgregarObservacionDTO observacionDto)
@@ -1383,6 +1448,8 @@ namespace TESIS_OG.Services.ProyectoService
             var materialesRaw = await _context.MaterialCalculados
                 .Include(mc => mc.IdInsumoNavigation)
                     .ThenInclude(i => i != null ? i.IdTipoInsumoNavigation : null)
+                .Include(mc => mc.IdInsumoNavigation)
+                    .ThenInclude(i => i != null ? i.InsumoStocks : null)
                 .Include(mc => mc.IdProyectoPrendaNavigation)
                     .ThenInclude(pp => pp != null ? pp.IdTipoPrendaNavigation : null)
                 .Where(mc => mc.IdProyecto == proyecto.IdProyecto)
@@ -1395,6 +1462,7 @@ namespace TESIS_OG.Services.ProyectoService
                 .Distinct().ToList();
 
             var insumosPorTipo = await _context.Insumos
+                .Include(i => i.InsumoStocks)
                 .Where(i => idsTipoInsumo.Contains(i.IdTipoInsumo))
                 .ToListAsync();
 
@@ -1405,10 +1473,16 @@ namespace TESIS_OG.Services.ProyectoService
 
                 // Usar el insumo del MaterialCalculado directamente (es el insumo específico)
                 Insumo? insumoReal = mc.IdInsumoNavigation;
-                decimal stockReal = insumoReal?.StockActual ?? 0;
+
+                // CÁLCULO DE STOCK DISPONIBLE PARA ESTE PROYECTO:
+                // Solo cuenta lo que es Stock General (IdProyecto == null) 
+                // O lo que ya está asignado específicamente a este proyecto.
+                // Ignoramos lo asignado a otros proyectos.
+                decimal stockReal = insumoReal?.InsumoStocks
+                    .Where(s => s.IdProyecto == null || s.IdProyecto == proyecto.IdProyecto)
+                    .Sum(s => s.Cantidad) ?? 0;
 
                 // Con color solicitado: siempre priorizar un insumo del mismo tipo con ese color.
-                // Si no existe ese color en el tipo, considerar stockReal = 0 para no “pedir cualquier color”.
                 if (!string.IsNullOrWhiteSpace(colorSolicitado))
                 {
                     var colorNorm = NormalizarColor(colorSolicitado);
@@ -1418,7 +1492,9 @@ namespace TESIS_OG.Services.ProyectoService
                     if (alternativo != null)
                     {
                         insumoReal = alternativo;
-                        stockReal = alternativo.StockActual;
+                        stockReal = alternativo.InsumoStocks
+                            .Where(s => s.IdProyecto == null || s.IdProyecto == proyecto.IdProyecto)
+                            .Sum(s => s.Cantidad);
                     }
                     else
                     {
@@ -1427,9 +1503,12 @@ namespace TESIS_OG.Services.ProyectoService
                 }
                 else if (stockReal == 0 && string.IsNullOrWhiteSpace(colorSolicitado))
                 {
-                    // Sin color: sumar todo el stock del tipo como fallback
-                    var totalTipo = insumosPorTipo.Where(i => i.IdTipoInsumo == idTipoInsumo).Sum(i => i.StockActual);
-                    if (totalTipo > stockReal) stockReal = totalTipo;
+                    // Sin color: sumar el stock disponible de todos los insumos del tipo
+                    stockReal = insumosPorTipo
+                        .Where(i => i.IdTipoInsumo == idTipoInsumo)
+                        .SelectMany(i => i.InsumoStocks)
+                        .Where(s => s.IdProyecto == null || s.IdProyecto == proyecto.IdProyecto)
+                        .Sum(s => s.Cantidad);
                 }
 
                 var cantidadFinal = mc.CantidadManual ?? mc.CantidadCalculada;
@@ -1459,7 +1538,8 @@ namespace TESIS_OG.Services.ProyectoService
                     ColorInsumo = insumoReal?.Color,
                     ColorSolicitado = colorSolicitado,
                     ColorCoincide = string.IsNullOrWhiteSpace(colorSolicitado)
-                                   || NormalizarColor(insumoReal?.Color) == NormalizarColor(colorSolicitado)
+                                   || NormalizarColor(insumoReal?.Color) == NormalizarColor(colorSolicitado),
+                    PrecioUnitario = insumoReal?.PrecioUnitario ?? mc.IdInsumoNavigation?.PrecioUnitario
                 };
             }).ToList();
 
@@ -1508,7 +1588,15 @@ namespace TESIS_OG.Services.ProyectoService
                 NombreMuestra = muestraAsociada?.NombreMuestra,
                 Prendas = prendas,
                 Materiales = materiales,
-                AlertasStock = alertasStock
+                AlertasStock = alertasStock,
+                Observaciones = proyecto.ObservacionProyectos?.Select(o => new ObservacionDTO
+                {
+                    IdObservacion = o.IdObservacion,
+                    IdUsuario = o.IdUsuario,
+                    NombreUsuario = o.IdUsuarioNavigation?.NombreUsuario,
+                    Descripcion = o.Descripcion,
+                    Fecha = o.Fecha
+                }).OrderByDescending(o => o.Fecha).ToList()
             };
         }
 

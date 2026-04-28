@@ -23,8 +23,15 @@ export class UbicacionesComponent implements OnInit {
     ubicacionSeleccionada: Ubicacion | null = null;
     ubicacionDetalle: Ubicacion | null = null;
 
+    // Tabs y Scrap
+    tabActiva: 'listado' | 'scrap' = 'listado';
+    inventarioScrap: any[] = [];
+    cargandoScrap = false;
+
     // Data for the form
     nuevaUbicacion: Partial<Ubicacion> = {
+        nombre: '',
+        tipo: 'Rack',
         codigo: '',
         rack: 1,
         division: 1,
@@ -43,6 +50,30 @@ export class UbicacionesComponent implements OnInit {
 
     ngOnInit(): void {
         this.cargarUbicaciones();
+        this.cargarInventarioScrap();
+    }
+
+    setTab(tab: 'listado' | 'scrap'): void {
+        this.tabActiva = tab;
+        if (tab === 'scrap') {
+            this.cargarInventarioScrap();
+        } else {
+            this.cargarUbicaciones();
+        }
+    }
+
+    cargarInventarioScrap(): void {
+        this.cargandoScrap = true;
+        this.ubicacionesService.getInventarioScrapGeneral().subscribe({
+            next: (res) => {
+                this.inventarioScrap = res || [];
+                this.cargandoScrap = false;
+            },
+            error: (err) => {
+                console.error('Error al cargar inventario scrap:', err);
+                this.cargandoScrap = false;
+            }
+        });
     }
 
     cargarUbicaciones(): void {
@@ -54,6 +85,8 @@ export class UbicacionesComponent implements OnInit {
     abrirNuevo(): void {
         this.ubicacionSeleccionada = null;
         this.nuevaUbicacion = {
+            nombre: '',
+            tipo: 'Rack',
             codigo: '',
             rack: 1,
             division: 1,
@@ -85,9 +118,16 @@ export class UbicacionesComponent implements OnInit {
     }
 
     guardar(): void {
-        if (!this.nuevaUbicacion.codigo || !this.nuevaUbicacion.rack || !this.nuevaUbicacion.division) {
-            alert('Por favor complete los campos obligatorios');
+        if (!this.nuevaUbicacion.nombre || !this.nuevaUbicacion.tipo || !this.nuevaUbicacion.codigo) {
+            alert('Por favor complete los campos obligatorios (Nombre, Tipo, Código)');
             return;
+        }
+
+        if (this.nuevaUbicacion.tipo === 'Rack') {
+            if (!this.nuevaUbicacion.rack || !this.nuevaUbicacion.division) {
+                alert('Para tipo Rack, debe especificar Rack y División');
+                return;
+            }
         }
 
         if (this.ubicacionSeleccionada) {
@@ -119,10 +159,30 @@ export class UbicacionesComponent implements OnInit {
     }
 
     generarCodigo(): void {
-        const rackStr = this.nuevaUbicacion.rack?.toString().padStart(2, '0');
-        const divStr = this.nuevaUbicacion.division?.toString().padStart(2, '0');
-        const espStr = this.nuevaUbicacion.espacio?.toString().padStart(2, '0');
+        if (this.nuevaUbicacion.tipo !== 'Rack') return;
+        
+        const rackStr = this.nuevaUbicacion.rack?.toString().padStart(2, '0') || '01';
+        const divStr = this.nuevaUbicacion.division?.toString().padStart(2, '0') || '01';
+        const espStr = this.nuevaUbicacion.espacio?.toString().padStart(2, '0') || '01';
         this.nuevaUbicacion.codigo = `RCK-${divStr}-${espStr}`;
+    }
+
+    onTipoChange(): void {
+        if (this.nuevaUbicacion.tipo === 'Scrap') {
+            this.nuevaUbicacion.codigo = 'SCRP';
+            this.nuevaUbicacion.nombre = 'Zona Scrap';
+            this.nuevaUbicacion.rack = 0;
+            this.nuevaUbicacion.division = 0;
+            this.nuevaUbicacion.espacio = 0;
+        } else if (this.nuevaUbicacion.tipo === 'Despacho') {
+            this.nuevaUbicacion.codigo = 'DES-01';
+            this.nuevaUbicacion.nombre = 'Zona Despacho';
+            this.nuevaUbicacion.rack = 0;
+            this.nuevaUbicacion.division = 0;
+            this.nuevaUbicacion.espacio = 0;
+        } else if (this.nuevaUbicacion.tipo === 'Rack') {
+            this.generarCodigo();
+        }
     }
 
     abrirDetalleProyecto(idProyecto: number): void {

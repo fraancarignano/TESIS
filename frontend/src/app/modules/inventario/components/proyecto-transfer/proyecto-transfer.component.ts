@@ -26,6 +26,7 @@ interface MaterialRow {
   stockDisponible: number;
   tieneStockSuficiente: boolean;
   cantidadAAsignar: number;
+  precioUnitario?: number;
 }
 
 interface ItemOC {
@@ -136,7 +137,8 @@ export class ProyectoTransferComponent implements OnInit {
             unidadMedida: m.unidadMedida || '',
             stockDisponible: stock,
             tieneStockSuficiente: tieneStock,
-            cantidadAAsignar: tieneStock ? necesario : 0
+            cantidadAAsignar: tieneStock ? necesario : 0,
+            precioUnitario: m.precioUnitario
           };
         });
         this.cargandoMateriales = false;
@@ -202,10 +204,10 @@ export class ProyectoTransferComponent implements OnInit {
       // Telas con color → insumo nuevo (idInsumo=0) para garantizar el color correcto
       // Avíos/hilos sin color → usar el insumo existente del tipo
       idInsumo: m.colorSolicitado ? 0 : m.idInsumo,
-      nombreInsumo: m.tipoInsumo || m.nombreInsumo,
+      nombreInsumo: m.nombreInsumo, // Usar el nombre específico
       colorSolicitado: m.colorSolicitado || '',
       cantidad: Math.max(0.01, m.cantidadNecesaria - m.stockDisponible),
-      precioUnitario: 0,
+      precioUnitario: m.precioUnitario || 0,
       nuevoIdTipoInsumo: m.colorSolicitado ? (m.idTipoInsumo || undefined) : undefined,
       nuevoUnidadMedida: m.unidadMedida
     }));

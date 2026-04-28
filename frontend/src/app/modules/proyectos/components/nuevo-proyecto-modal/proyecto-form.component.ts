@@ -871,6 +871,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
       prendas: this.prendasProyecto.map(p => ({
         idTipoPrenda: p.idTipoPrenda!,
         idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
+        idInsumo: (p.idInsumo && p.idInsumo !== p.idTipoInsumoMaterial) ? p.idInsumo : undefined,
         cantidadTotal: p.cantidadTotal,
         colorSolicitado: p.colorTela || undefined
       })),

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace TESIS_OG.Models;
@@ -22,6 +22,10 @@ public partial class Scrap
     public string? AreaOcurrencia { get; set; }
 
     public decimal? CostoScrap { get; set; }
+
+    public int? IdUbicacion { get; set; }
+
+    public virtual Ubicacion? IdUbicacionNavigation { get; set; }
 
     public virtual Insumo IdInsumoNavigation { get; set; } = null!;
 

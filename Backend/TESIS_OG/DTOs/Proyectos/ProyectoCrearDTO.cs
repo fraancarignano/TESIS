@@ -172,6 +172,9 @@ namespace TESIS_OG.DTOs.Proyectos
 
         // Alertas de stock
         public List<string> AlertasStock { get; set; } = new();
+
+        // Observaciones e historial
+        public List<ObservacionDTO>? Observaciones { get; set; } = new();
     }
 
     // ===================================================
@@ -229,6 +232,7 @@ namespace TESIS_OG.DTOs.Proyectos
         public string? ColorInsumo { get; set; }
         public string? ColorSolicitado { get; set; }
         public bool ColorCoincide { get; set; } = true;
+        public decimal? PrecioUnitario { get; set; }
     }
 
     // ===================================================

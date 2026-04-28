@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
@@ -504,6 +504,25 @@ namespace TESIS_OG.Controllers
             {
                 _logger.LogError(ex, "Error al registrar scrap del proyecto {IdProyecto}", id);
                 return StatusCode(500, new { message = "Error al registrar scrap" });
+            }
+        }
+
+        /// <summary>
+        /// Obtiene el listado de scrap registrado en el proyecto
+        /// </summary>
+        [HttpGet("{id}/scraps")]
+        [ProducesResponseType(typeof(List<ScrapProyectoDTO>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> ObtenerScrapsProyecto(int id)
+        {
+            try
+            {
+                var result = await _proyectoService.ObtenerScrapsProyectoAsync(id);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener scrap del proyecto {IdProyecto}", id);
+                return StatusCode(500, new { message = "Error al obtener scrap" });
             }
         }
 

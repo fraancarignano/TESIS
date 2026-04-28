@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace TESIS_OG.DTOs.Configuracion
@@ -55,6 +55,7 @@ namespace TESIS_OG.DTOs.Configuracion
     {
         public int IdTipoPrenda { get; set; }
         public int IdTipoInsumoMaterial { get; set; }
+        public int? IdInsumo { get; set; } // Opcional: para calcular con un insumo específico
         public int CantidadTotal { get; set; }
         public string? ColorSolicitado { get; set; }
     }
@@ -85,6 +86,7 @@ namespace TESIS_OG.DTOs.Configuracion
         public decimal? Faltante { get; set; }
         public string? Color { get; set; }          // color del insumo en stock
         public string? ColorSolicitado { get; set; } // color pedido en la prenda
+        public decimal? PrecioUnitario { get; set; }  // Precio del insumo para OC
     }
 
     public class AlertaCalculoDTO

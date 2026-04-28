@@ -23,6 +23,8 @@ namespace TESIS_OG.Services.UbicacionService
             var ubicacion = new Ubicacion
             {
                 Codigo = dto.Codigo,
+                Nombre = dto.Nombre,
+                Tipo = dto.Tipo ?? "Rack",
                 Rack = dto.Rack,
                 Division = dto.Division,
                 Espacio = dto.Espacio,
@@ -42,6 +44,8 @@ namespace TESIS_OG.Services.UbicacionService
                 {
                     IdUbicacion = u.IdUbicacion,
                     Codigo = u.Codigo,
+                    Nombre = u.Nombre,
+                    Tipo = u.Tipo,
                     Rack = u.Rack,
                     Division = u.Division,
                     Espacio = u.Espacio,
@@ -58,6 +62,8 @@ namespace TESIS_OG.Services.UbicacionService
                 {
                     IdUbicacion = u.IdUbicacion,
                     Codigo = u.Codigo,
+                    Nombre = u.Nombre,
+                    Tipo = u.Tipo,
                     Rack = u.Rack,
                     Division = u.Division,
                     Espacio = u.Espacio,
@@ -75,6 +81,8 @@ namespace TESIS_OG.Services.UbicacionService
             if (existeCodigo) return null;
 
             ubicacion.Codigo = dto.Codigo;
+            ubicacion.Nombre = dto.Nombre;
+            ubicacion.Tipo = dto.Tipo ?? ubicacion.Tipo;
             ubicacion.Rack = dto.Rack;
             ubicacion.Division = dto.Division;
             ubicacion.Espacio = dto.Espacio;
@@ -89,7 +97,8 @@ namespace TESIS_OG.Services.UbicacionService
             var ubicacion = await _context.Ubicacions.FindAsync(id);
             if (ubicacion == null) return false;
 
-            var estaEnUso = await _context.Insumos.AnyAsync(i => i.IdUbicacion == id);
+            var estaEnUso = await _context.Insumos.AnyAsync(i => i.IdUbicacion == id)
+                            || await _context.Scraps.AnyAsync(s => s.IdUbicacion == id);
             if (estaEnUso) return false;
 
             _context.Ubicacions.Remove(ubicacion);
@@ -137,6 +146,46 @@ namespace TESIS_OG.Services.UbicacionService
                         }
                     }
                 })
+                .ToListAsync();
+        }
+
+        public async Task<List<ScrapUbicacionDTO>> ObtenerScrapsPorUbicacionAsync(int idUbicacion)
+        {
+            return await _context.Scraps
+                .Include(s => s.IdInsumoNavigation)
+                .Include(s => s.IdProyectoNavigation)
+                .Where(s => s.IdUbicacion == idUbicacion)
+                .OrderByDescending(s => s.FechaRegistro)
+                .Select(s => new ScrapUbicacionDTO
+                {
+                    IdScrap = s.IdScrap,
+                    IdProyecto = s.IdProyecto,
+                    CodigoProyecto = s.IdProyectoNavigation != null ? s.IdProyectoNavigation.CodigoProyecto : null,
+                    NombreProyecto = s.IdProyectoNavigation != null ? s.IdProyectoNavigation.NombreProyecto : null,
+                    IdInsumo = s.IdInsumo,
+                    NombreInsumo = s.IdInsumoNavigation.NombreInsumo,
+                    CantidadKg = s.CantidadScrap,
+                    Motivo = s.Motivo,
+                    AreaOcurrencia = s.AreaOcurrencia,
+                    FechaRegistro = s.FechaRegistro
+                })
+                .ToListAsync();
+        }
+
+        public async Task<List<InventarioScrapDTO>> ObtenerInventarioScrapGeneralAsync()
+        {
+            return await _context.Scraps
+                .Include(s => s.IdInsumoNavigation)
+                .GroupBy(s => new { s.IdInsumo, s.IdInsumoNavigation.NombreInsumo })
+                .Select(g => new InventarioScrapDTO
+                {
+                    IdInsumo = g.Key.IdInsumo,
+                    NombreInsumo = g.Key.NombreInsumo,
+                    CantidadTotalKg = g.Sum(x => x.CantidadScrap),
+                    CantidadProyectos = g.Select(x => x.IdProyecto).Distinct().Count(),
+                    UltimoRegistro = g.Max(x => x.FechaRegistro)
+                })
+                .OrderByDescending(x => x.CantidadTotalKg)
                 .ToListAsync();
         }
 

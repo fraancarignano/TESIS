@@ -474,7 +474,7 @@
                     </ng-template>
                   </div>
                 </div>
-<div class="corte-distribucion">
+                <div class="corte-distribucion">
                   <div class="corte-distribucion-header">
                     <strong>Distribucion por talles</strong>
                   </div>
@@ -483,6 +483,60 @@
                     <input type="number" [ngModel]="item.cantidad" disabled>
                     <button type="button" class="btn-mini" disabled>#{{ i + 1 }}</button>
                   </div>
+                </div>
+              </div>
+
+              <!-- TENDIDAS (NUEVO) -->
+              <div *ngIf="esAreaCorte" class="corte-form tendidas-form">
+                <div class="corte-header">
+                  <h4><i class="fas fa-layer-group"></i> Paso 2 - Registro de Tendidas</h4>
+                  <button type="button" class="btn-agregar-tendida" (click)="agregarTendida()" [disabled]="!puedeEditarFormularioCorte">
+                    <i class="fas fa-plus"></i> Nueva Tendida
+                  </button>
+                </div>
+
+                <div class="tabla-tendidas-container" *ngIf="tendidas.length > 0">
+                   <table class="tabla-tendidas">
+                     <thead>
+                       <tr>
+                         <th>Tela</th>
+                         <th>Largo (cm)</th>
+                         <th>Ancho (cm)</th>
+                         <th>Capas</th>
+                         <th>Area (m²)</th>
+                         <th>% Aprovech.</th>
+                         <th>Acción</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       <tr *ngFor="let t of tendidas; let index = index">
+                         <td>
+                            <select [(ngModel)]="t.idInsumo" (change)="onTendidaTelaChange(t)" [disabled]="!puedeEditarFormularioCorte">
+                               <option *ngFor="let mat of materialesCorte" [value]="mat.idInsumo">{{ mat.nombreInsumo }}</option>
+                            </select>
+                         </td>
+                         <td><input type="number" [(ngModel)]="t.largoCm" (change)="calcularAreaTendida(t)" min="0" [disabled]="!puedeEditarFormularioCorte"></td>
+                         <td><input type="number" [(ngModel)]="t.anchoCm" (change)="calcularAreaTendida(t)" min="0" [disabled]="!puedeEditarFormularioCorte"></td>
+                         <td><input type="number" [(ngModel)]="t.capas" (change)="calcularAreaTendida(t)" min="1" [disabled]="!puedeEditarFormularioCorte"></td>
+                         <td class="fw-bold">{{ t.areaTotalM2 | number:'1.2-2' }} m²</td>
+                         <td>
+                            <div class="input-porcentaje">
+                               <input type="number" [(ngModel)]="t.porcentajeAprovechamiento" min="0" max="100" [disabled]="!puedeEditarFormularioCorte">
+                               <span>%</span>
+                            </div>
+                         </td>
+                         <td>
+                            <button class="btn-eliminar-tendida" (click)="eliminarTendida(index)" [disabled]="!puedeEditarFormularioCorte">
+                               <i class="fas fa-trash"></i>
+                            </button>
+                         </td>
+                       </tr>
+                     </tbody>
+                   </table>
+                </div>
+
+                <div class="sin-tendidas" *ngIf="tendidas.length === 0">
+                  <p class="text-muted"><i class="fas fa-info-circle"></i> No hay tendidas registradas para este parte.</p>
                 </div>
               </div>
 
@@ -513,13 +567,6 @@
                   <div class="form-group"><label>Corte N°</label><input type="text" [(ngModel)]="corteReal.corteNumero" [disabled]="!puedeEditarFormularioCorte"></div>
                   <div class="form-group"><label>Fecha corte</label><input type="date" [(ngModel)]="corteReal.fechaCorte" [disabled]="!puedeEditarFormularioCorte"></div>
                   <div class="form-group"><label>Responsable</label><input type="text" [(ngModel)]="corteReal.responsable" disabled></div>
-                  <div class="form-group"><label>Estado</label>
-                    <select [(ngModel)]="corteReal.estadoEjecucion" [disabled]="!puedeEditarFormularioCorte">
-                      <option value="PENDIENTE">Pendiente</option>
-                      <option value="EN_EJECUCION">En ejecución</option>
-                      <option value="CERRADO">Cerrado</option>
-                    </select>
-                  </div>
                 </div>
 
                 <div class="corte-distribucion">
@@ -561,6 +608,33 @@
 
                 <div class="calidad-actions">
                   <!-- vacío: el botón guardar corte se muestra junto al btn continuar -->
+                </div>
+              </div>
+
+              <!-- HISTORIAL DE SCRAP DEL PROYECTO (NUEVO) -->
+              <div *ngIf="esAreaCorte && historialScrap.length > 0" class="corte-form scrap-historial-section">
+                <div class="corte-header">
+                  <h4><i class="fas fa-recycle"></i> Historial de Remanentes (Scrap)</h4>
+                </div>
+                <div class="tabla-scraps-mini">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Material</th>
+                        <th>Cantidad</th>
+                        <th>Ubicación</th>
+                        <th>Fecha</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let s of historialScrap">
+                        <td>{{ s.nombreInsumo }}</td>
+                        <td class="fw-bold text-danger">{{ s.cantidadKg | number:'1.2-2' }} kg</td>
+                        <td><span class="badge-ubicacion">SCRP</span></td>
+                        <td>{{ s.fechaRegistro | date:'dd/MM/yyyy' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
               <div *ngIf="esAreaDiseno" class="diseno-form">
@@ -945,11 +1019,16 @@
                 </button>
 
                 <!-- Guardar corte: solo en área corte -->
-                <button *ngIf="esAreaCorte && !estaCompleta(areaSeleccionada)"
+                <button *ngIf="esAreaCorte && !estaCompleta(areaSeleccionada) && (isEditingCorte || _historialCortesReales.length === 0)"
                   type="button" class="btn-guardar-inspeccion btn-area-action"
                   (click)="guardarCorteReal()" [disabled]="!puedeGuardarCorteReal || guardandoCorteReal">
                   <i class="fas" [ngClass]="guardandoCorteReal ? 'fa-spinner fa-spin' : 'fa-save'"></i>
                   {{ guardandoCorteReal ? 'Guardando...' : 'Guardar parte de corte' }}
+                </button>
+
+                <button *ngIf="esAreaCorte && !estaCompleta(areaSeleccionada) && !isEditingCorte && _historialCortesReales.length > 0"
+                  type="button" class="btn-area-action" (click)="editarCorte()">
+                  <i class="fas fa-edit"></i> Editar Parte
                 </button>
 
                 <!-- Guardar planilla confección -->

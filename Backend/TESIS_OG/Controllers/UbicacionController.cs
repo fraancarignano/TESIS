@@ -89,5 +89,19 @@ namespace TESIS_OG.Controllers
 
             return Ok(new { message = "Transferencia realizada con éxito" });
         }
+
+        [HttpGet("{id}/scraps")]
+        public async Task<IActionResult> ObtenerScrapsPorUbicacion(int id)
+        {
+            var result = await _ubicacionService.ObtenerScrapsPorUbicacionAsync(id);
+            return Ok(result);
+        }
+
+        [HttpGet("scraps/inventario")]
+        public async Task<IActionResult> ObtenerInventarioScrapGeneral()
+        {
+            var result = await _ubicacionService.ObtenerInventarioScrapGeneralAsync();
+            return Ok(result);
+        }
     }
 }

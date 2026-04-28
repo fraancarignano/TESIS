@@ -7,10 +7,33 @@ import { Insumo } from '../../inventario/models/insumo.model';
 export interface Ubicacion {
     idUbicacion?: number;
     codigo: string;
+    nombre?: string;      // Nombre descriptivo (ej: Pasillo A)
+    tipo?: string;        // 'Rack' | 'Despacho' | 'Scrap' | 'Virtual' | 'Otro'
     rack: number;
     division: number;
     espacio: number;
     descripcion?: string;
+}
+
+export interface ScrapUbicacionItem {
+    idScrap: number;
+    idProyecto: number;
+    codigoProyecto?: string;
+    nombreProyecto?: string;
+    idInsumo: number;
+    nombreInsumo: string;
+    cantidadKg: number;
+    motivo?: string;
+    areaOcurrencia?: string;
+    fechaRegistro: string;
+}
+
+export interface InventarioScrap {
+    idInsumo: number;
+    nombreInsumo: string;
+    cantidadTotalKg: number;
+    cantidadProyectos: number;
+    ultimoRegistro: string;
 }
 
 @Injectable({
@@ -23,6 +46,10 @@ export class UbicacionesService {
 
     getUbicaciones(): Observable<Ubicacion[]> {
         return this.http.get<Ubicacion[]>(this.apiUrl);
+    }
+
+    getInventarioScrapGeneral(): Observable<InventarioScrap[]> {
+        return this.http.get<InventarioScrap[]>(`${this.apiUrl}/scraps/inventario`);
     }
 
     getUbicacion(id: number): Observable<Ubicacion> {
@@ -47,6 +74,10 @@ export class UbicacionesService {
 
     getProyectosPorUbicacion(id: number): Observable<any[]> {
         return this.http.get<any[]>(`${this.apiUrl}/${id}/proyectos`);
+    }
+
+    getScrapsPorUbicacion(id: number): Observable<ScrapUbicacionItem[]> {
+        return this.http.get<ScrapUbicacionItem[]>(`${this.apiUrl}/${id}/scraps`);
     }
 
     transferirDesdeOrden(transferDto: any): Observable<any> {

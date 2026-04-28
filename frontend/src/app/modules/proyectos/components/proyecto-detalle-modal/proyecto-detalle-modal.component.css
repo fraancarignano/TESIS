@@ -2463,3 +2463,122 @@ select:disabled {
   box-shadow: 0 4px 12px rgba(183, 28, 28, 0.35);
 }
 .btn-eliminar-def:disabled { opacity: 0.6; cursor: not-allowed; }
+/* ==================== TENDIDAS ==================== */
+.tendidas-form {
+  background: white !important;
+}
+
+.btn-agregar-tendida {
+  background: #2e7d32;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s;
+}
+
+.btn-agregar-tendida:hover:not(:disabled) {
+  background: #1b5e20;
+  transform: translateY(-1px);
+}
+
+.tabla-tendidas {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.tabla-tendidas th {
+  background: #f1f8e9 !important;
+  color: #2e7d32 !important;
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 2px solid #c8e6c9;
+}
+
+.tabla-tendidas td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tabla-tendidas select, 
+.tabla-tendidas input {
+  width: 100%;
+  padding: 0.35rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.input-porcentaje {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input-porcentaje input {
+  width: 55px !important;
+}
+
+.btn-eliminar-tendida {
+  background: #ffebee;
+  color: #c62828;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-eliminar-tendida:hover:not(:disabled) {
+  background: #ef9a9a;
+}
+
+/* ==================== SCRAP HISTORIAL ==================== */
+.scrap-historial-section {
+  background: #fff5f5 !important;
+  border: 1.5px dashed #ffcdd2 !important;
+}
+
+.tabla-scraps-mini {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ffcdd2;
+}
+
+.tabla-scraps-mini table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.tabla-scraps-mini th {
+  background: #ffebee !important;
+  color: #c62828 !important;
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+}
+
+.tabla-scraps-mini td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid #fff5f5;
+}
+
+.badge-ubicacion {
+  background: #f3e5f5;
+  color: #7b1fa2;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.65rem;
+}

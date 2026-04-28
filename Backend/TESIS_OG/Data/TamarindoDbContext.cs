@@ -1127,7 +1127,7 @@ public partial class TamarindoDbContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.CantidadScrap)
-                .HasColumnType("decimal(9, 0)")
+                .HasColumnType("decimal(18, 2)")
                 .HasColumnName("cantidad_Scrap");
             entity.Property(e => e.CostoScrap).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.Destino)
@@ -1139,6 +1139,7 @@ public partial class TamarindoDbContext : DbContext
                 .HasColumnName("fecha_Registro");
             entity.Property(e => e.IdInsumo).HasColumnName("id_Insumo");
             entity.Property(e => e.IdProyecto).HasColumnName("id_Proyecto");
+            entity.Property(e => e.IdUbicacion).HasColumnName("IdUbicacion");
             entity.Property(e => e.Motivo)
                 .HasMaxLength(80)
                 .IsUnicode(false)
@@ -1153,6 +1154,10 @@ public partial class TamarindoDbContext : DbContext
                 .HasForeignKey(d => d.IdProyecto)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Scrap__id_Proyec__22751F6C");
+
+            entity.HasOne(d => d.IdUbicacionNavigation).WithMany(p => p.Scraps)
+                .HasForeignKey(d => d.IdUbicacion)
+                .HasConstraintName("FK_Scrap_Ubicacion");
         });
 
         modelBuilder.Entity<Talle>(entity =>
@@ -1273,6 +1278,14 @@ public partial class TamarindoDbContext : DbContext
             entity.Property(e => e.Rack).HasColumnName("rack");
             entity.Property(e => e.Division).HasColumnName("division");
             entity.Property(e => e.Espacio).HasColumnName("espacio");
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("Nombre");
+            entity.Property(e => e.Tipo)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("Tipo");
             entity.Property(e => e.Descripcion)
                 .HasMaxLength(200)
                 .IsUnicode(false)
