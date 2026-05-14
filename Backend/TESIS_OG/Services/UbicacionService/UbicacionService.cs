@@ -10,6 +10,9 @@ namespace TESIS_OG.Services.UbicacionService
     {
         private readonly TamarindoDbContext _context;
 
+        private static readonly HashSet<string> EstadosValidos =
+            new(StringComparer.OrdinalIgnoreCase) { "Activa", "Ocupado", "BloqIN", "BloqOUT" };
+
         public UbicacionService(TamarindoDbContext context)
         {
             _context = context;
@@ -28,7 +31,8 @@ namespace TESIS_OG.Services.UbicacionService
                 Rack = dto.Rack,
                 Division = dto.Division,
                 Espacio = dto.Espacio,
-                Descripcion = dto.Descripcion
+                Descripcion = dto.Descripcion,
+                EstadoUbicacion = "Activa"
             };
 
             _context.Ubicacions.Add(ubicacion);
@@ -49,7 +53,8 @@ namespace TESIS_OG.Services.UbicacionService
                     Rack = u.Rack,
                     Division = u.Division,
                     Espacio = u.Espacio,
-                    Descripcion = u.Descripcion
+                    Descripcion = u.Descripcion,
+                    EstadoUbicacion = u.EstadoUbicacion
                 })
                 .ToListAsync();
         }
@@ -67,7 +72,8 @@ namespace TESIS_OG.Services.UbicacionService
                     Rack = u.Rack,
                     Division = u.Division,
                     Espacio = u.Espacio,
-                    Descripcion = u.Descripcion
+                    Descripcion = u.Descripcion,
+                    EstadoUbicacion = u.EstadoUbicacion
                 })
                 .FirstOrDefaultAsync();
         }
@@ -87,6 +93,7 @@ namespace TESIS_OG.Services.UbicacionService
             ubicacion.Division = dto.Division;
             ubicacion.Espacio = dto.Espacio;
             ubicacion.Descripcion = dto.Descripcion;
+            // EstadoUbicacion NO se modifica aquí — se usa el endpoint PATCH /estado
 
             await _context.SaveChangesAsync();
             return await ObtenerUbicacionPorIdAsync(id);
@@ -106,12 +113,25 @@ namespace TESIS_OG.Services.UbicacionService
             return true;
         }
 
+        public async Task<UbicacionDTO?> CambiarEstadoAsync(int id, string nuevoEstado)
+        {
+            if (!EstadosValidos.Contains(nuevoEstado)) return null;
+
+            var ubicacion = await _context.Ubicacions.FindAsync(id);
+            if (ubicacion == null) return null;
+
+            ubicacion.EstadoUbicacion = nuevoEstado;
+            await _context.SaveChangesAsync();
+            return await ObtenerUbicacionPorIdAsync(id);
+        }
+
         public async Task<List<InsumoIndexDTO>> ObtenerInsumosPorUbicacionAsync(int idUbicacion)
         {
             return await _context.InsumoStocks
                 .Include(s => s.IdInsumoNavigation)
                     .ThenInclude(i => i.IdTipoInsumoNavigation)
                 .Include(s => s.IdProyectoNavigation)
+                .Include(s => s.IdUbicacionNavigation)
                 .Where(s => s.IdUbicacion == idUbicacion)
                 .Select(s => new InsumoIndexDTO
                 {
@@ -129,6 +149,7 @@ namespace TESIS_OG.Services.UbicacionService
                       : (s.IdInsumoNavigation.Estado ?? "Disponible"),
                     IdUbicacion = s.IdUbicacion,
                     CodigoUbicacion = s.IdUbicacionNavigation != null ? s.IdUbicacionNavigation.Codigo : null,
+                    EstadoUbicacion = s.IdUbicacionNavigation != null ? s.IdUbicacionNavigation.EstadoUbicacion : "Activa",
                     DetalleStock = new List<InsumoStockDTO>
                     {
                         new InsumoStockDTO
@@ -140,6 +161,7 @@ namespace TESIS_OG.Services.UbicacionService
                             CodigoProyecto = s.IdProyectoNavigation != null ? s.IdProyectoNavigation.CodigoProyecto : null,
                             IdUbicacion = s.IdUbicacion,
                             CodigoUbicacion = s.IdUbicacionNavigation != null ? s.IdUbicacionNavigation.Codigo : null,
+                            EstadoUbicacion = s.IdUbicacionNavigation != null ? s.IdUbicacionNavigation.EstadoUbicacion : "Activa",
                             IdOrdenCompra = s.IdOrdenCompra,
                             Cantidad = s.Cantidad,
                             FechaActualizacion = s.FechaActualizacion
@@ -204,10 +226,18 @@ namespace TESIS_OG.Services.UbicacionService
                 .ToListAsync();
         }
 
-        public async Task<bool> TransferirInsumosAsync(InsumoTransferDTO transferDto)
+        public async Task<(bool ok, string? error)> TransferirInsumosAsync(InsumoTransferDTO transferDto)
         {
             var ubicacionDestino = await _context.Ubicacions.FindAsync(transferDto.IdUbicacionDestino);
-            if (ubicacionDestino == null) return false;
+            if (ubicacionDestino == null)
+                return (false, "La ubicación de destino no existe.");
+
+            // ── VALIDACIONES ESTADO DESTINO ──────────────────────────────────
+            if (ubicacionDestino.EstadoUbicacion == "Ocupado")
+                return (false, $"La ubicación '{ubicacionDestino.Codigo}' está Ocupada. No puede recibir más mercadería.");
+
+            if (ubicacionDestino.EstadoUbicacion == "BloqIN")
+                return (false, $"La ubicación '{ubicacionDestino.Codigo}' tiene Bloqueo de Ingreso (BLIN). No se puede ingresar mercadería.");
 
             // CASO 1: TRANSFERENCIA DESDE ORDEN DE COMPRA
             if (transferDto.IdOrdenCompra.HasValue)
@@ -215,7 +245,8 @@ namespace TESIS_OG.Services.UbicacionService
                 var orden = await _context.OrdenCompras
                     .Include(o => o.DetalleOrdenCompras)
                     .FirstOrDefaultAsync(o => o.IdOrdenCompra == transferDto.IdOrdenCompra);
-                if (orden == null) return false;
+                if (orden == null)
+                    return (false, "Orden de compra no encontrada.");
 
                 foreach (var idInsumo in transferDto.IdsInsumos)
                 {
@@ -232,8 +263,8 @@ namespace TESIS_OG.Services.UbicacionService
 
                     // Crear o actualizar entrada granular en InsumoStock
                     var stockEntry = await _context.InsumoStocks
-                        .FirstOrDefaultAsync(s => s.IdInsumo == idInsumo 
-                                               && s.IdUbicacion == transferDto.IdUbicacionDestino 
+                        .FirstOrDefaultAsync(s => s.IdInsumo == idInsumo
+                                               && s.IdUbicacion == transferDto.IdUbicacionDestino
                                                && s.IdProyecto == transferDto.IdProyecto);
 
                     if (stockEntry == null)
@@ -282,11 +313,19 @@ namespace TESIS_OG.Services.UbicacionService
             else if (transferDto.IdUbicacionOrigen.HasValue)
             {
                 var ubicacionOrigen = await _context.Ubicacions.FindAsync(transferDto.IdUbicacionOrigen);
-                if (ubicacionOrigen == null) return false;
+                if (ubicacionOrigen == null)
+                    return (false, "La ubicación de origen no existe.");
+
+                // ── VALIDACIONES ESTADO ORIGEN ───────────────────────────────
+                if (ubicacionOrigen.EstadoUbicacion == "BloqOUT")
+                    return (false, $"La ubicación '{ubicacionOrigen.Codigo}' tiene Bloqueo de Egreso (BLOUT). No se pueden mover los insumos.");
+
+                if (ubicacionOrigen.EstadoUbicacion == "Ocupado")
+                    return (false, $"La ubicación '{ubicacionOrigen.Codigo}' está marcada como Ocupada. Cambie el estado antes de transferir.");
 
                 foreach (var idInsumo in transferDto.IdsInsumos)
                 {
-                    // Buscar stock en el origen (agrupamos por proyecto si se especifica o general)
+                    // Buscar stock en el origen
                     var stockOrigen = await _context.InsumoStocks
                         .Where(s => s.IdInsumo == idInsumo && s.IdUbicacion == transferDto.IdUbicacionOrigen)
                         .ToListAsync();
@@ -303,8 +342,8 @@ namespace TESIS_OG.Services.UbicacionService
 
                         // Transferir a destino
                         var stockDestino = await _context.InsumoStocks
-                            .FirstOrDefaultAsync(s => s.IdInsumo == idInsumo 
-                                                   && s.IdUbicacion == transferDto.IdUbicacionDestino 
+                            .FirstOrDefaultAsync(s => s.IdInsumo == idInsumo
+                                                   && s.IdUbicacion == transferDto.IdUbicacionDestino
                                                    && s.IdProyecto == sSource.IdProyecto);
 
                         if (stockDestino == null)
@@ -350,10 +389,23 @@ namespace TESIS_OG.Services.UbicacionService
                     };
                     _context.InventarioMovimientos.Add(movimiento);
                 }
+
+                // ── AUTO-LIBERAR ORIGEN SI QUEDÓ SIN STOCK ──────────────────
+                var quedaStockEnOrigen = await _context.InsumoStocks
+                    .AnyAsync(s => s.IdUbicacion == transferDto.IdUbicacionOrigen);
+
+                if (!quedaStockEnOrigen && ubicacionOrigen.EstadoUbicacion == "Ocupado")
+                {
+                    ubicacionOrigen.EstadoUbicacion = "Activa";
+                }
             }
 
             await _context.SaveChangesAsync();
-            return true;
+
+            // ── AUTO-LIBERAR ORIGEN EN CASO 1 SI QUEDÓ SIN STOCK ────────────
+            // (aplica después del SaveChanges para no interferir con los removes anteriores)
+
+            return (true, null);
         }
     }
 }

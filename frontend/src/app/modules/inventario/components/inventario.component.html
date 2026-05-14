@@ -66,9 +66,14 @@
           <td>{{ insumo.unidadMedida }}</td>
           <td>{{ insumo.proveedor?.nombreProveedor || '-' }}</td>
           <td>
-            <span class="codigo-ubicacion" *ngIf="insumo.codigoUbicacion">
-              {{ insumo.codigoUbicacion }}
-            </span>
+            <div class="ubicacion-con-estado" *ngIf="insumo.codigoUbicacion">
+              <span class="codigo-ubicacion">{{ insumo.codigoUbicacion }}</span>
+              <span *ngIf="insumo.estadoUbicacion && insumo.estadoUbicacion !== 'Activa'" 
+                    class="badge-estado-mini" 
+                    [class]="'mini-est-' + insumo.estadoUbicacion">
+                {{ insumo.estadoUbicacion === 'Ocupado' ? 'OCUP' : insumo.estadoUbicacion === 'BloqIN' ? 'BLIN' : 'BLOUT' }}
+              </span>
+            </div>
             <span *ngIf="!insumo.codigoUbicacion" style="color: #ccc;">-</span>
           </td>
           <td>

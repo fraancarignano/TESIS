@@ -19,7 +19,14 @@ import { Insumo } from '../../../inventario/models/insumo.model';
               </svg>
             </div>
             <div>
-              <h2>Ubicación: {{ ubicacion.codigo }}</h2>
+              <div class="d-flex align-items-center gap-2">
+                <h2>Ubicación: {{ ubicacion.codigo }}</h2>
+                <span *ngIf="ubicacion.estadoUbicacion !== 'Activa'" 
+                      class="badge-estado-header" 
+                      [ngClass]="'header-est-' + ubicacion.estadoUbicacion">
+                  {{ ubicacion.estadoUbicacion }}
+                </span>
+              </div>
               <p>Rack {{ ubicacion.rack }} - División {{ ubicacion.division }} - Espacio {{ ubicacion.espacio }}</p>
             </div>
           </div>
@@ -446,6 +453,20 @@ import { Insumo } from '../../../inventario/models/insumo.model';
     .mb-3 { margin-bottom: 1rem; }
     .mt-2 { margin-top: 0.5rem; }
     .mt-3 { margin-top: 1rem; }
+    .gap-2 { gap: 0.5rem; }
+
+    .badge-estado-header {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .header-est-Ocupado { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+    .header-est-BloqIN  { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    .header-est-BloqOUT { background: #ede7f6; color: #4527a0; border: 1px solid #d1c4e9; }
   `]
 })
 export class UbicacionDetalleModalComponent implements OnInit {

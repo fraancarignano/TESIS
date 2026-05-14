@@ -667,3 +667,24 @@ td {
   cursor: pointer;
 }
 .btn-limpiar-sel:hover { background: #e4e4e7; }
+
+/* ─── BADGES DE ESTADO MINI (TABLA INVENTARIO) ───────────────── */
+.ubicacion-con-estado {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.badge-estado-mini {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.mini-est-Ocupado { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+.mini-est-BloqIN  { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+.mini-est-BloqOUT { background: #ede7f6; color: #4527a0; border: 1px solid #d1c4e9; }

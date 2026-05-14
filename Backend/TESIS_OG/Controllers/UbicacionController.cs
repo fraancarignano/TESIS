@@ -52,6 +52,20 @@ namespace TESIS_OG.Controllers
             return Ok(result);
         }
 
+        /// <summary>Cambia solo el estado operativo de una ubicación (Activa/Ocupado/BloqIN/BloqOUT)</summary>
+        [HttpPatch("{id}/estado")]
+        public async Task<IActionResult> CambiarEstado(int id, [FromBody] UbicacionEstadoDTO dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.EstadoUbicacion))
+                return BadRequest(new { message = "El estado no puede estar vacío." });
+
+            var result = await _ubicacionService.CambiarEstadoAsync(id, dto.EstadoUbicacion);
+            if (result == null)
+                return BadRequest(new { message = "No se pudo cambiar el estado. Verifique que la ubicación exista y el estado sea válido (Activa, Ocupado, BloqIN, BloqOUT)." });
+
+            return Ok(result);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> EliminarUbicacion(int id)
         {
@@ -82,10 +96,10 @@ namespace TESIS_OG.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(new { message = "Datos inválidos", errors = ModelState });
 
-            var result = await _ubicacionService.TransferirInsumosAsync(transferDto);
+            var (ok, error) = await _ubicacionService.TransferirInsumosAsync(transferDto);
 
-            if (!result)
-                return BadRequest(new { message = "No se pudo realizar la transferencia. Verifique que el origen y destino existan y tengan stock suficiente." });
+            if (!ok)
+                return BadRequest(new { message = error ?? "No se pudo realizar la transferencia. Verifique que el origen y destino existan y tengan stock suficiente." });
 
             return Ok(new { message = "Transferencia realizada con éxito" });
         }

@@ -12,6 +12,8 @@ namespace TESIS_OG.DTOs.Ubicacion
         public int Division { get; set; }
         public int Espacio { get; set; }
         public string? Descripcion { get; set; }
+        /// <summary>Estado operativo: 'Activa' | 'Ocupado' | 'BloqIN' | 'BloqOUT'</summary>
+        public string EstadoUbicacion { get; set; } = "Activa";
     }
 
     public class UbicacionCreateDTO
@@ -23,6 +25,7 @@ namespace TESIS_OG.DTOs.Ubicacion
         public int Division { get; set; }
         public int Espacio { get; set; }
         public string? Descripcion { get; set; }
+        // Al crear siempre arranca en Activa — no se expone al usuario
     }
 
     public class UbicacionEditDTO
@@ -35,4 +38,12 @@ namespace TESIS_OG.DTOs.Ubicacion
         public int Espacio { get; set; }
         public string? Descripcion { get; set; }
     }
+
+    /// <summary>DTO mínimo para el endpoint PATCH /{id}/estado</summary>
+    public class UbicacionEstadoDTO
+    {
+        /// <summary>Valores válidos: 'Activa' | 'Ocupado' | 'BloqIN' | 'BloqOUT'</summary>
+        public string EstadoUbicacion { get; set; } = "Activa";
+    }
 }
+

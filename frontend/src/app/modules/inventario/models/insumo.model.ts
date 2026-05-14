@@ -28,6 +28,7 @@ export interface InsumoStock {
   codigoProyecto?: string;
   idUbicacion?: number;
   codigoUbicacion?: string;
+  estadoUbicacion?: string;
   idOrdenCompra?: number;
   nroOrden?: string;
   cantidad: number;
@@ -48,6 +49,7 @@ export interface Insumo {
   nombreProveedor?: string;
   idUbicacion?: number;
   codigoUbicacion?: string;
+  estadoUbicacion?: string;
   nombreTipoInsumo?: string;
   estado?: string;
   color?: string;

@@ -37,6 +37,7 @@
                     <th>Tipo</th>
                     <th>Codigo</th>
                     <th>Rack / Div / Esp</th>
+                    <th>Estado</th>
                     <th>Descripcion</th>
                     <th style="text-align: right;" *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Gestionar' }">Acciones</th>
                 </tr>
@@ -54,16 +55,69 @@
                       </ng-container>
                       <span *ngIf="u.tipo !== 'Rack' && u.tipo" class="text-muted">N/A</span>
                     </td>
+                    <!-- COLUMNA DE ESTADO -->
+                    <td>
+                        <span class="badge-estado-ubicacion"
+                              [class.est-activa]="(u.estadoUbicacion || 'Activa') === 'Activa'"
+                              [class.est-ocupado]="u.estadoUbicacion === 'Ocupado'"
+                              [class.est-blin]="u.estadoUbicacion === 'BloqIN'"
+                              [class.est-blout]="u.estadoUbicacion === 'BloqOUT'">
+                            
+                            <!-- Iconos dinámicos según estado -->
+                            <svg *ngIf="(u.estadoUbicacion || 'Activa') === 'Activa'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <svg *ngIf="u.estadoUbicacion === 'Ocupado'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                            <svg *ngIf="u.estadoUbicacion === 'BloqIN'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            <svg *ngIf="u.estadoUbicacion === 'BloqOUT'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+
+                            {{ getEstadoInfo(u.estadoUbicacion).label }}
+                        </span>
+                    </td>
                     <td>{{ u.descripcion || '-' }}</td>
                     <td class="td-acciones" *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Gestionar' }">
                         <div class="acciones">
-                            <button class="btn-icon btn-edit" (click)="abrirEditar(u)" title="Editar ubicacion">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                            </button>
+                            <!-- Botón de configuración de estado (tuerca) -->
+                            <div class="config-wrapper" style="position: relative;">
+                                <button class="btn-icon btn-config"
+                                        (click)="toggleMenuEstado($event, u.idUbicacion!)"
+                                        title="Configurar estado">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                    </svg>
+                                </button>
+
+                                <!-- Dropdown de estados -->
+                                <div class="estado-dropdown" *ngIf="menuEstadoAbierto === u.idUbicacion" (click)="$event.stopPropagation()">
+                                    <div class="dropdown-header">Configurar estado</div>
+                                    <button *ngFor="let est of ESTADOS"
+                                            class="dropdown-option"
+                                            [class.option-activo]="(u.estadoUbicacion || 'Activa') === est.valor"
+                                            (click)="cambiarEstado($event, u, est.valor)">
+                                        <span class="opt-icono">
+                                            <svg *ngIf="est.valor === 'Activa'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            <svg *ngIf="est.valor === 'Ocupado'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                            <svg *ngIf="est.valor === 'BloqIN'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                            <svg *ngIf="est.valor === 'BloqOUT'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                        </span>
+                                        <span class="opt-info">
+                                            <strong>{{ est.label }}</strong>
+                                            <small>{{ est.descripcion }}</small>
+                                        </span>
+                                        <span class="opt-check" *ngIf="(u.estadoUbicacion || 'Activa') === est.valor">✓</span>
+                                    </button>
+                                    <div class="dropdown-sep"></div>
+                                    <button class="dropdown-option dropdown-edit" (click)="abrirEditar(u)">
+                                        <span class="opt-icono">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </span>
+                                        <span class="opt-info">
+                                            <strong>Editar datos</strong>
+                                            <small>Modificar nombre, código, etc.</small>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+
                             <button class="btn-icon btn-delete" (click)="eliminar(u.idUbicacion!)" title="Eliminar ubicacion">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
@@ -77,7 +131,7 @@
                     </td>
                 </tr>
                 <tr *ngIf="ubicaciones.length === 0">
-                    <td colspan="6" class="sin-resultados">
+                    <td colspan="7" class="sin-resultados">
                         <h3>No se encontraron ubicaciones configuradas</h3>
                         <button class="btn btn-primary" (click)="abrirNuevo()"
                             *appHasPermission="{ modulo: 'Ubicaciones', accion: 'Gestionar' }">

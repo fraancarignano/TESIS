@@ -694,9 +694,23 @@ namespace TESIS_OG.Controllers
 
                     // Descontar del InsumoStock "Stock General" (IdProyecto = null) de este insumo
                     var stockGeneral = await _context.InsumoStocks
+                        .Include(s => s.IdUbicacionNavigation)
                         .Where(s => s.IdInsumo == insumo.IdInsumo && s.IdProyecto == null)
                         .OrderByDescending(s => s.Cantidad)
                         .FirstOrDefaultAsync();
+
+                    // ── VALIDAR BLOQUEO DE EGRESO ────────────────────────────
+                    if (stockGeneral?.IdUbicacionNavigation != null &&
+                        stockGeneral.IdUbicacionNavigation.EstadoUbicacion == "BloqOUT")
+                    {
+                        await transaction.RollbackAsync();
+                        return BadRequest(new
+                        {
+                            message = $"El material '{insumo.NombreInsumo}' está en la ubicación " +
+                                      $"'{stockGeneral.IdUbicacionNavigation.Codigo}' con Bloqueo de Egreso (BLOUT). " +
+                                      "No se puede asignar hasta que se levante el bloqueo."
+                        });
+                    }
 
                     int? idUbicacionHeredada = stockGeneral?.IdUbicacion;
 
@@ -705,8 +719,20 @@ namespace TESIS_OG.Controllers
                         stockGeneral.Cantidad -= item.Cantidad;
                         stockGeneral.FechaActualizacion = DateTime.Now;
                         if (stockGeneral.Cantidad <= 0)
+                        {
                             _context.InsumoStocks.Remove(stockGeneral);
+                            // Auto-liberar ubicación si queda sin stock
+                            if (stockGeneral.IdUbicacionNavigation != null &&
+                                stockGeneral.IdUbicacionNavigation.EstadoUbicacion == "Ocupado")
+                            {
+                                var hayOtroStock = await _context.InsumoStocks
+                                    .AnyAsync(s => s.IdUbicacion == stockGeneral.IdUbicacion && s.IdProyecto == null);
+                                if (!hayOtroStock)
+                                    stockGeneral.IdUbicacionNavigation.EstadoUbicacion = "Activa";
+                            }
+                        }
                     }
+
 
                     _context.InsumoStocks.Add(new InsumoStock
                     {

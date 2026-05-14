@@ -13,6 +13,7 @@ export interface Ubicacion {
     division: number;
     espacio: number;
     descripcion?: string;
+    estadoUbicacion?: string; // 'Activa' | 'Ocupado' | 'BloqIN' | 'BloqOUT'
 }
 
 export interface ScrapUbicacionItem {
@@ -66,6 +67,11 @@ export class UbicacionesService {
 
     deleteUbicacion(id: number): Observable<any> {
         return this.http.delete(`${this.apiUrl}/${id}`);
+    }
+
+    /** Cambia solo el estado operativo de una ubicación */
+    cambiarEstadoUbicacion(id: number, estadoUbicacion: string): Observable<Ubicacion> {
+        return this.http.patch<Ubicacion>(`${this.apiUrl}/${id}/estado`, { estadoUbicacion });
     }
 
     getInsumosPorUbicacion(id: number): Observable<Insumo[]> {

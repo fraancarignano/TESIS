@@ -46,7 +46,9 @@
         <label>Ubicación destino</label>
         <select [(ngModel)]="idUbicacionDestinoOC">
           <option [ngValue]="null">Seleccionar ubicación...</option>
-          <option *ngFor="let u of ubicaciones" [ngValue]="u.idUbicacion">{{ u.codigo }}</option>
+          <option *ngFor="let u of ubicacionesDestinoDisponibles" [ngValue]="u.idUbicacion">
+            {{ u.codigo }} {{ u.estadoUbicacion === 'BloqOUT' ? '[BLOUT]' : '' }}
+          </option>
         </select>
       </div>
     </div>
@@ -83,14 +85,18 @@
         <label>Ubicación origen</label>
         <select [(ngModel)]="idUbicacionOrigen" (change)="onUbicacionOrigenChange()">
           <option [ngValue]="null">Seleccionar origen...</option>
-          <option *ngFor="let u of ubicaciones" [ngValue]="u.idUbicacion">{{ u.codigo }}</option>
+          <option *ngFor="let u of ubicacionesOrigenDisponibles" [ngValue]="u.idUbicacion">
+            {{ u.codigo }} {{ u.estadoUbicacion === 'BloqIN' ? '[BLIN]' : '' }}
+          </option>
         </select>
       </div>
       <div class="form-group">
         <label>Ubicación destino</label>
         <select [(ngModel)]="idUbicacionDestino">
           <option [ngValue]="null">Seleccionar destino...</option>
-          <option *ngFor="let u of ubicaciones" [ngValue]="u.idUbicacion" [disabled]="u.idUbicacion === idUbicacionOrigen">{{ u.codigo }}</option>
+          <option *ngFor="let u of ubicacionesDestinoDisponibles" [ngValue]="u.idUbicacion" [disabled]="u.idUbicacion === idUbicacionOrigen">
+            {{ u.codigo }} {{ u.estadoUbicacion === 'BloqOUT' ? '[BLOUT]' : '' }}
+          </option>
         </select>
       </div>
     </div>

@@ -11,6 +11,7 @@ namespace TESIS_OG.DTOs.Insumos
         public string? CodigoProyecto { get; set; }
         public int? IdUbicacion { get; set; }
         public string? CodigoUbicacion { get; set; }
+        public string? EstadoUbicacion { get; set; }
         public int? IdOrdenCompra { get; set; }
         public string? NroOrden { get; set; }
         public decimal Cantidad { get; set; }

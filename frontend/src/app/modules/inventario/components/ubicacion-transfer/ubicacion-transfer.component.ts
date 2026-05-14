@@ -60,6 +60,18 @@ export class UbicacionTransferComponent implements OnInit {
   proveedores: any[] = [];
   cargando = false;
 
+  // ── FILTRADO DE UBICACIONES ────────────────────────────────────
+
+  get ubicacionesDestinoDisponibles(): Ubicacion[] {
+    // Para destino: NO mostrar Ocupadas ni BloqIN
+    return this.ubicaciones.filter(u => u.estadoUbicacion !== 'Ocupado' && u.estadoUbicacion !== 'BloqIN');
+  }
+
+  get ubicacionesOrigenDisponibles(): Ubicacion[] {
+    // Para origen: NO mostrar BloqOUT ni Ocupadas
+    return this.ubicaciones.filter(u => u.estadoUbicacion !== 'BloqOUT' && u.estadoUbicacion !== 'Ocupado');
+  }
+
   // ── TAB 1: OC → Ubicación ─────────────────────────────────────
   idOrdenOC: number | null = null;
   idUbicacionDestinoOC: number | null = null;
@@ -185,8 +197,9 @@ export class UbicacionTransferComponent implements OnInit {
     if (!this.idUbicacionDestinoOC) { this.alertas.error('Sin destino', 'Seleccioná una ubicación de destino.'); return; }
 
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const ubicacionDestino = this.ubicaciones.find(u => u.idUbicacion === this.idUbicacionDestinoOC);
+    
     this.cargando = true;
-    // Sin IdProyecto — esto es solo asignación de ubicación (stock general)
     this.ubicacionesService.transferirDesdeOrden({
       idOrdenCompra: this.idOrdenOC,
       idsInsumos: ids,
@@ -194,16 +207,26 @@ export class UbicacionTransferComponent implements OnInit {
       idUsuario: usuario.idUsuario || null
     }).subscribe({
       next: () => {
-        this.alertas.success('Ingreso realizado', 'Los insumos ingresaron al stock general en la ubicación seleccionada.');
+        this.cargando = false;
+
+        // POPUP SUGERENCIA OCUPADO
+        if (confirm(`Los insumos fueron ingresados a [${ubicacionDestino?.codigo}]. \n\n¿Desea cambiar el estado de esta ubicación a "Ocupado" para evitar nuevos ingresos?`)) {
+          this.ubicacionesService.cambiarEstadoUbicacion(this.idUbicacionDestinoOC!, 'Ocupado').subscribe();
+        }
+
+        this.alertas.success('Ingreso realizado', 'Los insumos ingresaron al stock general.');
         this.idOrdenOC = null;
         this.idUbicacionDestinoOC = null;
         this.insumosOC = [];
-        this.cargando = false;
         this.cargarDatos();
       },
-      error: () => { this.alertas.error('Error', 'No se pudo realizar el ingreso.'); this.cargando = false; }
+      error: (err) => { 
+        this.alertas.error('Error', err.error?.message || 'No se pudo realizar el ingreso.'); 
+        this.cargando = false; 
+      }
     });
   }
+
 
   // ── TAB 2 ─────────────────────────────────────────────────────
 
@@ -232,6 +255,8 @@ export class UbicacionTransferComponent implements OnInit {
     if (this.idUbicacionOrigen === this.idUbicacionDestino) { this.alertas.error('Error', 'Origen y destino no pueden ser iguales.'); return; }
 
     const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const ubicacionDestino = this.ubicaciones.find(u => u.idUbicacion === this.idUbicacionDestino);
+
     this.cargando = true;
     this.ubicacionesService.transferirDesdeOrden({
       idUbicacionOrigen: this.idUbicacionOrigen,
@@ -240,16 +265,26 @@ export class UbicacionTransferComponent implements OnInit {
       idUsuario: usuario.idUsuario || null
     }).subscribe({
       next: () => {
+        this.cargando = false;
+
+        // POPUP SUGERENCIA OCUPADO
+        if (confirm(`Transferencia completada a [${ubicacionDestino?.codigo}]. \n\n¿Desea marcar la ubicación destino como "Ocupada"?`)) {
+          this.ubicacionesService.cambiarEstadoUbicacion(this.idUbicacionDestino!, 'Ocupado').subscribe();
+        }
+
         this.alertas.success('Transferencia realizada', 'Los insumos fueron movidos correctamente.');
         this.idUbicacionOrigen = null;
         this.idUbicacionDestino = null;
         this.insumosUB = [];
-        this.cargando = false;
         this.cargarDatos();
       },
-      error: () => { this.alertas.error('Error', 'No se pudo realizar la transferencia.'); this.cargando = false; }
+      error: (err) => { 
+        this.alertas.error('Error', err.error?.message || 'No se pudo realizar la transferencia.'); 
+        this.cargando = false; 
+      }
     });
   }
+
 
   // ── TAB 3: Asignar a Proyecto (copia exacta de proyecto-transfer) ──
 

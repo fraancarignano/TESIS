@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UbicacionesService, Ubicacion } from '../services/ubicaciones.service';
@@ -43,6 +43,16 @@ export class UbicacionesComponent implements OnInit {
     mostrarProyecto = false;
     proyectoSeleccionado: ProyectoVista | null = null;
 
+    // Menú de configuración de estado
+    menuEstadoAbierto: number | null = null;
+
+    readonly ESTADOS = [
+        { valor: 'Activa',  label: 'Activa',       descripcion: 'Sin restricciones', clase: 'estado-activa' },
+        { valor: 'Ocupado', label: 'Ocupado',       descripcion: 'No admite más ingreso', clase: 'estado-ocupado' },
+        { valor: 'BloqIN',  label: 'Bloqueo IN',   descripcion: 'Bloqueado para ingreso', clase: 'estado-blin' },
+        { valor: 'BloqOUT', label: 'Bloqueo OUT',  descripcion: 'Bloqueado para egreso', clase: 'estado-blout' },
+    ];
+
     constructor(
         private ubicacionesService: UbicacionesService,
         private proyectosService: ProyectosService
@@ -51,6 +61,11 @@ export class UbicacionesComponent implements OnInit {
     ngOnInit(): void {
         this.cargarUbicaciones();
         this.cargarInventarioScrap();
+    }
+
+    @HostListener('document:click')
+    cerrarMenusGlobal(): void {
+        this.menuEstadoAbierto = null;
     }
 
     setTab(tab: 'listado' | 'scrap'): void {
@@ -100,6 +115,7 @@ export class UbicacionesComponent implements OnInit {
         this.ubicacionSeleccionada = { ...ubicacion };
         this.nuevaUbicacion = { ...ubicacion };
         this.mostrarFormulario = true;
+        this.menuEstadoAbierto = null;
     }
 
     cerrarFormulario(): void {
@@ -184,6 +200,35 @@ export class UbicacionesComponent implements OnInit {
             this.generarCodigo();
         }
     }
+
+    // ── GESTIÓN DE ESTADO ──────────────────────────────────────────
+
+    toggleMenuEstado(event: Event, idUbicacion: number): void {
+        event.stopPropagation();
+        this.menuEstadoAbierto = this.menuEstadoAbierto === idUbicacion ? null : idUbicacion;
+    }
+
+    cambiarEstado(event: Event, ubicacion: Ubicacion, nuevoEstado: string): void {
+        event.stopPropagation();
+        this.menuEstadoAbierto = null;
+
+        if (!ubicacion.idUbicacion) return;
+        if (ubicacion.estadoUbicacion === nuevoEstado) return; // sin cambio
+
+        this.ubicacionesService.cambiarEstadoUbicacion(ubicacion.idUbicacion, nuevoEstado).subscribe({
+            next: (updated) => {
+                const idx = this.ubicaciones.findIndex(u => u.idUbicacion === ubicacion.idUbicacion);
+                if (idx !== -1) this.ubicaciones[idx] = updated;
+            },
+            error: (err: any) => alert(err.error?.message || 'Error al cambiar el estado')
+        });
+    }
+
+    getEstadoInfo(estado?: string) {
+        return this.ESTADOS.find(e => e.valor === estado) ?? this.ESTADOS[0];
+    }
+
+    // ── PROYECTOS ──────────────────────────────────────────────────
 
     abrirDetalleProyecto(idProyecto: number): void {
         this.proyectosService.obtenerProyectoPorId(idProyecto).pipe(

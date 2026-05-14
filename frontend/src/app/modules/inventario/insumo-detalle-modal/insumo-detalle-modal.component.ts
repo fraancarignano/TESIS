@@ -110,9 +110,16 @@ import { AlertasService } from '../../../core/services/alertas';
                       </span>
                     </td>
                     <td>
-                      <span *ngIf="s.idUbicacion" class="link-label" (click)="verDetalleUbicacion(s.idUbicacion)">
-                        {{ s.codigoUbicacion }}
-                      </span>
+                      <div *ngIf="s.idUbicacion" style="display:flex;align-items:center;gap:6px;">
+                        <span class="link-label" (click)="verDetalleUbicacion(s.idUbicacion)">
+                          {{ s.codigoUbicacion }}
+                        </span>
+                        <span *ngIf="s.estadoUbicacion && s.estadoUbicacion !== 'Activa'" 
+                              class="badge-estado-mini" 
+                              [class]="'mini-est-' + s.estadoUbicacion">
+                          {{ s.estadoUbicacion === 'Ocupado' ? 'OCUP' : s.estadoUbicacion === 'BloqIN' ? 'BLIN' : 'BLOUT' }}
+                        </span>
+                      </div>
                       <span *ngIf="!s.idUbicacion" class="text-muted">-</span>
                     </td>
                     <td style="white-space:nowrap;">
@@ -250,6 +257,20 @@ import { AlertasService } from '../../../core/services/alertas';
       background: #f5f5f5; border: none; padding: 8px 16px; border-radius: 4px;
       cursor: pointer; font-weight: 600;
     }
+
+    /* ─── BADGES DE ESTADO MINI ───────────────── */
+    .badge-estado-mini {
+      font-size: 8px;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 4px;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .mini-est-Ocupado { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+    .mini-est-BloqIN  { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    .mini-est-BloqOUT { background: #ede7f6; color: #4527a0; border: 1px solid #d1c4e9; }
   `]
 })
 export class InsumoDetalleModalComponent {
