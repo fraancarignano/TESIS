@@ -30,6 +30,8 @@ export class MuestraDetallePageComponent implements OnInit {
   comentario = '';
   accionComentario?: AccionComentario;
   comentarioObligatorio = false;
+  guardando = false;
+  paletaColores: string[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -104,6 +106,7 @@ export class MuestraDetallePageComponent implements OnInit {
     this.muestrasService.obtenerMuestraPorId(id).subscribe({
       next: (muestra) => {
         this.muestra = muestra;
+        const paletaPrincipal = this.setearPaletaDesdeTexto(muestra.paletaRgb);
         this.form.patchValue({
           nombreMuestra: muestra.nombreMuestra,
           descripcion: muestra.descripcion || '',
@@ -118,7 +121,7 @@ export class MuestraDetallePageComponent implements OnInit {
           estampadoDescripcion: muestra.estampadoDescripcion || '',
           estampadoReferencia: muestra.estampadoReferencia || '',
           otrosDetalle: muestra.otrosDetalle || '',
-          paletaRgb: this.normalizarPaleta(muestra.paletaRgb)
+          paletaRgb: paletaPrincipal
         });
         this.form.disable();
         this.editando = false;
@@ -138,6 +141,7 @@ export class MuestraDetallePageComponent implements OnInit {
 
   cancelarEdicion(): void {
     if (!this.muestra) return;
+    const paletaPrincipal = this.setearPaletaDesdeTexto(this.muestra.paletaRgb);
 
     this.form.patchValue({
       nombreMuestra: this.muestra.nombreMuestra,
@@ -153,7 +157,7 @@ export class MuestraDetallePageComponent implements OnInit {
       estampadoDescripcion: this.muestra.estampadoDescripcion || '',
       estampadoReferencia: this.muestra.estampadoReferencia || '',
       otrosDetalle: this.muestra.otrosDetalle || '',
-      paletaRgb: this.normalizarPaleta(this.muestra.paletaRgb)
+      paletaRgb: paletaPrincipal
     });
     this.form.disable();
     this.editando = false;
@@ -176,7 +180,7 @@ export class MuestraDetallePageComponent implements OnInit {
   }
 
   confirmarComentario(): void {
-    if (!this.accionComentario) return;
+    if (!this.accionComentario || this.guardando) return;
     if (this.comentarioObligatorio && !this.comentario.trim()) {
       this.error = 'El comentario es obligatorio';
       return;
@@ -194,6 +198,7 @@ export class MuestraDetallePageComponent implements OnInit {
       }
 
       const formValue = this.form.getRawValue();
+      this.sincronizarPaletaConControl(formValue.paletaRgb);
       const dto = {
         nombreMuestra: formValue.nombreMuestra?.trim(),
         descripcion: formValue.descripcion?.trim() || undefined,
@@ -210,32 +215,40 @@ export class MuestraDetallePageComponent implements OnInit {
         estampadoDescripcion: formValue.estampadoDescripcion?.trim() || undefined,
         estampadoReferencia: formValue.estampadoReferencia?.trim() || undefined,
         otrosDetalle: formValue.otrosDetalle?.trim() || undefined,
-        paletaRgb: formValue.paletaRgb?.trim() || undefined,
+        paletaRgb: this.serializarPaleta(),
         comentarioActualizacion: comentario
       };
 
+      this.guardando = true;
       this.muestrasService.actualizarMuestra(id, dto).subscribe({
         next: (actualizada) => {
           this.muestra = actualizada;
+          const paletaPrincipal = this.setearPaletaDesdeTexto(actualizada.paletaRgb);
+          this.form.patchValue({ paletaRgb: paletaPrincipal });
           this.form.disable();
           this.editando = false;
           this.cerrarModalComentario();
+          this.guardando = false;
         },
         error: (err) => {
           this.error = err.message || 'No se pudo actualizar la muestra';
+          this.guardando = false;
         }
       });
 
       return;
     }
 
+    this.guardando = true;
     this.muestrasService.rechazarMuestra(id, comentario).subscribe({
       next: () => {
         this.cargarMuestra(id);
         this.cerrarModalComentario();
+        this.guardando = false;
       },
       error: (err) => {
         this.error = err.message || 'No se pudo rechazar la muestra';
+        this.guardando = false;
       }
     });
   }
@@ -243,6 +256,12 @@ export class MuestraDetallePageComponent implements OnInit {
   aceptarMuestra(): void {
     const id = this.muestra?.idMuestra;
     if (!id) return;
+
+    const mensajeValidacion = this.validarMuestraParaAceptar();
+    if (mensajeValidacion) {
+      this.error = mensajeValidacion;
+      return;
+    }
 
     this.error = '';
     this.muestrasService.aceptarMuestra(id).subscribe({
@@ -319,11 +338,10 @@ export class MuestraDetallePageComponent implements OnInit {
     return 'badge-neutra';
   }
 
-  /** Normaliza el valor de paletaRgb a un hex simple para el color picker */
   private normalizarPaleta(valor: string | null | undefined): string {
     if (!valor) return '#000000';
     const hex = valor.trim().match(/#([A-Fa-f0-9]{6})/);
-    return hex ? hex[0] : '#000000';
+    return hex ? hex[0].toUpperCase() : '#000000';
   }
 
   get puedeAceptar(): boolean {
@@ -332,5 +350,108 @@ export class MuestraDetallePageComponent implements OnInit {
 
   get puedeRechazar(): boolean {
     return this.estadoActual !== 'Rechazada';
+  }
+
+  onImagenReferenciaChange(event: Event, controlName: 'bordadoReferencia' | 'estampadoReferencia' | 'mockupUrl'): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.error = 'El archivo debe ser una imagen valida';
+      input.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.form.get(controlName)?.setValue(String(reader.result || ''));
+      this.form.get(controlName)?.markAsDirty();
+      this.error = '';
+    };
+    reader.onerror = () => {
+      this.error = 'No se pudo leer la imagen seleccionada';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  limpiarImagen(controlName: 'bordadoReferencia' | 'estampadoReferencia' | 'mockupUrl'): void {
+    this.form.get(controlName)?.setValue('');
+    this.form.get(controlName)?.markAsDirty();
+  }
+
+  onPaletaPrincipalChange(): void {
+    const color = this.normalizarPaleta(this.form.get('paletaRgb')?.value);
+    this.form.get('paletaRgb')?.setValue(color, { emitEvent: false });
+    this.sincronizarPaletaConControl(color);
+  }
+
+  quitarColorPaleta(color: string): void {
+    this.paletaColores = this.paletaColores.filter(c => c !== color);
+    const actual = this.normalizarPaleta(this.form.get('paletaRgb')?.value);
+    if (actual === color) {
+      this.form.get('paletaRgb')?.setValue(this.paletaColores[0] || '#000000');
+    }
+  }
+
+  private setearPaletaDesdeTexto(paletaRaw: string | null | undefined): string {
+    this.paletaColores = this.extraerColoresPaleta(paletaRaw);
+    const principal = this.paletaColores[0] || '#000000';
+    if (this.paletaColores.length === 0) this.paletaColores = [principal];
+    return principal;
+  }
+
+  private extraerColoresPaleta(paletaRaw: string | null | undefined): string[] {
+    if (!paletaRaw) return [];
+    const matches = paletaRaw.match(/#([A-Fa-f0-9]{6})/g) || [];
+    const normalizados = matches.map(c => c.toUpperCase());
+    return Array.from(new Set(normalizados));
+  }
+
+  private sincronizarPaletaConControl(colorControl: string | null | undefined): void {
+    const color = this.normalizarPaleta(colorControl);
+    if (!this.paletaColores.includes(color)) {
+      this.paletaColores = [color, ...this.paletaColores.filter(c => c !== color)];
+    }
+  }
+
+  private serializarPaleta(): string {
+    const controlColor = this.normalizarPaleta(this.form.get('paletaRgb')?.value);
+    const colores = [controlColor, ...this.paletaColores.filter(c => c !== controlColor)];
+    const unicos = Array.from(new Set(colores.filter(Boolean)));
+    return unicos.join(', ');
+  }
+
+  private validarMuestraParaAceptar(): string | null {
+    if (this.form.invalid) return 'Completa los campos obligatorios antes de aceptar la muestra';
+
+    const formValue = this.form.getRawValue();
+    if (!String(formValue.mockupUrl || '').trim()) {
+      return 'Para aceptar la muestra debes cargar el mockup';
+    }
+
+    if (formValue.bordadoRequerido) {
+      if (!String(formValue.bordadoDescripcion || '').trim()) {
+        return 'Marcaste bordado: completa la descripcion';
+      }
+      if (!String(formValue.bordadoReferencia || '').trim()) {
+        return 'Marcaste bordado: debes cargar la imagen de referencia';
+      }
+    }
+
+    if (formValue.estampadoRequerido) {
+      if (!String(formValue.estampadoDescripcion || '').trim()) {
+        return 'Marcaste estampado: completa la descripcion';
+      }
+      if (!String(formValue.estampadoReferencia || '').trim()) {
+        return 'Marcaste estampado: debes cargar la imagen de referencia';
+      }
+    }
+
+    if (!String(formValue.paletaRgb || '').trim()) {
+      return 'Completa la paleta de color antes de aceptar';
+    }
+
+    return null;
   }
 }

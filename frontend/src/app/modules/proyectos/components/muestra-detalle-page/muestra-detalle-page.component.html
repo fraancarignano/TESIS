@@ -107,6 +107,8 @@
           </div>
           <ng-container *ngIf="editando; else mockupOculto">
             <input type="text" formControlName="mockupUrl" placeholder="URL o contenido del mockup">
+            <input type="file" accept="image/*" (change)="onImagenReferenciaChange($event, 'mockupUrl')">
+            <button type="button" class="btn-secundario" (click)="limpiarImagen('mockupUrl')">Quitar imagen</button>
           </ng-container>
           <ng-template #mockupOculto>
             <small class="media-helper" *ngIf="form.get('mockupUrl')?.value">Imagen cargada</small>
@@ -119,11 +121,17 @@
             <span class="media-helper">Color de referencia</span>
           </div>
           <div class="paleta-card">
-            <input type="color" formControlName="paletaRgb" class="paleta-picker">
+            <input type="color" formControlName="paletaRgb" class="paleta-picker" (change)="onPaletaPrincipalChange()">
             <div>
               <strong>{{ form.get('paletaRgb')?.value || '-' }}</strong>
-              <small>Aplicada al diseño</small>
+              <small>Color principal aplicado al diseño</small>
             </div>
+          </div>
+          <div class="paleta-lista">
+            <span class="paleta-chip" *ngFor="let color of paletaColores" [style.background]="color">
+              <span class="paleta-chip-text">{{ color }}</span>
+              <button type="button" *ngIf="editando && paletaColores.length > 1" (click)="quitarColorPaleta(color)">x</button>
+            </span>
           </div>
         </div>
       </div>
@@ -137,6 +145,8 @@
           <textarea rows="2" formControlName="bordadoDescripcion" placeholder="Descripción bordado"></textarea>
           <ng-container *ngIf="editando; else bordadoOculto">
             <input type="text" formControlName="bordadoReferencia" placeholder="Referencia bordado">
+            <input type="file" accept="image/*" (change)="onImagenReferenciaChange($event, 'bordadoReferencia')">
+            <button type="button" class="btn-secundario" (click)="limpiarImagen('bordadoReferencia')">Quitar imagen</button>
           </ng-container>
           <ng-template #bordadoOculto>
             <small class="referencia-sub" *ngIf="form.get('bordadoReferencia')?.value">Imagen cargada</small>
@@ -158,6 +168,8 @@
           <textarea rows="2" formControlName="estampadoDescripcion" placeholder="Descripción estampado"></textarea>
           <ng-container *ngIf="editando; else estampadoOculto">
             <input type="text" formControlName="estampadoReferencia" placeholder="Referencia estampado">
+            <input type="file" accept="image/*" (change)="onImagenReferenciaChange($event, 'estampadoReferencia')">
+            <button type="button" class="btn-secundario" (click)="limpiarImagen('estampadoReferencia')">Quitar imagen</button>
           </ng-container>
           <ng-template #estampadoOculto>
             <small class="referencia-sub" *ngIf="form.get('estampadoReferencia')?.value">Imagen cargada</small>
@@ -213,10 +225,10 @@
     <button class="btn-primario" *ngIf="!editando" (click)="iniciarEdicion()">
       Agregar actualización
     </button>
-    <button class="btn-primario" *ngIf="editando" (click)="solicitarComentario('actualizacion')">
+    <button class="btn-primario" *ngIf="editando" (click)="solicitarComentario('actualizacion')" [disabled]="guardando">
       Guardar cambios
     </button>
-    <button class="btn-secundario" *ngIf="editando" (click)="cancelarEdicion()">
+    <button class="btn-secundario" *ngIf="editando" (click)="cancelarEdicion()" [disabled]="guardando">
       Cancelar edición
     </button>
     <button class="btn-danger" (click)="solicitarComentario('rechazo')" [disabled]="editando || !puedeRechazar">
@@ -234,22 +246,45 @@
   </div>
 
   <div class="modal-overlay" *ngIf="mostrarModalComentario">
-    <div class="modal">
-      <h4>{{ accionComentario === 'rechazo' ? 'Motivo del rechazo' : 'Comentario de actualización' }}</h4>
-      <p *ngIf="comentarioObligatorio">El comentario es obligatorio.</p>
+  <div class="modal modal-comentario">
+    <div class="modal-comentario-head">
+      <div class="modal-headline">
+        <h4>{{ accionComentario === 'rechazo' ? 'Motivo del rechazo' : 'Resumen de cambios' }}</h4>
+        <span class="modal-chip">{{ accionComentario === 'rechazo' ? 'Rechazo' : 'Actualizacion' }}</span>
+      </div>
+      <button class="btn-close" (click)="cerrarModalComentario()" [disabled]="guardando">&times;</button>
+    </div>
+
+    <div class="modal-comentario-body">
+      <p class="modal-legend" *ngIf="comentarioObligatorio">El comentario es obligatorio para continuar.</p>
+      <p class="modal-legend" *ngIf="!comentarioObligatorio">Deja un breve feedback de lo que modificaste.</p>
+
+      <label class="modal-label">Comentario</label>
       <textarea
-        rows="4"
+        rows="5"
         [(ngModel)]="comentario"
+        [disabled]="guardando"
         [placeholder]="accionComentario === 'rechazo' ? 'Explica por qué se rechaza la muestra' : 'Escribe el comentario de actualización'"
       ></textarea>
-      <div class="modal-actions">
-        <button class="btn-secundario" (click)="cerrarModalComentario()">Cancelar</button>
-        <button class="btn-primario" (click)="confirmarComentario()">Confirmar</button>
+      <div class="comentario-meta">
+        <small>{{ (comentario || '').trim().length }} caracteres</small>
       </div>
     </div>
-  </div>
 
-  <div class="modal-overlay" *ngIf="mostrarModalHistorial">
+    <div class="saving-row" *ngIf="guardando">
+      <span class="spinner"></span>
+      <span>Guardando cambios, espera un momento...</span>
+    </div>
+    <div class="modal-actions modal-actions-comentario">
+      <button class="btn-secundario" (click)="cerrarModalComentario()" [disabled]="guardando">Cancelar</button>
+      <button class="btn-primario btn-confirmar" (click)="confirmarComentario()" [disabled]="guardando">
+        {{ guardando ? 'Guardando...' : 'Confirmar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModalHistorial">
     <div class="modal modal-historial">
       <div class="modal-header">
         <h4>Historial y Feedback</h4>

@@ -169,6 +169,8 @@ namespace TESIS_OG.Services.MuestrasService
             var muestra = await _context.Muestras.FirstOrDefaultAsync(m => m.IdMuestra == idMuestra);
             if (muestra == null) return false;
 
+            ValidarMuestraParaAprobacion(muestra);
+
             muestra.Estado = "Aprobada";
 
             _context.MuestraHistorials.Add(new MuestraHistorial
@@ -317,6 +319,34 @@ namespace TESIS_OG.Services.MuestrasService
 
             await _context.SaveChangesAsync();
             return (true, $"Diseno sincronizado correctamente ({sincronizados} prendas actualizadas)");
+        }
+
+        private static void ValidarMuestraParaAprobacion(Muestra muestra)
+        {
+            if (string.IsNullOrWhiteSpace(muestra.NombreMuestra))
+                throw new ArgumentException("La muestra debe tener nombre antes de aprobarse");
+
+            if (string.IsNullOrWhiteSpace(muestra.MockupUrl))
+                throw new ArgumentException("Para aprobar la muestra debe cargarse el mockup");
+
+            if (string.IsNullOrWhiteSpace(muestra.PaletaRgb))
+                throw new ArgumentException("Para aprobar la muestra debe definirse la paleta");
+
+            if (muestra.BordadoRequerido)
+            {
+                if (string.IsNullOrWhiteSpace(muestra.BordadoDescripcion))
+                    throw new ArgumentException("Marcaste bordado: falta la descripcion");
+                if (string.IsNullOrWhiteSpace(muestra.BordadoReferencia))
+                    throw new ArgumentException("Marcaste bordado: falta la imagen de referencia");
+            }
+
+            if (muestra.EstampadoRequerido)
+            {
+                if (string.IsNullOrWhiteSpace(muestra.EstampadoDescripcion))
+                    throw new ArgumentException("Marcaste estampado: falta la descripcion");
+                if (string.IsNullOrWhiteSpace(muestra.EstampadoReferencia))
+                    throw new ArgumentException("Marcaste estampado: falta la imagen de referencia");
+            }
         }
 
         private static MuestraDetalleDTO MapToDetalle(Muestra muestra)

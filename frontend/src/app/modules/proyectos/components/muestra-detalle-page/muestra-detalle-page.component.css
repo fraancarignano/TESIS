@@ -270,6 +270,38 @@
   opacity: 0.6;
 }
 
+.paleta-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.paleta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  padding: 0.2rem 0.35rem 0.2rem 0.55rem;
+}
+
+.paleta-chip-text {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  padding: 0.1rem 0.35rem;
+}
+
+.paleta-chip button {
+  border: none;
+  border-radius: 999px;
+  width: 20px;
+  height: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .campo label {
   display: block;
   font-weight: 600;
@@ -423,6 +455,188 @@
 .modal textarea {
   width: 100%;
   margin-top: 0.5rem;
+}
+
+.modal-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.modal-chip {
+  background: #fff3e0;
+  color: #b95a00;
+  border: 1px solid #ffd6ad;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.modal-legend {
+  margin: 0.45rem 0 0;
+  color: #6b7280;
+  font-size: 0.86rem;
+}
+
+.modal-comentario {
+  width: min(620px, 94vw);
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 2px solid #ffd7c8;
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.26);
+  animation: modalPop 0.22s ease-out;
+}
+
+.modal-comentario-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  background: linear-gradient(135deg, #ff5722, #f4511e);
+  border-bottom: 2px solid #ff8a65;
+}
+
+.modal-comentario-body {
+  padding: 0.9rem;
+  background:
+    radial-gradient(circle at top right, rgba(255, 87, 34, 0.09), transparent 42%),
+    #fff;
+}
+
+.modal-label {
+  display: inline-block;
+  margin-top: 0.7rem;
+  margin-bottom: 0.35rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.modal-comentario textarea {
+  min-height: 132px;
+  resize: vertical;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  padding: 0.58rem 0.7rem;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  background: #fff;
+  margin-top: 0.35rem;
+}
+
+.modal-comentario textarea:focus {
+  border-color: #ff5722;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.12);
+}
+
+.modal-comentario textarea:disabled {
+  background: #f5f5f5;
+  opacity: 0.7;
+}
+
+.comentario-meta {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.35rem;
+  color: #6b7280;
+}
+
+.modal-actions-comentario {
+  padding: 0.75rem 0.9rem 0.9rem;
+  border-top: 2px solid #f0f0f0;
+  background: #fff;
+}
+
+.btn-confirmar {
+  min-width: 140px;
+  background: linear-gradient(135deg, #ff5722, #f4511e);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(255, 87, 34, 0.3);
+}
+
+.btn-confirmar:hover:not(:disabled) {
+  box-shadow: 0 5px 15px rgba(255, 87, 34, 0.42);
+  transform: translateY(-1px);
+}
+
+.modal-comentario .btn-secundario {
+  background: #fff;
+  border: 2px solid #e0e0e0;
+  color: #666;
+}
+
+.modal-comentario .btn-secundario:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #cfcfcf;
+}
+
+.modal-comentario .btn-primario:disabled,
+.modal-comentario .btn-secundario:disabled,
+.modal-comentario .btn-close:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.saving-row {
+  margin: 0.35rem 0.9rem 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #374151;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #ffd8ca;
+  border-top-color: #ff5722;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+.modal-comentario .modal-headline h4 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.modal-comentario .modal-chip {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.modal-comentario .modal-legend {
+  color: #666;
+  margin-top: 0;
+}
+
+.modal-comentario .modal-label {
+  color: #555;
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .modal-actions {

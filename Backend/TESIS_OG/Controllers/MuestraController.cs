@@ -146,6 +146,10 @@ namespace TESIS_OG.Controllers
                 if (!ok) return NotFound(new { message = "Muestra no encontrada" });
                 return Ok(new { message = "Muestra aprobada" });
             }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al aprobar muestra");
