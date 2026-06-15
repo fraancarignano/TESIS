@@ -247,14 +247,14 @@ export class OrdenCompraFormComponent implements OnInit {
     this.ordenCompraService.crearOrden(nuevaOrden).subscribe({
       next: () => {
         this.cargando = false;
-        this.alertas.success('Orden creada', 'La orden de compra se creó correctamente');
+        this.alertas.success('Pedido creado', 'La nota de pedido se creó correctamente');
         this.ordenCreada.emit();
         this.cerrarFormulario();
       },
       error: (err) => {
         this.cargando = false;
         const msg = err.error?.message || err.error?.error || 'Error desconocido';
-        this.alertas.error('Error', `No se pudo crear la orden: ${msg}`);
+        this.alertas.error('Error', `No se pudo crear el pedido: ${msg}`);
       }
     });
   }

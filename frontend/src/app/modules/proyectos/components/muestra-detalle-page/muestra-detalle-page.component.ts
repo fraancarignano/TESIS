@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { MuestrasService } from '../../services/muestra.service';
 import { MuestraDetalle } from '../../models/muestra.model';
+import { AlertasService } from '../../../../core/services/alertas';
 
 type AccionComentario = 'actualizacion' | 'rechazo';
 
@@ -37,7 +38,8 @@ export class MuestraDetallePageComponent implements OnInit {
     private route: ActivatedRoute,
     public router: Router,
     private fb: FormBuilder,
-    private muestrasService: MuestrasService
+    private muestrasService: MuestrasService,
+    private alertas: AlertasService
   ) {
     this.form = this.fb.group({
       nombreMuestra: ['', [Validators.required, Validators.minLength(3)]],
@@ -96,6 +98,12 @@ export class MuestraDetallePageComponent implements OnInit {
       return;
     }
 
+    // Mostrar datos pre-cargados del estado de navegación (vienen del listado)
+    const navMuestra = history.state?.muestra as MuestraDetalle | undefined;
+    if (navMuestra?.idMuestra === id) {
+      this.poblarFormulario(navMuestra);
+    }
+
     this.cargarMuestra(id);
   }
 
@@ -105,26 +113,7 @@ export class MuestraDetallePageComponent implements OnInit {
 
     this.muestrasService.obtenerMuestraPorId(id).subscribe({
       next: (muestra) => {
-        this.muestra = muestra;
-        const paletaPrincipal = this.setearPaletaDesdeTexto(muestra.paletaRgb);
-        this.form.patchValue({
-          nombreMuestra: muestra.nombreMuestra,
-          descripcion: muestra.descripcion || '',
-          prioridad: muestra.prioridad || '',
-          fechaEntrega: muestra.fechaEntrega || '',
-          idUsuarioEncargado: muestra.idUsuarioEncargado ?? '',
-          mockupUrl: muestra.mockupUrl || '',
-          bordadoRequerido: muestra.bordadoRequerido,
-          bordadoDescripcion: muestra.bordadoDescripcion || '',
-          bordadoReferencia: muestra.bordadoReferencia || '',
-          estampadoRequerido: muestra.estampadoRequerido,
-          estampadoDescripcion: muestra.estampadoDescripcion || '',
-          estampadoReferencia: muestra.estampadoReferencia || '',
-          otrosDetalle: muestra.otrosDetalle || '',
-          paletaRgb: paletaPrincipal
-        });
-        this.form.disable();
-        this.editando = false;
+        this.poblarFormulario(muestra);
         this.loading = false;
       },
       error: (err) => {
@@ -132,6 +121,29 @@ export class MuestraDetallePageComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  private poblarFormulario(muestra: MuestraDetalle): void {
+    this.muestra = muestra;
+    const paletaPrincipal = this.setearPaletaDesdeTexto(muestra.paletaRgb);
+    this.form.patchValue({
+      nombreMuestra: muestra.nombreMuestra,
+      descripcion: muestra.descripcion || '',
+      prioridad: muestra.prioridad || '',
+      fechaEntrega: muestra.fechaEntrega || '',
+      idUsuarioEncargado: muestra.idUsuarioEncargado ?? '',
+      mockupUrl: muestra.mockupUrl || '',
+      bordadoRequerido: muestra.bordadoRequerido,
+      bordadoDescripcion: muestra.bordadoDescripcion || '',
+      bordadoReferencia: muestra.bordadoReferencia || '',
+      estampadoRequerido: muestra.estampadoRequerido,
+      estampadoDescripcion: muestra.estampadoDescripcion || '',
+      estampadoReferencia: muestra.estampadoReferencia || '',
+      otrosDetalle: muestra.otrosDetalle || '',
+      paletaRgb: paletaPrincipal
+    });
+    this.form.disable();
+    this.editando = false;
   }
 
   iniciarEdicion(): void {
@@ -265,9 +277,13 @@ export class MuestraDetallePageComponent implements OnInit {
 
     this.error = '';
     this.muestrasService.aceptarMuestra(id).subscribe({
-      next: () => {
+      next: async () => {
         this.cargarMuestra(id);
-        const irACrear = window.confirm('Muestra aceptada. Â¿QuerÃ©s ir ahora a crear el proyecto?');
+        const irACrear = await this.alertas.confirmar(
+          'Muestra aprobada',
+          '¿Querés ir ahora a crear el proyecto?',
+          'Ir a crear proyecto'
+        );
         if (irACrear) {
           this.router.navigate(['/proyectos/crear'], { queryParams: { muestra: id } });
         }
@@ -309,20 +325,25 @@ export class MuestraDetallePageComponent implements OnInit {
     const id = this.muestra?.idMuestra;
     if (!id || this.editando) return;
 
-    const confirmado = window.confirm('¿Seguro que querés borrar esta muestra? Esta acción no se puede deshacer.');
-    if (!confirmado) return;
+    this.alertas.confirmar(
+      'Borrar muestra',
+      '¿Segús que querés borrar esta muestra? Esta acción no se puede deshacer.',
+      'Sí, borrar'
+    ).then(confirmado => {
+      if (!confirmado) return;
 
-    this.loading = true;
-    this.error = '';
+      this.loading = true;
+      this.error = '';
 
-    this.muestrasService.eliminarMuestra(id).subscribe({
-      next: () => {
-        this.router.navigate(['/proyectos/muestras']);
-      },
-      error: (err) => {
-        this.error = err.message || 'No se pudo eliminar la muestra';
-        this.loading = false;
-      }
+      this.muestrasService.eliminarMuestra(id).subscribe({
+        next: () => {
+          this.router.navigate(['/proyectos/muestras']);
+        },
+        error: (err) => {
+          this.error = err.message || 'No se pudo eliminar la muestra';
+          this.loading = false;
+        }
+      });
     });
   }
 
@@ -391,6 +412,13 @@ export class MuestraDetallePageComponent implements OnInit {
     const actual = this.normalizarPaleta(this.form.get('paletaRgb')?.value);
     if (actual === color) {
       this.form.get('paletaRgb')?.setValue(this.paletaColores[0] || '#000000');
+    }
+  }
+
+  agregarColorPaleta(): void {
+    const color = this.normalizarPaleta(this.form.get('paletaRgb')?.value);
+    if (color && !this.paletaColores.includes(color)) {
+      this.paletaColores = [...this.paletaColores, color];
     }
   }
 

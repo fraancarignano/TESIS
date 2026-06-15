@@ -256,12 +256,27 @@
   opacity: 0.85;
 }
 
-.btn-delete {
-  color: #c62828;
-  background: #fdecea;
+.btn-delete:hover {
+  background: #ffcdd2;
+  border-color: #ef9a9a;
 }
 
-.btn-delete:hover {
+.btn-print {
+  color: #455a64;
+  background: #eceff1;
+}
+
+.btn-print:hover {
+  background: #cfd8dc;
+  border-color: #90a4ae;
+}
+
+.btn-pdf {
+  color: #e53935;
+  background: #ffebee;
+}
+
+.btn-pdf:hover {
   background: #ffcdd2;
   border-color: #ef9a9a;
 }
@@ -501,6 +516,25 @@
   background: #ff5722;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.btn-pdf-detail {
+  background: #e53935;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 12px;
+}
+
+.btn-pdf-detail:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
 }
 
 .btn-primary:disabled {

@@ -8,6 +8,7 @@ import { OrdenCompraReceiveComponent } from './orden-compra-receive/orden-compra
 import { AlertasService } from '../../../core/services/alertas';
 import { AuthService } from '../../login/services/auth.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
+import { ExportService } from '../../../core/services/export.service';
 
 @Component({
   selector: 'app-orden-compra',
@@ -45,7 +46,8 @@ export class OrdenCompraComponent implements OnInit {
   constructor(
     private ordenCompraService: OrdenCompraService,
     private alertas: AlertasService,
-    private authService: AuthService
+    private authService: AuthService,
+    private exportService: ExportService
   ) { }
 
   ngOnInit(): void {
@@ -63,10 +65,10 @@ export class OrdenCompraComponent implements OnInit {
         console.log('Órdenes cargadas:', this.ordenes);
       },
       error: (err) => {
-        console.error('Error al cargar órdenes:', err);
+        console.error('Error al cargar pedidos:', err);
         this.error = true;
         this.loading = false;
-        this.alertas.error('Error', 'No se pudieron cargar las órdenes de compra');
+        this.alertas.error('Error', 'No se pudieron cargar las notas de pedido');
       }
     });
   }
@@ -149,8 +151,8 @@ export class OrdenCompraComponent implements OnInit {
 
   async rechazarOrden(orden: OrdenCompra): Promise<void> {
     const confirmado = await this.alertas.confirmar(
-      '¿Rechazar orden de compra?',
-      `Se rechazará la orden ${orden.nroOrden}. Esta acción no se puede deshacer.`,
+      '¿Rechazar pedido?',
+      `Se rechazará el pedido ${orden.nroOrden}. Esta acción no se puede deshacer.`,
       'Sí, rechazar'
     );
 
@@ -206,15 +208,15 @@ export class OrdenCompraComponent implements OnInit {
   async verificarOrden(orden: OrdenCompra, event?: Event): Promise<void> {
     event?.stopPropagation();
     const confirmado = await this.alertas.confirmar(
-      '¿Verificar orden de compra?',
-      `La orden ${orden.nroOrden} quedará verificada y lista para asignar a ubicación o proyecto.`,
+      '¿Verificar pedido?',
+      `El pedido ${orden.nroOrden} quedará verificado y listo para asignar a ubicación o proyecto.`,
       'Sí, verificar'
     );
     if (!confirmado) return;
 
     this.ordenCompraService.verificarOrden(orden.idOrdenCompra).subscribe({
       next: () => {
-        this.alertas.success('Orden verificada', 'La orden está lista para ser asignada.');
+        this.alertas.success('Pedido verificado', 'El pedido está listo para ser asignado.');
         this.cargarOrdenes();
         this.cerrarDetalle();
       },
@@ -225,15 +227,15 @@ export class OrdenCompraComponent implements OnInit {
   async anularOrden(orden: OrdenCompra, event?: Event): Promise<void> {    event?.stopPropagation();
 
     const confirmado = await this.alertas.confirmar(
-      '¿Anular orden de compra?',
-      `La orden ${orden.nroOrden} quedará anulada. Luego podrá eliminarla definitivamente.`,
+      '¿Anular pedido?',
+      `El pedido ${orden.nroOrden} quedará anulado. Luego podrá eliminarla definitivamente.`,
       'Sí, anular'
     );
     if (!confirmado) return;
 
     this.ordenCompraService.anularOrden(orden.idOrdenCompra).subscribe({
       next: () => {
-        this.alertas.success('Orden anulada', 'La orden fue anulada correctamente.');
+        this.alertas.success('Pedido anulado', 'El pedido fue anulado correctamente.');
         this.cargarOrdenes();
         this.cerrarDetalle();
       },
@@ -245,21 +247,21 @@ export class OrdenCompraComponent implements OnInit {
     if (event) event.stopPropagation();
 
     const confirmado = await this.alertas.confirmar(
-      '¿Eliminar orden de compra?',
-      `Se eliminará permanentemente la orden ${orden.nroOrden}. Esta acción no se puede deshacer.`,
+      '¿Eliminar pedido?',
+      `Se eliminará permanentemente el pedido ${orden.nroOrden}. Esta acción no se puede deshacer.`,
       'Sí, eliminar'
     );
 
     if (confirmado) {
       this.ordenCompraService.eliminarOrden(orden.idOrdenCompra).subscribe({
         next: () => {
-          this.alertas.success('Orden eliminada', 'La orden de compra se eliminó correctamente');
+          this.alertas.success('Pedido eliminado', 'El pedido se eliminó correctamente');
           this.cargarOrdenes();
           this.cerrarDetalle();
         },
         error: (err) => {
           console.error('Error al eliminar:', err);
-          this.alertas.error('Error', 'No se pudo eliminar la orden de compra');
+          this.alertas.error('Error', 'No se pudo eliminar el pedido');
         }
       });
     }
@@ -290,5 +292,15 @@ export class OrdenCompraComponent implements OnInit {
       month: '2-digit',
       year: 'numeric'
     });
+  }
+
+  imprimirPedido(orden: OrdenCompra, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.exportService.exportarOrdenCompraPDF(orden);
+  }
+
+  exportarPDF(orden: OrdenCompra, event?: Event): void {
+    if (event) event.stopPropagation();
+    this.exportService.exportarOrdenCompraPDF(orden);
   }
 }

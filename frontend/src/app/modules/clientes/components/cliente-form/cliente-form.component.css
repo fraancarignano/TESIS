@@ -457,3 +457,28 @@
 .input-wrapper.no-icon select {
   padding-left: 12px !important;
 }
+
+/* === TELÉFONO PREFIX STYLE === */
+.phone-wrapper {
+  display: flex !important;
+  align-items: stretch;
+}
+
+.phone-prefix-select {
+  width: 100px !important;
+  border-right: none !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  padding-left: 36px !important; /* leaves space for icon */
+  padding-right: 18px !important;
+  background-position: right 4px center !important;
+  font-weight: 600 !important;
+  color: #333 !important;
+}
+
+.phone-number-input {
+  flex: 1;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  padding-left: 10px !important;
+}

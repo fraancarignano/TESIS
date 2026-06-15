@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -848,6 +848,109 @@ export class ExportService {
 
     const nombreArchivo = `planilla_confeccion_${this.getFechaParaArchivo()}.pdf`;
     doc.save(nombreArchivo);
+  }
+
+
+  // ==================== EXPORTACIÓN DE NOTAS DE PEDIDO ====================
+
+  /**
+   * Exportar una nota de pedido a PDF
+   */
+  exportarOrdenCompraPDF(orden: any): void {
+    const doc = new jsPDF('p');
+    const marginX = 14;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const contentWidth = pageWidth - marginX * 2;
+    let y = 15;
+
+    // Header con color corporativo
+    doc.setFillColor(255, 87, 34);
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    doc.setFontSize(22);
+    doc.setTextColor(255, 255, 255);
+    doc.text('NOTA DE PEDIDO', marginX, 20);
+    
+    doc.setFontSize(12);
+    doc.text(`Nro: ${orden.nroOrden}`, marginX, 30);
+    doc.text(`Fecha: ${this.formatearFecha(orden.fechaSolicitud)}`, pageWidth - marginX, 30, { align: 'right' });
+
+    y = 50;
+    doc.setTextColor(40);
+    doc.setFontSize(11);
+    
+    // Información del Proveedor y Proyecto
+    doc.setFont('helvetica', 'bold');
+    doc.text('INFORMACIÓN DEL PROVEEDOR', marginX, y);
+    doc.line(marginX, y + 2, marginX + 80, y + 2);
+    
+    doc.text('INFORMACIÓN DEL PEDIDO', pageWidth / 2 + 5, y);
+    doc.line(pageWidth / 2 + 5, y + 2, pageWidth - marginX, y + 2);
+    
+    y += 10;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(`Proveedor: ${orden.nombreProveedor || '-'}`, marginX, y);
+    doc.text(`Estado: ${orden.estado}`, pageWidth / 2 + 5, y);
+    
+    y += 6;
+    doc.text(`Proyecto: ${orden.nombreProyecto || 'Sin proyecto'}`, marginX, y);
+    doc.text(`Entrega Estimada: ${this.formatearFecha(orden.fechaEntregaEstimada || '')}`, pageWidth / 2 + 5, y);
+    
+    y += 10;
+    if (orden.descripcion) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Descripción:', marginX, y);
+      doc.setFont('helvetica', 'normal');
+      const lines = doc.splitTextToSize(orden.descripcion, contentWidth);
+      doc.text(lines, marginX, y + 5);
+      y += 5 + (lines.length * 5);
+    }
+
+    y += 10;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('DETALLE DE INSUMOS', marginX, y);
+    
+    const headers = [['Insumo', 'Color', 'Cantidad', 'Precio Unit.', 'Subtotal']];
+    const data = (orden.detalles || []).map((d: any) => [
+      d.nombreInsumo || '-',
+      d.colorInsumo || '-',
+      d.cantidad.toString(),
+      `$${d.precioUnitario.toFixed(2)}`,
+      `$${d.subtotal.toFixed(2)}`
+    ]);
+
+    autoTable(doc, {
+      head: headers,
+      body: data,
+      startY: y + 5,
+      theme: 'striped',
+      headStyles: { fillColor: [255, 87, 34], textColor: [255, 255, 255] },
+      styles: { fontSize: 9 },
+      columnStyles: {
+        2: { halign: 'center' },
+        3: { halign: 'right' },
+        4: { halign: 'right' }
+      }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY;
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`TOTAL: $${orden.totalOrden.toFixed(2)}`, pageWidth - marginX, finalY + 15, { align: 'right' });
+
+    // Footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(`Generado por Sistema de Gestión - Página ${i} de ${pageCount}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+    }
+
+    window.open(doc.output('bloburl'), '_blank');
   }
 
   // ==================== MÉTODOS AUXILIARES - CLIENTES ====================

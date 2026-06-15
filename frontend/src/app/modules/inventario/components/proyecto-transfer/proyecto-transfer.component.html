@@ -81,7 +81,7 @@
             Sin stock suficiente ({{ sinStock.length }}) — telas y avíos
           </div>
           <button class="btn-oc" (click)="abrirPanelOC()">
-            + Generar Orden de Compra
+            + Generar Nota de Pedido
           </button>
         </div>
 
@@ -138,15 +138,15 @@
   <div class="pt-overlay" *ngIf="mostrarPanelOC" (click)="cerrarPanelOC()">
     <div class="pt-modal" (click)="$event.stopPropagation()">
       <div class="pt-modal-header">
-        <h2>Generar Orden de Compra</h2>
+        <h2>Generar Nota de Pedido</h2>
         <button class="btn-close" (click)="cerrarPanelOC()">×</button>
       </div>
 
       <div class="pt-modal-body">
         <p class="pt-modal-desc">
           Materiales faltantes para <strong>{{ proyectoActual?.nombreProyecto }}</strong>
-          (telas y avíos en una sola orden).
-          Una vez recibida la OC y el stock ingresado, podrás asignarlos al proyecto.
+          (telas y avíos en una sola nota de pedido).
+          Una vez recibida la nota de pedido y el stock ingresado, podrás asignarlos al proyecto.
         </p>
 
         <div class="pt-grid-2">
@@ -204,7 +204,7 @@
       <div class="pt-modal-footer">
         <button class="btn-secondary" (click)="cerrarPanelOC()">Cancelar</button>
         <button class="btn-primary" (click)="generarOrdenCompra()" [disabled]="generandoOC">
-          {{ generandoOC ? 'Generando...' : 'Generar OC' }}
+          {{ generandoOC ? 'Generando...' : 'Generar Pedido' }}
         </button>
       </div>
     </div>

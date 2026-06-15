@@ -269,26 +269,40 @@
           
           <div class="form-row">
             <div class="form-field">
-              <label for="telefono">
+              <label for="telefonoNumero">
                 Teléfono <span class="required">*</span>
               </label>
-              <div class="input-wrapper">
+              <div class="input-wrapper phone-wrapper">
                 <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                 </svg>
+                <select formControlName="telefonoPrefijo" class="phone-prefix-select">
+                  <option value="+54">+54 (AR)</option>
+                  <option value="+54 9">+54 9 (AR Cel)</option>
+                  <option value="+598">+598 (UY)</option>
+                  <option value="+56">+56 (CL)</option>
+                  <option value="+55">+55 (BR)</option>
+                  <option value="+591">+591 (BO)</option>
+                  <option value="+57">+57 (CO)</option>
+                  <option value="+58">+58 (VE)</option>
+                  <option value="+51">+51 (PE)</option>
+                  <option value="+593">+593 (EC)</option>
+                  <option value="+595">+595 (PY)</option>
+                </select>
                 <input 
-                  type="tel" 
-                  id="telefono"
-                  formControlName="telefono"
-                  placeholder="+54 351 123-4567"
-                  [class.error]="tieneError('telefono')"
+                  type="text" 
+                  id="telefonoNumero"
+                  formControlName="telefonoNumero"
+                  placeholder="351 123-4567"
+                  class="phone-number-input"
+                  [class.error]="tieneError('telefonoNumero')"
                 >
               </div>
-              <span class="error-message" *ngIf="tieneError('telefono')">
+              <span class="error-message" *ngIf="tieneError('telefonoNumero')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
-                {{ obtenerMensajeError('telefono') }}
+                {{ obtenerMensajeError('telefonoNumero') }}
               </span>
             </div>
 

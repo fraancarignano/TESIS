@@ -119,12 +119,12 @@ export class ClientesComponent implements OnInit {
 
       // Filtrar por provincia
       if (this.filtrosActuales.idProvincia) {
-        resultado = resultado.filter(c => c.nombreProvincia === this.filtrosActuales!.idProvincia);
+        resultado = resultado.filter(c => c.idProvincia === this.filtrosActuales!.idProvincia);
       }
 
       // Filtrar por ciudad
       if (this.filtrosActuales.idCiudad) {
-        resultado = resultado.filter(c => c.nombreEstado === this.filtrosActuales!.idCiudad);
+        resultado = resultado.filter(c => c.idCiudad === this.filtrosActuales!.idCiudad);
       }
 
       // Filtrar por rango de fechas

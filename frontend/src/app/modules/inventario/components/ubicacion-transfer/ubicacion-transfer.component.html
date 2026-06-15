@@ -10,7 +10,7 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
       </svg>
-      OC → Ubicación
+      Pedido → Ubicación
     </button>
     <button class="tab" [class.active]="tabActiva === 'ub-ub'" (click)="tabActiva = 'ub-ub'">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -28,19 +28,19 @@
 
   <!-- TAB 1: OC → Ubicación -->
   <div class="tab-content" *ngIf="tabActiva === 'oc-ubicacion'">
-    <p class="tab-desc">Ingresá los insumos de una Orden de Compra <strong>verificada</strong> a una ubicación física. Al confirmar, los insumos pasan a <strong>Stock General</strong> en esa ubicación.</p>
+    <p class="tab-desc">Ingresá los insumos de una Nota de Pedido <strong>verificada</strong> a una ubicación física. Al confirmar, los insumos pasan a <strong>Stock General</strong> en esa ubicación.</p>
 
     <div class="form-grid">
       <div class="form-group">
-        <label>Orden de Compra verificada</label>
+        <label>Nota de Pedido verificada</label>
         <select [(ngModel)]="idOrdenOC" (change)="onOrdenOCChange()">
-          <option [ngValue]="null">Seleccionar OC...</option>
+          <option [ngValue]="null">Seleccionar Pedido...</option>
           <option *ngFor="let o of ordenesVerificadas" [ngValue]="o.idOrdenCompra">
             {{ o.nroOrden }} — {{ o.nombreProveedor }}
             <ng-container *ngIf="o.nombreProyecto"> ({{ o.nombreProyecto }})</ng-container>
           </option>
         </select>
-        <small *ngIf="ordenesVerificadas.length === 0" class="hint-warn">No hay órdenes verificadas. Verificá una OC desde el módulo de Órdenes de Compra.</small>
+        <small *ngIf="ordenesVerificadas.length === 0" class="hint-warn">No hay pedidos verificados. Verificá una nota de pedido desde el módulo de Pedidos.</small>
       </div>
       <div class="form-group">
         <label>Ubicación destino</label>
@@ -55,7 +55,7 @@
 
     <div class="insumos-list" *ngIf="insumosOC.length > 0">
       <div class="list-header">
-        <strong>Insumos de la orden</strong>
+        <strong>Insumos del pedido</strong>
         <label class="check-all"><input type="checkbox" [checked]="todosSeleccionadosOC" (change)="toggleTodosOC()"> Todos</label>
       </div>
       <div class="item-row" *ngFor="let item of insumosOC">
@@ -73,7 +73,7 @@
       </div>
     </div>
 
-    <div class="empty-hint" *ngIf="!idOrdenOC">Seleccioná una OC verificada para ver sus insumos.</div>
+    <div class="empty-hint" *ngIf="!idOrdenOC">Seleccioná un pedido verificado para ver sus insumos.</div>
   </div>
 
   <!-- TAB 2: Ubicación → Ubicación -->
@@ -188,7 +188,7 @@
               <span class="dot warn"></span>
               Sin stock suficiente ({{ sinStock.length }}) — telas y avíos
             </div>
-            <button class="btn-oc" (click)="abrirPanelOC()">+ Generar Orden de Compra</button>
+            <button class="btn-oc" (click)="abrirPanelOC()">+ Generar Nota de Pedido</button>
           </div>
           <table class="pt-table">
             <thead>
@@ -236,7 +236,7 @@
   <div class="pt-overlay" *ngIf="mostrarPanelOC" (click)="cerrarPanelOC()">
     <div class="pt-modal" (click)="$event.stopPropagation()">
       <div class="pt-modal-header">
-        <h2>Generar Orden de Compra</h2>
+        <h2>Generar Nota de Pedido</h2>
         <button class="btn-close" (click)="cerrarPanelOC()">×</button>
       </div>
       <div class="pt-modal-body">
@@ -282,7 +282,7 @@
       <div class="pt-modal-footer">
         <button class="btn-secondary-pt" (click)="cerrarPanelOC()">Cancelar</button>
         <button class="btn-primary-blue" (click)="generarOrdenCompra()" [disabled]="generandoOC">
-          {{ generandoOC ? 'Generando...' : 'Generar OC' }}
+          {{ generandoOC ? 'Generando...' : 'Generar Pedido' }}
         </button>
       </div>
     </div>

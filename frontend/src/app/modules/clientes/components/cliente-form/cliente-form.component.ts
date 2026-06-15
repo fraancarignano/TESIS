@@ -56,7 +56,8 @@ export class ClienteFormComponent implements OnInit {
   cuitCuil: [''],
   
   // Campos comunes
-  telefono: ['', [Validators.required]],
+  telefonoPrefijo: ['+54', [Validators.required]],
+  telefonoNumero: ['', [Validators.required, Validators.maxLength(15), Validators.pattern(/^[0-9\s\-]+$/)]],
   email: ['', [Validators.required, Validators.email]],
   idEstadoCliente: [1, [Validators.required]],
   observaciones: [''],
@@ -73,6 +74,7 @@ export class ClienteFormComponent implements OnInit {
     this.cargarDatosIniciales();
     this.configurarValidacionesDinamicas();
     this.configurarCascadaProvinciaCiudad();
+    this.configurarMascaraCuit();
     
     if (this.cliente) {
       this.esEdicion = true;
@@ -101,6 +103,27 @@ export class ClienteFormComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al cargar estados:', err);
+      }
+    });
+  }
+
+  /**
+   * Configurar máscara de CUIT/CUIL automática
+   */
+  configurarMascaraCuit(): void {
+    this.formulario.get('cuitCuil')?.valueChanges.subscribe(value => {
+      if (!value) return;
+      const rawDigits = value.replace(/\D/g, '').slice(0, 11);
+      let formatted = '';
+      if (rawDigits.length <= 2) {
+        formatted = rawDigits;
+      } else if (rawDigits.length <= 10) {
+        formatted = `${rawDigits.slice(0, 2)}-${rawDigits.slice(2)}`;
+      } else {
+        formatted = `${rawDigits.slice(0, 2)}-${rawDigits.slice(2, 10)}-${rawDigits.slice(10, 11)}`;
+      }
+      if (value !== formatted) {
+        this.formulario.get('cuitCuil')?.setValue(formatted, { emitEvent: false });
       }
     });
   }
@@ -196,6 +219,20 @@ export class ClienteFormComponent implements OnInit {
   // Inferir tipo de persona desde los datos
   const tiposPersona = this.cliente.razonSocial ? 'Jurídica' : 'Física';
   
+  // Extraer prefijo y número telefónico
+  const tel = this.cliente.telefono || '';
+  let prefijo = '+54';
+  let numero = tel;
+  
+  const prefijosDisponibles = ['+54 9', '+54', '+598', '+56', '+55', '+591', '+57', '+58', '+51', '+593', '+595'];
+  for (const p of prefijosDisponibles) {
+    if (tel.startsWith(p)) {
+      prefijo = p;
+      numero = tel.slice(p.length).trim();
+      break;
+    }
+  }
+  
   this.formulario.patchValue({
     tiposPersona: tiposPersona, // ← Inferido
     tipoCliente: this.cliente.tipoCliente, // ← Mayorista/Minorista/Otro
@@ -205,7 +242,8 @@ export class ClienteFormComponent implements OnInit {
     numeroDocumento: this.cliente.numeroDocumento || '',
     razonSocial: this.cliente.razonSocial || '',
     cuitCuil: this.cliente.cuitCuil || '',
-    telefono: this.cliente.telefono || '',
+    telefonoPrefijo: prefijo,
+    telefonoNumero: numero,
     email: this.cliente.email || '',
     idEstadoCliente: this.cliente.idEstadoCliente,
     observaciones: this.cliente.observaciones || '',
@@ -216,7 +254,7 @@ export class ClienteFormComponent implements OnInit {
   });
 
   // Si tiene provincia, cargar las ciudades
-  if (this.cliente.nombreProvincia) {
+  if (this.cliente.idProvincia) {
     this.clientesService.obtenerCiudadesPorProvincia(this.cliente.idProvincia).subscribe({
       next: (data) => {
         this.ciudades = data;
@@ -286,7 +324,7 @@ esPersonaJuridica(): boolean {
   const cliente: any = {
     // tiposPersona NO se envía ← IMPORTANTE
     tipoCliente: formValue.tipoCliente, // ← Este SÍ (Mayorista/Minorista/Otro)
-    telefono: formValue.telefono || null,
+    telefono: `${formValue.telefonoPrefijo} ${formValue.telefonoNumero}`.trim() || null,
     email: formValue.email || null,
     idEstadoCliente: formValue.idEstadoCliente,
     observaciones: formValue.observaciones || null,
@@ -368,7 +406,13 @@ esPersonaJuridica(): boolean {
       return `Mínimo ${control.errors?.['minlength'].requiredLength} caracteres`;
     }
     if (control.hasError('pattern')) {
+      if (campo === 'telefonoNumero') {
+        return 'Solo se permiten números, espacios y guiones';
+      }
       return 'Formato inválido (XX-XXXXXXXX-X)';
+    }
+    if (control.hasError('maxlength')) {
+      return `Máximo ${control.errors?.['maxlength'].requiredLength} caracteres`;
     }
     return '';
   }

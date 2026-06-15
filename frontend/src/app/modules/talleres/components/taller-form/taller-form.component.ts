@@ -20,6 +20,9 @@ export class TallerFormComponent implements OnInit {
   esEdicion = false;
   provincias: Provincia[] = [];
   ciudades: Ciudad[] = [];
+  
+  tiposTallerEstandar = ['Confección', 'Corte', 'Estampado', 'Bordado', 'Planchado y Terminado'];
+  mostrarOtroTipo = false;
 
   constructor(
     private fb: FormBuilder,
@@ -28,7 +31,8 @@ export class TallerFormComponent implements OnInit {
   ) {
     this.formulario = this.fb.group({
       nombreTaller: ['', [Validators.required, Validators.minLength(3)]],
-      tipoTaller: [''],
+      tipoTallerSelect: ['Confección', [Validators.required]],
+      tipoTallerOtro: [''],
       responsable: [''],
       telefono: [''],
       email: ['', [Validators.email]],
@@ -41,12 +45,17 @@ export class TallerFormComponent implements OnInit {
   ngOnInit(): void {
     this.cargarProvincias();
     this.configurarCascadaProvinciaCiudad();
-
+    this.configurarSelectorTipoTaller();
+ 
     if (this.taller) {
       this.esEdicion = true;
+      const tTipo = this.taller.tipoTaller || '';
+      const esEstandar = this.tiposTallerEstandar.includes(tTipo);
+      
       this.formulario.patchValue({
         nombreTaller: this.taller.nombreTaller,
-        tipoTaller: this.taller.tipoTaller || '',
+        tipoTallerSelect: esEstandar ? tTipo : (tTipo ? 'Otro' : 'Confección'),
+        tipoTallerOtro: esEstandar ? '' : tTipo,
         responsable: this.taller.responsable || '',
         telefono: this.taller.telefono || '',
         email: this.taller.email || '',
@@ -54,7 +63,9 @@ export class TallerFormComponent implements OnInit {
         idProvincia: this.taller.idProvincia || null,
         idCiudad: this.taller.idCiudad || null
       });
-
+ 
+      this.mostrarOtroTipo = !esEstandar && !!tTipo;
+ 
       if (this.taller.idProvincia) {
         this.talleresService.obtenerCiudadesPorProvincia(this.taller.idProvincia).subscribe({
           next: (data) => this.ciudades = data,
@@ -72,12 +83,18 @@ export class TallerFormComponent implements OnInit {
     }
 
     const formValue = this.formulario.value;
+    const finalTipoTaller = formValue.tipoTallerSelect === 'Otro' ? formValue.tipoTallerOtro : formValue.tipoTallerSelect;
     const datos = {
-      ...formValue,
+      nombreTaller: formValue.nombreTaller,
+      tipoTaller: finalTipoTaller,
+      responsable: formValue.responsable,
+      telefono: formValue.telefono,
+      email: formValue.email,
+      direccion: formValue.direccion,
       idProvincia: Number(formValue.idProvincia),
       idCiudad: Number(formValue.idCiudad)
     };
-
+ 
     if (this.esEdicion && this.taller?.idTaller) {
       this.talleresService.actualizarTaller({
         idTaller: this.taller.idTaller,
@@ -91,7 +108,7 @@ export class TallerFormComponent implements OnInit {
       });
       return;
     }
-
+ 
     this.talleresService.agregarTaller(datos).subscribe({
       next: () => {
         this.alertas.success('Taller creado', 'El taller se registro correctamente');
@@ -130,8 +147,22 @@ export class TallerFormComponent implements OnInit {
     if (control.hasError('required')) return 'Este campo es requerido';
     if (control.hasError('email')) return 'Ingresa un email valido';
     if (control.hasError('minlength')) return `Minimo ${control.errors?.['minlength'].requiredLength} caracteres`;
-
+ 
     return '';
+  }
+ 
+  configurarSelectorTipoTaller(): void {
+    this.formulario.get('tipoTallerSelect')?.valueChanges.subscribe(val => {
+      this.mostrarOtroTipo = val === 'Otro';
+      const otroControl = this.formulario.get('tipoTallerOtro');
+      if (val === 'Otro') {
+        otroControl?.setValidators([Validators.required, Validators.minLength(2)]);
+      } else {
+        otroControl?.clearValidators();
+        otroControl?.setValue('');
+      }
+      otroControl?.updateValueAndValidity();
+    });
   }
 
   get titulo(): string {

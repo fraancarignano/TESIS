@@ -434,6 +434,94 @@
   cursor: not-allowed;
 }
 
+/* Botones tipo accion con icono (no usar btn-icon: el global lo pisa con !important) */
+.btn-accion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: none;
+  padding: 0.72rem 1.1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #fff;
+  transition: background 0.18s, transform 0.15s;
+}
+
+.btn-accion:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-accion:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Morado para "+ Actualización" */
+.btn-accion-morado {
+  background: #7c3aed;
+  box-shadow: 0 3px 10px rgba(124, 58, 237, 0.28);
+}
+
+.btn-accion-morado:hover:not(:disabled) {
+  background: #6d28d9;
+}
+
+/* Rojo para "Borrar" */
+.btn-accion-rojo {
+  background: #dc2626;
+  box-shadow: 0 3px 10px rgba(220, 38, 38, 0.28);
+}
+
+.btn-accion-rojo:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+/* Paleta de colores - área de agregar */
+.paleta-agregar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #eee;
+}
+
+.btn-agregar-color {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.82rem;
+  background: #f0f0f0;
+  color: #333;
+  transition: background 0.2s;
+}
+
+.btn-agregar-color:hover {
+  background: #e0e0e0;
+}
+
+.paleta-chip-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: rgba(255,255,255,0.85);
+  padding: 0 0 0 0.2rem;
+}
+
+.paleta-chip-remove:hover {
+  color: #fff;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;

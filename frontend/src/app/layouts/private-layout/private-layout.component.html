@@ -20,10 +20,6 @@
             *appHasPermission="{ modulo: 'Proyectos', accion: 'Crear' }">
             <span class="text">Crear Proyecto</span>
           </a>
-          <a routerLink="/proyectos/crear-muestra" routerLinkActive="active" class="nav-item sub"
-            *appHasPermission="{ modulo: 'Proyectos', accion: 'Crear' }">
-            <span class="text">Crear Muestra</span>
-          </a>
           <a routerLink="/proyectos/muestras" routerLinkActive="active" class="nav-item sub">
             <span class="text">Listado de Muestras</span>
           </a>
@@ -121,13 +117,13 @@
       </div>
 
       <a routerLink="/ordenes" routerLinkActive="active" class="nav-item parent" [class.active]="ordenesAbierto" (click)="toggleOrdenes()">
-        <span class="text">Ordenes de Compra</span>
+        <span class="text">Pedidos</span>
         <span class="chevron" [class.open]="ordenesAbierto">▾</span>
       </a>
       <div class="submenu" [class.open]="ordenesAbierto">
         <a routerLink="/ordenes" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-item sub"
           *appHasPermission="{ modulo: 'OrdenesCompra', accion: 'Recepcionar' }">
-          <span class="text">Listado de Órdenes</span>
+          <span class="text">Listado de Pedidos</span>
         </a>
         <a routerLink="/ordenes/control-recepcion" routerLinkActive="active" class="nav-item sub"
           *appHasPermission="{ modulo: 'Inventario', accion: 'Recepcionar' }">

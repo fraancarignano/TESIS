@@ -1,7 +1,7 @@
 <div class="modal-overlay" (click)="cerrarFormulario()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>Nueva Orden de Compra</h2>
+      <h2>Nueva Nota de Pedido</h2>
       <button class="btn-close" (click)="cerrarFormulario()">&times;</button>
     </div>
 
@@ -202,7 +202,7 @@
 
         <!-- Lista de Insumos Agregados -->
         <div class="form-section" *ngIf="detalles.length > 0">
-          <h3>Insumos en la Orden</h3>
+          <h3>Insumos en el Pedido</h3>
 
           <div class="tabla-container">
             <table class="tabla-insumos">
@@ -260,7 +260,7 @@
         (click)="guardarOrden()"
         [disabled]="cargando || detalles.length === 0"
       >
-        {{ cargando ? 'Guardando...' : 'Crear Orden' }}
+        {{ cargando ? 'Guardando...' : 'Crear Pedido' }}
       </button>
     </div>
   </div>

@@ -37,10 +37,21 @@
             </div>
 
             <div class="form-field">
-              <label for="tipoTaller">Tipo de Taller</label>
+              <label for="tipoTallerSelect">Tipo de Taller <span class="required">*</span></label>
               <div class="input-wrapper">
-                <input type="text" id="tipoTaller" formControlName="tipoTaller" placeholder="Confeccion, bordado, estampado...">
+                <select id="tipoTallerSelect" formControlName="tipoTallerSelect">
+                  <option *ngFor="let tipo of tiposTallerEstandar" [value]="tipo">{{ tipo }}</option>
+                  <option value="Otro">Otro (Especificar)</option>
+                </select>
               </div>
+            </div>
+
+            <div class="form-field" *ngIf="mostrarOtroTipo">
+              <label for="tipoTallerOtro">Especificar Tipo <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <input type="text" id="tipoTallerOtro" formControlName="tipoTallerOtro" placeholder="Escriba el tipo de taller..." [class.error]="tieneError('tipoTallerOtro')">
+              </div>
+              <span class="error-message" *ngIf="tieneError('tipoTallerOtro')">{{ obtenerMensajeError('tipoTallerOtro') }}</span>
             </div>
           </div>
         </div>

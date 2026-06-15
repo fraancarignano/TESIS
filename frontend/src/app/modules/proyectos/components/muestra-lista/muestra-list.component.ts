@@ -37,7 +37,7 @@ export class MuestraListComponent implements OnInit {
     this.error = false;
     this.paginaActual = 1;
 
-    this.muestrasService.obtenerMuestras().subscribe({
+    this.muestrasService.obtenerMuestrasConCache().subscribe({
       next: (data) => {
         this.muestras = data || [];
         this.loading = false;

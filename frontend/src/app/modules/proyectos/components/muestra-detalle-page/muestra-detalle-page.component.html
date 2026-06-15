@@ -66,7 +66,12 @@
         </div>
         <div class="campo">
           <label>Prioridad</label>
-          <input type="text" formControlName="prioridad" placeholder="Alta / Media / Baja">
+          <select formControlName="prioridad">
+            <option value="">Seleccionar...</option>
+            <option value="Alta">Alta</option>
+            <option value="Media">Media</option>
+            <option value="Baja">Baja</option>
+          </select>
         </div>
         <div class="campo">
           <label>Fecha entrega</label>
@@ -118,20 +123,23 @@
         <div class="media-card">
           <div class="media-top">
             <span class="media-title">Paleta</span>
-            <span class="media-helper">Color de referencia</span>
-          </div>
-          <div class="paleta-card">
-            <input type="color" formControlName="paletaRgb" class="paleta-picker" (change)="onPaletaPrincipalChange()">
-            <div>
-              <strong>{{ form.get('paletaRgb')?.value || '-' }}</strong>
-              <small>Color principal aplicado al diseño</small>
-            </div>
+            <span class="media-helper">Colores de referencia</span>
           </div>
           <div class="paleta-lista">
             <span class="paleta-chip" *ngFor="let color of paletaColores" [style.background]="color">
               <span class="paleta-chip-text">{{ color }}</span>
-              <button type="button" *ngIf="editando && paletaColores.length > 1" (click)="quitarColorPaleta(color)">x</button>
+              <button type="button" class="paleta-chip-remove" *ngIf="editando && paletaColores.length > 1" (click)="quitarColorPaleta(color)" title="Quitar color">&times;</button>
             </span>
+          </div>
+          <div class="paleta-agregar" *ngIf="editando">
+            <input type="color" formControlName="paletaRgb" class="paleta-picker" (change)="onPaletaPrincipalChange()">
+            <button type="button" class="btn-agregar-color" (click)="agregarColorPaleta()" title="Agregar color">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Agregar
+            </button>
           </div>
         </div>
       </div>
@@ -222,8 +230,13 @@
   </section>
 
   <div class="footer-botones" *ngIf="muestra">
-    <button class="btn-primario" *ngIf="!editando" (click)="iniciarEdicion()">
-      Agregar actualización
+    <button class="btn-accion btn-accion-morado" *ngIf="!editando" (click)="iniciarEdicion()" title="Agregar actualización">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="16"></line>
+        <line x1="8" y1="12" x2="16" y2="12"></line>
+      </svg>
+      + Actualización
     </button>
     <button class="btn-primario" *ngIf="editando" (click)="solicitarComentario('actualizacion')" [disabled]="guardando">
       Guardar cambios
@@ -232,16 +245,23 @@
       Cancelar edición
     </button>
     <button class="btn-danger" (click)="solicitarComentario('rechazo')" [disabled]="editando || !puedeRechazar">
-      Rechazar muestra
+      Rechazar
     </button>
-    <button class="btn-danger" (click)="eliminarMuestra()" [disabled]="editando || loading">
-      Borrar muestra
+    <button class="btn-accion btn-accion-rojo" (click)="eliminarMuestra()" [disabled]="editando || loading" title="Borrar muestra">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+        <path d="M10 11v6"></path>
+        <path d="M14 11v6"></path>
+        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+      </svg>
+      Borrar
     </button>
     <button class="btn-aceptar" (click)="aceptarMuestra()" [disabled]="editando || !puedeAceptar">
-      Aceptar muestra
+      Aprobar
     </button>
     <button class="btn-secundario" (click)="abrirHistorial()">
-      Ver Feedback
+      Feedback
     </button>
   </div>
 

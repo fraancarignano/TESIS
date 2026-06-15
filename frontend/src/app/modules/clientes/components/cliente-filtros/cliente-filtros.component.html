@@ -72,8 +72,8 @@
               (change)="onProvinciaChange(); aplicarFiltros()"
               class="select-filtro"
             >
-              <option [value]="undefined">Todas las provincias</option>
-              <option *ngFor="let provincia of provincias" [value]="provincia.idProvincia">
+              <option [ngValue]="undefined">Todas las provincias</option>
+              <option *ngFor="let provincia of provincias" [ngValue]="provincia.idProvincia">
                 {{ provincia.nombre }}
               </option>
             </select>
@@ -88,7 +88,7 @@
               class="select-filtro"
               [disabled]="!provinciaSeleccionada"
             >
-              <option [value]="null">Seleccione ciudad</option>
+              <option [ngValue]="undefined">Seleccione ciudad</option>
               <option 
               *ngFor="let ciudad of ciudades" 
               [ngValue]="ciudad.idCiudad"

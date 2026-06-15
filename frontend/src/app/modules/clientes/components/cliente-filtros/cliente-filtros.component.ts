@@ -117,7 +117,7 @@ export class ClienteFiltrosComponent implements OnInit {
     this.estadosDisponibles.forEach(e => e.seleccionado = false);
     
     // Resetear tipos de cliente
-    this.tiposClienteDisponibles.forEach(t => t.seleccionado = true);
+    this.tiposClienteDisponibles.forEach(t => t.seleccionado = false);
     
     // Resetear ubicación
     this.provinciaSeleccionada = undefined;
@@ -153,21 +153,10 @@ export class ClienteFiltrosComponent implements OnInit {
   }
 
   get contadorFiltrosActivos(): number {
-    let count = -2;
+    let count = 0;
     
-    // Contar estados no seleccionados (los que se desviaron del default)
-    const estadosNoDefault = this.estadosDisponibles.filter(e => 
-      (e.id <= 2 && !e.seleccionado) || (e.id > 2 && e.seleccionado)
-    ).length;
-    if (estadosNoDefault > 0) count++;
-    
-    // Contar tipos de cliente no seleccionados
-    const tiposNoDefault = this.tiposClienteDisponibles.filter(t => 
-      ((t.valor === 'Mayorista' || t.valor === 'Minorista') && !t.seleccionado) || 
-      (t.valor === 'Otro' && t.seleccionado)
-    ).length;
-    if (tiposNoDefault > 0) count++;
-    
+    if (this.estadosDisponibles.some(e => e.seleccionado)) count++;
+    if (this.tiposClienteDisponibles.some(t => t.seleccionado)) count++;
     if (this.provinciaSeleccionada) count++;
     if (this.ciudadSeleccionada) count++;
     if (this.fechaDesde || this.fechaHasta) count++;

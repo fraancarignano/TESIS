@@ -191,7 +191,7 @@ export class UbicacionTransferComponent implements OnInit {
     this.insumosOC.forEach(i => i.seleccionado = this.todosSeleccionadosOC);
   }
 
-  confirmarTransferenciaOC(): void {
+  async confirmarTransferenciaOC(): Promise<void> {
     const ids = this.insumosOC.filter(i => i.seleccionado).map(i => i.idInsumo!);
     if (!ids.length) { this.alertas.error('Sin selección', 'Seleccioná al menos un insumo.'); return; }
     if (!this.idUbicacionDestinoOC) { this.alertas.error('Sin destino', 'Seleccioná una ubicación de destino.'); return; }
@@ -206,11 +206,16 @@ export class UbicacionTransferComponent implements OnInit {
       idUbicacionDestino: this.idUbicacionDestinoOC,
       idUsuario: usuario.idUsuario || null
     }).subscribe({
-      next: () => {
+      next: async () => {
         this.cargando = false;
 
         // POPUP SUGERENCIA OCUPADO
-        if (confirm(`Los insumos fueron ingresados a [${ubicacionDestino?.codigo}]. \n\n¿Desea cambiar el estado de esta ubicación a "Ocupado" para evitar nuevos ingresos?`)) {
+        const confirmarOcupado = await this.alertas.confirmar(
+          '¿Marcar como Ocupada?',
+          `Los insumos fueron ingresados a [${ubicacionDestino?.codigo}]. \n\n¿Desea cambiar el estado de esta ubicación a "Ocupado" para evitar nuevos ingresos?`,
+          'Sí, marcar'
+        );
+        if (confirmarOcupado) {
           this.ubicacionesService.cambiarEstadoUbicacion(this.idUbicacionDestinoOC!, 'Ocupado').subscribe();
         }
 
@@ -248,7 +253,7 @@ export class UbicacionTransferComponent implements OnInit {
     this.insumosUB.forEach(i => i.seleccionado = this.todosSeleccionadosUB);
   }
 
-  confirmarTransferenciaUB(): void {
+  async confirmarTransferenciaUB(): Promise<void> {
     const ids = this.insumosUB.filter(i => i.seleccionado).map(i => i.idInsumo!);
     if (!ids.length) { this.alertas.error('Sin selección', 'Seleccioná al menos un insumo.'); return; }
     if (!this.idUbicacionDestino) { this.alertas.error('Sin destino', 'Seleccioná una ubicación de destino.'); return; }
@@ -264,11 +269,16 @@ export class UbicacionTransferComponent implements OnInit {
       idUbicacionDestino: this.idUbicacionDestino,
       idUsuario: usuario.idUsuario || null
     }).subscribe({
-      next: () => {
+      next: async () => {
         this.cargando = false;
 
         // POPUP SUGERENCIA OCUPADO
-        if (confirm(`Transferencia completada a [${ubicacionDestino?.codigo}]. \n\n¿Desea marcar la ubicación destino como "Ocupada"?`)) {
+        const confirmarOcupado = await this.alertas.confirmar(
+          '¿Marcar como Ocupada?',
+          `Transferencia completada a [${ubicacionDestino?.codigo}]. \n\n¿Desea marcar la ubicación destino como "Ocupada"?`,
+          'Sí, marcar'
+        );
+        if (confirmarOcupado) {
           this.ubicacionesService.cambiarEstadoUbicacion(this.idUbicacionDestino!, 'Ocupado').subscribe();
         }
 
