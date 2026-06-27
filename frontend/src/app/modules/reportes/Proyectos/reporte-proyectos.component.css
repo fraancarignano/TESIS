@@ -231,6 +231,44 @@
     width: 100%;
 }
 
+.tabla-container {
+    border: 1px solid #efefef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.tabla-wrapper {
+    overflow-x: auto;
+}
+
+.tabla-reporte {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 520px;
+}
+
+.tabla-reporte thead th {
+    background: #fff8f3;
+    color: #5f4a3b;
+    padding: 10px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    text-align: left;
+    border-bottom: 1px solid #f0e4dd;
+}
+
+.tabla-reporte tbody td {
+    padding: 9px 10px;
+    font-size: 0.82rem;
+    border-bottom: 1px solid #f4f4f4;
+    color: #2f2f2f;
+}
+
+.tabla-reporte tbody tr:hover {
+    background: #fffaf7;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .reporte-container {
@@ -249,5 +287,9 @@
 
     .grafico-container {
         height: 200px;
+    }
+
+    .tabla-reporte {
+        min-width: 100%;
     }
 }
