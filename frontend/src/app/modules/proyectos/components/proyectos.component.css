@@ -197,6 +197,38 @@
   gap: 0.6rem;
   align-items: start;
   width: 100%;
+  transition: grid-template-columns 0.3s ease;
+}
+
+.kanban-board.con-inactivos {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* Botón toggle inactivos */
+.btn-toggle-inactivos {
+  background: white;
+  color: #757575;
+  border: 1.5px solid #e0e0e0;
+  font-size: 0.78rem;
+  gap: 0.35rem;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-toggle-inactivos:hover {
+  background: #f5f5f5;
+  border-color: #9e9e9e;
+  color: #333;
+}
+
+.btn-toggle-inactivos.activo {
+  background: #ede7f6;
+  color: #6a1b9a;
+  border-color: #9c27b0;
+}
+
+.btn-toggle-inactivos.activo:hover {
+  background: #d1c4e9;
 }
 
 .kanban-column {
@@ -226,6 +258,25 @@
 
 .column-header.finalizado {
   background: #e8f5e9;
+}
+
+.column-header.inactivos {
+  background: #f3f0f8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.inactivos-hint {
+  font-size: 0.6rem;
+  color: #9e9e9e;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.columna-inactivos .column-content {
+  opacity: 0.85;
 }
 
 .column-badge {

@@ -639,7 +639,7 @@
               </div>
               <div *ngIf="esAreaDiseno" class="diseno-form">
                 <!-- Banner de sincronización con muestra -->
-                <div class="muestra-sync-banner" *ngIf="proyecto.idMuestra">
+                <div class="muestra-sync-banner" *ngIf="tieneMuestraParaSincronizar">
                   <div class="banner-content">
                     <svg class="anim-sync" [class.spinning]="loadingSync" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M21.5 2v6h-6"></path>
@@ -648,13 +648,35 @@
                       <path d="M21.5 12A10 10 0 0 1 5.5 19.5L2.5 16"></path>
                     </svg>
                     <div class="banner-text">
-                      <span class="banner-title">Muestra Asociada: {{ proyecto.nombreMuestra }}</span>
-                      <span class="banner-subtitle">Este proyecto tiene una muestra vinculada. Puedes importar sus mockups y descripciones.</span>
+                      <span class="banner-title">Muestra Asociada: {{ nombreMuestraActiva }}</span>
+                      <span class="banner-subtitle">Este proyecto tiene una muestra vinculada. Puedes importar sus mockups, paleta y descripciones.</span>
                     </div>
                   </div>
                   <button class="btn-sync-action" (click)="sincronizarConMuestra()" [disabled]="loadingSync">
-                    {{ loadingSync ? 'Sincronizando...' : 'Sincronizar Diseño' }}
+                    {{ loadingSync ? 'Sincronizando...' : 'Sincronizar con muestra' }}
                   </button>
+                </div>
+
+                <!-- Vincular muestra si el proyecto se creó sin persistir el vínculo -->
+                <div class="muestra-sync-banner muestra-link-banner" *ngIf="!tieneMuestraParaSincronizar && muestrasDisponiblesVincular.length">
+                  <div class="banner-content">
+                    <div class="banner-text">
+                      <span class="banner-title">Vincular muestra aprobada</span>
+                      <span class="banner-subtitle">Este proyecto no tiene muestra vinculada. Seleccioná una del mismo cliente para importar el diseño.</span>
+                    </div>
+                  </div>
+                  <div class="banner-actions">
+                    <select [(ngModel)]="muestraSeleccionadaVincular" [disabled]="vinculandoMuestra">
+                      <option value="">Seleccionar muestra...</option>
+                      <option *ngFor="let m of muestrasDisponiblesVincular" [value]="m.idMuestra">
+                        {{ m.nombreMuestra }}
+                      </option>
+                    </select>
+                    <button class="btn-sync-action" (click)="vincularMuestraSeleccionada()"
+                      [disabled]="!muestraSeleccionadaVincular || vinculandoMuestra">
+                      {{ vinculandoMuestra ? 'Vinculando...' : 'Vincular y sincronizar' }}
+                    </button>
+                  </div>
                 </div>
 
                 <div class="corte-header">

@@ -92,15 +92,36 @@
         <!-- Fecha Inicio -->
         <div class="field">
           <label>Fecha de Inicio *</label>
-          <input type="date" formControlName="fechaInicio">
+          <div class="date-field-wrapper">
+            <input type="date" formControlName="fechaInicio" #inputFechaInicio>
+            <button type="button" class="cal-icon-btn" (click)="inputFechaInicio.showPicker()" title="Abrir calendario" tabindex="-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Fecha Lí­mite -->
         <div class="field">
           <label>Fecha Lí­mite</label>
-          <input type="date"
-            formControlName="fechaFin"
-            [min]="fechaMinima">
+          <div class="date-field-wrapper">
+            <input type="date"
+              formControlName="fechaFin"
+              [min]="fechaMinima"
+              #inputFechaFin>
+            <button type="button" class="cal-icon-btn" (click)="inputFechaFin.showPicker()" title="Abrir calendario" tabindex="-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -236,68 +257,89 @@
             <small>Si no aparece, agrega uno nuevo.</small>
           </div>
 
-          <!-- Tipo de Material (Tipo de Tela) -->
-          <div class="field">
-            <label>Tipo de Material *</label>
-            <select 
-              [(ngModel)]="prendaEditando.idTipoInsumoMaterial" 
-              [ngModelOptions]="{standalone: true}"
-              (change)="onTipoMaterialChange()"
-            >
-              <option [value]="undefined">Seleccionar tipo de tela...</option>
-              <option *ngFor="let tipoInsumo of tiposInsumoTelas" [value]="tipoInsumo.idTipoInsumo">
-                {{ tipoInsumo.nombreTipo }}
-              </option>
-            </select>
-            <small>Ej: Algodón, Lycra, Polyester, etc.</small>
-          </div>
+          <!-- Múltiples Materiales -->
+          <div class="seccion-materiales" style="margin-top: 1rem; border-top: 1px dashed #ccc; padding-top: 1rem;">
+            <label style="margin-bottom: 0.5rem; display: block; font-size: 1rem;">Materiales *</label>
+            <div class="material-item" *ngFor="let mat of prendaEditando.materiales; let matIndex = index" style="background: #f9f9f9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #eee;">
+              <div class="material-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-weight: 600; color: #555;">
+                  {{ matIndex === 0 ? 'Material Principal' : 'Material Extra ' + matIndex }}
+                </span>
+                <button type="button" class="btn-delete-mini" (click)="eliminarMaterialDePrenda(matIndex)" *ngIf="(prendaEditando.materiales?.length || 0) > 1" title="Eliminar material">✕</button>
+              </div>
+              <div *ngIf="matIndex === 0" style="margin-bottom: 0.75rem; color: #666; font-size: 0.9rem;">
+                Este material se utiliza para el cálculo automático de telas. Los materiales extra se agregan como referencias adicionales.
+              </div>
+              
+              <!-- Tipo de Material (Tipo de Tela) -->
+              <div class="field" style="margin-bottom: 0.8rem;">
+                <label>Tipo de Material *</label>
+                <select 
+                  [(ngModel)]="mat.idTipoInsumoMaterial" 
+                  [ngModelOptions]="{standalone: true}"
+                  (change)="onTipoMaterialChange(matIndex)"
+                >
+                  <option [value]="undefined">Seleccionar tipo de tela...</option>
+                  <option *ngFor="let tipoInsumo of tiposInsumoTelas" [value]="tipoInsumo.idTipoInsumo">
+                    {{ tipoInsumo.nombreTipo }}
+                  </option>
+                </select>
+                <small *ngIf="matIndex === 0">Ej: Algodón, Lycra, Polyester, etc.</small>
+              </div>
 
-          <!-- Material solicitado (buscador inteligente) -->
-          <div class="field" *ngIf="prendaEditando.idTipoInsumoMaterial">
-            <label>Material solicitado</label>
-            <div class="material-search-wrapper" (click)="$event.stopPropagation()">
-              <div class="material-search-inputs">
-                <input
-                  type="number"
-                  [(ngModel)]="busquedaMaterialId"
-                  [ngModelOptions]="{standalone: true}"
-                  placeholder="ID"
-                  class="input-id-material"
-                  (input)="onBusquedaMaterialIdChange()"
-                  min="1"
-                >
-                <input
-                  type="text"
-                  [(ngModel)]="busquedaMaterialNombre"
-                  [ngModelOptions]="{standalone: true}"
-                  placeholder="Buscar por nombre o color..."
-                  class="input-nombre-material"
-                  (input)="onBusquedaMaterialNombreChange()"
-                  (focus)="mostrarSugerenciasMaterial = true"
-                  (blur)="ocultarSugerenciasMaterialDelay()"
-                  autocomplete="off"
-                >
-              </div>
-              <!-- Insumo seleccionado -->
-              <div class="material-seleccionado-tag" *ngIf="getMaterialSeleccionadoObj()">
-                <span>#{{ getMaterialSeleccionadoObj()!.idInsumo }} {{ getMaterialSeleccionadoObj()!.nombreInsumo }}{{ getMaterialSeleccionadoObj()!.color ? ' — ' + getMaterialSeleccionadoObj()!.color : '' }}</span>
-                <button type="button" (click)="limpiarMaterialSeleccionado()" class="btn-clear-material">✕</button>
-              </div>
-              <!-- Sugerencias -->
-              <div class="material-sugerencias" *ngIf="mostrarSugerenciasMaterial && insumosTelasBusqueda.length > 0">
-                <div
-                  class="sugerencia-item-mat"
-                  *ngFor="let ins of insumosTelasBusqueda"
-                  (mousedown)="seleccionarMaterial(ins)"
-                >
-                  <span class="sug-id">#{{ ins.idInsumo }}</span>
-                  <span class="sug-nombre">{{ ins.nombreInsumo }}</span>
-                  <span class="sug-color" *ngIf="ins.color">{{ ins.color }}</span>
-                  <span class="sug-stock">{{ ins.stockActual }} {{ ins.unidadMedida }}</span>
+              <!-- Material solicitado (buscador inteligente) -->
+              <div class="field" *ngIf="mat.idTipoInsumoMaterial">
+                <label>Insumo en catálogo</label>
+                <div class="material-search-wrapper" (click)="$event.stopPropagation()">
+                  <div class="material-search-inputs">
+                    <input
+                      type="number"
+                      [(ngModel)]="busquedaMaterialIds[matIndex]"
+                      [ngModelOptions]="{standalone: true}"
+                      placeholder="ID"
+                      class="input-id-material"
+                      (input)="onBusquedaMaterialIdChange(matIndex)"
+                      (focus)="materialEnEdicionIndex = matIndex"
+                      min="1"
+                    >
+                    <input
+                      type="text"
+                      [(ngModel)]="busquedaMaterialNombres[matIndex]"
+                      [ngModelOptions]="{standalone: true}"
+                      placeholder="Buscar por nombre o color..."
+                      class="input-nombre-material"
+                      (input)="onBusquedaMaterialNombreChange(matIndex)"
+                      (focus)="materialEnEdicionIndex = matIndex; mostrarSugerenciasMaterial = true"
+                      (blur)="ocultarSugerenciasMaterialDelay()"
+                      autocomplete="off"
+                    >
+                  </div>
+                  <!-- Insumo seleccionado -->
+                  <div class="material-seleccionado-tag" *ngIf="getMaterialSeleccionadoObj(matIndex)">
+                    <span>#{{ getMaterialSeleccionadoObj(matIndex)!.idInsumo }} {{ getMaterialSeleccionadoObj(matIndex)!.nombreInsumo }}{{ getMaterialSeleccionadoObj(matIndex)!.color ? ' — ' + getMaterialSeleccionadoObj(matIndex)!.color : '' }}</span>
+                    <button type="button" (click)="limpiarMaterialSeleccionado(matIndex)" class="btn-clear-material">✕</button>
+                  </div>
+                  <!-- Sugerencias -->
+                  <div class="material-sugerencias" *ngIf="mostrarSugerenciasMaterial && materialEnEdicionIndex === matIndex && insumosTelasBusqueda.length > 0">
+                    <div
+                      class="sugerencia-item-mat"
+                      *ngFor="let ins of insumosTelasBusqueda"
+                      (mousedown)="seleccionarMaterial(ins, matIndex)"
+                    >
+                      <span class="sug-id">#{{ ins.idInsumo }}</span>
+                      <span class="sug-nombre">{{ ins.nombreInsumo }}</span>
+                      <span class="sug-color" *ngIf="ins.color">{{ ins.color }}</span>
+                      <span class="sug-stock">{{ ins.stockActual }} {{ ins.unidadMedida }}</span>
+                    </div>
+                  </div>
                 </div>
+                <small *ngIf="matIndex === 0">Seleccioná el insumo específico del catálogo o dejalo vacío si no hay stock.</small>
               </div>
             </div>
-            <small>Seleccioná el insumo específico del catálogo. Si no existe, crealo primero en Gestión de Insumos.</small>
+            
+            <button type="button" class="btn-secondary-sm btn-agregar-material" (click)="agregarMaterialAPrenda()" style="margin-bottom: 1rem;">
+              <i class="fas fa-plus"></i> Agregar otro material
+            </button>
           </div>
 
           <!-- Cantidad Total -->

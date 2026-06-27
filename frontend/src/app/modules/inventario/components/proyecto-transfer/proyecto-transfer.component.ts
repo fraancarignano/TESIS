@@ -16,6 +16,7 @@ function normalizarColor(c?: string | null): string {
 }
 
 interface MaterialRow {
+  idMaterialCalculado: number;
   idInsumo: number;
   idTipoInsumo: number;
   nombreInsumo: string;
@@ -27,9 +28,14 @@ interface MaterialRow {
   tieneStockSuficiente: boolean;
   cantidadAAsignar: number;
   precioUnitario?: number;
+  esMaterialExtra: boolean;
+  idProyectoPrenda?: number;
+  nombrePrenda?: string;
+  seleccionado: boolean;
 }
 
 interface ItemOC {
+  idMaterialCalculado?: number;
   idInsumo: number;
   nombreInsumo: string;
   colorSolicitado: string;
@@ -37,6 +43,9 @@ interface ItemOC {
   precioUnitario: number;
   nuevoIdTipoInsumo?: number;
   nuevoUnidadMedida?: string;
+  esMaterialExtra?: boolean;
+  idProyectoPrenda?: number;
+  nombrePrenda?: string;
 }
 
 @Component({
@@ -121,24 +130,28 @@ export class ProyectoTransferComponent implements OnInit {
       next: (proyecto: any) => {
         this.materiales = (proyecto.materiales || []).map((m: any): MaterialRow => {
           const necesario = Number(m.cantidadFinal ?? m.cantidadNecesaria ?? 0);
-          const colorNorm = normalizarColor(m.colorSolicitado);
-          // Stock real: solo cuenta si el color del insumo coincide exactamente
-          const colorInsumoNorm = normalizarColor(m.colorInsumo);
-          const colorCoincide = !colorNorm || colorInsumoNorm === colorNorm;
-          const stock = colorCoincide ? Number(m.stockActual ?? 0) : 0;
+          // Si hay un idInsumo explícito, usar su stock directamente.
+          // El color es solo un atributo del insumo, no debe impedir usar su stock.
+          const stock = Number(m.stockActual ?? 0);
           const tieneStock = stock >= necesario;
+          const esExtra = m.tipoCalculo === 'Extra';
           return {
+            idMaterialCalculado: Number(m.idMaterialCalculado ?? 0),
             idInsumo: m.idInsumo,
             idTipoInsumo: m.idTipoInsumo ?? 0,
             nombreInsumo: m.nombreInsumo,
             tipoInsumo: m.tipoInsumo || '',
-            colorSolicitado: colorNorm,
+            colorSolicitado: normalizarColor(m.colorSolicitado),
             cantidadNecesaria: necesario,
             unidadMedida: m.unidadMedida || '',
             stockDisponible: stock,
             tieneStockSuficiente: tieneStock,
             cantidadAAsignar: tieneStock ? necesario : 0,
-            precioUnitario: m.precioUnitario
+            precioUnitario: m.precioUnitario,
+            esMaterialExtra: esExtra,
+            idProyectoPrenda: m.idProyectoPrenda,
+            nombrePrenda: m.nombrePrenda,
+            seleccionado: !esExtra && tieneStock
           };
         });
         this.cargandoMateriales = false;
@@ -150,21 +163,60 @@ export class ProyectoTransferComponent implements OnInit {
 
   // ── GETTERS ───────────────────────────────────────────────────
 
-  get conStock(): MaterialRow[] { return this.materiales.filter(m => m.tieneStockSuficiente); }
-  get sinStock(): MaterialRow[] { return this.materiales.filter(m => !m.tieneStockSuficiente); }
+  get conStock(): MaterialRow[] {
+    return this.materiales.filter(m => !m.esMaterialExtra && m.tieneStockSuficiente);
+  }
+  get sinStock(): MaterialRow[] {
+    return this.materiales.filter(m => !m.esMaterialExtra && !m.tieneStockSuficiente);
+  }
+  get materialesExtra(): MaterialRow[] {
+    return this.materiales.filter(m => m.esMaterialExtra);
+  }
   get todosListos(): boolean { return this.materiales.length > 0 && this.materialesListos && this.proyectoActual?.estado === 'Pendiente'; }
   get totalOC(): number { return this.itemsOC.reduce((a, i) => a + i.cantidad * i.precioUnitario, 0); }
+
+  materialExcedeStock(material: MaterialRow): boolean {
+    return material.cantidadAAsignar > material.stockDisponible;
+  }
+
+  onCantidadAsignarChange(material: MaterialRow): void {
+    material.cantidadAAsignar = Number(material.cantidadAAsignar || 0);
+    if (material.cantidadAAsignar < 0) {
+      material.cantidadAAsignar = 0;
+    }
+  }
 
   // ── ASIGNAR AL PROYECTO ───────────────────────────────────────
 
   asignarAlProyecto(): void {
-    const aAsignar = this.conStock.filter(m => m.cantidadAAsignar > 0);
+    const aAsignar = [
+      ...this.conStock.filter(m => m.seleccionado && m.cantidadAAsignar > 0),
+      ...this.materialesExtra.filter(m =>
+        m.seleccionado &&
+        m.cantidadAAsignar > 0 &&
+        m.stockDisponible >= m.cantidadAAsignar
+      )
+    ];
+    const conError = [
+      ...this.conStock.filter(m => m.seleccionado && this.materialExcedeStock(m)),
+      ...this.materialesExtra.filter(m => m.seleccionado && this.materialExcedeStock(m))
+    ];
+    if (conError.length) {
+      this.mostrarMensaje('La cantidad que tratás de ingresar es mayor al stock disponible.', 'error');
+      return;
+    }
     if (!aAsignar.length) { this.mostrarMensaje('No hay materiales seleccionados para asignar', 'error'); return; }
 
     this.cargando = true;
     this.proyectosServiceNuevo.asignarMaterialesAlProyecto(
       Number(this.idProyectoSeleccionado),
-      aAsignar.map(m => ({ idInsumo: m.idInsumo, cantidad: m.cantidadAAsignar }))
+      aAsignar.map(m => ({
+        idInsumo: m.idInsumo,
+        cantidad: m.cantidadAAsignar,
+        idMaterialCalculado: m.idMaterialCalculado,
+        idProyectoPrenda: m.idProyectoPrenda,
+        esMaterialExtra: m.esMaterialExtra
+      }))
     ).subscribe({
       next: (res: any) => {
         const detalle = Array.isArray(res?.detalle) ? res.detalle : [];
@@ -199,18 +251,30 @@ export class ProyectoTransferComponent implements OnInit {
   // ── GENERAR OC ────────────────────────────────────────────────
 
   abrirPanelOC(): void {
-    if (!this.sinStock.length) { this.mostrarMensaje('No hay materiales faltantes', 'error'); return; }
-    this.itemsOC = this.sinStock.map(m => ({
-      // Telas con color → insumo nuevo (idInsumo=0) para garantizar el color correcto
-      // Avíos/hilos sin color → usar el insumo existente del tipo
-      idInsumo: m.colorSolicitado ? 0 : m.idInsumo,
-      nombreInsumo: m.nombreInsumo, // Usar el nombre específico
-      colorSolicitado: m.colorSolicitado || '',
-      cantidad: Math.max(0.01, m.cantidadNecesaria - m.stockDisponible),
-      precioUnitario: m.precioUnitario || 0,
-      nuevoIdTipoInsumo: m.colorSolicitado ? (m.idTipoInsumo || undefined) : undefined,
-      nuevoUnidadMedida: m.unidadMedida
-    }));
+    const materialesParaPedido = [
+      ...this.sinStock,
+      ...this.materialesExtra
+    ];
+
+    if (!materialesParaPedido.length) { this.mostrarMensaje('No hay materiales para pedir', 'error'); return; }
+    this.itemsOC = materialesParaPedido.map(m => {
+      // Para materiales extra, la cantidad inicial es 0 (el usuario debe ingresarla manualmente)
+      // Para materiales principales, calculamos el faltante
+      const cantidadInicial = m.esMaterialExtra ? 0 : Math.max(0.01, m.cantidadNecesaria - m.stockDisponible);
+      return {
+        idMaterialCalculado: m.idMaterialCalculado,
+        idInsumo: m.idInsumo || 0,
+        nombreInsumo: m.nombreInsumo,
+        colorSolicitado: m.colorSolicitado || '',
+        cantidad: cantidadInicial,
+        precioUnitario: m.precioUnitario || 0,
+        nuevoIdTipoInsumo: m.idInsumo === 0 ? (m.idTipoInsumo || undefined) : undefined,
+        nuevoUnidadMedida: m.unidadMedida,
+        esMaterialExtra: m.esMaterialExtra,
+        idProyectoPrenda: m.idProyectoPrenda,
+        nombrePrenda: m.nombrePrenda
+      };
+    });
     this.idProveedorOC = null;
     this.fechaEntregaOC = '';
     this.mostrarPanelOC = true;
@@ -218,8 +282,17 @@ export class ProyectoTransferComponent implements OnInit {
 
   cerrarPanelOC(): void { this.mostrarPanelOC = false; }
 
+  quitarItemOC(index: number): void {
+    this.itemsOC.splice(index, 1);
+  }
+
   generarOrdenCompra(): void {
     if (!this.idProveedorOC) { this.mostrarMensaje('Seleccioná un proveedor', 'error'); return; }
+    if (!this.itemsOC.length) { this.mostrarMensaje('Agregá al menos un material al pedido', 'error'); return; }
+    if (this.itemsOC.some(i => i.cantidad <= 0)) {
+      this.mostrarMensaje('Completá la cantidad de los materiales extra o quitálos del pedido', 'error');
+      return;
+    }
     if (this.itemsOC.some(i => i.precioUnitario <= 0)) { this.mostrarMensaje('Completá el precio unitario', 'error'); return; }
 
     const coloresDetalle = this.itemsOC
@@ -229,22 +302,29 @@ export class ProyectoTransferComponent implements OnInit {
 
     const dto = {
       idProveedor: this.idProveedorOC,
+      idProyecto: this.idProyectoSeleccionado,
       descripcion: `Proyecto: ${this.proyectoActual?.nombreProyecto || ''}` +
         (coloresDetalle ? ` | ${coloresDetalle}` : ''),
       fechaSolicitud: new Date().toISOString().split('T')[0],
       fechaEntregaEstimada: this.fechaEntregaOC || null,
       totalOrden: this.totalOC,
-      detalles: this.itemsOC.map(i => ({
-        idInsumo: i.idInsumo,
-        cantidad: i.cantidad,
-        precioUnitario: i.precioUnitario,
-        subtotal: i.cantidad * i.precioUnitario,
-        // Si es insumo nuevo (idInsumo === 0), pasar los campos de creación
-        nuevoNombreInsumo: i.idInsumo === 0 ? i.nombreInsumo : undefined,
-        nuevoIdTipoInsumo: i.idInsumo === 0 ? i.nuevoIdTipoInsumo : undefined,
-        nuevoColor: i.idInsumo === 0 ? (i.colorSolicitado || undefined) : undefined,
-        nuevoUnidadMedida: i.idInsumo === 0 ? (i.nuevoUnidadMedida || 'Kg') : undefined
-      }))
+      detalles: this.itemsOC.map(i => {
+        return {
+          idInsumo: i.idInsumo,
+          cantidad: i.cantidad,
+          precioUnitario: i.precioUnitario,
+          subtotal: i.cantidad * i.precioUnitario,
+          // Si es insumo nuevo (idInsumo === 0), pasar los campos de creación
+          nuevoNombreInsumo: i.idInsumo === 0 ? i.nombreInsumo : undefined,
+          nuevoIdTipoInsumo: i.idInsumo === 0 ? i.nuevoIdTipoInsumo : undefined,
+          nuevoColor: i.idInsumo === 0 ? (i.colorSolicitado || undefined) : undefined,
+          nuevoUnidadMedida: i.idInsumo === 0 ? (i.nuevoUnidadMedida || 'Kg') : undefined,
+          // Campos para materiales extra
+          idProyecto: i.esMaterialExtra ? this.idProyectoSeleccionado : undefined,
+          idProyectoPrenda: i.esMaterialExtra ? i.idProyectoPrenda : undefined,
+          esMaterialExtra: i.esMaterialExtra || false
+        };
+      })
     };
 
     this.generandoOC = true;

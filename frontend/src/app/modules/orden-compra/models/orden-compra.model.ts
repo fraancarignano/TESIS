@@ -48,6 +48,11 @@ export interface DetalleOrdenCompraDTO {
   nuevoIdTipoInsumo?: number;
   nuevoColor?: string;
   nuevoUnidadMedida?: string;
+  idProyecto?: number;
+  idProyectoPrenda?: number;
+  esMaterialExtra?: boolean;
+  idMaterialCalculado?: number;
+  nombrePrenda?: string;
 }
 
 export interface Proveedor {

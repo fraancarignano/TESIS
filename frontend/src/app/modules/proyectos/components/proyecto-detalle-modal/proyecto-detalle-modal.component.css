@@ -2242,7 +2242,28 @@ select:disabled {
   box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
   display: flex;
   align-items: center;
+}
+
+.muestra-link-banner {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.banner-actions {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.banner-actions select {
+  min-width: 220px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+  background: #fff;
+  color: #0d47a1;
+  font-size: 0.85rem;
 }
 
 .btn-sync-action:hover:not(:disabled) {

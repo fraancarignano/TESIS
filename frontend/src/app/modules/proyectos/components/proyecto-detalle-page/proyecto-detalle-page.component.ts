@@ -112,11 +112,15 @@ export class ProyectoDetallePageComponent implements OnInit {
 
     const clienteNombre = detalle.clienteNombre ?? detalle.nombreCliente ?? '';
     const nombreEncargado = detalle.nombreEncargado ?? detalle.nombreUsuarioEncargado ?? null;
+    const idMuestra = detalle.idMuestra ?? detalle.IdMuestra ?? null;
+    const nombreMuestra = detalle.nombreMuestra ?? detalle.NombreMuestra ?? null;
 
     return {
       ...detalle,
       clienteNombre,
-      nombreEncargado
+      nombreEncargado,
+      idMuestra: idMuestra ? Number(idMuestra) : null,
+      nombreMuestra
     } as Proyecto;
   }
 }

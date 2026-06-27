@@ -72,18 +72,23 @@ export class ProyectoFormNuevoComponent implements OnInit {
   usuarios: UsuarioSimple[] = [];
   prioridades: string[] = ['baja', 'media', 'alta'];
   insumosTelasFiltrados: InsumoFormulario[] = [];
-  // Buscador inteligente de material
-  busquedaMaterialNombre = '';
-  busquedaMaterialId?: number;
+  // Buscador inteligente de material (ahora por material en edición)
+  busquedaMaterialNombres: { [index: number]: string } = {};
+  busquedaMaterialIds: { [index: number]: number | undefined } = {};
   mostrarSugerenciasMaterial = false;
+  materialEnEdicionIndex = -1;
 
   get insumosTelasBusqueda(): InsumoFormulario[] {
-    if (!this.prendaEditando?.idTipoInsumoMaterial) return [];
+    if (this.materialEnEdicionIndex === -1 || !this.prendaEditando?.materiales) return [];
+    const idx = this.materialEnEdicionIndex;
+    const mat = this.prendaEditando.materiales[idx];
+    if (!mat?.idTipoInsumoMaterial) return [];
+    
     const base = this.insumosTelas.filter(
-      i => i.idTipoInsumo === Number(this.prendaEditando!.idTipoInsumoMaterial)
+      i => i.idTipoInsumo === Number(mat.idTipoInsumoMaterial)
     );
-    const termNombre = this.busquedaMaterialNombre.trim().toLowerCase();
-    const termId = this.busquedaMaterialId;
+    const termNombre = (this.busquedaMaterialNombres[idx] || '').trim().toLowerCase();
+    const termId = this.busquedaMaterialIds[idx];
     if (!termNombre && !termId) return base.slice(0, 8);
     return base.filter(i => {
       if (termId) return i.idInsumo === termId;
@@ -92,41 +97,57 @@ export class ProyectoFormNuevoComponent implements OnInit {
     }).slice(0, 10);
   }
 
-  onBusquedaMaterialNombreChange(): void {
-    this.prendaEditando!.idInsumo = undefined;
+  onBusquedaMaterialNombreChange(index: number): void {
+    this.materialEnEdicionIndex = index;
+    if (this.prendaEditando?.materiales) {
+      this.prendaEditando.materiales[index].idInsumo = undefined;
+    }
     this.mostrarSugerenciasMaterial = true;
   }
 
-  onBusquedaMaterialIdChange(): void {
-    if (this.busquedaMaterialId) {
-      const found = this.insumosTelas.find(i => i.idInsumo === this.busquedaMaterialId);
-      if (found) { this.seleccionarMaterial(found); return; }
+  onBusquedaMaterialIdChange(index: number): void {
+    this.materialEnEdicionIndex = index;
+    const termId = this.busquedaMaterialIds[index];
+    if (termId) {
+      const found = this.insumosTelas.find(i => i.idInsumo === termId);
+      if (found) { this.seleccionarMaterial(found, index); return; }
     }
-    this.prendaEditando!.idInsumo = undefined;
+    if (this.prendaEditando?.materiales) {
+      this.prendaEditando.materiales[index].idInsumo = undefined;
+    }
   }
 
-  seleccionarMaterial(insumo: InsumoFormulario): void {
-    this.prendaEditando!.idInsumo = insumo.idInsumo;
-    this.prendaEditando!.colorTela = insumo.color || undefined;
-    this.busquedaMaterialNombre = '';
-    this.busquedaMaterialId = undefined;
+  seleccionarMaterial(insumo: InsumoFormulario, index?: number): void {
+    const idx = index !== undefined ? index : this.materialEnEdicionIndex;
+    if (idx === -1 || !this.prendaEditando?.materiales) return;
+    const mat = this.prendaEditando.materiales[idx];
+    mat.idInsumo = insumo.idInsumo;
+    mat.colorTela = insumo.color || undefined;
+    this.busquedaMaterialNombres[idx] = '';
+    this.busquedaMaterialIds[idx] = undefined;
     this.mostrarSugerenciasMaterial = false;
+    this.materialEnEdicionIndex = -1;
   }
 
-  limpiarMaterialSeleccionado(): void {
-    this.prendaEditando!.idInsumo = undefined;
-    this.prendaEditando!.colorTela = undefined;
-    this.busquedaMaterialNombre = '';
-    this.busquedaMaterialId = undefined;
+  limpiarMaterialSeleccionado(index: number): void {
+    if (!this.prendaEditando?.materiales) return;
+    const mat = this.prendaEditando.materiales[index];
+    mat.idInsumo = undefined;
+    mat.colorTela = undefined;
+    this.busquedaMaterialNombres[index] = '';
+    this.busquedaMaterialIds[index] = undefined;
+    this.materialEnEdicionIndex = -1;
   }
 
   ocultarSugerenciasMaterialDelay(): void {
     setTimeout(() => { this.mostrarSugerenciasMaterial = false; }, 200);
   }
 
-  getMaterialSeleccionadoObj(): InsumoFormulario | undefined {
-    if (!this.prendaEditando?.idInsumo) return undefined;
-    return this.insumosTelas.find(i => i.idInsumo === Number(this.prendaEditando!.idInsumo));
+  getMaterialSeleccionadoObj(index: number): InsumoFormulario | undefined {
+    if (!this.prendaEditando?.materiales) return undefined;
+    const mat = this.prendaEditando.materiales[index];
+    if (!mat?.idInsumo) return undefined;
+    return this.insumosTelas.find(i => i.idInsumo === Number(mat.idInsumo));
   }
   muestrasAprobadas: MuestraDetalle[] = [];
 
@@ -164,8 +185,17 @@ export class ProyectoFormNuevoComponent implements OnInit {
   materialesAdicionalesExpandido = false;
 
   private prendaTieneTelaAsignada(prenda: PrendaFormulario): boolean {
-    if (!prenda.idTipoInsumoMaterial) return false;
+    if (prenda.materiales && prenda.materiales.length > 0) {
+      return prenda.materiales.some(m => {
+        const idInsumo = Number(m.idInsumo);
+        const tieneInsumoEnStock = !!idInsumo && this.insumosTelas.some(i => i.idInsumo === idInsumo);
+        const tieneColorSolicitado = !!(m.colorTela || '').trim();
+        return tieneInsumoEnStock || tieneColorSolicitado;
+      });
+    }
 
+    // Fallback retrocompatibilidad
+    if (!prenda.idTipoInsumoMaterial) return false;
     const idInsumo = Number(prenda.idInsumo);
     const tieneInsumoEnStock = !!idInsumo && this.insumosTelas.some(i => i.idInsumo === idInsumo);
     const tieneColorSolicitado = !!(prenda.colorTela || '').trim();
@@ -432,24 +462,38 @@ export class ProyectoFormNuevoComponent implements OnInit {
   // FILTRO DE MATERIALES
   // ========================================
 
-  onTipoMaterialChange(): void {
-    if (!this.prendaEditando?.idTipoInsumoMaterial) {
-      this.insumosTelasFiltrados = [];
-      this.prendaEditando!.idInsumo = undefined;
-      this.prendaEditando!.colorTela = undefined;
-      this.busquedaMaterialNombre = '';
-      this.busquedaMaterialId = undefined;
+  onTipoMaterialChange(index: number): void {
+    if (!this.prendaEditando?.materiales) return;
+    const mat = this.prendaEditando.materiales[index];
+
+    if (!mat.idTipoInsumoMaterial) {
+      mat.idInsumo = undefined;
+      mat.colorTela = undefined;
+      this.busquedaMaterialNombres[index] = '';
+      this.busquedaMaterialIds[index] = undefined;
       return;
     }
 
-    this.insumosTelasFiltrados = this.insumosTelas.filter(
-      insumo => insumo.idTipoInsumo === Number(this.prendaEditando!.idTipoInsumoMaterial)
-    );
+    mat.idInsumo = undefined;
+    mat.colorTela = undefined;
+    this.busquedaMaterialNombres[index] = '';
+    this.busquedaMaterialIds[index] = undefined;
+  }
 
-    this.prendaEditando!.idInsumo = undefined;
-    this.prendaEditando!.colorTela = undefined;
-    this.busquedaMaterialNombre = '';
-    this.busquedaMaterialId = undefined;
+  agregarMaterialAPrenda(): void {
+    if (!this.prendaEditando) return;
+    if (!this.prendaEditando.materiales) this.prendaEditando.materiales = [];
+    this.prendaEditando.materiales.push({
+      id: generarIdTemporal(),
+      cantidad: 1 // Por defecto 1
+    });
+  }
+
+  eliminarMaterialDePrenda(index: number): void {
+    if (!this.prendaEditando?.materiales) return;
+    this.prendaEditando.materiales.splice(index, 1);
+    delete this.busquedaMaterialNombres[index];
+    delete this.busquedaMaterialIds[index];
   }
 
   onInsumoColorChange(): void {
@@ -503,26 +547,52 @@ export class ProyectoFormNuevoComponent implements OnInit {
   }
 
   editarPrenda(prenda: PrendaFormulario, index: number): void {
-    this.prendaEditando = { ...prenda };
+    this.prendaEditando = this.clonarPrenda(prenda);
     this.indexPrendaEditando = index;
     this.prendaEditandoSnapshot = this.clonarPrenda(this.prendaEditando);
     
-    if (this.prendaEditando.idTipoInsumoMaterial) {
-      this.insumosTelasFiltrados = this.insumosTelas.filter(
-        insumo => insumo.idTipoInsumo === this.prendaEditando!.idTipoInsumoMaterial
-      );
+    // Si la prenda vieja no tenía materiales, inicializamos
+    if (!this.prendaEditando!.materiales) {
+      this.prendaEditando!.materiales = [];
+      if (this.prendaEditando!.idTipoInsumoMaterial) {
+        this.prendaEditando!.materiales.push({
+          id: generarIdTemporal(),
+          idTipoInsumoMaterial: this.prendaEditando!.idTipoInsumoMaterial,
+          idInsumo: this.prendaEditando!.idInsumo,
+          colorTela: this.prendaEditando!.colorTela,
+          cantidad: 1
+        });
+      }
     }
   }
 
   guardarPrenda(prenda: PrendaFormulario): void {
-    if (!prenda.idTipoPrenda || !prenda.idTipoInsumoMaterial || prenda.cantidadTotal <= 0) {
-      this.errorMensaje = 'Completa todos los campos de la prenda';
+    if (!prenda.idTipoPrenda || prenda.cantidadTotal <= 0) {
+      this.errorMensaje = 'Completa todos los campos obligatorios de la prenda';
       return;
     }
+
+    if (!prenda.materiales || prenda.materiales.length === 0) {
+      this.errorMensaje = 'Debes agregar al menos un material a la prenda';
+      return;
+    }
+
+    const materialesInvalidos = prenda.materiales.some(m => !m.idTipoInsumoMaterial);
+    if (materialesInvalidos) {
+      this.errorMensaje = 'Todos los materiales deben tener un tipo de material seleccionado';
+      return;
+    }
+
+    // Compatibilidad hacia atrás: setear el primer material en los campos raíz
+    const primerMaterial = prenda.materiales[0];
+    prenda.idTipoInsumoMaterial = primerMaterial.idTipoInsumoMaterial;
+    prenda.idInsumo = primerMaterial.idInsumo;
+    prenda.colorTela = primerMaterial.colorTela;
 
     // Si no hay idInsumo (sin stock), usar el idTipoInsumoMaterial como referencia
     if (!prenda.idInsumo) {
       prenda.idInsumo = Number(prenda.idTipoInsumoMaterial);
+      primerMaterial.idInsumo = prenda.idInsumo;
     }
 
     if (prenda.tallesDistribuidos.length === 0) {
@@ -586,14 +656,23 @@ export class ProyectoFormNuevoComponent implements OnInit {
   private compararPrendas(a: PrendaFormulario, b: PrendaFormulario): boolean {
     if (
       a.idTipoPrenda !== b.idTipoPrenda ||
-      a.idTipoInsumoMaterial !== b.idTipoInsumoMaterial ||
-      a.idInsumo !== b.idInsumo ||
       a.cantidadTotal !== b.cantidadTotal ||
       a.tieneBordado !== b.tieneBordado ||
       a.tieneEstampado !== b.tieneEstampado ||
       (a.descripcionDiseno || '').trim() !== (b.descripcionDiseno || '').trim()
     ) {
       return false;
+    }
+
+    const matA = a.materiales || [];
+    const matB = b.materiales || [];
+    if (matA.length !== matB.length) return false;
+    for (let i = 0; i < matA.length; i++) {
+      if (matA[i].idTipoInsumoMaterial !== matB[i].idTipoInsumoMaterial ||
+          matA[i].idInsumo !== matB[i].idInsumo ||
+          matA[i].colorTela !== matB[i].colorTela) {
+        return false;
+      }
     }
 
     const ta = (a.tallesDistribuidos || []).map(t => ({ idTalle: t.idTalle, cantidad: t.cantidad })).sort((x, y) => x.idTalle - y.idTalle);
@@ -612,6 +691,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
     if (!prenda) return undefined;
     return {
       ...prenda,
+      materiales: (prenda.materiales || []).map(m => ({ ...m })),
       tallesDistribuidos: (prenda.tallesDistribuidos || []).map(t => ({ ...t }))
     };
   }
@@ -867,14 +947,29 @@ export class ProyectoFormNuevoComponent implements OnInit {
     this.cargando = true;
     this.errorMensaje = '';
 
-    const request = {
-      prendas: this.prendasProyecto.map(p => ({
+    const prendasParaCalculo = this.prendasProyecto.flatMap(p => {
+      if (p.materiales && p.materiales.length > 0) {
+        const principal = p.materiales[0];
+        return [{
+          idTipoPrenda: p.idTipoPrenda!,
+          idTipoInsumoMaterial: principal.idTipoInsumoMaterial!,
+          idInsumo: (principal.idInsumo && principal.idInsumo !== principal.idTipoInsumoMaterial) ? principal.idInsumo : undefined,
+          cantidadTotal: p.cantidadTotal,
+          colorSolicitado: principal.colorTela || p.colorTela || undefined
+        }];
+      }
+
+      return [{
         idTipoPrenda: p.idTipoPrenda!,
         idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
         idInsumo: (p.idInsumo && p.idInsumo !== p.idTipoInsumoMaterial) ? p.idInsumo : undefined,
         cantidadTotal: p.cantidadTotal,
         colorSolicitado: p.colorTela || undefined
-      })),
+      }];
+    });
+
+    const request = {
+      prendas: prendasParaCalculo,
       materialesManuales: this.materialesManuales.map(m => ({
         idInsumo: m.idInsumo!,
         cantidad: m.cantidad
@@ -1003,6 +1098,7 @@ export class ProyectoFormNuevoComponent implements OnInit {
         ? this.prendasProyecto.map((p, index) => ({
             idTipoPrenda: p.idTipoPrenda!,
             idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
+            idInsumo: p.idInsumo,
             cantidadTotal: p.cantidadTotal,
             tieneBordado: p.tieneBordado ?? false,
             tieneEstampado: p.tieneEstampado ?? false,
@@ -1012,7 +1108,14 @@ export class ProyectoFormNuevoComponent implements OnInit {
             talles: p.tallesDistribuidos.map(t => ({
               idTalle: t.idTalle,
               cantidad: t.cantidad
-            }))
+            })),
+            materiales: p.materiales && p.materiales.length > 0
+              ? p.materiales.map(m => ({
+                  idTipoInsumoMaterial: m.idTipoInsumoMaterial!,
+                  idInsumo: m.idInsumo,
+                  colorTela: m.colorTela?.trim() || undefined
+                }))
+              : undefined
           }))
         : [],
       materialesManualesActualizados:
@@ -1051,66 +1154,56 @@ export class ProyectoFormNuevoComponent implements OnInit {
     idUsuarioEncargado: formValue.idUsuarioEncargado
       ? Number(formValue.idUsuarioEncargado)
       : undefined,
+    idMuestra: formValue.idMuestraAprobada
+      ? Number(formValue.idMuestraAprobada)
+      : undefined,
     noConsumirStock: true,
     prendas: this.prendasProyecto.map((p, index) => ({
       idTipoPrenda: p.idTipoPrenda!,
       idTipoInsumoMaterial: p.idTipoInsumoMaterial!,
-      idInsumo: p.idInsumo!,
+      idInsumo: p.idInsumo,
       cantidadTotal: p.cantidadTotal,
       tieneBordado: p.tieneBordado,
       tieneEstampado: p.tieneEstampado,
-      descripcionDiseño: p.descripcionDiseno?.trim() || undefined,
+      descripcionDiseno: p.descripcionDiseno?.trim() || undefined,
       colorTela: p.colorTela?.trim() || undefined,
       orden: index,
       talles: p.tallesDistribuidos.map(t => ({
         idTalle: t.idTalle,
         cantidad: t.cantidad
-      }))
-    })),
-    materialesManuales:
-      this.materialesManuales.length > 0
-        ? this.materialesManuales.map(m => ({
-            idInsumo: m.idInsumo!,
-            cantidad: m.cantidad,
-            unidadMedida: m.unidadMedida!,
-            observaciones: m.observaciones?.trim() || undefined
+      })),
+      materiales: p.materiales && p.materiales.length > 0
+        ? p.materiales.map(m => ({
+            idTipoInsumoMaterial: m.idTipoInsumoMaterial!,
+            idInsumo: m.idInsumo,
+            colorTela: m.colorTela?.trim() || undefined
           }))
         : undefined
+    }))
   };
-
-  const validacion = this.proyectosService.validarFormularioLocal(dto);
-  if (!validacion.esValido) {
-    this.errorMensaje = validacion.errores.join('; ');
-    this.cargando = false;
-    return;
-  }
 
   this.proyectosService.crearProyecto(dto).subscribe({
     next: (proyectoCreado) => {
-      this.notificarInventarioPorTelas(proyectoCreado);
-      const muestraId = Number(formValue.idMuestraAprobada);
-      if (muestraId) {
-        this.muestrasService.asignarMuestraAProyecto(muestraId, proyectoCreado.idProyecto).subscribe({
-          next: () => {
-            if (this.esModal) {
-              this.cerrar.emit();
-            } else {
-              this.router.navigate(['/proyectos/explorar']);
-            }
-          },
-          error: (err) => {
-            this.errorMensaje = err.message || 'Proyecto creado, pero no se pudo asignar la muestra';
-            this.cargando = false;
-          }
+      const idMuestra = formValue.idMuestraAprobada ? Number(formValue.idMuestraAprobada) : 0;
+      const finalizar = () => {
+        this.alertas.toast('Proyecto creado correctamente');
+        this.notificarInventarioPorTelas(proyectoCreado);
+        if (this.esModal) {
+          this.cerrar.emit();
+        } else {
+          this.router.navigate(['/proyectos/explorar']);
+        }
+      };
+
+      if (idMuestra > 0 && proyectoCreado?.idProyecto) {
+        this.muestrasService.asignarMuestraAProyecto(idMuestra, proyectoCreado.idProyecto).subscribe({
+          next: () => finalizar(),
+          error: () => finalizar()
         });
         return;
       }
 
-      if (this.esModal) {
-        this.cerrar.emit();
-      } else {
-        this.router.navigate(['/proyectos/explorar']);
-      }
+      finalizar();
     },
     error: (err) => {
       this.errorMensaje = this.extraerMensajeError(err);

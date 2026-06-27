@@ -203,8 +203,12 @@ export class NotificacionesComponent implements OnInit {
   }
 
   irATransferir(s: SolicitudMaterialItem): void {
-    this.router.navigate(['/inventario/asignar-proyecto'], {
-      queryParams: { proyecto: s.idProyecto, solicitud: s.idSolicitud }
+    this.router.navigate(['/inventario/transferir'], {
+      queryParams: {
+        tab: 'asignar-proyecto',
+        proyecto: s.idProyecto,
+        solicitud: s.idSolicitud
+      }
     });
   }
 

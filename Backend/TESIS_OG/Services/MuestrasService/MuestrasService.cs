@@ -249,6 +249,13 @@ namespace TESIS_OG.Services.MuestrasService
 
                 var mockupUrl = muestra.MockupUrl;
                 var descripcionMockup = !string.IsNullOrWhiteSpace(muestra.OtrosDetalle) ? muestra.OtrosDetalle : null;
+                if (!string.IsNullOrWhiteSpace(muestra.PaletaRgb))
+                {
+                    var paletaInfo = $"Paleta de colores: {muestra.PaletaRgb.Trim()}";
+                    descripcionMockup = string.IsNullOrWhiteSpace(descripcionMockup)
+                        ? paletaInfo
+                        : $"{descripcionMockup.Trim()}\n{paletaInfo}";
+                }
 
                 string? imagenLogo = null;
                 string? descripcionLogo = null;

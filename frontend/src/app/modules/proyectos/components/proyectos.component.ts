@@ -30,13 +30,21 @@ export class ProyectosComponent implements OnInit {
   // Búsqueda
   terminoBusqueda: string = '';
 
+  // Toggle para mostrar estados inactivos
+  mostrarInactivos: boolean = false;
+
+  // Estados inactivos que se ocultan por defecto
+  readonly estadosInactivos: string[] = ['Despachado', 'Archivado', 'Cancelado', 'Anulado', 'Pausado'];
+
   // Estados para las columnas Kanban
   proyectosPendientes: ProyectoVista[] = [];
   proyectosEnProceso: ProyectoVista[] = [];
   proyectosFinalizados: ProyectoVista[] = [];
+  proyectosInactivos: ProyectoVista[] = [];
   proyectosPendientesFiltrados: ProyectoVista[] = [];
   proyectosEnProcesoFiltrados: ProyectoVista[] = [];
   proyectosFinalizadosFiltrados: ProyectoVista[] = [];
+  proyectosInactivosFiltrados: ProyectoVista[] = [];
 
   // Todos los proyectos (para filtrado)
   todosLosProyectos: Proyecto[] = [];
@@ -47,10 +55,16 @@ export class ProyectosComponent implements OnInit {
   }
 
   get totalProyectosArchivados(): number {
-    // Count archived projects from all projects
     return this.todosLosProyectos.filter(p =>
-      p.estado === 'Archivado' || p.estado === 'Cancelado' || p.estado === 'Pausado'
+      this.estadosInactivos.includes(p.estado)
     ).length;
+  }
+
+  get labelToggleInactivos(): string {
+    const count = this.proyectosInactivos.length;
+    return this.mostrarInactivos
+      ? `Ocultar inactivos (${count})`
+      : `Mostrar inactivos (${count})`;
   }
 
   get promedioScrap(): number {
@@ -110,10 +124,17 @@ export class ProyectosComponent implements OnInit {
     this.proyectosPendientes = [];
     this.proyectosEnProceso = [];
     this.proyectosFinalizados = [];
+    this.proyectosInactivos = [];
 
-    // Convertir a ProyectoVista y distribuir (filtrar archivados)
+    // Convertir a ProyectoVista y distribuir
     proyectos.forEach(proyecto => {
       const proyectoVista = proyectoToVista(proyecto);
+
+      if (this.estadosInactivos.includes(proyecto.estado)) {
+        // Estados inactivos van a la columna oculta por defecto
+        this.proyectosInactivos.push(proyectoVista);
+        return;
+      }
 
       switch (proyecto.estado) {
         case 'Pendiente':
@@ -125,11 +146,18 @@ export class ProyectosComponent implements OnInit {
         case 'Finalizado':
           this.proyectosFinalizados.push(proyectoVista);
           break;
-        // Archivado, Cancelado, Pausado no se muestran en el kanban
         default:
           break;
       }
     });
+  }
+
+  /**
+   * Toggle para mostrar/ocultar proyectos inactivos
+   */
+  toggleInactivos(): void {
+    this.mostrarInactivos = !this.mostrarInactivos;
+    this.aplicarFiltros();
   }
 
   /**
@@ -236,6 +264,7 @@ export class ProyectosComponent implements OnInit {
     this.proyectosPendientesFiltrados = this.filtrarProyectos(this.proyectosPendientes);
     this.proyectosEnProcesoFiltrados = this.filtrarProyectos(this.proyectosEnProceso);
     this.proyectosFinalizadosFiltrados = this.filtrarProyectos(this.proyectosFinalizados);
+    this.proyectosInactivosFiltrados = this.filtrarProyectos(this.proyectosInactivos);
   }
 
   /**

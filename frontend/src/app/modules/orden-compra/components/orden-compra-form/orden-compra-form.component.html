@@ -67,14 +67,26 @@
           </div>
 
           <div class="form-row">
-            <div class="form-group">
-              <label for="proyecto">Proyecto asociado (opcional)</label>
-              <select id="proyecto" [(ngModel)]="idProyectoSeleccionado" name="proyecto" [disabled]="cargando">
-                <option [ngValue]="undefined">Sin proyecto</option>
-                <option *ngFor="let p of proyectos" [ngValue]="p.idProyecto">
-                  {{ p.codigoProyecto }} — {{ p.nombreProyecto }}
-                </option>
-              </select>
+            <div class="form-group" style="display: flex; flex-direction: row; gap: 8px; align-items: flex-end; width: 100%;">
+              <div style="flex: 1;">
+                <label for="proyecto">Proyecto asociado (opcional)</label>
+                <select id="proyecto" [(ngModel)]="idProyectoSeleccionado" name="proyecto" [disabled]="cargando">
+                  <option [ngValue]="undefined">Sin proyecto</option>
+                  <option *ngFor="let p of proyectos" [ngValue]="p.idProyecto">
+                    {{ p.codigoProyecto }} — {{ p.nombreProyecto }}
+                  </option>
+                </select>
+              </div>
+              <button 
+                type="button" 
+                class="btn-secondary" 
+                (click)="autocompletarDesdeProyecto()" 
+                [disabled]="!idProyectoSeleccionado || cargando"
+                style="height: 38px; white-space: nowrap;"
+                title="Calcula los insumos que faltan para este proyecto y los agrega a la orden"
+              >
+                Autocompletar faltantes
+              </button>
             </div>
           </div>
         </div>
@@ -217,8 +229,33 @@
               </thead>
               <tbody>
                 <tr *ngFor="let detalle of detalles; let i = index">
-                  <td>{{ obtenerNombreDetalle(detalle) }}</td>
-                  <td>{{ detalle.cantidad }}</td>
+                  <td>
+                    {{ obtenerNombreDetalle(detalle) }}
+                    <span *ngIf="esDetalleExtra(detalle)" style="margin-left:8px;padding:2px 8px;border-radius:999px;background:#fff3e0;color:#b26a00;font-size:.75rem;font-weight:600;">
+                      Extra
+                    </span>
+                    <span *ngIf="detalle.nombrePrenda" style="margin-left:6px;color:#64748b;font-size:.82rem;">
+                      {{ detalle.nombrePrenda }}
+                    </span>
+                  </td>
+                  <td>
+                    <ng-container *ngIf="esDetalleExtra(detalle) && esDetalleAutocompletado(detalle); else cantidadSoloLectura">
+                      <input
+                        type="number"
+                        [(ngModel)]="detalle.cantidad"
+                        [ngModelOptions]="{ standalone: true }"
+                        min="0"
+                        step="0.01"
+                        [disabled]="cargando"
+                        (ngModelChange)="actualizarSubtotal(detalle)"
+                        style="width:110px"
+                        placeholder="Ingresar cantidad"
+                      />
+                    </ng-container>
+                    <ng-template #cantidadSoloLectura>
+                      {{ detalle.cantidad }}
+                    </ng-template>
+                  </td>
                   <td>${{ detalle.precioUnitario | number:'1.2-2' }}</td>
                   <td>${{ detalle.subtotal | number:'1.2-2' }}</td>
                   <td>

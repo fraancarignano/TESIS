@@ -85,13 +85,21 @@ export interface PrendaTalleCrear {
 export interface ProyectoPrendaCrear {
   idTipoPrenda: number;
   idTipoInsumoMaterial: number;
-  idInsumo: number;
+  idInsumo?: number;
   cantidadTotal: number;
   tieneBordado: boolean;
   tieneEstampado: boolean;
   descripcionDiseno?: string;
+  colorTela?: string;
   orden?: number;
   talles: PrendaTalleCrear[];
+  materiales?: ProyectoPrendaMaterialCrear[];
+}
+
+export interface ProyectoPrendaMaterialCrear {
+  idTipoInsumoMaterial: number;
+  idInsumo?: number;
+  colorTela?: string;
 }
 
 export interface MaterialManual {
@@ -110,6 +118,7 @@ export interface ProyectoCrearNuevo {
   fechaInicio: string; // YYYY-MM-DD
   fechaFin?: string;
   idUsuarioEncargado?: number;
+  idMuestra?: number;
   noConsumirStock?: boolean;
   prendas: ProyectoPrendaCrear[];
   materialesManuales?: MaterialManual[];
@@ -142,6 +151,7 @@ export interface ProyectoPrendaDTO {
 export interface MaterialCalculado {
   idMaterialCalculado: number;
   idInsumo: number;
+  idTipoInsumo?: number;
   nombreInsumo: string;
   tipoInsumo: string;
   tipoCalculo: string; // "Auto" o "Manual"
@@ -154,6 +164,9 @@ export interface MaterialCalculado {
   observaciones?: string;
   idProyectoPrenda?: number;
   nombrePrenda?: string;
+  colorInsumo?: string;
+  colorSolicitado?: string;
+  precioUnitario?: number;
 }
 
 export interface ProyectoDetalle {
@@ -171,6 +184,8 @@ export interface ProyectoDetalle {
   cantidadProducida?: number;
   idUsuarioEncargado?: number;
   nombreUsuarioEncargado?: string;
+  idMuestra?: number;
+  nombreMuestra?: string;
   esMultiPrenda: boolean;
   prendas: ProyectoPrendaDTO[];
   materiales: MaterialCalculado[];
@@ -255,15 +270,30 @@ export interface ValidacionStock {
 // ESTADO LOCAL DEL FORMULARIO
 // ============================================
 
+export interface MaterialPrenda {
+  id: string; // UUID temporal
+  idTipoInsumoMaterial?: number;
+  nombreMaterial?: string;
+  idInsumo?: number;
+  colorTela?: string;
+  cantidad?: number;
+}
+
 export interface PrendaFormulario {
   // Temporal, antes de guardar
   id: string; // UUID temporal para el array
   idTipoPrenda?: number;
   nombrePrenda?: string;
+  
+  // Lista de materiales para la prenda
+  materiales?: MaterialPrenda[];
+
+  // Mantengo los campos individuales para compatibilidad hacia atrás
   idTipoInsumoMaterial?: number;
   nombreMaterial?: string;
   idInsumo?: number; // ID del insumo específico (tela con color)
   colorTela?: string; // Color de la tela seleccionada
+  
   cantidadTotal: number;
   tieneBordado: boolean;
   tieneEstampado: boolean;

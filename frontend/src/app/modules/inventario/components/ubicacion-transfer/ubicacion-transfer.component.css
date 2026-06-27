@@ -83,6 +83,7 @@
 
 .input-cant { width: 80px; padding: 5px 8px; border: 1px solid #ddd; border-radius: 5px; font-size: .88rem; text-align: center; }
 .input-precio { width: 100px; padding: 5px 8px; border: 1px solid #ddd; border-radius: 5px; font-size: .88rem; }
+.stock-warning { margin-top: 6px; font-size: .76rem; color: #c62828; font-weight: 600; line-height: 1.2; }
 
 .btn-primary-blue { background: #1976d2; color: #fff; border: none; border-radius: 7px; padding: 9px 18px; cursor: pointer; font-weight: 600; font-size: .88rem; display: inline-flex; align-items: center; gap: 6px; }
 .btn-primary-blue:hover:not(:disabled) { background: #1565c0; }
@@ -103,6 +104,9 @@
 .pt-iniciar { background: linear-gradient(135deg, #e8f5e9, #f1f8e9); border: 2px solid #4caf50 !important; }
 .pt-iniciar-content { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
 .pt-iniciar-content p { margin: 4px 0 0; color: #555; font-size: .88rem; }
+.pt-iniciar-title { display: inline-flex; align-items: center; gap: 10px; }
+.pt-iniciar-icon { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: #2e7d32; color: #fff; box-shadow: 0 4px 10px rgba(46,125,50,.2); }
+.pt-iniciar-icon svg { width: 16px; height: 16px; fill: currentColor; }
 .btn-iniciar { background: #2e7d32; color: #fff; border: none; border-radius: 8px; padding: 12px 24px; cursor: pointer; font-weight: 700; font-size: 1rem; white-space: nowrap; }
 .btn-iniciar:hover:not(:disabled) { background: #1b5e20; }
 .btn-iniciar:disabled { opacity: .5; cursor: not-allowed; }

@@ -7,6 +7,7 @@ import { AlertasService } from '../../../../core/services/alertas';
 import { InsumosService } from '../../../inventario/services/insumos.service';
 import { TipoInsumo } from '../../../inventario/models/insumo.model';
 import { ProyectosService } from '../../../proyectos/services/proyecto.service';
+import { ProyectosServiceNuevo } from '../../../proyectos/services/proyectos-nuevo.service';
 
 @Component({
   selector: 'app-orden-compra-form',
@@ -32,6 +33,7 @@ export class OrdenCompraFormComponent implements OnInit {
   tiposInsumo: TipoInsumo[] = [];
 
   detalles: DetalleOrdenCompraDTO[] = [];
+  detallesAutocompletados = new Set<DetalleOrdenCompraDTO>();
 
   // Modo agregar: 'existente' | 'nuevo'
   modoAgregar: 'existente' | 'nuevo' = 'existente';
@@ -104,7 +106,8 @@ export class OrdenCompraFormComponent implements OnInit {
     private ordenCompraService: OrdenCompraService,
     private insumosService: InsumosService,
     private alertas: AlertasService,
-    private proyectosService: ProyectosService
+    private proyectosService: ProyectosService,
+    private proyectosServiceNuevo: ProyectosServiceNuevo
   ) {}
 
   ngOnInit(): void {
@@ -129,6 +132,69 @@ export class OrdenCompraFormComponent implements OnInit {
     this.ordenCompraService.obtenerProveedores().subscribe({
       next: (data) => { this.proveedores = data; },
       error: () => this.alertas.error('Error', 'No se pudieron cargar los proveedores')
+    });
+  }
+
+  autocompletarDesdeProyecto(): void {
+    if (!this.idProyectoSeleccionado) return;
+    this.cargando = true;
+    this.proyectosServiceNuevo.obtenerProyectoPorId(this.idProyectoSeleccionado).subscribe({
+      next: (proyecto) => {
+        this.cargando = false;
+        if (!proyecto || !proyecto.materiales || proyecto.materiales.length === 0) {
+          this.alertas.info('Sin materiales', 'El proyecto no tiene materiales calculados o faltantes.');
+          return;
+        }
+
+        let agregados = 0;
+        proyecto.materiales.forEach(mat => {
+          const esExtra = this.esMaterialExtra(mat);
+          if (!mat.tieneStock || esExtra) {
+            // Ya está en los detalles?
+            const existe = this.detalles.find(d =>
+              esExtra
+                ? d.idMaterialCalculado === mat.idMaterialCalculado
+                : d.idInsumo === mat.idInsumo
+            );
+            if (!existe && mat.idInsumo) {
+              // Calcular faltante. Los extras se agregan sin cantidad para carga manual.
+              const faltante = esExtra
+                ? 0
+                : mat.stockActual < mat.cantidadFinal ? mat.cantidadFinal - mat.stockActual : mat.cantidadFinal;
+              
+              // Buscar insumo en la lista para obtener precio
+              const insumoBase = this.insumos.find(i => i.idInsumo === mat.idInsumo);
+              const precio = insumoBase?.precioUnitario || mat.precioUnitario || 0;
+
+              const detalle = {
+                idInsumo: mat.idInsumo,
+                cantidad: parseFloat(faltante.toFixed(2)),
+                precioUnitario: precio,
+                subtotal: parseFloat((faltante * precio).toFixed(2)),
+                idProyecto: this.idProyectoSeleccionado,
+                idProyectoPrenda: mat.idProyectoPrenda,
+                esMaterialExtra: esExtra,
+                idMaterialCalculado: mat.idMaterialCalculado,
+                nombrePrenda: mat.nombrePrenda
+              };
+
+              this.detalles.push(detalle);
+              if (esExtra) this.detallesAutocompletados.add(detalle);
+              agregados++;
+            }
+          }
+        });
+
+        if (agregados > 0) {
+          this.alertas.success('Insumos agregados', `Se agregaron ${agregados} insumos del proyecto.`);
+        } else {
+          this.alertas.info('Sin faltantes', 'No hay insumos faltantes nuevos para agregar.');
+        }
+      },
+      error: (err) => {
+        this.cargando = false;
+        this.alertas.error('Error', 'No se pudo cargar el detalle del proyecto para autocompletar.');
+      }
     });
   }
 
@@ -209,6 +275,21 @@ export class OrdenCompraFormComponent implements OnInit {
     this.detalles.splice(index, 1);
   }
 
+  esDetalleExtra(detalle: DetalleOrdenCompraDTO): boolean {
+    return !!detalle.esMaterialExtra;
+  }
+
+  esDetalleAutocompletado(detalle: DetalleOrdenCompraDTO): boolean {
+    return this.detallesAutocompletados.has(detalle);
+  }
+
+  actualizarSubtotal(detalle: DetalleOrdenCompraDTO): void {
+    const cantidad = Number(detalle.cantidad || 0);
+    const precio = Number(detalle.precioUnitario || 0);
+    detalle.cantidad = cantidad;
+    detalle.subtotal = parseFloat((cantidad * precio).toFixed(2));
+  }
+
   get totalOrden(): number {
     return this.detalles.reduce((sum, d) => sum + d.subtotal, 0);
   }
@@ -223,6 +304,11 @@ export class OrdenCompraFormComponent implements OnInit {
     return insumo.color ? `${insumo.nombreInsumo} — ${insumo.color}` : insumo.nombreInsumo;
   }
 
+  // Helper method to check if a material is extra
+  esMaterialExtra(mat: any): boolean {
+    return mat.tipoCalculo === 'Extra';
+  }
+
   async guardarOrden(): Promise<void> {
     if (!this.idProveedorSeleccionado || !this.fechaSolicitud) {
       this.alertas.error('Datos incompletos', 'Complete todos los campos obligatorios');
@@ -230,6 +316,14 @@ export class OrdenCompraFormComponent implements OnInit {
     }
     if (this.detalles.length === 0) {
       this.alertas.error('Sin insumos', 'Debe agregar al menos un insumo');
+      return;
+    }
+    if (this.detalles.some(d => d.cantidad <= 0)) {
+      this.alertas.error('Cantidad pendiente', 'Completá la cantidad de los materiales extra o quitálos del pedido.');
+      return;
+    }
+    if (this.detalles.some(d => d.precioUnitario <= 0)) {
+      this.alertas.error('Precio pendiente', 'Completá el precio unitario de todos los materiales del pedido.');
       return;
     }
 

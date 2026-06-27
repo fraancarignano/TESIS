@@ -121,7 +121,10 @@ namespace TESIS_OG.Services.OrdenCompraService
                         IdInsumo = detalleDto.IdInsumo,
                         Cantidad = detalleDto.Cantidad,
                         PrecioUnitario = detalleDto.PrecioUnitario,
-                        Subtotal = detalleDto.Subtotal
+                        Subtotal = detalleDto.Subtotal,
+                        IdProyecto = detalleDto.IdProyecto ?? ordenDto.IdProyecto,
+                        IdProyectoPrenda = detalleDto.IdProyectoPrenda,
+                        EsMaterialExtra = detalleDto.EsMaterialExtra
                     };
 
                     _context.DetalleOrdenCompras.Add(detalle);
@@ -339,7 +342,7 @@ namespace TESIS_OG.Services.OrdenCompraService
                 if (detalle.CantidadRecibida <= 0) return null;
             }
 
-            // 4. Actualizar el stock de cada insumo
+            // 4. Actualizar el stock de cada insumo y manejar materiales extra
             foreach (var detalle in recepcionDto.Detalles)
             {
                 var insumo = await _context.Insumos
@@ -352,7 +355,28 @@ namespace TESIS_OG.Services.OrdenCompraService
                     insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
                 }
 
-                // 5. Registrar el movimiento de inventario
+                // 5. Si es un material extra de proyecto, actualizar el MaterialCalculado
+                var detalleOrden = orden.DetalleOrdenCompras.FirstOrDefault(d => d.IdInsumo == detalle.IdInsumo);
+                if (detalleOrden != null && detalleOrden.IdProyecto.HasValue && detalleOrden.IdProyectoPrenda.HasValue)
+                {
+                    var materialCalculado = await _context.MaterialCalculados
+                        .FirstOrDefaultAsync(m => 
+                            m.IdProyecto == detalleOrden.IdProyecto.Value &&
+                            m.IdProyectoPrenda == detalleOrden.IdProyectoPrenda.Value &&
+                            m.IdInsumo == detalle.IdInsumo &&
+                            m.TipoCalculo == "Extra");
+
+                    if (materialCalculado != null)
+                    {
+                        // La cantidad final se resuelve en lectura como
+                        // CantidadManual ?? CantidadCalculada.
+                        // Para materiales extra, la recepción fija la cantidad manual recibida.
+                        materialCalculado.CantidadManual = detalle.CantidadRecibida;
+                        materialCalculado.TieneStock = true;
+                    }
+                }
+
+                // 6. Registrar el movimiento de inventario
                 var movimiento = new InventarioMovimiento
                 {
                     IdInsumo = detalle.IdInsumo,
@@ -368,13 +392,13 @@ namespace TESIS_OG.Services.OrdenCompraService
                 _context.InventarioMovimientos.Add(movimiento);
             }
 
-            // 6. Actualizar el estado de la orden a "Recibida"
+            // 7. Actualizar el estado de la orden a "Recibida"
             orden.Estado = "Recibida";
 
-            // 7. Guardar todos los cambios
+            // 8. Guardar todos los cambios
             await _context.SaveChangesAsync();
 
-            // 8. Retornar la orden actualizada
+            // 9. Retornar la orden actualizada
             return await ObtenerOrdenPorIdAsync(orden.IdOrdenCompra);
         }
 

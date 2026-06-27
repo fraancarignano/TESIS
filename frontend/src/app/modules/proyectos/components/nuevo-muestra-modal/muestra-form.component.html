@@ -99,16 +99,37 @@
         <!-- Fecha Inicio -->
         <div class="field" [ngClass]="{'campo-error': formulario.get('fechaInicio')?.invalid && formulario.get('fechaInicio')?.touched}">
           <label>Fecha de Inicio *</label>
-          <input type="date" formControlName="fechaInicio">
+          <div class="date-field-wrapper">
+            <input type="date" formControlName="fechaInicio" #inputFechaInicioMuestra>
+            <button type="button" class="cal-icon-btn" (click)="inputFechaInicioMuestra.showPicker()" title="Abrir calendario" tabindex="-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </button>
+          </div>
           <span class="error-msg" *ngIf="formulario.get('fechaInicio')?.invalid && formulario.get('fechaInicio')?.touched">Requerida</span>
         </div>
 
-        <!-- Fecha Lí­mite -->
+        <!-- Fecha Límite -->
         <div class="field">
-          <label>Fecha Lí­mite</label>
-          <input type="date"
-            formControlName="fechaFin"
-            [min]="fechaMinima">
+          <label>Fecha Límite</label>
+          <div class="date-field-wrapper">
+            <input type="date"
+              formControlName="fechaFin"
+              [min]="fechaMinima"
+              #inputFechaFinMuestra>
+            <button type="button" class="cal-icon-btn" (click)="inputFechaFinMuestra.showPicker()" title="Abrir calendario" tabindex="-1">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -344,31 +365,47 @@
             <small>Si no aparece, agrega uno nuevo.</small>
           </div>
 
-          <!-- Tipo de Material (Tipo de Tela) -->
-          <div class="field">
-            <label>Tipo de Material *</label>
-            <select 
-              [(ngModel)]="prendaEditando.idTipoInsumoMaterial" 
-              [ngModelOptions]="{standalone: true}"
-              (change)="onTipoMaterialChange()"
-            >
-              <option [ngValue]="undefined">Seleccionar tipo de tela...</option>
-              <option *ngFor="let tipoInsumo of tiposInsumoTelas" [ngValue]="tipoInsumo.idTipoInsumo">
-                {{ tipoInsumo.nombreTipo }}
-              </option>
-            </select>
-            <small>Ej: Algodí³n, Lycra, Polyester, etc.</small>
-          </div>
-          <!-- Color/Variante (referencial) -->
-          <div class="field">
-            <label>Color o variante (referencial)</label>
-            <input
-              type="text"
-              [(ngModel)]="prendaEditando.colorTela"
-              [ngModelOptions]="{standalone: true}"
-              placeholder="Ej: Azul marino, Rayado, etc."
-            >
-            <small>Solo informativo, no impacta stock.</small>
+          <!-- Múltiples Materiales -->
+          <div class="seccion-materiales" style="margin-top: 1rem; border-top: 1px dashed #ccc; padding-top: 1rem;">
+            <label style="margin-bottom: 0.5rem; display: block; font-size: 1rem;">Materiales *</label>
+            <div class="material-item" *ngFor="let mat of prendaEditando.materiales; let matIndex = index" style="background: #f9f9f9; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #eee;">
+              <div class="material-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-weight: 600; color: #555;">Material {{ matIndex + 1 }}</span>
+                <button type="button" class="btn-delete-mini" (click)="eliminarMaterialDePrenda(matIndex)" *ngIf="(prendaEditando.materiales?.length || 0) > 1" title="Eliminar material">✕</button>
+              </div>
+              
+              <!-- Tipo de Material (Tipo de Tela) -->
+              <div class="field" style="margin-bottom: 0.8rem;">
+                <label>Tipo de Material *</label>
+                <select 
+                  [(ngModel)]="mat.idTipoInsumoMaterial" 
+                  [ngModelOptions]="{standalone: true}"
+                  (change)="onTipoMaterialChange(matIndex)"
+                >
+                  <option [ngValue]="undefined">Seleccionar tipo de tela...</option>
+                  <option *ngFor="let tipoInsumo of tiposInsumoTelas" [ngValue]="tipoInsumo.idTipoInsumo">
+                    {{ tipoInsumo.nombreTipo }}
+                  </option>
+                </select>
+                <small *ngIf="matIndex === 0">Ej: Algodón, Lycra, Polyester, etc.</small>
+              </div>
+
+              <!-- Color/Variante (referencial) -->
+              <div class="field" *ngIf="mat.idTipoInsumoMaterial">
+                <label>Color o variante (referencial)</label>
+                <input
+                  type="text"
+                  [(ngModel)]="mat.colorTela"
+                  [ngModelOptions]="{standalone: true}"
+                  placeholder="Ej: Azul marino, Rayado, etc."
+                >
+                <small *ngIf="matIndex === 0">Solo informativo, no impacta stock.</small>
+              </div>
+            </div>
+            
+            <button type="button" class="btn-secondary-sm btn-agregar-material" (click)="agregarMaterialAPrenda()" style="margin-bottom: 1rem;">
+              <i class="fas fa-plus"></i> Agregar otro material
+            </button>
           </div>
 
           <!-- Diseño -->

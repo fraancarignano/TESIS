@@ -49,6 +49,8 @@ namespace TESIS_OG.DTOs.Configuracion
         public List<PrendaParaCalculoDTO> Prendas { get; set; } = new();
 
         public List<MaterialManualParaCalculoDTO>? MaterialesManuales { get; set; }
+
+        public bool? NoConsumirStock { get; set; }
     }
 
     public class PrendaParaCalculoDTO
@@ -57,6 +59,14 @@ namespace TESIS_OG.DTOs.Configuracion
         public int IdTipoInsumoMaterial { get; set; }
         public int? IdInsumo { get; set; } // Opcional: para calcular con un insumo específico
         public int CantidadTotal { get; set; }
+        public string? ColorSolicitado { get; set; }
+        public List<MaterialParaCalculoDTO>? Materiales { get; set; }
+    }
+
+    public class MaterialParaCalculoDTO
+    {
+        public int IdTipoInsumoMaterial { get; set; }
+        public int? IdInsumo { get; set; }
         public string? ColorSolicitado { get; set; }
     }
 

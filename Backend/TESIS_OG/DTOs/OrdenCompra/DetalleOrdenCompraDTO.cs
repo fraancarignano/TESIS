@@ -14,5 +14,10 @@
         public int? NuevoIdTipoInsumo { get; set; }
         public string? NuevoColor { get; set; }
         public string? NuevoUnidadMedida { get; set; }
+
+        // Campos para materiales extra de proyecto
+        public int? IdProyecto { get; set; }
+        public int? IdProyectoPrenda { get; set; }
+        public bool EsMaterialExtra { get; set; }
     }
 }

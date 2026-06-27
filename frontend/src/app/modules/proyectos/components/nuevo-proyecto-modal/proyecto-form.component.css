@@ -246,6 +246,65 @@ textarea {
   font-size: 0.84rem;
   transition: all 0.2s;
   background: white;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Wrapper para los inputs de fecha con icono */
+.date-field-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.date-field-wrapper input[type="date"] {
+  padding-right: 2.2rem; /* Espacio para el icono */
+  width: 100%;
+}
+
+.date-field-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
+  /* Ocultamos el icono por defecto o lo hacemos transparente para que el click lo intercepte si es necesario, 
+     pero al tener nuestro botón lo ideal es taparlo o dejarlo detrás */
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 2.2rem;
+  height: 100%;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.cal-icon-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #757575;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+  z-index: 1; /* El pseudo-elemento picker-indicator está encima para capturar clics en webkit, o el botón lo captura si usamos showPicker */
+  pointer-events: none; /* Para que el clic pase al picker-indicator en navegadores webkit, o lo habilitamos si dependemos de JS puro */
+}
+
+/* Si dependemos del .showPicker() en Angular, el pointer-events debe ser auto, y ocultamos el indicator webkit */
+.date-field-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+.cal-icon-btn {
+  pointer-events: auto;
+}
+.cal-icon-btn:hover {
+  background: #f0f0f0;
+  color: #ff5722;
 }
 
 input:focus,

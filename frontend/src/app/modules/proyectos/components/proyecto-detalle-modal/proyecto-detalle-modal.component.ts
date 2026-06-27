@@ -123,6 +123,13 @@ export class ProyectoDetalleModalComponent implements OnInit {
   disenoPrendasMap: Record<number, DisenoPrendaForm> = {};
   disenoResumenPrendas: DisenoResumenPrenda[] = [];
   loadingSync = false;
+  /** Muestra vinculada al proyecto (desde API de diseño o proyecto). */
+  muestraVinculadaId?: number | null;
+  muestraVinculadaNombre?: string | null;
+  /** Muestras aprobadas del mismo cliente sin proyecto, para vincular manualmente. */
+  muestrasDisponiblesVincular: { idMuestra: number; nombreMuestra: string }[] = [];
+  muestraSeleccionadaVincular = '';
+  vinculandoMuestra = false;
   tendidas: TendidaForm[] = [];
   historialScrap: any[] = [];
   materialesCorte: any[] = [];
@@ -418,7 +425,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
   }
 
   async sincronizarConMuestra(): Promise<void> {
-    if (!this.proyecto.idMuestra || this.loadingSync) return;
+    const idMuestra = this.idMuestraActiva;
+    if (!idMuestra || this.loadingSync) return;
 
     const confirmar = await this.alertas.confirmar(
       'Sincronizar Diseño',
@@ -428,15 +436,54 @@ export class ProyectoDetalleModalComponent implements OnInit {
     if (!confirmar) return;
 
     this.loadingSync = true;
-    this.muestrasService.sincronizarDiseno(this.proyecto.idMuestra).subscribe({
+    this.muestrasService.sincronizarDiseno(idMuestra).subscribe({
       next: () => {
         this.alertas.toast('Diseño sincronizado correctamente');
-        this.cargarDisenoArea(); // Recargar los datos para mostrar los nuevos mockups
+        this.cargarDisenoArea();
         this.loadingSync = false;
       },
       error: (err: any) => {
         this.alertas.error('Error de sincronización', err?.message || 'No se pudo sincronizar el diseño.');
         this.loadingSync = false;
+      }
+    });
+  }
+
+  get idMuestraActiva(): number | null {
+    const id = this.muestraVinculadaId ?? this.proyecto?.idMuestra;
+    return id && Number(id) > 0 ? Number(id) : null;
+  }
+
+  get tieneMuestraParaSincronizar(): boolean {
+    return !!this.idMuestraActiva;
+  }
+
+  get nombreMuestraActiva(): string {
+    return this.muestraVinculadaNombre || this.proyecto?.nombreMuestra || 'Muestra asociada';
+  }
+
+  async vincularMuestraSeleccionada(): Promise<void> {
+    const idMuestra = Number(this.muestraSeleccionadaVincular);
+    const idProyecto = Number(this.proyecto?.idProyecto);
+    if (!idMuestra || !idProyecto || this.vinculandoMuestra) return;
+
+    this.vinculandoMuestra = true;
+    this.muestrasService.asignarMuestraAProyecto(idMuestra, idProyecto).subscribe({
+      next: () => {
+        const muestra = this.muestrasDisponiblesVincular.find(m => m.idMuestra === idMuestra);
+        this.muestraVinculadaId = idMuestra;
+        this.muestraVinculadaNombre = muestra?.nombreMuestra ?? null;
+        this.proyecto.idMuestra = idMuestra;
+        this.proyecto.nombreMuestra = this.muestraVinculadaNombre ?? undefined;
+        this.muestrasDisponiblesVincular = [];
+        this.muestraSeleccionadaVincular = '';
+        this.vinculandoMuestra = false;
+        this.alertas.toast('Muestra vinculada al proyecto');
+        void this.sincronizarConMuestra();
+      },
+      error: (err: any) => {
+        this.vinculandoMuestra = false;
+        this.alertas.error('Error', err?.message || 'No se pudo vincular la muestra.');
       }
     });
   }
@@ -1070,9 +1117,13 @@ export class ProyectoDetalleModalComponent implements OnInit {
     if (!idProyecto || Number.isNaN(idProyecto)) return;
 
     this.cargandoDiseno = true;
+    this.muestrasDisponiblesVincular = [];
+    this.muestraSeleccionadaVincular = '';
 
     this.disenoService.obtenerResumenProyecto(idProyecto).subscribe({
       next: (resumen) => {
+        this.aplicarMuestraDesdeResumenDiseno(resumen.idMuestra, resumen.nombreMuestra);
+
         this.disenoResumenPrendas = resumen.prendas.map(prenda => ({
           idProyectoPrenda: Number(prenda.idProyectoPrenda),
           nombrePrenda: String(prenda.tipoPrenda || '').trim() || 'Prenda',
@@ -1131,6 +1182,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al cargar resumen de diseño:', err);
+        this.resolverMuestraVinculadaFallback();
         this.disenoResumenPrendas = this.construirResumenDisenoPrendas();
 
         this.disenoPrendas = this.disenoResumenPrendas.map(prenda => ({
@@ -1174,6 +1226,74 @@ export class ProyectoDetalleModalComponent implements OnInit {
             this.cargandoDiseno = false;
           }
         });
+      }
+    });
+  }
+
+  private aplicarMuestraDesdeResumenDiseno(
+    idMuestra?: number | null,
+    nombreMuestra?: string | null
+  ): void {
+    if (idMuestra && Number(idMuestra) > 0) {
+      this.muestraVinculadaId = Number(idMuestra);
+      this.muestraVinculadaNombre = nombreMuestra ?? null;
+      this.proyecto.idMuestra = this.muestraVinculadaId;
+      this.proyecto.nombreMuestra = this.muestraVinculadaNombre ?? undefined;
+      this.muestrasDisponiblesVincular = [];
+      return;
+    }
+
+    this.resolverMuestraVinculadaFallback();
+  }
+
+  private resolverMuestraVinculadaFallback(): void {
+    if (this.proyecto?.idMuestra && Number(this.proyecto.idMuestra) > 0) {
+      this.muestraVinculadaId = Number(this.proyecto.idMuestra);
+      this.muestraVinculadaNombre = this.proyecto.nombreMuestra ?? null;
+      return;
+    }
+
+    this.muestraVinculadaId = null;
+    this.muestraVinculadaNombre = null;
+    this.cargarMuestrasDisponiblesParaVincular();
+  }
+
+  private cargarMuestrasDisponiblesParaVincular(): void {
+    const idCliente = Number(this.proyecto?.idCliente);
+    const idProyecto = Number(this.proyecto?.idProyecto);
+    if (!idCliente || !idProyecto) return;
+
+    this.muestrasService.obtenerMuestras().subscribe({
+      next: (muestras) => {
+        const lista = muestras || [];
+
+        const asignadaAProyecto = lista.find(m => Number(m.idProyectoAsignado) === idProyecto);
+        if (asignadaAProyecto) {
+          this.muestraVinculadaId = asignadaAProyecto.idMuestra;
+          this.muestraVinculadaNombre = asignadaAProyecto.nombreMuestra;
+          this.proyecto.idMuestra = asignadaAProyecto.idMuestra;
+          this.proyecto.nombreMuestra = asignadaAProyecto.nombreMuestra;
+          this.muestrasDisponiblesVincular = [];
+          return;
+        }
+
+        this.muestrasDisponiblesVincular = lista
+          .filter(m =>
+            (m.estado || '').toLowerCase() === 'aprobada' &&
+            Number(m.idCliente) === idCliente &&
+            !m.idProyectoAsignado
+          )
+          .map(m => ({
+            idMuestra: m.idMuestra,
+            nombreMuestra: m.nombreMuestra || `Muestra #${m.idMuestra}`
+          }));
+
+        if (this.muestrasDisponiblesVincular.length === 1) {
+          this.muestraSeleccionadaVincular = String(this.muestrasDisponiblesVincular[0].idMuestra);
+        }
+      },
+      error: () => {
+        this.muestrasDisponiblesVincular = [];
       }
     });
   }

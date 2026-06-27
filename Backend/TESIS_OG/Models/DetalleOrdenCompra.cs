@@ -17,6 +17,11 @@ public partial class DetalleOrdenCompra
 
     public decimal? Subtotal { get; set; }
 
+    // Campos para materiales extra de proyecto
+    public int? IdProyecto { get; set; }
+    public int? IdProyectoPrenda { get; set; }
+    public bool? EsMaterialExtra { get; set; }
+
     public virtual Insumo IdInsumoNavigation { get; set; } = null!;
 
     public virtual OrdenCompra IdOrdenCompraNavigation { get; set; } = null!;

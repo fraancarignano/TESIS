@@ -107,7 +107,16 @@ verificarMaterialesListos(id: number): Observable<{ listos: boolean; detalles: a
 /**
  * Asignar materiales al proyecto directamente desde stock global
  */
-asignarMaterialesAlProyecto(idProyecto: number, materiales: { idInsumo: number; cantidad: number }[]): Observable<any> {
+asignarMaterialesAlProyecto(
+  idProyecto: number,
+  materiales: {
+    idInsumo: number;
+    cantidad: number;
+    idMaterialCalculado?: number;
+    idProyectoPrenda?: number;
+    esMaterialExtra?: boolean;
+  }[]
+): Observable<any> {
   return this.http.post<any>(`${this.apiUrl}/${idProyecto}/asignar-materiales`, { materiales }).pipe(
     catchError(this.handleError)
   );

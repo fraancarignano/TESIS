@@ -55,6 +55,11 @@ namespace TESIS_OG.DTOs.Proyectos
 
         public int? IdUsuarioEncargado { get; set; }
 
+        /// <summary>
+        /// Muestra aprobada a vincular con el proyecto (permite sincronizar diseño después).
+        /// </summary>
+        public int? IdMuestra { get; set; }
+
         // ========== NUEVO: PRENDAS DEL PROYECTO ==========
         [Required(ErrorMessage = "Debe agregar al menos una prenda")]
         [MinLength(1, ErrorMessage = "Debe agregar al menos una prenda")]
@@ -77,6 +82,8 @@ namespace TESIS_OG.DTOs.Proyectos
         [Required(ErrorMessage = "Debe seleccionar el material")]
         public int IdTipoInsumoMaterial { get; set; } // Tipo de tela (Algodón, Lycra, etc)
 
+        public int? IdInsumo { get; set; }
+
         [Required(ErrorMessage = "Debe especificar la cantidad total")]
         [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
         public int CantidadTotal { get; set; }
@@ -93,10 +100,24 @@ namespace TESIS_OG.DTOs.Proyectos
 
         public int? Orden { get; set; }
 
+        // ========== NUEVO: MATERIALES ADICIONALES POR PRENDA ==========
+        public List<ProyectoPrendaMaterialCrearDTO>? Materiales { get; set; }
+
         // ========== DISTRIBUCIÓN POR TALLES ==========
         [Required(ErrorMessage = "Debe especificar la distribución por talles")]
         [MinLength(1, ErrorMessage = "Debe seleccionar al menos un talle")]
         public List<PrendaTalleCrearDTO> Talles { get; set; } = new();
+    }
+
+    public class ProyectoPrendaMaterialCrearDTO
+    {
+        [Required(ErrorMessage = "Debe seleccionar el material")]
+        public int IdTipoInsumoMaterial { get; set; }
+
+        public int? IdInsumo { get; set; }
+
+        [StringLength(80)]
+        public string? ColorTela { get; set; }
     }
 
     // ===================================================

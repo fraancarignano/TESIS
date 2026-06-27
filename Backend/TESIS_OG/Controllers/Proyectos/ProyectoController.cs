@@ -743,6 +743,27 @@ namespace TESIS_OG.Controllers
                         FechaActualizacion = DateTime.Now
                     });
 
+                    var materialExtra = await _context.MaterialCalculados
+                        .FirstOrDefaultAsync(mc =>
+                            mc.IdProyecto == id &&
+                            (
+                                (item.IdMaterialCalculado.HasValue && mc.IdMaterialCalculado == item.IdMaterialCalculado.Value)
+                                || (
+                                    mc.IdInsumo == item.IdInsumo &&
+                                    (!item.IdProyectoPrenda.HasValue || mc.IdProyectoPrenda == item.IdProyectoPrenda.Value) &&
+                                    (item.EsMaterialExtra || mc.TipoCalculo == "Extra" || mc.CantidadCalculada == 0)
+                                )
+                            ));
+
+                    if (materialExtra != null)
+                    {
+                        materialExtra.CantidadManual = item.Cantidad;
+                        materialExtra.UnidadMedida = string.IsNullOrWhiteSpace(materialExtra.UnidadMedida)
+                            ? insumo.UnidadMedida ?? "Unidades"
+                            : materialExtra.UnidadMedida;
+                        materialExtra.TieneStock = true;
+                    }
+
                     var destino = $"Proyecto {proyecto.CodigoProyecto ?? id.ToString()}";
                     var observacion = $"Asignado al proyecto {proyecto.NombreProyecto}";
                     _context.InventarioMovimientos.Add(new InventarioMovimiento
@@ -817,7 +838,14 @@ namespace TESIS_OG.Controllers
                         : mat.IdInsumoNavigation?.Color;
 
                     decimal stockAsignado;
-                    if (idTipoInsumo > 0)
+                    if (mat.IdInsumo > 0)
+                    {
+                        // Siempre contar el stock asignado al insumo específico del material calculado.
+                        stockAsignado = await _context.InsumoStocks
+                            .Where(s => s.IdInsumo == mat.IdInsumo && s.IdProyecto == id)
+                            .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+                    }
+                    else if (idTipoInsumo > 0)
                     {
                         // Con color solicitado → contar por tipo+color; sin color → contar por tipo (cualquier insumo del tipo)
                         if (!string.IsNullOrWhiteSpace(colorParaMatch))
@@ -855,10 +883,7 @@ namespace TESIS_OG.Controllers
                     }
                     else
                     {
-                        // Fallback: por insumo exacto
-                        stockAsignado = await _context.InsumoStocks
-                            .Where(s => s.IdInsumo == mat.IdInsumo && s.IdProyecto == id)
-                            .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+                        stockAsignado = 0;
                     }
 
                     var listo = stockAsignado >= cantidadNecesaria;
@@ -998,5 +1023,8 @@ namespace TESIS_OG.Controllers
     {
         public int IdInsumo { get; set; }
         public decimal Cantidad { get; set; }
+        public int? IdMaterialCalculado { get; set; }
+        public int? IdProyectoPrenda { get; set; }
+        public bool EsMaterialExtra { get; set; }
     }
 }

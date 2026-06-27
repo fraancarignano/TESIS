@@ -37,6 +37,9 @@ namespace TESIS_OG.DTOs.Proyectos
         public decimal? ScrapTotal { get; set; }
         public decimal? ScrapPorcentaje { get; set; }
 
+        public int? IdMuestra { get; set; }
+        public string? NombreMuestra { get; set; }
+
         public List<ProyectoPrendaResumenDTO> Prendas { get; set; } = new();
     }
 

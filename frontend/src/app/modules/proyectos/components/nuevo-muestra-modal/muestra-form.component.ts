@@ -74,7 +74,7 @@ export class MuestraFormNuevoComponent implements OnInit, OnDestroy {
   prioridades: string[] = ['baja', 'media', 'alta'];
   insumosTelasFiltrados: InsumoFormulario[] = [];
 
-  // Prendas del proyecto
+  // Prendas de la muestra
   prendasProyecto: PrendaFormulario[] = [];
   prendaEditando?: PrendaFormulario;
   indexPrendaEditando: number = -1;
@@ -84,6 +84,84 @@ export class MuestraFormNuevoComponent implements OnInit, OnDestroy {
   mostrarModalTalles = false;
   tallesDistribuyendo: TalleDistribuido[] = [];
   cantidadTotalTalles = 0;
+
+  // Buscador inteligente de material
+  busquedaMaterialNombres: { [index: number]: string } = {};
+  busquedaMaterialIds: { [index: number]: number | undefined } = {};
+  mostrarSugerenciasMaterial = false;
+  materialEnEdicionIndex = -1;
+
+  get insumosTelasBusqueda(): InsumoFormulario[] {
+    if (this.materialEnEdicionIndex === -1 || !this.prendaEditando?.materiales) return [];
+    const idx = this.materialEnEdicionIndex;
+    const mat = this.prendaEditando.materiales[idx];
+    if (!mat?.idTipoInsumoMaterial) return [];
+    
+    const base = this.insumosTelas.filter(
+      i => i.idTipoInsumo === Number(mat.idTipoInsumoMaterial)
+    );
+    const termNombre = (this.busquedaMaterialNombres[idx] || '').trim().toLowerCase();
+    const termId = this.busquedaMaterialIds[idx];
+    if (!termNombre && !termId) return base.slice(0, 8);
+    return base.filter(i => {
+      if (termId) return i.idInsumo === termId;
+      return i.nombreInsumo.toLowerCase().includes(termNombre) ||
+             (i.color || '').toLowerCase().includes(termNombre);
+    }).slice(0, 10);
+  }
+
+  onBusquedaMaterialNombreChange(index: number): void {
+    this.materialEnEdicionIndex = index;
+    if (this.prendaEditando?.materiales) {
+      this.prendaEditando.materiales[index].idInsumo = undefined;
+    }
+    this.mostrarSugerenciasMaterial = true;
+  }
+
+  onBusquedaMaterialIdChange(index: number): void {
+    this.materialEnEdicionIndex = index;
+    const termId = this.busquedaMaterialIds[index];
+    if (termId) {
+      const found = this.insumosTelas.find(i => i.idInsumo === termId);
+      if (found) { this.seleccionarMaterial(found, index); return; }
+    }
+    if (this.prendaEditando?.materiales) {
+      this.prendaEditando.materiales[index].idInsumo = undefined;
+    }
+  }
+
+  seleccionarMaterial(insumo: InsumoFormulario, index?: number): void {
+    const idx = index !== undefined ? index : this.materialEnEdicionIndex;
+    if (idx === -1 || !this.prendaEditando?.materiales) return;
+    const mat = this.prendaEditando.materiales[idx];
+    mat.idInsumo = insumo.idInsumo;
+    mat.colorTela = insumo.color || undefined;
+    this.busquedaMaterialNombres[idx] = '';
+    this.busquedaMaterialIds[idx] = undefined;
+    this.mostrarSugerenciasMaterial = false;
+    this.materialEnEdicionIndex = -1;
+  }
+
+  limpiarMaterialSeleccionado(index: number): void {
+    if (!this.prendaEditando?.materiales) return;
+    const mat = this.prendaEditando.materiales[index];
+    mat.idInsumo = undefined;
+    mat.colorTela = undefined;
+    this.busquedaMaterialNombres[index] = '';
+    this.busquedaMaterialIds[index] = undefined;
+    this.materialEnEdicionIndex = -1;
+  }
+
+  ocultarSugerenciasMaterialDelay(): void {
+    setTimeout(() => { this.mostrarSugerenciasMaterial = false; }, 200);
+  }
+
+  getMaterialSeleccionadoObj(index: number): InsumoFormulario | undefined {
+    if (!this.prendaEditando?.materiales) return undefined;
+    const mat = this.prendaEditando.materiales[index];
+    if (!mat?.idInsumo) return undefined;
+    return this.insumosTelas.find(i => i.idInsumo === Number(mat.idInsumo));
+  }
 
   // Modal nuevo tipo de prenda
   mostrarModalTipoPrenda = false;
@@ -238,18 +316,39 @@ export class MuestraFormNuevoComponent implements OnInit, OnDestroy {
   // FILTRO DE MATERIALES
   // ========================================
 
-  onTipoMaterialChange(): void {
+  onTipoMaterialChange(index: number): void {
+    if (!this.prendaEditando?.materiales) return;
+    const mat = this.prendaEditando.materiales[index];
     
-    if (!this.prendaEditando?.idTipoInsumoMaterial) {
+    if (!mat.idTipoInsumoMaterial) {
       this.insumosTelasFiltrados = [];
-      this.prendaEditando!.idInsumo = undefined;
-      this.prendaEditando!.colorTela = undefined;
+      mat.idInsumo = undefined;
+      mat.colorTela = undefined;
+      this.busquedaMaterialNombres[index] = '';
+      this.busquedaMaterialIds[index] = undefined;
       return;
     }
 
-    // Solo informativo, no usamos stock. Asignamos un id ficticio basado en el tipo.
+    // Solo informativo, no usamos stock en muestras habitualmente. Asignamos un id ficticio basado en el tipo si no elige uno específico.
     this.insumosTelasFiltrados = [];
-    this.prendaEditando!.idInsumo = Number(this.prendaEditando!.idTipoInsumoMaterial);
+    mat.idInsumo = Number(mat.idTipoInsumoMaterial);
+    mat.colorTela = undefined;
+    this.busquedaMaterialNombres[index] = '';
+    this.busquedaMaterialIds[index] = undefined;
+  }
+
+  agregarMaterialAPrenda(): void {
+    if (!this.prendaEditando) return;
+    if (!this.prendaEditando.materiales) this.prendaEditando.materiales = [];
+    this.prendaEditando.materiales.push({
+      id: generarIdTemporal(),
+      cantidad: 1
+    });
+  }
+
+  eliminarMaterialDePrenda(index: number): void {
+    if (!this.prendaEditando?.materiales) return;
+    this.prendaEditando.materiales.splice(index, 1);
   }
 
   // ========================================
@@ -277,38 +376,59 @@ export class MuestraFormNuevoComponent implements OnInit, OnDestroy {
   }
 
   editarPrenda(prenda: PrendaFormulario, index: number): void {
-    this.prendaEditando = {
-      ...prenda,
-      idTipoPrenda: prenda.idTipoPrenda ? Number(prenda.idTipoPrenda as any) : undefined,
-      idTipoInsumoMaterial: prenda.idTipoInsumoMaterial ? Number(prenda.idTipoInsumoMaterial as any) : undefined,
-      idInsumo: prenda.idInsumo ? Number(prenda.idInsumo as any) : undefined,
-      paletaColores: (prenda.paletaColores || []).slice()
-    };
+    this.prendaEditando = this.clonarPrenda(prenda);
+    if (this.prendaEditando) {
+      this.prendaEditando.idTipoPrenda = this.prendaEditando.idTipoPrenda ? Number(this.prendaEditando.idTipoPrenda as any) : undefined;
+    }
     this.indexPrendaEditando = index;
     this.prendaEditandoSnapshot = this.clonarPrenda(this.prendaEditando);
     
-    if (this.prendaEditando.idTipoInsumoMaterial) {
-      this.insumosTelasFiltrados = this.insumosTelas.filter(
-        insumo => insumo.idTipoInsumo === this.prendaEditando!.idTipoInsumoMaterial
-      );
+    // Si la prenda vieja no tenía materiales, inicializamos
+    if (this.prendaEditando && !this.prendaEditando.materiales) {
+      this.prendaEditando.materiales = [];
+      if (this.prendaEditando.idTipoInsumoMaterial) {
+        this.prendaEditando.materiales.push({
+          id: generarIdTemporal(),
+          idTipoInsumoMaterial: Number(this.prendaEditando.idTipoInsumoMaterial),
+          idInsumo: this.prendaEditando.idInsumo ? Number(this.prendaEditando.idInsumo) : undefined,
+          colorTela: this.prendaEditando.colorTela,
+          cantidad: 1
+        });
+      }
     }
   }
 
   guardarPrenda(prenda: PrendaFormulario): void {
     this.aplicarTalleDefecto(prenda);
 
-    // Normalizar IDs (ngModel en <select> puede devolver string)
+    // Normalizar IDs
     prenda.idTipoPrenda = prenda.idTipoPrenda ? Number(prenda.idTipoPrenda) : undefined;
-    prenda.idTipoInsumoMaterial = prenda.idTipoInsumoMaterial ? Number(prenda.idTipoInsumoMaterial) : undefined;
-    prenda.idInsumo = prenda.idInsumo ? Number(prenda.idInsumo) : undefined;
 
-    if (!prenda.idTipoPrenda || !prenda.idTipoInsumoMaterial || prenda.cantidadTotal <= 0) {
+    if (!prenda.idTipoPrenda || prenda.cantidadTotal <= 0) {
       this.errorMensaje = 'Completa todos los campos obligatorios de la prenda';
       return;
     }
 
+    if (!prenda.materiales || prenda.materiales.length === 0) {
+      this.errorMensaje = 'Debes agregar al menos un material a la prenda';
+      return;
+    }
+
+    const materialesInvalidos = prenda.materiales.some(m => !m.idTipoInsumoMaterial);
+    if (materialesInvalidos) {
+      this.errorMensaje = 'Todos los materiales deben tener un tipo de material seleccionado';
+      return;
+    }
+
+    // Compatibilidad hacia atrás: setear el primer material en los campos raíz
+    const primerMaterial = prenda.materiales[0];
+    prenda.idTipoInsumoMaterial = primerMaterial.idTipoInsumoMaterial;
+    prenda.idInsumo = primerMaterial.idInsumo;
+    prenda.colorTela = primerMaterial.colorTela;
+
     if (!prenda.idInsumo) {
       prenda.idInsumo = Number(prenda.idTipoInsumoMaterial);
+      primerMaterial.idInsumo = prenda.idInsumo;
     }
 
     if (prenda.tallesDistribuidos.length === 0) {
@@ -369,14 +489,23 @@ export class MuestraFormNuevoComponent implements OnInit, OnDestroy {
   private compararPrendas(a: PrendaFormulario, b: PrendaFormulario): boolean {
     if (
       a.idTipoPrenda !== b.idTipoPrenda ||
-      a.idTipoInsumoMaterial !== b.idTipoInsumoMaterial ||
-      a.idInsumo !== b.idInsumo ||
       a.cantidadTotal !== b.cantidadTotal ||
       a.tieneBordado !== b.tieneBordado ||
       a.tieneEstampado !== b.tieneEstampado ||
       (a.descripcionDiseno || '').trim() !== (b.descripcionDiseno || '').trim()
     ) {
       return false;
+    }
+
+    const matA = a.materiales || [];
+    const matB = b.materiales || [];
+    if (matA.length !== matB.length) return false;
+    for (let i = 0; i < matA.length; i++) {
+      if (matA[i].idTipoInsumoMaterial !== matB[i].idTipoInsumoMaterial ||
+          matA[i].idInsumo !== matB[i].idInsumo ||
+          matA[i].colorTela !== matB[i].colorTela) {
+        return false;
+      }
     }
 
     const ta = (a.tallesDistribuidos || []).map(t => ({ idTalle: t.idTalle, cantidad: t.cantidad })).sort((x, y) => x.idTalle - y.idTalle);
@@ -395,6 +524,7 @@ export class MuestraFormNuevoComponent implements OnInit, OnDestroy {
     if (!prenda) return undefined;
     return {
       ...prenda,
+      materiales: (prenda.materiales || []).map(m => ({ ...m })),
       paletaColores: (prenda.paletaColores || []).slice(),
       tallesDistribuidos: (prenda.tallesDistribuidos || []).map(t => ({ ...t }))
     };
