@@ -231,6 +231,30 @@ export class ReporteProyectosComponent implements OnInit, AfterViewInit, OnDestr
             this.datosReporte.length === 0 && this.datosEvolucion.length === 0;
     }
 
+    get filasTablaProduccion(): ProduccionPorPrenda[] {
+        return [...this.datosReporte].sort((a, b) => {
+            if (a.cantidadProducida !== b.cantidadProducida) {
+                return b.cantidadProducida - a.cantidadProducida;
+            }
+
+            return a.nombrePrenda.localeCompare(b.nombrePrenda);
+        });
+    }
+
+    get filasTablaEvolucion(): EvolucionPrenda[] {
+        return [...this.datosEvolucion].sort((a, b) => {
+            if (a.año !== b.año) {
+                return a.año - b.año;
+            }
+
+            return a.mes - b.mes;
+        });
+    }
+
+    formatearPeriodo(fila: EvolucionPrenda): string {
+        return `${MESES[fila.mes - 1]} ${fila.año}`;
+    }
+
     ngOnDestroy(): void {
         if (this.chart) this.chart.destroy();
     }

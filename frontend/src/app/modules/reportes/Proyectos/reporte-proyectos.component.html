@@ -92,6 +92,45 @@
         <canvas #chartProduccion></canvas>
     </div>
 
+    <!-- Tabla -->
+    <div class="tabla-container" *ngIf="!loading && !error && !sinDatos">
+        <div class="tabla-wrapper" *ngIf="!modoEvolucion; else tablaEvolucion">
+            <table class="tabla-reporte">
+                <thead>
+                    <tr>
+                        <th>Tipo de Prenda</th>
+                        <th>Cantidad Producida</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let fila of filasTablaProduccion">
+                        <td>{{ fila.nombrePrenda }}</td>
+                        <td>{{ fila.cantidadProducida }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <ng-template #tablaEvolucion>
+            <div class="tabla-wrapper">
+                <table class="tabla-reporte">
+                    <thead>
+                        <tr>
+                            <th>Periodo</th>
+                            <th>Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let fila of filasTablaEvolucion">
+                            <td>{{ formatearPeriodo(fila) }}</td>
+                            <td>{{ fila.cantidad }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </ng-template>
+    </div>
+
     <!-- Sin datos -->
     <div class="no-data" *ngIf="sinDatos">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
