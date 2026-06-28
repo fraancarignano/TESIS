@@ -198,7 +198,7 @@ export class ReporteScrapMaterialComponent implements OnInit, AfterViewInit, OnD
     const cfg: ChartConfiguration = {
       type: 'bar',
       data: {
-        labels: top.map(r => r.codigoProyecto),
+        labels: top.map(r => r.nombreProyecto),
         datasets: [{
           label: 'Scrap (u.)',
           data: top.map(r => Number(r.cantidadScrapTotal)),

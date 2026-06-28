@@ -3694,7 +3694,7 @@ const CRITERIOS_CALIDAD_INICIALES: CriterioCalidadUI[] = [
   },
   {
     id: 'diseno',
-    nombre: 'Bordado/estampado correcto',
+    nombre: 'Diseño: bordado/estampado correcto',
     descripcion: 'Verificar posición, calidad visual y fijación del diseño.',
     esCritico: false,
     resultado: 'pendiente',
