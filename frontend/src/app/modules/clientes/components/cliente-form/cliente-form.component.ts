@@ -49,7 +49,7 @@ export class ClienteFormComponent implements OnInit {
   nombre: [''],
   apellido: [''],
   tipoDocumento: ['DNI'],
-  numeroDocumento: [''],
+  numeroDocumento: ['', [Validators.pattern(/^\d*$/)]],
   
   // Campos para Persona Jurídica
   razonSocial: [''],
@@ -75,6 +75,7 @@ export class ClienteFormComponent implements OnInit {
     this.configurarValidacionesDinamicas();
     this.configurarCascadaProvinciaCiudad();
     this.configurarMascaraCuit();
+    this.configurarDocumentoSoloNumeros();
     
     if (this.cliente) {
       this.esEdicion = true;
@@ -129,6 +130,20 @@ export class ClienteFormComponent implements OnInit {
   }
 
   /**
+   * Permitir solo numeros en el documento.
+   */
+  configurarDocumentoSoloNumeros(): void {
+    this.formulario.get('numeroDocumento')?.valueChanges.subscribe(value => {
+      if (!value) return;
+
+      const soloNumeros = value.replace(/\D/g, '');
+      if (value !== soloNumeros) {
+        this.formulario.get('numeroDocumento')?.setValue(soloNumeros, { emitEvent: false });
+      }
+    });
+  }
+
+  /**
    * Configurar cascada Provincia -> Ciudad
    */
   configurarCascadaProvinciaCiudad(): void {
@@ -162,7 +177,7 @@ export class ClienteFormComponent implements OnInit {
       this.formulario.get('nombre')?.setValidators([Validators.required, Validators.minLength(2)]);
       this.formulario.get('apellido')?.setValidators([Validators.required, Validators.minLength(2)]);
       this.formulario.get('tipoDocumento')?.setValidators([Validators.required]);
-      this.formulario.get('numeroDocumento')?.setValidators([Validators.required]);
+      this.formulario.get('numeroDocumento')?.setValidators([Validators.required, Validators.pattern(/^\d+$/)]);
       
       // Limpiar campos de Persona Jurídica
       this.formulario.patchValue({ 
@@ -406,6 +421,9 @@ esPersonaJuridica(): boolean {
       return `Mínimo ${control.errors?.['minlength'].requiredLength} caracteres`;
     }
     if (control.hasError('pattern')) {
+      if (campo === 'numeroDocumento') {
+        return 'Solo se permiten numeros';
+      }
       if (campo === 'telefonoNumero') {
         return 'Solo se permiten números, espacios y guiones';
       }

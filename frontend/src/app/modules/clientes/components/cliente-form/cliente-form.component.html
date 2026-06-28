@@ -176,6 +176,8 @@
                   type="text" 
                   id="numeroDocumento"
                   formControlName="numeroDocumento"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
                   placeholder="12345678"
                   [class.error]="tieneError('numeroDocumento')"
                 >
