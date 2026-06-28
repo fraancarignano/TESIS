@@ -61,19 +61,19 @@ import { Cliente } from '../models/cliente.model';
             <div class="campos-grid">
               <div class="campo">
                 <label>Nombre</label>
-                <div class="valor">{{ cliente?.nombre || '-' }}</div>
+                <div class="valor">{{ cliente.nombre || '-' }}</div>
               </div>
               <div class="campo">
                 <label>Apellido</label>
-                <div class="valor">{{ cliente?.apellido || '-' }}</div>
+                <div class="valor">{{ cliente.apellido || '-' }}</div>
               </div>
               <div class="campo">
                 <label>Tipo de Documento</label>
-                <div class="valor">{{ cliente?.tipoDocumento || '-' }}</div>
+                <div class="valor">{{ cliente.tipoDocumento || '-' }}</div>
               </div>
               <div class="campo">
                 <label>Número de Documento</label>
-                <div class="valor">{{ cliente?.numeroDocumento || '-' }}</div>
+                <div class="valor">{{ cliente.numeroDocumento || '-' }}</div>
               </div>
             </div>
           </div>
@@ -90,11 +90,11 @@ import { Cliente } from '../models/cliente.model';
             <div class="campos-grid">
               <div class="campo">
                 <label>Razón Social</label>
-                <div class="valor">{{ cliente?.razonSocial || '-' }}</div>
+                <div class="valor">{{ cliente.razonSocial || '-' }}</div>
               </div>
               <div class="campo">
                 <label>CUIT / CUIL</label>
-                <div class="valor">{{ cliente?.cuitCuil || '-' }}</div>
+                <div class="valor">{{ cliente.cuitCuil || '-' }}</div>
               </div>
             </div>
           </div>
@@ -110,11 +110,11 @@ import { Cliente } from '../models/cliente.model';
             <div class="campos-grid">
               <div class="campo">
                 <label>Teléfono</label>
-                <div class="valor">{{ cliente?.telefono || '-' }}</div>
+                <div class="valor">{{ cliente.telefono || '-' }}</div>
               </div>
               <div class="campo">
                 <label>Email</label>
-                <div class="valor">{{ cliente?.email || '-' }}</div>
+                <div class="valor">{{ cliente.email || '-' }}</div>
               </div>
             </div>
           </div>
@@ -131,19 +131,19 @@ import { Cliente } from '../models/cliente.model';
             <div class="campos-grid">
               <div class="campo" *ngIf="cliente?.nombreProvincia">
                 <label>Provincia</label>
-                <div class="valor">{{ cliente?.nombreProvincia }}</div>
+                <div class="valor">{{ cliente.nombreProvincia }}</div>
               </div>
               <div class="campo" *ngIf="cliente?.nombreCiudad">
                 <label>Ciudad</label>
-                <div class="valor">{{ cliente?.nombreCiudad }}</div>
+                <div class="valor">{{ cliente.nombreCiudad }}</div>
               </div>
               <div class="campo" *ngIf="cliente?.direccion">
                 <label>Dirección</label>
-                <div class="valor">{{ cliente?.direccion }}</div>
+                <div class="valor">{{ cliente.direccion }}</div>
               </div>
               <div class="campo" *ngIf="cliente?.codigoPostal">
                 <label>Código Postal</label>
-                <div class="valor">{{ cliente?.codigoPostal }}</div>
+                <div class="valor">{{ cliente.codigoPostal }}</div>
               </div>
             </div>
           </div>
@@ -168,13 +168,13 @@ import { Cliente } from '../models/cliente.model';
               </div>
               <div class="campo">
                 <label>Fecha de Alta</label>
-                <div class="valor">{{ formatearFecha(cliente?.fechaAlta) }}</div>
+                <div class="valor">{{ formatearFecha(cliente.fechaAlta) }}</div>
               </div>
               <div class="campo">
                 <label>Categoría del Cliente</label>
                 <div class="valor">
                   <span class="badge badge-categoria">
-                    {{ cliente?.tipoCliente || '-' }}
+                    {{ cliente.tipoCliente || '-' }}
                   </span>
                 </div>
               </div>
@@ -194,7 +194,7 @@ import { Cliente } from '../models/cliente.model';
               <span>Observaciones</span>
             </div>
             <div class="observaciones-texto">
-              {{ cliente?.observaciones }}
+              {{ cliente.observaciones }}
             </div>
           </div>
         </div>

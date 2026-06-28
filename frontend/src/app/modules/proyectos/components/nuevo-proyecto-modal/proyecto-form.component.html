@@ -509,9 +509,11 @@
       </div>
     </div>
 
+<!-- ============================================ -->
+    <!-- SECCIóN 3: MATERIALES ADICIONALES -->
     <!-- ============================================ -->
-    <!-- SECCIí“N 3: MATERIALES ADICIONALES -->
-    <!-- ============================================ -->
+    <!-- Oculto por refactor: los materiales extras ya se gestionan en edición de prenda -->
+    <ng-container *ngIf="false">
     <div class="seccion">
       <div class="seccion-header">
         <h3>
@@ -529,8 +531,8 @@
       </div>
 
       <p class="seccion-descripcion">
-        Los materiales de tela se calculan automí¡ticamente segíºn las prendas. 
-        Aquí­ puedes agregar hilos y accesorios manualmente.
+        Los materiales de tela se calculan automáticamente según las prendas. 
+        Aquí puedes agregar hilos y accesorios manualmente.
       </p>
 
       <div *ngIf="materialesAdicionalesExpandido">
@@ -667,7 +669,8 @@
         </div>
       </div>
       </div>
-    </div>
+      </div>
+    </ng-container>
     <!-- ============================================ -->
     <!-- PREVIEW DE MATERIALES -->
     <!-- ============================================ -->

@@ -138,3 +138,4 @@ export class AvanceAreasComponent implements OnChanges {
 }
 
 export default AvanceAreasComponent;
+

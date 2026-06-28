@@ -59,16 +59,6 @@ export const AREAS_PRODUCCION: AreaProduccion[] = [
     color: '#4caf50',
     icono: 'fa-check-circle',
     campo: 'avanceCalidadPrenda'
-  },
-  {
-    id: 5,
-    idArea: 5,  // ⭐ ID de la tabla AreaProduccion - VERIFICA ESTE VALOR
-    nombre: 'Etiquetado y Empaquetado',
-    nombreCorto: 'Empaquetado',
-    descripcion: 'Etiquetado, empaquetado y preparación para despacho',
-    color: '#2196f3',
-    icono: 'fa-box',
-    campo: 'avanceEtiquetadoEmpaquetado'
   }
 ];
 
