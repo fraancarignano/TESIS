@@ -1678,10 +1678,15 @@ namespace TESIS_OG.Services.ProyectoService
                 Insumo? insumoReal = mc.IdInsumoNavigation;
 
                 decimal stockReal;
+                decimal stockAsignado; // cantidad reservada para este proyecto en InsumoStock
                 if (insumoReal != null)
                 {
                     stockReal = insumoReal.InsumoStocks
                         .Where(s => s.IdProyecto == null || s.IdProyecto == proyecto.IdProyecto)
+                        .Sum(s => s.Cantidad);
+                    // Solo el bucket de este proyecto específico
+                    stockAsignado = insumoReal.InsumoStocks
+                        .Where(s => s.IdProyecto == proyecto.IdProyecto)
                         .Sum(s => s.Cantidad);
                 }
                 else if (!string.IsNullOrWhiteSpace(colorSolicitado))
@@ -1696,10 +1701,14 @@ namespace TESIS_OG.Services.ProyectoService
                         stockReal = alternativo.InsumoStocks
                             .Where(s => s.IdProyecto == null || s.IdProyecto == proyecto.IdProyecto)
                             .Sum(s => s.Cantidad);
+                        stockAsignado = alternativo.InsumoStocks
+                            .Where(s => s.IdProyecto == proyecto.IdProyecto)
+                            .Sum(s => s.Cantidad);
                     }
                     else
                     {
                         stockReal = 0;
+                        stockAsignado = 0;
                     }
                 }
                 else
@@ -1708,6 +1717,11 @@ namespace TESIS_OG.Services.ProyectoService
                         .Where(i => i.IdTipoInsumo == idTipoInsumo)
                         .SelectMany(i => i.InsumoStocks)
                         .Where(s => s.IdProyecto == null || s.IdProyecto == proyecto.IdProyecto)
+                        .Sum(s => s.Cantidad);
+                    stockAsignado = insumosPorTipo
+                        .Where(i => i.IdTipoInsumo == idTipoInsumo)
+                        .SelectMany(i => i.InsumoStocks)
+                        .Where(s => s.IdProyecto == proyecto.IdProyecto)
                         .Sum(s => s.Cantidad);
                 }
 
@@ -1731,6 +1745,7 @@ namespace TESIS_OG.Services.ProyectoService
                     CantidadFinal = cantidadFinal,
                     UnidadMedida = mc.UnidadMedida,
                     StockActual = stockReal,
+                    StockAsignado = stockAsignado,
                     TieneStock = tieneStockReal,
                     Observaciones = mc.Observaciones,
                     IdProyectoPrenda = mc.IdProyectoPrenda,

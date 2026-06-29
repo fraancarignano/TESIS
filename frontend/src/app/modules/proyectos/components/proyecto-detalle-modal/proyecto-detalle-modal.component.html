@@ -567,31 +567,56 @@
                   <div class="form-group"><label>Corte N°</label><input type="text" [(ngModel)]="corteReal.corteNumero" [disabled]="!puedeEditarFormularioCorte"></div>
                   <div class="form-group"><label>Fecha corte</label><input type="date" [(ngModel)]="corteReal.fechaCorte" [disabled]="!puedeEditarFormularioCorte"></div>
                   <div class="form-group"><label>Responsable</label><input type="text" [(ngModel)]="corteReal.responsable" disabled></div>
+                  <div class="form-group" *ngIf="usaPrendasGlobalCorteReal"><label>Prendas cortadas</label><input type="number" min="0" step="1" [(ngModel)]="corteReal.prendasCortadas" [disabled]="!puedeEditarFormularioCorte"></div>
                 </div>
 
                 <div class="corte-distribucion">
                   <div class="corte-distribucion-header">
                     <strong>Detalle por tela</strong>
                   </div>
-                  <div class="corte-distribucion-row corte-detalle-header">
+                  <div class="corte-distribucion-row corte-detalle-header" [class.corte-distribucion-row-global]="usaPrendasGlobalCorteReal">
                     <span>Tela</span>
-                    <span>Código tela</span>
+                    <span>Asignado (kg)</span>
                     <span>Tela usada (kg)</span>
-                    <span>Prendas cortadas</span>
+                    <span *ngIf="!usaPrendasGlobalCorteReal">Prendas cortadas</span>
                     <span>Scrap (kg)</span>
                   </div>
-                  <div class="corte-distribucion-row" *ngFor="let item of corteReal.detalleTelas; trackBy: trackByDetalleTela">
-                    <input type="text" [ngModel]="item.nombreInsumo" disabled>
-                    <input type="text" [ngModel]="item.codigoTela" disabled>
-                    <input type="number" min="0" step="0.01" [(ngModel)]="item.telaUsadaKg" [disabled]="!puedeEditarFormularioCorte">
-                    <input type="number" min="0" step="1" [(ngModel)]="item.prendasCortadas" [disabled]="!puedeEditarFormularioCorte">
-                    <input type="number" min="0" step="0.01" [(ngModel)]="item.scrapKg" [disabled]="!puedeEditarFormularioCorte">
-                  </div>
-                  <div class="corte-distribucion-row corte-totales">
+                  <ng-container *ngFor="let item of corteReal.detalleTelas; trackBy: trackByDetalleTela">
+                    <div class="corte-distribucion-row" [class.corte-distribucion-row-global]="usaPrendasGlobalCorteReal"
+                         [class.corte-row-con-error]="telaUsadaExcedeAsignada(item) || scrapExcedeTelaUsada(item)">
+                      <input type="text" [ngModel]="item.nombreInsumo" disabled>
+                      <!-- Cantidad asignada al proyecto: solo lectura, fuente de verdad para la validación -->
+                      <input type="number" [ngModel]="obtenerTelaAsignadaCorteReal(item) || item.cantidadAsignadaKg" disabled
+                             [class.input-asignado-ok]="obtenerTelaAsignadaCorteReal(item) > 0"
+                             [class.input-asignado-sin-datos]="obtenerTelaAsignadaCorteReal(item) === 0">
+                      <input type="number" min="0"
+                             [max]="obtenerTelaAsignadaCorteReal(item) > 0 ? obtenerTelaAsignadaCorteReal(item) : null"
+                             step="0.01"
+                             [(ngModel)]="item.telaUsadaKg"
+                             [disabled]="!puedeEditarFormularioCorte"
+                             [class.input-error]="telaUsadaExcedeAsignada(item)">
+                      <input *ngIf="!usaPrendasGlobalCorteReal" type="number" min="0" step="1" [(ngModel)]="item.prendasCortadas" [disabled]="!puedeEditarFormularioCorte">
+                      <input type="number" min="0"
+                             [max]="item.telaUsadaKg > 0 ? item.telaUsadaKg : null"
+                             step="0.01"
+                             [(ngModel)]="item.scrapKg"
+                             [disabled]="!puedeEditarFormularioCorte"
+                             [class.input-error]="scrapExcedeTelaUsada(item)">
+                    </div>
+                    <div class="corte-row-error" *ngIf="telaUsadaExcedeAsignada(item)">
+                      <i class="fas fa-exclamation-circle"></i>
+                      Tela usada ({{ item.telaUsadaKg }} kg) supera la cantidad asignada al proyecto ({{ obtenerTelaAsignadaCorteReal(item) }} kg).
+                    </div>
+                    <div class="corte-row-error" *ngIf="scrapExcedeTelaUsada(item)">
+                      <i class="fas fa-exclamation-circle"></i>
+                      Scrap ({{ item.scrapKg }} kg) no puede superar la tela usada ({{ item.telaUsadaKg }} kg).
+                    </div>
+                  </ng-container>
+                  <div class="corte-distribucion-row corte-totales" [class.corte-distribucion-row-global]="usaPrendasGlobalCorteReal">
                     <input type="text" value="Totales" disabled>
                     <input type="text" value="-" disabled>
                     <input type="number" [ngModel]="totalTelaUsadaCorteReal" disabled>
-                    <input type="number" [ngModel]="totalPrendasCorteReal" disabled>
+                    <input *ngIf="!usaPrendasGlobalCorteReal" type="number" [ngModel]="totalPrendasCorteReal" disabled>
                     <input type="number" [ngModel]="totalScrapCorteReal" disabled>
                   </div>
                 </div>

@@ -248,16 +248,31 @@ namespace TESIS_OG.Services.UbicacionService
                 if (orden == null)
                     return (false, "Orden de compra no encontrada.");
 
+                var cantidadesAprobadas = await _context.InventarioMovimientos
+                    .Where(m => m.IdOrdenCompra == orden.IdOrdenCompra
+                             && m.TipoMovimiento == "Entrada"
+                             && m.IdInsumo != null)
+                    .GroupBy(m => m.IdInsumo!.Value)
+                    .Select(g => new { IdInsumo = g.Key, Cantidad = g.Sum(m => m.Cantidad) })
+                    .ToDictionaryAsync(x => x.IdInsumo, x => x.Cantidad);
+
                 foreach (var idInsumo in transferDto.IdsInsumos)
                 {
                     var detalle = orden.DetalleOrdenCompras.FirstOrDefault(d => d.IdInsumo == idInsumo);
                     if (detalle == null) continue;
 
+                    if (!cantidadesAprobadas.TryGetValue(idInsumo, out var cantidadAIngresar) || cantidadAIngresar <= 0)
+                        return (false, $"El insumo {idInsumo} no tiene cantidad aprobada en el control de recepción.");
+
                     var insumo = await _context.Insumos.FindAsync(idInsumo);
                     if (insumo == null) continue;
 
-                    // Actualizar stock global del insumo
-                    insumo.StockActual += detalle.Cantidad;
+                    var stockTotalAntes = await _context.InsumoStocks
+                        .Where(s => s.IdInsumo == idInsumo)
+                        .SumAsync(s => (decimal?)s.Cantidad) ?? 0m;
+
+                    // Actualizar ubicación y stock global según la cantidad real aprobada en recepción.
+                    insumo.StockActual = stockTotalAntes + cantidadAIngresar;
                     insumo.IdUbicacion = transferDto.IdUbicacionDestino;
                     insumo.FechaActualizacion = DateOnly.FromDateTime(DateTime.Now);
 
@@ -275,14 +290,14 @@ namespace TESIS_OG.Services.UbicacionService
                             IdUbicacion = transferDto.IdUbicacionDestino,
                             IdProyecto = transferDto.IdProyecto,
                             IdOrdenCompra = orden.IdOrdenCompra,
-                            Cantidad = detalle.Cantidad,
+                            Cantidad = cantidadAIngresar,
                             FechaActualizacion = DateTime.Now
                         };
                         _context.InsumoStocks.Add(stockEntry);
                     }
                     else
                     {
-                        stockEntry.Cantidad += detalle.Cantidad;
+                        stockEntry.Cantidad += cantidadAIngresar;
                         stockEntry.FechaActualizacion = DateTime.Now;
                         stockEntry.IdOrdenCompra = orden.IdOrdenCompra;
                     }
@@ -293,7 +308,7 @@ namespace TESIS_OG.Services.UbicacionService
                         NombreInsumo = insumo.NombreInsumo,
                         IdOrdenCompra = orden.IdOrdenCompra,
                         TipoMovimiento = "Transferencia",
-                        Cantidad = detalle.Cantidad,
+                        Cantidad = cantidadAIngresar,
                         FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
                         Origen = $"Orden de Compra #{orden.NroOrden}",
                         Destino = ubicacionDestino.Codigo,

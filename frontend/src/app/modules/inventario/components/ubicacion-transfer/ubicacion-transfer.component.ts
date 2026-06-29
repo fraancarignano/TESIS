@@ -52,6 +52,13 @@ interface ItemOC {
   nombrePrenda?: string;
 }
 
+type InsumoOCTransfer = Insumo & {
+  seleccionado: boolean;
+  cantidadPedida: number;
+  cantidadAIngresar: number;
+  estadoRecepcion?: string;
+};
+
 @Component({
   selector: 'app-ubicacion-transfer',
   standalone: true,
@@ -85,7 +92,7 @@ export class UbicacionTransferComponent implements OnInit {
   // ── TAB 1: OC → Ubicación ─────────────────────────────────────
   idOrdenOC: number | null = null;
   idUbicacionDestinoOC: number | null = null;
-  insumosOC: (Insumo & { seleccionado: boolean })[] = [];
+  insumosOC: InsumoOCTransfer[] = [];
   todosSeleccionadosOC = false;
 
   // ── TAB 2: Ubicación → Ubicación ─────────────────────────────
@@ -188,7 +195,10 @@ export class UbicacionTransferComponent implements OnInit {
       this.insumosOC = orden.detalles.map(d => ({
         idInsumo: d.idInsumo,
         nombreInsumo: d.nombreInsumo || '',
-        stockActual: d.cantidad,
+        stockActual: Number(d.cantidadRecibida ?? 0),
+        cantidadPedida: Number(d.cantidad ?? 0),
+        cantidadAIngresar: Number(d.cantidadRecibida ?? 0),
+        estadoRecepcion: d.estadoRecepcion,
         seleccionado: true,
         nombreTipoInsumo: '',
         unidadMedida: '',

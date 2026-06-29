@@ -2,9 +2,9 @@
 // INTERFACES PRINCIPALES
 // ============================================
 
-import { 
-  AREAS_PRODUCCION, 
-  getAreaActual, 
+import {
+  AREAS_PRODUCCION,
+  getAreaActual,
   calcularProgresoGeneralPorAreas,
   getResumenAreas,
   ResumenAreas
@@ -22,7 +22,7 @@ export interface DetalleAvanceAreas {
 export function getDetalleAvanceAreas(proyecto: Proyecto): DetalleAvanceAreas {
   const resumen = getResumenAreas(proyecto);
   const areaActualObj = getAreaActual(proyecto);
-  
+
   return {
     areaActual: areaActualObj?.nombreCorto,
     progresoGeneral: calcularProgresoGeneralPorAreas(proyecto),
@@ -52,19 +52,19 @@ export interface Proyecto {
   areaActual?: string | null;
   idMuestra?: number | null;
   nombreMuestra?: string | null;
-  
+
   // Avances (0-100)
   avanceDiseno?: number | null;
   avanceCorte?: number | null;
   avanceConfeccion?: number | null;
   avanceCalidadPrenda?: number | null;
   avanceEtiquetadoEmpaquetado?: number | null;
-  
+
   // Costos y scrap
   costoMaterialEstimado?: number | null;
   scrapTotal?: number | null;
   scrapPorcentaje?: number | null;
-  
+
   // Relaciones
   materiales?: MaterialProyecto[];
   observaciones?: ObservacionProyecto[];
@@ -75,9 +75,9 @@ export interface Proyecto {
 // TIPOS Y ENUMS
 // ============================================
 
-export type EstadoProyecto = 
+export type EstadoProyecto =
   | 'Pendiente'
-  | 'En Proceso' 
+  | 'En Proceso'
   | 'Finalizado'
   | 'Despachado'
   | 'Cancelado'
@@ -85,12 +85,12 @@ export type EstadoProyecto =
   | 'Anulado'
   | 'Archivado';
 
-export type PrioridadProyecto = 
+export type PrioridadProyecto =
   | 'alta'
   | 'media'
   | 'baja';
 
-export type AreaProyecto = 
+export type AreaProyecto =
   | 'avanceDiseno'
   | 'avanceCorte'
   | 'avanceConfeccion'
@@ -102,15 +102,34 @@ export type AreaProyecto =
 // ============================================
 
 export interface MaterialProyecto {
+  // Campos del sistema viejo (DetalleMaterialProyecto)
   idDetalle: number;
   idInsumo: number;
   nombreInsumo?: string;
-  color?: string; // Añadido para seguimiento de telas con color
+  color?: string;
   idUnidad: number;
   unidadMedida?: string;
   cantidadAsignada: number;
   cantidadUtilizada?: number;
   desperdicioEstimado?: number;
+
+  // Campos del sistema nuevo (MaterialCalculadoResponseDTO desde API)
+  idMaterialCalculado?: number;
+  tipoCalculo?: string;
+  cantidadCalculada?: number;
+  cantidadManual?: number;
+  cantidadFinal?: number;
+  stockActual?: number;
+  /** Cantidad efectivamente asignada a este proyecto en InsumoStock.
+   *  Es la cantidad real reservada al proyecto desde Inventario > Transferir Insumos > Asignar Material.
+   *  Fuente de verdad para el límite de "Tela Usada" en el parte de corte real. */
+  stockAsignado?: number;
+  tieneStock?: boolean;
+  idProyectoPrenda?: number;
+  nombrePrenda?: string;
+  colorInsumo?: string;
+  colorSolicitado?: string;
+  precioUnitario?: number;
 }
 
 export interface ObservacionProyecto {
@@ -244,7 +263,7 @@ export function calcularProgresoGeneral(proyecto: Proyecto): number {
     proyecto.avanceCalidadPrenda ?? 0,
     proyecto.avanceEtiquetadoEmpaquetado ?? 0
   ];
-  
+
   const suma = avances.reduce((acc, val) => acc + val, 0);
   return Math.round(suma / avances.length);
 }
@@ -264,7 +283,7 @@ export function calcularDiasTranscurridos(fechaInicio: string): number {
  */
 export function calcularDiasRestantes(fechaFin?: string): number | undefined {
   if (!fechaFin) return undefined;
-  
+
   const fin = new Date(fechaFin);
   const hoy = new Date();
   const diff = fin.getTime() - hoy.getTime();
@@ -278,7 +297,7 @@ export function estaVencido(fechaFin?: string, estado?: EstadoProyecto): boolean
   if (!fechaFin || estado === 'Finalizado' || estado === 'Cancelado' || estado === 'Archivado' || estado === 'Anulado') {
     return false;
   }
-  
+
   const fin = new Date(fechaFin);
   const hoy = new Date();
   return hoy > fin;
@@ -306,7 +325,7 @@ export function getEstadoColor(estado: EstadoProyecto): string {
  */
 export function getPrioridadColor(prioridad?: PrioridadProyecto): string {
   if (!prioridad) return '#9e9e9e';
-  
+
   const colores: Record<PrioridadProyecto, string> = {
     'baja': '#66bb6a',
     'media': '#ffa726',

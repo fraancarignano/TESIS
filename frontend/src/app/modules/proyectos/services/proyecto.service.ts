@@ -3,10 +3,10 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, BehaviorSubject, of, concat } from 'rxjs';
 import { tap, catchError, map, finalize, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
-import { 
-  Proyecto, 
+import {
+  Proyecto,
   ProyectoVista,
-  CrearProyectoDTO, 
+  CrearProyectoDTO,
   EditarProyectoDTO,
   BuscarProyectosDTO,
   CambiarEstadoDTO,
@@ -28,12 +28,12 @@ export class ProyectosService {
   private readonly cacheKey = 'proyectos_cache_v2';
   private readonly cacheTimestampKey = 'proyectos_cache_v2_ts';
   private readonly cacheTtlMs = 5 * 60 * 1000; // 5 minutos
-  
+
   private proyectosSubject = new BehaviorSubject<Proyecto[]>([]);
   public proyectos$ = this.proyectosSubject.asObservable();
   private fetchEnCurso$?: Observable<Proyecto[]>;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Obtener todos los proyectos
@@ -131,8 +131,8 @@ export class ProyectosService {
    * Cambiar estado (para drag & drop)
    */
   cambiarEstado(id: number, estado: string): Observable<any> {
-    const dto: CambiarEstadoDTO = { 
-      estado: mapearEstadoParaBackend(estado) 
+    const dto: CambiarEstadoDTO = {
+      estado: mapearEstadoParaBackend(estado)
     };
     return this.http.patch(`${this.apiUrl}/${id}/estado`, dto).pipe(
       tap(() => this.obtenerProyectos().subscribe()),
@@ -277,7 +277,7 @@ export class ProyectosService {
    */
   private handleError(error: HttpErrorResponse) {
     console.error('🔴 HTTP Error completo:', error);
-    
+
     let errorMessage = 'Ocurrió un error desconocido';
 
     if (error.error instanceof ErrorEvent) {
@@ -296,7 +296,7 @@ export class ProyectosService {
         } else if (error.error?.errors) {
           // Errores de validación de .NET
           const errors = error.error.errors;
-          const errorMessages = Object.keys(errors).map(key => 
+          const errorMessages = Object.keys(errors).map(key =>
             `${key}: ${errors[key].join(', ')}`
           );
           errorMessage = errorMessages.join(' | ');

@@ -62,7 +62,12 @@
         <input type="checkbox" [(ngModel)]="item.seleccionado" [id]="'oc-' + item.idInsumo">
         <label [for]="'oc-' + item.idInsumo">
           <span class="item-name">{{ item.nombreInsumo }}</span>
-          <span class="item-qty">{{ item.stockActual }} u.</span>
+          <span class="item-qty">
+            A ingresar: {{ item.cantidadAIngresar }} u.
+            <small *ngIf="item.cantidadPedida !== item.cantidadAIngresar">
+              (pedido: {{ item.cantidadPedida }} u.)
+            </small>
+          </span>
         </label>
       </div>
       <div class="actions">

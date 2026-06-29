@@ -1525,7 +1525,11 @@
 }
 
 .corte-real .corte-distribucion-row {
-  grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1.8fr 0.9fr 1fr 1fr 1fr;
+}
+
+.corte-real .corte-distribucion-row-global {
+  grid-template-columns: 1.8fr 0.9fr 1fr 1fr;
 }
 
 .corte-detalle-header {
@@ -1538,6 +1542,42 @@
 .corte-totales input {
   font-weight: 700;
   background: #f1f5f9;
+}
+
+.corte-row-error {
+  color: #b42318;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin: -0.15rem 0 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.corte-row-con-error {
+  border-left: 3px solid #f97316;
+  padding-left: 0.3rem;
+  border-radius: 4px;
+}
+
+/* Campo "Asignado (kg)": indica cuánta tela fue reservada para el proyecto */
+.input-asignado-ok {
+  background: #f0fdf4 !important;
+  color: #166534 !important;
+  font-weight: 600 !important;
+  border-color: #86efac !important;
+}
+
+.input-asignado-sin-datos {
+  background: #fafafa !important;
+  color: #9ca3af !important;
+  font-style: italic;
+}
+
+/* Input con error de validación */
+.input-error {
+  border-color: #f97316 !important;
+  background: #fff7ed !important;
 }
 
 .btn-mini {

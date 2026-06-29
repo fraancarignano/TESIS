@@ -246,6 +246,12 @@ namespace TESIS_OG.DTOs.Proyectos
         public decimal CantidadFinal { get; set; }
         public string UnidadMedida { get; set; } = null!;
         public decimal StockActual { get; set; }
+        /// <summary>
+        /// Cantidad efectivamente asignada a este proyecto en InsumoStock (IdProyecto = idProyecto).
+        /// Es la cantidad real descontada del stock y reservada para el proyecto desde
+        /// Inventario > Transferir Insumos > Asignar Material.
+        /// </summary>
+        public decimal StockAsignado { get; set; }
         public bool TieneStock { get; set; }
         public string? Observaciones { get; set; }
         public int? IdProyectoPrenda { get; set; }

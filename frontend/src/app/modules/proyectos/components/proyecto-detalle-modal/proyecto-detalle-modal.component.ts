@@ -306,7 +306,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
       .filter(inc => inc.estado !== 'CERRADA') // Solo las no cerradas
       .forEach(inc => {
         const key = `${inc.nombrePrenda}-${inc.talle}`;
-        
+
         if (!prendasMap.has(key)) {
           prendasMap.set(key, {
             id: key,
@@ -320,11 +320,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
         }
 
         const prenda = prendasMap.get(key)!;
-        
+
         // Agregar criterios rechazados
         const criterios = inc.criterioNombre.split(',').map(c => c.trim());
         const detalles = inc.detalleFalla ? inc.detalleFalla.split(';').map(d => d.trim()) : [];
-        
+
         criterios.forEach((criterio, index) => {
           if (!prenda.criteriosRechazados.some(c => c.nombre === criterio)) {
             prenda.criteriosRechazados.push({
@@ -596,9 +596,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
         const idProyectoPrenda = Number(prenda?.idProyectoPrenda ?? prenda?.idPrenda ?? index + 1);
         const talles = Array.isArray(prenda?.talles)
           ? prenda.talles.map((t: any) => ({
-              nombreTalle: String(t?.nombreTalle ?? t?.idTalle ?? 'General').trim() || 'General',
-              cantidad: Math.max(0, Number(t?.cantidad ?? 0))
-            }))
+            nombreTalle: String(t?.nombreTalle ?? t?.idTalle ?? 'General').trim() || 'General',
+            cantidad: Math.max(0, Number(t?.cantidad ?? 0))
+          }))
           : [];
 
         return {
@@ -670,6 +670,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
   }
 
   get resumenCortePorTela(): { etiqueta: string; prendas: number }[] {
+    if (this.usaPrendasGlobalCorteReal) {
+      return [{ etiqueta: 'Proyecto', prendas: this.totalPrendasCorteReal }];
+    }
+
     const mapa = new Map<string, number>();
     (this.corteReal.detalleTelas || []).forEach(t => {
       const nombre = (t.nombreInsumo || 'Tela').trim();
@@ -873,6 +877,12 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return this.totalScrapCorteReal > telaUsada;
   }
 
+  get tieneErroresDetalleCorteReal(): boolean {
+    return (this.corteReal.detalleTelas || []).some(t =>
+      this.telaUsadaExcedeAsignada(t) || this.scrapExcedeTelaUsada(t)
+    );
+  }
+
   get totalScrapCorteReal(): number {
     return this.redondearNumero(
       this.corteReal.detalleTelas.reduce((acc, t) => acc + (Number(t.scrapKg) || 0), 0)
@@ -880,6 +890,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
   }
 
   get totalPrendasCorteReal(): number {
+    if (this.usaPrendasGlobalCorteReal) {
+      return Math.max(0, Math.floor(Number(this.corteReal.prendasCortadas) || 0));
+    }
+
     return this.corteReal.detalleTelas.reduce((acc, t) => acc + (Number(t.prendasCortadas) || 0), 0);
   }
 
@@ -896,6 +910,54 @@ export class ProyectoDetalleModalComponent implements OnInit {
     if (!this.corteReal.fechaCorte.trim()) return false;
     if (!this.corteReal.responsable.trim()) return false;
     return true;
+  }
+
+  get usaPrendasGlobalCorteReal(): boolean {
+    return (this.corteReal.detalleTelas?.length || 0) > 1;
+  }
+
+  obtenerTelaAsignadaCorteReal(tela: CorteRealTela): number {
+    // 1. Si la fila ya tiene cantidadAsignadaKg cacheado (serializado desde guardado previo), usarlo
+    const asignadaFila = Number(tela.cantidadAsignadaKg) || 0;
+    if (asignadaFila > 0) return this.redondearNumero(asignadaFila);
+
+    const materiales = this.obtenerMaterialesCorteFuente();
+
+    // 2. Buscar por idDetalleAsignacion (que ahora es idMaterialCalculado)
+    const porDetalle = materiales.find(m =>
+      (m as any).idMaterialCalculado === tela.idDetalleAsignacion ||
+      m.idDetalle === tela.idDetalleAsignacion
+    );
+    if (porDetalle) {
+      // Priorizar stockAsignado (cantidad real en InsumoStock del proyecto)
+      const sa = Number((porDetalle as any).stockAsignado) || 0;
+      if (sa > 0) return this.redondearNumero(sa);
+      const cf = Number((porDetalle as any).cantidadFinal) || 0;
+      if (cf > 0) return this.redondearNumero(cf);
+      return this.redondearNumero(Number(porDetalle.cantidadAsignada) || 0);
+    }
+
+    // 3. Buscar por idInsumo
+    const coincidencias = materiales.filter(m => m.idInsumo === tela.idInsumo);
+    if (coincidencias.length === 1) {
+      const m = coincidencias[0];
+      const sa = Number((m as any).stockAsignado) || 0;
+      if (sa > 0) return this.redondearNumero(sa);
+      const cf = Number((m as any).cantidadFinal) || 0;
+      if (cf > 0) return this.redondearNumero(cf);
+      return this.redondearNumero(Number(m.cantidadAsignada) || 0);
+    }
+
+    return 0;
+  }
+
+  telaUsadaExcedeAsignada(tela: CorteRealTela): boolean {
+    const asignada = this.obtenerTelaAsignadaCorteReal(tela);
+    return asignada > 0 && (Number(tela.telaUsadaKg) || 0) > asignada;
+  }
+
+  scrapExcedeTelaUsada(tela: CorteRealTela): boolean {
+    return (Number(tela.scrapKg) || 0) > (Number(tela.telaUsadaKg) || 0);
   }
 
   get seguimientoTalles(): SeguimientoTalle[] {
@@ -2028,8 +2090,8 @@ export class ProyectoDetalleModalComponent implements OnInit {
     return index;
   }
 
-  trackByDetalleTela(index: number, item: CorteRealTela): number {
-    return item.idInsumo || index;
+  trackByDetalleTela(index: number, item: CorteRealTela): string {
+    return `${item.idDetalleAsignacion || item.idInsumo || 'tela'}-${index}`;
   }
 
   actualizarCantidadDistribucionCorte(index: number, value: number | string): void {
@@ -2113,34 +2175,38 @@ export class ProyectoDetalleModalComponent implements OnInit {
     // Si el total excedió la cantidad solicitada, bloqueamos SIEMPRE, incluso si no está cerrado
     // para evitar que se guarde basura.
     if (totalPrendas > cantidadObjetivo) {
-       this.alertas.error('Validación de Cantidad', `El total de prendas cortadas (${totalPrendas}) no puede superar la cantidad solicitada en el proyecto (${cantidadObjetivo}).`);
-       return;
+      this.alertas.error('Validación de Cantidad', `El total de prendas cortadas (${totalPrendas}) no puede superar la cantidad solicitada en el proyecto (${cantidadObjetivo}).`);
+      return;
     }
 
     for (const tela of this.corteReal.detalleTelas) {
-       // 1. Validar Scrap vs Tela Usada
-       if (Number(tela.scrapKg) > Number(tela.telaUsadaKg)) {
-          this.alertas.error('Error de Scrap', `El scrap de ${tela.nombreInsumo} no puede ser mayor a la tela usada (${tela.telaUsadaKg} kg).`);
-          return;
-       }
-       
-       // 2. Validar Tela Usada vs Asignada al proyecto
-       const matProyecto = (this.proyecto.materiales || []).find(m => m.idInsumo === tela.idInsumo);
-       const asignada = matProyecto?.cantidadAsignada || 0;
-       if (asignada > 0 && Number(tela.telaUsadaKg) > asignada) {
-          this.alertas.error('Validación de Tela', `La tela usada para ${tela.nombreInsumo} (${tela.telaUsadaKg} kg) supera la cantidad asignada al proyecto (${asignada} kg). Verificá los datos.`);
-          return;
-       }
+      // 1. Validar Scrap vs Tela Usada
+      if (this.scrapExcedeTelaUsada(tela)) {
+        this.alertas.error('Error de Scrap', `El scrap de ${tela.nombreInsumo} no puede ser mayor a la tela usada (${tela.telaUsadaKg} kg).`);
+        return;
+      }
 
-       // 3. Validar Prendas (siempre, no solo si está cerrado)
-       if (Number(tela.telaUsadaKg) > 0 && Number(tela.prendasCortadas) <= 0) {
-          this.alertas.error('Error de Carga', `Si usaste tela en ${tela.nombreInsumo}, debes indicar cuántas prendas se cortaron.`);
-          return;
-       }
+      // 2. Validar Tela Usada vs Asignada al proyecto
+      const asignada = this.obtenerTelaAsignadaCorteReal(tela);
+      if (asignada > 0 && Number(tela.telaUsadaKg) > asignada) {
+        this.alertas.error('Validación de Tela', `La tela usada para ${tela.nombreInsumo} (${tela.telaUsadaKg} kg) supera la cantidad asignada al proyecto (${asignada} kg). Verificá los datos.`);
+        return;
+      }
+
+      // 3. Validar Prendas (siempre, no solo si está cerrado)
+      if (!this.usaPrendasGlobalCorteReal && Number(tela.telaUsadaKg) > 0 && Number(tela.prendasCortadas) <= 0) {
+        this.alertas.error('Error de Carga', `Si usaste tela en ${tela.nombreInsumo}, debes indicar cuántas prendas se cortaron.`);
+        return;
+      }
+    }
+
+    if (this.usaPrendasGlobalCorteReal && this.totalTelaUsadaCorteReal > 0 && totalPrendas <= 0) {
+      this.alertas.error('Error de Carga', 'Si usaste tela, debes indicar cuantas prendas se cortaron.');
+      return;
     }
 
     if (this.tendidas.length === 0) {
-       // Solo aviso, no bloquea
+      // Solo aviso, no bloquea
     }
 
     const idUsuario = this.obtenerIdUsuarioActual();
@@ -2185,7 +2251,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
             next: () => this.cargarHistorialScrap()
           });
         }
-        
+
         // Limpiar tendidas tras guardado exitoso
         // No limpiamos localmente para que se vea, pero si el modal se cierra y abre, se recargará del token
       },
@@ -2204,9 +2270,10 @@ export class ProyectoDetalleModalComponent implements OnInit {
     this.proyectosService.obtenerProyectoPorId(this.proyecto.idProyecto).subscribe({
       next: (proy) => {
         this.materialesCorte = proy.materiales || [];
+        this.proyecto.materiales = this.materialesCorte;
         // Sincronizar detalleTelas si están vacíos
         if (this.corteReal.detalleTelas.length === 0) {
-           this.inicializarFormularioCorteReal();
+          this.inicializarFormularioCorteReal();
         }
       }
     });
@@ -2445,7 +2512,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
     if (!this.proyecto?.idProyecto) return;
 
     const criteriosRechazados = this.criteriosCalidad.filter(c => c.resultado === 'no_cumple');
-    
+
     if (criteriosRechazados.length === 0) {
       // No hay prendas rechazadas, solo recargar la lista
       this.cargarIncidenciasCalidad();
@@ -2488,7 +2555,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
     // Detectar prendas con criterios que no cumplen
     const prendasRechazadas: PrendaRechazada[] = [];
     const criteriosRechazados = this.criteriosCalidad.filter(c => c.resultado === 'no_cumple');
-    
+
     if (criteriosRechazados.length === 0) {
       this.prendasRechazadas = [];
       return;
@@ -2531,7 +2598,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   async devolverPrendaATaller(prenda: PrendaRechazada): Promise<void> {
     if (!this.proyecto?.idProyecto || !prenda.idCalidadIncidencia) return;
-    
+
     const confirmar = await this.alertas.confirmar(
       'Devolver a taller',
       `¿Confirmar devolución de ${prenda.cantidad} ${prenda.nombrePrenda} talle ${prenda.talle} al taller?`
@@ -2812,10 +2879,12 @@ export class ProyectoDetalleModalComponent implements OnInit {
   private inicializarFormularioCorteReal(): void {
     const base = this.crearCorteRealVacio();
     base.detalleTelas = this.obtenerTelasProyecto().map(t => ({
+      idDetalleAsignacion: t.idDetalleAsignacion,
       idInsumo: t.idInsumo,
       nombreInsumo: t.nombreInsumo,
       codigoTela: t.codigoTela || String(t.idInsumo),
-      telaUsadaKg: 0,
+      cantidadAsignadaKg: t.cantidadAsignadaKg,
+      telaUsadaKg: t.cantidadAsignadaKg,
       prendasCortadas: 0,
       scrapKg: 0
     }));
@@ -2825,7 +2894,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
     const ultimo = this.obtenerUltimoCorteReal();
     if (ultimo) {
-      const detalle = ultimo.detalleTelas.length > 0 ? ultimo.detalleTelas : base.detalleTelas;
+      const detalle = ultimo.detalleTelas.length > 0
+        ? this.sincronizarDetalleCorteRealConAsignaciones(base.detalleTelas, ultimo.detalleTelas)
+        : base.detalleTelas;
       this.corteReal = { ...base, ...ultimo, detalleTelas: detalle };
       this.tendidas = ultimo.tendidas || [];
       if (!this.corteReal.corteNumero.trim()) {
@@ -3117,7 +3188,7 @@ export class ProyectoDetalleModalComponent implements OnInit {
 
   private construirResumenCorteReal(): string {
     const detalleTelas = this.serializarDetalleTelas();
-    
+
     // Serializar tendidas
     const tendidasStr = this.tendidas
       .map(t => `${t.idInsumo}:${t.largoCm}:${t.anchoCm}:${t.capas}:${t.porcentajeAprovechamiento}`)
@@ -3320,25 +3391,68 @@ export class ProyectoDetalleModalComponent implements OnInit {
   }
 
   private obtenerTelasProyecto(): CorteTelaResumen[] {
-    const materiales = this.proyecto.materiales ?? [];
+    const materiales = this.obtenerMaterialesCorteFuente();
     let telas = materiales.filter(m => (m.nombreInsumo ?? '').toLowerCase().includes('tela'));
     if (telas.length === 0) {
       telas = materiales;
     }
 
-    const map = new Map<number, CorteTelaResumen>();
-    telas.forEach((m: MaterialProyecto) => {
-      if (!m?.idInsumo) return;
-      if (map.has(m.idInsumo)) return;
-      const nombre = (m.nombreInsumo ?? `Tela ${m.idInsumo}`).trim();
-      map.set(m.idInsumo, {
-        idInsumo: m.idInsumo,
-        nombreInsumo: nombre,
-        codigoTela: String(m.idInsumo)
-      });
-    });
+    return telas
+      .filter((m: MaterialProyecto) => !!m?.idInsumo)
+      .map((m: MaterialProyecto) => {
+        const nombre = (m.nombreInsumo ?? `Tela ${m.idInsumo}`).trim();
+        // Usar color del insumo o el color solicitado para el nombre
+        const color = ((m as any).colorInsumo ?? (m as any).colorSolicitado ?? m.color ?? '').trim();
+        const nombreConColor = color && !nombre.toLowerCase().includes(color.toLowerCase())
+          ? `${nombre} - ${color}`
+          : nombre;
 
-    return Array.from(map.values());
+        // Fuente de verdad para la cantidad asignada al proyecto:
+        // 1. stockAsignado: cantidad real en InsumoStock con IdProyecto = este proyecto (asignada desde Transferir Insumos)
+        // 2. cantidadFinal: cantidad calculada/manual como fallback si aún no fue asignada al stock
+        // 3. cantidadAsignada: campo legacy del sistema anterior
+        const stockAsignado = Number((m as any).stockAsignado) || 0;
+        const cantidadFinal = Number((m as any).cantidadFinal) || 0;
+        const cantidadLegacy = Number(m.cantidadAsignada) || 0;
+        const cantidadAsignadaKg = stockAsignado > 0
+          ? stockAsignado
+          : (cantidadFinal > 0 ? cantidadFinal : cantidadLegacy);
+
+        return {
+          idDetalleAsignacion: (m as any).idMaterialCalculado ?? m.idDetalle,
+          idInsumo: m.idInsumo,
+          nombreInsumo: nombreConColor,
+          codigoTela: String(m.idInsumo),
+          cantidadAsignadaKg: this.redondearNumero(cantidadAsignadaKg)
+        };
+      });
+  }
+
+  private obtenerMaterialesCorteFuente(): MaterialProyecto[] {
+    return (this.materialesCorte?.length ? this.materialesCorte : (this.proyecto.materiales ?? [])) as MaterialProyecto[];
+  }
+
+  private sincronizarDetalleCorteRealConAsignaciones(base: CorteRealTela[], guardado: CorteRealTela[]): CorteRealTela[] {
+    const usados = new Set<number>();
+    return base.map((filaBase) => {
+      const matchIndex = guardado.findIndex((filaGuardada, index) => {
+        if (usados.has(index)) return false;
+        if (filaBase.idDetalleAsignacion && filaGuardada.idDetalleAsignacion) {
+          return filaBase.idDetalleAsignacion === filaGuardada.idDetalleAsignacion;
+        }
+        return filaBase.idInsumo === filaGuardada.idInsumo;
+      });
+
+      if (matchIndex < 0) return filaBase;
+
+      usados.add(matchIndex);
+      return {
+        ...filaBase,
+        telaUsadaKg: guardado[matchIndex].telaUsadaKg,
+        prendasCortadas: base.length > 1 ? 0 : guardado[matchIndex].prendasCortadas,
+        scrapKg: guardado[matchIndex].scrapKg
+      };
+    });
   }
 
   private extraerCantidadesTalleDeObservacion(texto: string): Record<string, number> {
@@ -3424,9 +3538,11 @@ export class ProyectoDetalleModalComponent implements OnInit {
         const codigo = this.codificarToken(t.codigoTela || '');
         const nombre = this.codificarToken(t.nombreInsumo || '');
         const kg = Number(t.telaUsadaKg) || 0;
-        const prendas = Number(t.prendasCortadas) || 0;
+        const prendas = this.usaPrendasGlobalCorteReal ? 0 : (Number(t.prendasCortadas) || 0);
         const scrap = Number(t.scrapKg) || 0;
-        return `${id},${codigo},${nombre},${kg},${prendas},${scrap}`;
+        const idDetalle = Number(t.idDetalleAsignacion) || 0;
+        const asignada = Number(t.cantidadAsignadaKg) || 0;
+        return `${id},${codigo},${nombre},${kg},${prendas},${scrap},${idDetalle},${asignada}`;
       })
       .join('|');
   }
@@ -3443,7 +3559,9 @@ export class ProyectoDetalleModalComponent implements OnInit {
         nombreInsumo: this.decodificarToken(parts[2] ?? ''),
         telaUsadaKg: Number(parts[3]) || 0,
         prendasCortadas: Number(parts[4]) || 0,
-        scrapKg: Number(parts[5]) || 0
+        scrapKg: Number(parts[5]) || 0,
+        idDetalleAsignacion: Number(parts[6]) || undefined,
+        cantidadAsignadaKg: Number(parts[7]) || undefined
       }))
       .filter(t => t.idInsumo > 0 || t.nombreInsumo.length > 0);
   }
@@ -3547,9 +3665,11 @@ interface PlanCorteForm {
 }
 
 interface CorteTelaResumen {
+  idDetalleAsignacion: number;
   idInsumo: number;
   nombreInsumo: string;
   codigoTela: string;
+  cantidadAsignadaKg: number;
 }
 
 
@@ -3579,9 +3699,11 @@ interface CorteRealForm {
 }
 
 interface CorteRealTela {
+  idDetalleAsignacion?: number;
   idInsumo: number;
   nombreInsumo: string;
   codigoTela: string;
+  cantidadAsignadaKg?: number;
   telaUsadaKg: number;
   prendasCortadas: number;
   scrapKg: number;
@@ -3612,7 +3734,7 @@ interface RecepcionConfeccionForm {
   recibidoPorTalle: Record<string, number>;
 }
 
-interface RecepcionConfeccionRegistro extends RecepcionConfeccionForm {}
+interface RecepcionConfeccionRegistro extends RecepcionConfeccionForm { }
 
 interface AuditoriaItem {
   id: number;
