@@ -4,13 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { OrdenCompraService } from '../../../orden-compra/services/orden-compra.service';
-import { UbicacionesService, Ubicacion } from '../../../ubicaciones/services/ubicaciones.service';
+import { UbicacionesService, Ubicacion, ScrapProyectoInsumo } from '../../../ubicaciones/services/ubicaciones.service';
 import { ProyectosService } from '../../../proyectos/services/proyecto.service';
 import { ProyectosServiceNuevo } from '../../../proyectos/services/proyectos-nuevo.service';
 import { NotificacionesService } from '../../../../core/services/notificaciones.service';
 import { InsumosService } from '../../services/insumos.service';
 import { OrdenCompra } from '../../../orden-compra/models/orden-compra.model';
-import { Proyecto } from '../../../proyectos/models/proyecto.model';
+import { Proyecto, filtrarProyectosParaAsignacion } from '../../../proyectos/models/proyecto.model';
 import { Insumo } from '../../models/insumo.model';
 import { AlertasService } from '../../../../core/services/alertas';
 
@@ -80,8 +80,12 @@ export class UbicacionTransferComponent implements OnInit {
   // ── FILTRADO DE UBICACIONES ────────────────────────────────────
 
   get ubicacionesDestinoDisponibles(): Ubicacion[] {
-    // Para destino: NO mostrar Ocupadas ni BloqIN
-    return this.ubicaciones.filter(u => u.estadoUbicacion !== 'Ocupado' && u.estadoUbicacion !== 'BloqIN');
+    // Destino de pedido → solo tipo Rack (código RCK), excluyendo Despacho, Scrap y cualquier otro tipo.
+    // Dentro de Rack: solo estado Activa. Ocupado, BloqIN y cualquier otro estado se excluyen.
+    return this.ubicaciones.filter(u =>
+      u.tipo === 'Rack' &&
+      u.estadoUbicacion === 'Activa'
+    );
   }
 
   get ubicacionesOrigenDisponibles(): Ubicacion[] {
@@ -100,11 +104,23 @@ export class UbicacionTransferComponent implements OnInit {
   idUbicacionDestino: number | null = null;
   insumosUB: (Insumo & { seleccionado: boolean })[] = [];
   todosSeleccionadosUB = false;
+  modoEntreUbicaciones: 'ubicacion' | 'proyecto-scrap' | 'scrap-proyecto' = 'ubicacion';
+  idProyectoScrapSeleccionado: number | null = null;
+  proyectoScrapActual: Proyecto | null = null;
+  busquedaProyectoScrap = '';
+  proyectosScrapFiltrados: Proyecto[] = [];
+  mostrarResultadosProyectoScrap = false;
+  insumosScrap: ScrapProyectoInsumo[] = [];
+  cargandoInsumosScrap = false;
+  motivosScrap = ['Rotura', 'Desperfecto de Origen', 'Mal estado'];
 
   // ── TAB 3: Asignar a Proyecto (lógica completa de proyecto-transfer) ──
   idProyectoSeleccionado: number | null = null;
   idSolicitudOrigen: number | null = null;
   proyectoActual: Proyecto | null = null;
+  busquedaProyecto = '';
+  proyectosFiltrados: Proyecto[] = [];
+  mostrarResultadosProyecto = false;
   materiales: MaterialRow[] = [];
   cargandoMateriales = false;
   mensaje = '';
@@ -175,12 +191,10 @@ export class UbicacionTransferComponent implements OnInit {
       next: ({ ordenes, ubicaciones, proyectos, proveedores }) => {
         this.ordenesVerificadas = (ordenes as OrdenCompra[]).filter(o => o.estado === 'Verificada');
         this.ubicaciones = ubicaciones;
-        this.proyectos = (proyectos as any[]).filter(p =>
-          p.estado !== 'Archivado' && p.estado !== 'Cancelado' && p.estado !== 'Finalizado'
-        );
+        this.proyectos = filtrarProyectosParaAsignacion(proyectos as any[]);
         this.proveedores = proveedores;
         this.cargando = false;
-        if (this.idProyectoSeleccionado) this.onProyectoChange();
+        this.sincronizarProyectoDesdeQuery();
       },
       error: () => { this.cargando = false; }
     });
@@ -276,6 +290,16 @@ export class UbicacionTransferComponent implements OnInit {
     this.insumosUB.forEach(i => i.seleccionado = this.todosSeleccionadosUB);
   }
 
+  setModoEntreUbicaciones(modo: 'ubicacion' | 'proyecto-scrap' | 'scrap-proyecto'): void {
+    this.modoEntreUbicaciones = modo;
+    if (modo !== 'ubicacion') {
+      this.idUbicacionOrigen = null;
+      this.idUbicacionDestino = null;
+      this.insumosUB = [];
+    }
+    this.limpiarProyectoScrap();
+  }
+
   async confirmarTransferenciaUB(): Promise<void> {
     const ids = this.insumosUB.filter(i => i.seleccionado).map(i => i.idInsumo!);
     if (!ids.length) { this.alertas.error('Sin selección', 'Seleccioná al menos un insumo.'); return; }
@@ -321,10 +345,200 @@ export class UbicacionTransferComponent implements OnInit {
 
   // ── TAB 3: Asignar a Proyecto (copia exacta de proyecto-transfer) ──
 
+  onBusquedaProyectoScrapChange(): void {
+    if (this.idProyectoScrapSeleccionado) {
+      const label = this.obtenerLabelProyecto(this.proyectoScrapActual);
+      if (this.busquedaProyectoScrap !== label) {
+        this.idProyectoScrapSeleccionado = null;
+        this.proyectoScrapActual = null;
+        this.insumosScrap = [];
+      }
+    }
+
+    const term = this.busquedaProyectoScrap.trim().toLowerCase();
+    if (!term) {
+      this.proyectosScrapFiltrados = [];
+      this.mostrarResultadosProyectoScrap = false;
+      return;
+    }
+
+    this.proyectosScrapFiltrados = this.proyectos.filter(p =>
+      p.nombreProyecto?.toLowerCase().includes(term) ||
+      p.codigoProyecto?.toLowerCase().includes(term) ||
+      p.clienteNombre?.toLowerCase().includes(term) ||
+      p.estado?.toLowerCase().includes(term) ||
+      p.idProyecto?.toString().includes(term)
+    );
+    this.mostrarResultadosProyectoScrap = this.proyectosScrapFiltrados.length > 0;
+  }
+
+  seleccionarProyectoScrap(p: Proyecto): void {
+    this.idProyectoScrapSeleccionado = p.idProyecto ?? null;
+    this.proyectoScrapActual = p;
+    this.busquedaProyectoScrap = this.obtenerLabelProyecto(p);
+    this.mostrarResultadosProyectoScrap = false;
+    this.proyectosScrapFiltrados = [];
+    this.cargarInsumosScrap();
+  }
+
+  limpiarProyectoScrap(): void {
+    this.idProyectoScrapSeleccionado = null;
+    this.proyectoScrapActual = null;
+    this.busquedaProyectoScrap = '';
+    this.proyectosScrapFiltrados = [];
+    this.mostrarResultadosProyectoScrap = false;
+    this.insumosScrap = [];
+  }
+
+  cargarInsumosScrap(): void {
+    if (!this.idProyectoScrapSeleccionado) { this.insumosScrap = []; return; }
+
+    this.cargandoInsumosScrap = true;
+    const request$ = this.modoEntreUbicaciones === 'scrap-proyecto'
+      ? this.ubicacionesService.getScrapsProyectoParaTransferencia(this.idProyectoScrapSeleccionado)
+      : this.ubicacionesService.getInsumosProyectoParaScrap(this.idProyectoScrapSeleccionado);
+
+    request$.subscribe({
+      next: (items) => {
+        this.insumosScrap = (items || []).map(i => ({
+          ...i,
+          cantidadTransferir: 0,
+          motivo: this.modoEntreUbicaciones === 'scrap-proyecto' ? 'Reingreso desde scrap' : ''
+        }));
+        this.cargandoInsumosScrap = false;
+      },
+      error: () => {
+        this.alertas.error('Error', 'No se pudieron cargar los insumos del proyecto.');
+        this.cargandoInsumosScrap = false;
+      }
+    });
+  }
+
+  onCantidadScrapChange(item: ScrapProyectoInsumo): void {
+    item.cantidadTransferir = Number(item.cantidadTransferir || 0);
+    if (item.cantidadTransferir < 0) item.cantidadTransferir = 0;
+    if (item.cantidadTransferir > item.cantidadAsignada) {
+      item.cantidadTransferir = item.cantidadAsignada;
+    }
+  }
+
+  confirmarTransferenciaScrap(): void {
+    if (!this.idProyectoScrapSeleccionado) {
+      this.alertas.error('Sin proyecto', 'SeleccionÃ¡ un proyecto.');
+      return;
+    }
+
+    const items = this.insumosScrap
+      .filter(i => Number(i.cantidadTransferir || 0) > 0)
+      .map(i => ({
+        idInsumo: i.idInsumo,
+        cantidad: Number(i.cantidadTransferir),
+        motivo: i.motivo
+      }));
+
+    if (!items.length) {
+      this.alertas.error('Sin cantidades', 'IngresÃ¡ al menos una cantidad mayor a cero.');
+      return;
+    }
+
+    if (this.modoEntreUbicaciones === 'proyecto-scrap' && items.some(i => !i.motivo)) {
+      this.alertas.error('Motivo obligatorio', 'SeleccionÃ¡ un motivo para cada insumo a transferir.');
+      return;
+    }
+
+    const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+    const dto = {
+      idProyecto: this.idProyectoScrapSeleccionado,
+      idUsuario: usuario.idUsuario || null,
+      items
+    };
+
+    this.cargando = true;
+    const request$ = this.modoEntreUbicaciones === 'scrap-proyecto'
+      ? this.ubicacionesService.transferirScrapAProyecto(dto)
+      : this.ubicacionesService.transferirProyectoAScrap(dto);
+
+    request$.subscribe({
+      next: () => {
+        const titulo = this.modoEntreUbicaciones === 'scrap-proyecto'
+          ? 'Scrap devuelto'
+          : 'Transferencia a scrap';
+        const detalle = this.modoEntreUbicaciones === 'scrap-proyecto'
+          ? 'Los insumos fueron reingresados al proyecto.'
+          : 'Los insumos fueron registrados en la ubicaciÃ³n de scrap.';
+        this.alertas.success(titulo, detalle);
+        this.cargando = false;
+        this.cargarInsumosScrap();
+      },
+      error: (err) => {
+        this.alertas.error('Error', err?.error?.message || err?.message || 'No se pudo completar la transferencia.');
+        this.cargando = false;
+      }
+    });
+  }
+
   onProyectoChange(): void {
     if (!this.idProyectoSeleccionado) { this.materiales = []; this.proyectoActual = null; return; }
     this.proyectoActual = this.proyectos.find(p => p.idProyecto === Number(this.idProyectoSeleccionado)) || null;
     this.cargarMateriales();
+  }
+
+  onBusquedaProyectoChange(): void {
+    if (this.idProyectoSeleccionado) {
+      const label = this.obtenerLabelProyecto(this.proyectoActual);
+      if (this.busquedaProyecto !== label) {
+        this.idProyectoSeleccionado = null;
+        this.proyectoActual = null;
+        this.materiales = [];
+      }
+    }
+
+    const term = this.busquedaProyecto.trim().toLowerCase();
+    if (!term) {
+      this.proyectosFiltrados = [];
+      this.mostrarResultadosProyecto = false;
+      return;
+    }
+
+    this.proyectosFiltrados = this.proyectos.filter(p =>
+      p.nombreProyecto?.toLowerCase().includes(term) ||
+      p.codigoProyecto?.toLowerCase().includes(term) ||
+      p.clienteNombre?.toLowerCase().includes(term) ||
+      p.estado?.toLowerCase().includes(term) ||
+      p.idProyecto?.toString().includes(term)
+    );
+    this.mostrarResultadosProyecto = this.proyectosFiltrados.length > 0;
+  }
+
+  seleccionarProyecto(p: Proyecto): void {
+    this.idProyectoSeleccionado = p.idProyecto ?? null;
+    this.busquedaProyecto = this.obtenerLabelProyecto(p);
+    this.mostrarResultadosProyecto = false;
+    this.proyectosFiltrados = [];
+    this.onProyectoChange();
+  }
+
+  limpiarProyecto(): void {
+    this.idProyectoSeleccionado = null;
+    this.proyectoActual = null;
+    this.busquedaProyecto = '';
+    this.materiales = [];
+    this.mostrarResultadosProyecto = false;
+    this.proyectosFiltrados = [];
+  }
+
+  private obtenerLabelProyecto(p: Proyecto | null): string {
+    if (!p) return '';
+    return `${p.nombreProyecto} (${p.codigoProyecto || '—'}) — ${p.estado}`;
+  }
+
+  private sincronizarProyectoDesdeQuery(): void {
+    if (!this.idProyectoSeleccionado || !this.proyectos.length) return;
+    const p = this.proyectos.find(x => x.idProyecto === Number(this.idProyectoSeleccionado));
+    if (p) {
+      this.busquedaProyecto = this.obtenerLabelProyecto(p);
+      this.onProyectoChange();
+    }
   }
 
   cargarMateriales(): void {

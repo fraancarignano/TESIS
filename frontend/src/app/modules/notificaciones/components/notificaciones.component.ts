@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertasService } from '../../../core/services/alertas';
-import { NotificacionesService, NotificacionStockItem, SolicitudMaterialItem } from '../../../core/services/notificaciones.service';
+import { NotificacionesService, NotificacionStockItem, NotificacionControlRecepcionItem, SolicitudMaterialItem } from '../../../core/services/notificaciones.service';
 
 @Component({
   selector: 'app-notificaciones',
@@ -16,6 +16,10 @@ import { NotificacionesService, NotificacionStockItem, SolicitudMaterialItem } f
         <button [class.active]="tab === 'solicitudes'" (click)="tab = 'solicitudes'">
           Solicitudes de Material
           <span class="badge" *ngIf="pendientes > 0">{{ pendientes }}</span>
+        </button>
+        <button [class.active]="tab === 'control'" (click)="tab = 'control'; cargarControl()">
+          Control de Pedidos
+          <span class="badge" *ngIf="controlNoLeidas > 0">{{ controlNoLeidas }}</span>
         </button>
         <button [class.active]="tab === 'stock'" (click)="tab = 'stock'">
           Alertas de Stock
@@ -71,6 +75,50 @@ import { NotificacionesService, NotificacionStockItem, SolicitudMaterialItem } f
           </div>
 
           <div class="vacio" *ngIf="solicitudes.length === 0">No hay solicitudes.</div>
+        </div>
+      </div>
+
+      <!-- TAB: CONTROL DE RECEPCIÓN DE PEDIDOS -->
+      <div *ngIf="tab === 'control'">
+        <div class="tab-header">
+          <h2>Control de recepción de pedidos</h2>
+          <button class="btn-recargar" (click)="cargarControl()">&#8635; Recargar</button>
+        </div>
+
+        <div class="estado" *ngIf="loadingControl">Cargando...</div>
+        <div class="estado error" *ngIf="!loadingControl && errorControl">{{ errorControl }}</div>
+
+        <div class="lista" *ngIf="!loadingControl && !errorControl">
+          <div class="item" *ngFor="let n of notificacionesControl" [class.leida]="n.leida">
+            <div class="fila1">
+              <span class="tipo" [class.ctrl-habilitar]="n.tipo === 'HabilitarControl'" [class.ctrl-completado]="n.tipo === 'ControlCompletado'">
+                {{ n.tipo === 'HabilitarControl' ? 'Control habilitado' : 'Control completado' }}
+              </span>
+              <span class="fecha">{{ n.fecha | date:'dd/MM/yyyy' }}</span>
+            </div>
+
+            <div class="msg">{{ n.mensaje }}</div>
+
+            <div class="sol-detalle">
+              <span><i>Pedido:</i> <strong>{{ n.nroOrden }}</strong></span>
+              <span><i>Por:</i> {{ n.usuarioEmisor }}</span>
+            </div>
+
+            <div class="acciones-item">
+              <button
+                *ngIf="n.tipo === 'HabilitarControl'"
+                class="btn-transferir"
+                (click)="irAControlRecepcion(n)">
+                &#8594; Ir a Control de Recepción
+              </button>
+              <button class="btn-leida" *ngIf="!n.leida" [disabled]="marcandoControlId === n.idHistorial" (click)="marcarControlLeida(n)">
+                {{ marcandoControlId === n.idHistorial ? 'Marcando...' : 'Marcar como leída' }}
+              </button>
+              <span class="badge-leida" *ngIf="n.leida">Leída</span>
+            </div>
+          </div>
+
+          <div class="vacio" *ngIf="notificacionesControl.length === 0">No hay notificaciones de control.</div>
         </div>
       </div>
 
@@ -140,9 +188,11 @@ import { NotificacionesService, NotificacionStockItem, SolicitudMaterialItem } f
     .tipo { font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
     .tipo.faltante { background: #ffebee; color: #c62828; }
     .tipo.sobrante { background: #e8f5e9; color: #2e7d32; }
+    .tipo.ctrl-habilitar { background: #e3f2fd; color: #1565c0; }
+    .tipo.ctrl-completado { background: #e8f5e9; color: #2e7d32; }
     .msg { color: #2f2f2f; margin-bottom: 4px; }
     .meta { font-size: .78rem; color: #9e9e9e; }
-    .acciones-item { margin-top: 10px; display: flex; justify-content: flex-end; }
+    .acciones-item { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .btn-leida { border: 1px solid #ff5722; color: #ff5722; background: #fff; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: .8rem; }
     .btn-leida:hover:not(:disabled) { background: #fff3e0; }
     .btn-leida:disabled { opacity: .6; cursor: not-allowed; }
@@ -152,8 +202,9 @@ import { NotificacionesService, NotificacionStockItem, SolicitudMaterialItem } f
   `]
 })
 export class NotificacionesComponent implements OnInit {
-  tab: 'solicitudes' | 'stock' = 'solicitudes';
+  tab: 'solicitudes' | 'control' | 'stock' = 'solicitudes';
 
+  // Solicitudes de material
   solicitudes: SolicitudMaterialItem[] = [];
   loadingSolicitudes = false;
   errorSolicitudes = '';
@@ -161,6 +212,14 @@ export class NotificacionesComponent implements OnInit {
   pendientes = 0;
   marcandoId: number | null = null;
 
+  // Control de recepción
+  notificacionesControl: NotificacionControlRecepcionItem[] = [];
+  loadingControl = false;
+  errorControl = '';
+  controlNoLeidas = 0;
+  marcandoControlId: number | null = null;
+
+  // Alertas de stock
   notificaciones: NotificacionStockItem[] = [];
   loadingStock = false;
   errorStock = '';
@@ -174,6 +233,7 @@ export class NotificacionesComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarSolicitudes();
+    this.cargarControl();
     this.cargarStock();
   }
 
@@ -189,6 +249,22 @@ export class NotificacionesComponent implements OnInit {
       error: (err) => {
         this.errorSolicitudes = err?.error?.message || 'No se pudieron cargar las solicitudes';
         this.loadingSolicitudes = false;
+      }
+    });
+  }
+
+  cargarControl(): void {
+    this.loadingControl = true;
+    this.errorControl = '';
+    this.notificacionesService.obtenerNotificacionesControlRecepcion().subscribe({
+      next: (res) => {
+        this.notificacionesControl = res;
+        this.controlNoLeidas = res.filter(n => !n.leida).length;
+        this.loadingControl = false;
+      },
+      error: (err) => {
+        this.errorControl = err?.error?.message || 'Error al cargar notificaciones de control';
+        this.loadingControl = false;
       }
     });
   }
@@ -212,6 +288,10 @@ export class NotificacionesComponent implements OnInit {
     });
   }
 
+  irAControlRecepcion(n: NotificacionControlRecepcionItem): void {
+    this.router.navigate(['/ordenes/control-recepcion']);
+  }
+
   atenderSolicitud(s: SolicitudMaterialItem): void {
     if (this.marcandoId !== null) return;
     this.marcandoId = s.idSolicitud;
@@ -224,6 +304,22 @@ export class NotificacionesComponent implements OnInit {
       error: () => {
         this.marcandoId = null;
         this.alertas.error('Error', 'No se pudo marcar como atendida');
+      }
+    });
+  }
+
+  marcarControlLeida(n: NotificacionControlRecepcionItem): void {
+    if (n.leida || this.marcandoControlId !== null) return;
+    this.marcandoControlId = n.idHistorial;
+    this.notificacionesService.marcarNotificacionControlLeida(n.idHistorial).subscribe({
+      next: () => {
+        n.leida = true;
+        this.controlNoLeidas = Math.max(0, this.controlNoLeidas - 1);
+        this.marcandoControlId = null;
+      },
+      error: () => {
+        this.marcandoControlId = null;
+        this.alertas.error('Error', 'No se pudo marcar como leída');
       }
     });
   }

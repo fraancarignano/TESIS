@@ -211,6 +211,308 @@ namespace TESIS_OG.Services.UbicacionService
                 .ToListAsync();
         }
 
+        public async Task<List<ScrapProyectoInsumoDTO>> ObtenerInsumosProyectoParaScrapAsync(int idProyecto)
+        {
+            return await _context.InsumoStocks
+                .Include(s => s.IdInsumoNavigation)
+                .Where(s => s.IdProyecto == idProyecto && s.Cantidad > 0)
+                .GroupBy(s => new
+                {
+                    s.IdInsumo,
+                    s.IdInsumoNavigation.NombreInsumo,
+                    s.IdInsumoNavigation.Color,
+                    s.IdInsumoNavigation.UnidadMedida
+                })
+                .Select(g => new ScrapProyectoInsumoDTO
+                {
+                    IdInsumo = g.Key.IdInsumo,
+                    NombreInsumo = g.Key.NombreInsumo,
+                    Color = g.Key.Color,
+                    UnidadMedida = g.Key.UnidadMedida,
+                    CantidadAsignada = g.Sum(x => x.Cantidad),
+                    StockProyecto = g.Sum(x => x.Cantidad)
+                })
+                .OrderBy(x => x.NombreInsumo)
+                .ToListAsync();
+        }
+
+        public async Task<List<ScrapProyectoInsumoDTO>> ObtenerScrapsProyectoParaTransferenciaAsync(int idProyecto)
+        {
+            return await _context.Scraps
+                .Include(s => s.IdInsumoNavigation)
+                .Where(s => s.IdProyecto == idProyecto && s.CantidadScrap > 0)
+                .GroupBy(s => new
+                {
+                    s.IdInsumo,
+                    s.IdInsumoNavigation.NombreInsumo,
+                    s.IdInsumoNavigation.Color,
+                    s.IdInsumoNavigation.UnidadMedida
+                })
+                .Select(g => new ScrapProyectoInsumoDTO
+                {
+                    IdInsumo = g.Key.IdInsumo,
+                    NombreInsumo = g.Key.NombreInsumo,
+                    Color = g.Key.Color,
+                    UnidadMedida = g.Key.UnidadMedida,
+                    CantidadAsignada = g.Sum(x => x.CantidadScrap),
+                    StockProyecto = g.Sum(x => x.CantidadScrap)
+                })
+                .OrderBy(x => x.NombreInsumo)
+                .ToListAsync();
+        }
+
+        public async Task<(bool ok, string? error)> TransferirProyectoAScrapAsync(ScrapTransferDTO transferDto)
+        {
+            var proyecto = await _context.Proyectos.FindAsync(transferDto.IdProyecto);
+            if (proyecto == null)
+                return (false, "El proyecto seleccionado no existe.");
+
+            var items = transferDto.Items
+                .Where(i => i.Cantidad > 0)
+                .GroupBy(i => i.IdInsumo)
+                .Select(g => new ScrapTransferItemDTO
+                {
+                    IdInsumo = g.Key,
+                    Cantidad = g.Sum(x => x.Cantidad),
+                    Motivo = g.Select(x => x.Motivo).FirstOrDefault(m => !string.IsNullOrWhiteSpace(m))
+                })
+                .ToList();
+
+            if (!items.Any())
+                return (false, "Seleccioná al menos un insumo con cantidad mayor a cero.");
+
+            if (items.Any(i => string.IsNullOrWhiteSpace(i.Motivo)))
+                return (false, "El motivo es obligatorio para todos los insumos enviados a scrap.");
+
+            var ubicacionScrap = await ObtenerOCrearUbicacionScrapAsync();
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                foreach (var item in items)
+                {
+                    var insumo = await _context.Insumos.FindAsync(item.IdInsumo);
+                    if (insumo == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return (false, $"El insumo {item.IdInsumo} no existe.");
+                    }
+
+                    var stockProyecto = await _context.InsumoStocks
+                        .Where(s => s.IdProyecto == transferDto.IdProyecto && s.IdInsumo == item.IdInsumo && s.Cantidad > 0)
+                        .OrderByDescending(s => s.Cantidad)
+                        .ToListAsync();
+
+                    var disponible = stockProyecto.Sum(s => s.Cantidad);
+                    if (item.Cantidad > disponible)
+                    {
+                        await transaction.RollbackAsync();
+                        return (false, $"La cantidad de {insumo.NombreInsumo} supera el stock asignado al proyecto. Disponible: {disponible}.");
+                    }
+
+                    var restante = item.Cantidad;
+                    foreach (var stock in stockProyecto)
+                    {
+                        if (restante <= 0) break;
+
+                        var cantidadTomada = Math.Min(stock.Cantidad, restante);
+                        stock.Cantidad -= cantidadTomada;
+                        stock.FechaActualizacion = DateTime.Now;
+                        restante -= cantidadTomada;
+
+                        if (stock.Cantidad <= 0)
+                            _context.InsumoStocks.Remove(stock);
+                    }
+
+                    var scrap = new Scrap
+                    {
+                        IdProyecto = transferDto.IdProyecto,
+                        IdInsumo = item.IdInsumo,
+                        CantidadScrap = item.Cantidad,
+                        Motivo = item.Motivo,
+                        Destino = "Scrap",
+                        AreaOcurrencia = "Inventario",
+                        FechaRegistro = DateTime.Now,
+                        IdUbicacion = ubicacionScrap.IdUbicacion
+                    };
+                    _context.Scraps.Add(scrap);
+
+                    _context.InventarioMovimientos.Add(new InventarioMovimiento
+                    {
+                        IdInsumo = item.IdInsumo,
+                        NombreInsumo = insumo.NombreInsumo,
+                        TipoMovimiento = "Scrap",
+                        Cantidad = item.Cantidad,
+                        FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+                        Origen = $"Proyecto {proyecto.CodigoProyecto ?? proyecto.IdProyecto.ToString()}",
+                        Destino = ubicacionScrap.Codigo,
+                        Observacion = $"Motivo: {item.Motivo}",
+                        IdUsuario = transferDto.IdUsuario
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+                await ActualizarTotalesScrapProyectoAsync(transferDto.IdProyecto);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return (false, $"Error al transferir a scrap: {ex.Message}");
+            }
+        }
+
+        public async Task<(bool ok, string? error)> TransferirScrapAProyectoAsync(ScrapTransferDTO transferDto)
+        {
+            var proyecto = await _context.Proyectos.FindAsync(transferDto.IdProyecto);
+            if (proyecto == null)
+                return (false, "El proyecto seleccionado no existe.");
+
+            var items = transferDto.Items
+                .Where(i => i.Cantidad > 0)
+                .GroupBy(i => i.IdInsumo)
+                .Select(g => new ScrapTransferItemDTO
+                {
+                    IdInsumo = g.Key,
+                    Cantidad = g.Sum(x => x.Cantidad),
+                    Motivo = g.Select(x => x.Motivo).FirstOrDefault(m => !string.IsNullOrWhiteSpace(m)) ?? "Reingreso desde scrap"
+                })
+                .ToList();
+
+            if (!items.Any())
+                return (false, "Seleccioná al menos un insumo con cantidad mayor a cero.");
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                foreach (var item in items)
+                {
+                    var insumo = await _context.Insumos.FindAsync(item.IdInsumo);
+                    if (insumo == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return (false, $"El insumo {item.IdInsumo} no existe.");
+                    }
+
+                    var scraps = await _context.Scraps
+                        .Where(s => s.IdProyecto == transferDto.IdProyecto && s.IdInsumo == item.IdInsumo && s.CantidadScrap > 0)
+                        .OrderBy(s => s.FechaRegistro)
+                        .ToListAsync();
+
+                    var disponible = scraps.Sum(s => s.CantidadScrap);
+                    if (item.Cantidad > disponible)
+                    {
+                        await transaction.RollbackAsync();
+                        return (false, $"La cantidad de {insumo.NombreInsumo} supera el scrap disponible. Disponible: {disponible}.");
+                    }
+
+                    var restante = item.Cantidad;
+                    foreach (var scrap in scraps)
+                    {
+                        if (restante <= 0) break;
+
+                        var cantidadTomada = Math.Min(scrap.CantidadScrap, restante);
+                        scrap.CantidadScrap -= cantidadTomada;
+                        restante -= cantidadTomada;
+
+                        if (scrap.CantidadScrap <= 0)
+                            _context.Scraps.Remove(scrap);
+                    }
+
+                    var stockProyecto = await _context.InsumoStocks
+                        .FirstOrDefaultAsync(s => s.IdProyecto == transferDto.IdProyecto && s.IdInsumo == item.IdInsumo);
+
+                    if (stockProyecto == null)
+                    {
+                        stockProyecto = new InsumoStock
+                        {
+                            IdInsumo = item.IdInsumo,
+                            IdProyecto = transferDto.IdProyecto,
+                            IdUbicacion = insumo.IdUbicacion,
+                            Cantidad = item.Cantidad,
+                            FechaActualizacion = DateTime.Now
+                        };
+                        _context.InsumoStocks.Add(stockProyecto);
+                    }
+                    else
+                    {
+                        stockProyecto.Cantidad += item.Cantidad;
+                        stockProyecto.FechaActualizacion = DateTime.Now;
+                    }
+
+                    _context.InventarioMovimientos.Add(new InventarioMovimiento
+                    {
+                        IdInsumo = item.IdInsumo,
+                        NombreInsumo = insumo.NombreInsumo,
+                        TipoMovimiento = "Reingreso Scrap",
+                        Cantidad = item.Cantidad,
+                        FechaMovimiento = DateOnly.FromDateTime(DateTime.Now),
+                        Origen = "Scrap",
+                        Destino = $"Proyecto {proyecto.CodigoProyecto ?? proyecto.IdProyecto.ToString()}",
+                        Observacion = item.Motivo,
+                        IdUsuario = transferDto.IdUsuario
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+                await ActualizarTotalesScrapProyectoAsync(transferDto.IdProyecto);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return (true, null);
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return (false, $"Error al devolver scrap al proyecto: {ex.Message}");
+            }
+        }
+
+        private async Task<Ubicacion> ObtenerOCrearUbicacionScrapAsync()
+        {
+            var ubicacionScrap = await _context.Ubicacions
+                .FirstOrDefaultAsync(u => u.Tipo == "Scrap" || u.Codigo == "SCRP" || u.Codigo == "SCRP-01");
+
+            if (ubicacionScrap != null)
+                return ubicacionScrap;
+
+            ubicacionScrap = new Ubicacion
+            {
+                Codigo = "SCRP-01",
+                Nombre = "Depósito General de Scrap",
+                Tipo = "Scrap",
+                Rack = 0,
+                Division = 0,
+                Espacio = 0,
+                Descripcion = "Ubicación creada automáticamente para scrap",
+                EstadoUbicacion = "Activa"
+            };
+
+            _context.Ubicacions.Add(ubicacionScrap);
+            await _context.SaveChangesAsync();
+            return ubicacionScrap;
+        }
+
+        private async Task ActualizarTotalesScrapProyectoAsync(int idProyecto)
+        {
+            var proyecto = await _context.Proyectos.FindAsync(idProyecto);
+            if (proyecto == null) return;
+
+            var totalScrap = await _context.Scraps
+                .Where(s => s.IdProyecto == idProyecto)
+                .SumAsync(s => (decimal?)s.CantidadScrap) ?? 0;
+
+            var totalTelaAsignada = await _context.InsumoStocks
+                .Where(s => s.IdProyecto == idProyecto)
+                .SumAsync(s => (decimal?)s.Cantidad) ?? 0;
+
+            proyecto.ScrapTotal = totalScrap;
+            proyecto.ScrapPorcentaje = totalTelaAsignada + totalScrap > 0
+                ? Math.Round((totalScrap / (totalTelaAsignada + totalScrap)) * 100, 2)
+                : 0;
+        }
+
         public async Task<List<ProyectoUbicacionDTO>> ObtenerProyectosPorUbicacionAsync(int idUbicacion)
         {
             return await _context.Despachos

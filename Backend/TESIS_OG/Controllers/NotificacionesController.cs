@@ -6,7 +6,6 @@ using TESIS_OG.Data;
 using TESIS_OG.DTOs.Notificaciones;
 using TESIS_OG.Models;
 using TESIS_OG.Security;
-
 namespace TESIS_OG.Controllers
 {
     [ApiController]
@@ -306,6 +305,162 @@ namespace TESIS_OG.Controllers
             return Ok(new { message = "Solicitud marcada como atendida." });
         }
 
+        // ============================================================
+        // NOTIFICACIONES DE CONTROL DE RECEPCIÓN DE PEDIDOS
+        // ============================================================
+
+        /// <summary>
+        /// Crea una notificación de control de recepción.
+        /// Tipo "HabilitarControl"  → admin habilitó, destinatario: operario.
+        /// Tipo "ControlCompletado" → operario completó, destinatario: admin.
+        /// Formato Accion: CTRL|{tipo}|OC:{idOrdenCompra}|NRO:{nroOrden}
+        /// </summary>
+        [HttpPost("control-recepcion")]
+        [RequiresPermission("Notificaciones", "Crear")]
+        public async Task<IActionResult> CrearNotificacionControlRecepcion(
+            [FromBody] CrearNotificacionControlRecepcionDTO dto)
+        {
+            var idUsuario = ObtenerIdUsuarioDesdeToken();
+            if (!idUsuario.HasValue)
+                return Unauthorized(new { message = "No autenticado." });
+
+            var ordenExiste = await _context.OrdenCompras
+                .AsNoTracking()
+                .AnyAsync(o => o.IdOrdenCompra == dto.IdOrdenCompra);
+            if (!ordenExiste)
+                return BadRequest(new { message = "La orden indicada no existe." });
+
+            var tipo = dto.Tipo is "HabilitarControl" or "ControlCompletado"
+                ? dto.Tipo
+                : "HabilitarControl";
+
+            var accion = $"CTRL|{tipo}|OC:{dto.IdOrdenCompra}|NRO:{dto.NroOrden}";
+            if (accion.Length > 100) accion = accion[..100];
+
+            _context.HistorialUsuarios.Add(new HistorialUsuario
+            {
+                IdUsuario = idUsuario.Value,
+                Modulo = "NotificacionesControlRecepcion",
+                Accion = accion,
+                FechaAccion = DateOnly.FromDateTime(DateTime.Now)
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Notificación de control de recepción creada." });
+        }
+
+        /// <summary>
+        /// Lista las notificaciones de control de recepción (últimas 200).
+        /// </summary>
+        [HttpGet("control-recepcion")]
+        [RequiresPermission("Notificaciones", "Ver")]
+        public async Task<ActionResult<List<NotificacionControlRecepcionItemDTO>>> ObtenerNotificacionesControlRecepcion()
+        {
+            var idUsuario = ObtenerIdUsuarioDesdeToken();
+            if (!idUsuario.HasValue)
+                return Unauthorized(new { message = "No autenticado." });
+
+            var items = await _context.HistorialUsuarios
+                .AsNoTracking()
+                .Include(h => h.IdUsuarioNavigation)
+                .Where(h => h.Modulo == "NotificacionesControlRecepcion")
+                .OrderByDescending(h => h.FechaAccion)
+                .Take(200)
+                .ToListAsync();
+
+            var idsLeidos = await ObtenerIdsLeidosControlRecepcion(idUsuario.Value);
+
+            var result = items.Select(h =>
+            {
+                var (tipo, idOC, nroOrden) = ParseAccionControl(h.Accion ?? string.Empty);
+                var mensajeBase = tipo == "ControlCompletado"
+                    ? $"El operario completó el control de recepción del pedido {nroOrden}."
+                    : $"Se habilitó el control de recepción del pedido {nroOrden}. Realizá el control físico.";
+                return new NotificacionControlRecepcionItemDTO
+                {
+                    IdHistorial = h.IdHistorial,
+                    IdOrdenCompra = idOC,
+                    NroOrden = nroOrden,
+                    Tipo = tipo,
+                    Mensaje = mensajeBase,
+                    Fecha = h.FechaAccion,
+                    IdUsuarioEmisor = h.IdUsuario,
+                    UsuarioEmisor = $"{h.IdUsuarioNavigation.NombreUsuario} {h.IdUsuarioNavigation.ApellidoUsuario}".Trim(),
+                    Leida = idsLeidos.Contains(h.IdHistorial)
+                };
+            }).ToList();
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Devuelve la cantidad de notificaciones de control no leídas (últimos 30 días).
+        /// </summary>
+        [HttpGet("control-recepcion/count")]
+        [RequiresPermission("Notificaciones", "Ver")]
+        public async Task<ActionResult<object>> ContarNotificacionesControlRecepcion()
+        {
+            var idUsuario = ObtenerIdUsuarioDesdeToken();
+            if (!idUsuario.HasValue)
+                return Unauthorized(new { message = "No autenticado." });
+
+            var fechaDesde = DateOnly.FromDateTime(DateTime.Now.AddDays(-30));
+            var idsLeidos = await ObtenerIdsLeidosControlRecepcion(idUsuario.Value);
+
+            var ids = await _context.HistorialUsuarios
+                .AsNoTracking()
+                .Where(h => h.Modulo == "NotificacionesControlRecepcion" && h.FechaAccion >= fechaDesde)
+                .Select(h => h.IdHistorial)
+                .ToListAsync();
+
+            var count = ids.Count(id => !idsLeidos.Contains(id));
+            return Ok(new { total = count });
+        }
+
+        /// <summary>
+        /// Marca una notificación de control de recepción como leída.
+        /// </summary>
+        [HttpPost("control-recepcion/{idHistorial:int}/leer")]
+        [RequiresPermission("Notificaciones", "Ver")]
+        public async Task<IActionResult> MarcarNotificacionControlLeida([FromRoute] int idHistorial)
+        {
+            var idUsuario = ObtenerIdUsuarioDesdeToken();
+            if (!idUsuario.HasValue)
+                return Unauthorized(new { message = "No autenticado." });
+
+            var existe = await _context.HistorialUsuarios
+                .AsNoTracking()
+                .AnyAsync(h => h.IdHistorial == idHistorial && h.Modulo == "NotificacionesControlRecepcion");
+            if (!existe)
+                return NotFound(new { message = "Notificación no encontrada." });
+
+            var accion = $"READ|N:{idHistorial}";
+            var yaLeida = await _context.HistorialUsuarios
+                .AsNoTracking()
+                .AnyAsync(h =>
+                    h.IdUsuario == idUsuario.Value &&
+                    h.Modulo == "NotificacionesControlRecepcionLeidas" &&
+                    h.Accion == accion);
+
+            if (!yaLeida)
+            {
+                _context.HistorialUsuarios.Add(new HistorialUsuario
+                {
+                    IdUsuario = idUsuario.Value,
+                    Modulo = "NotificacionesControlRecepcionLeidas",
+                    Accion = accion,
+                    FechaAccion = DateOnly.FromDateTime(DateTime.Now)
+                });
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { message = "Notificación marcada como leída." });
+        }
+
+        // ============================================================
+        // HELPERS PRIVADOS
+        // ============================================================
+
         private static string NormalizarTipo(string? tipo)
         {
             var raw = (tipo ?? string.Empty).Trim().ToLowerInvariant();
@@ -379,5 +534,56 @@ namespace TESIS_OG.Controllers
 
             return idsLeidos;
         }
+
+        private async Task<HashSet<int>> ObtenerIdsLeidosControlRecepcion(int idUsuario)
+        {
+            var leidasRaw = await _context.HistorialUsuarios
+                .AsNoTracking()
+                .Where(h => h.IdUsuario == idUsuario && h.Modulo == "NotificacionesControlRecepcionLeidas")
+                .Select(h => h.Accion)
+                .ToListAsync();
+
+            var idsLeidos = new HashSet<int>();
+            foreach (var accion in leidasRaw)
+            {
+                if (string.IsNullOrWhiteSpace(accion)) continue;
+                var partes = accion.Split('|', StringSplitOptions.RemoveEmptyEntries);
+                var token = partes.FirstOrDefault(p => p.StartsWith("N:", StringComparison.OrdinalIgnoreCase));
+                if (token != null && int.TryParse(token[2..], out var id))
+                    idsLeidos.Add(id);
+            }
+            return idsLeidos;
+        }
+
+        /// <summary>Parsea una acción con formato CTRL|{tipo}|OC:{idOC}|NRO:{nroOrden}.</summary>
+        private static (string tipo, int idOC, string nroOrden) ParseAccionControl(string accion)
+        {
+            var partes = accion.Split('|', StringSplitOptions.RemoveEmptyEntries);
+            var tipo = partes.Length > 1 ? partes[1] : "HabilitarControl";
+            var idOC = 0;
+            var nroOrden = string.Empty;
+
+            foreach (var parte in partes)
+            {
+                if (parte.StartsWith("OC:", StringComparison.OrdinalIgnoreCase))
+                    _ = int.TryParse(parte[3..], out idOC);
+                else if (parte.StartsWith("NRO:", StringComparison.OrdinalIgnoreCase))
+                    nroOrden = parte[4..];
+            }
+
+            return (tipo, idOC, nroOrden);
+        }
+    }
+}
+
+// DTO de entrada para crear notificaciones de control de recepción
+namespace TESIS_OG.DTOs.Notificaciones
+{
+    public class CrearNotificacionControlRecepcionDTO
+    {
+        public int IdOrdenCompra { get; set; }
+        public string NroOrden { get; set; } = string.Empty;
+        /// <summary>"HabilitarControl" o "ControlCompletado"</summary>
+        public string Tipo { get; set; } = "HabilitarControl";
     }
 }

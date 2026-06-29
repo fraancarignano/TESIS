@@ -50,6 +50,19 @@ export interface CrearSolicitudMaterialPayload {
   }[];
 }
 
+export interface NotificacionControlRecepcionItem {
+  idHistorial: number;
+  idOrdenCompra: number;
+  nroOrden: string;
+  /** "HabilitarControl" | "ControlCompletado" */
+  tipo: string;
+  mensaje: string;
+  fecha: string;
+  idUsuarioEmisor: number;
+  usuarioEmisor: string;
+  leida: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -99,6 +112,28 @@ export class NotificacionesService {
 
   atenderSolicitud(id: number): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${this.apiUrl}/solicitudes-material/${id}/atender`, {}).pipe(
+      tap(() => this.emitirCambio())
+    );
+  }
+
+  // ── Control de Recepción de Pedidos ──────────────────────────
+
+  crearNotificacionControlRecepcion(payload: { idOrdenCompra: number; nroOrden: string; tipo: 'HabilitarControl' | 'ControlCompletado' }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/control-recepcion`, payload).pipe(
+      tap(() => this.emitirCambio())
+    );
+  }
+
+  obtenerNotificacionesControlRecepcion(): Observable<NotificacionControlRecepcionItem[]> {
+    return this.http.get<NotificacionControlRecepcionItem[]>(`${this.apiUrl}/control-recepcion`);
+  }
+
+  contarNotificacionesControlRecepcion(): Observable<{ total: number }> {
+    return this.http.get<{ total: number }>(`${this.apiUrl}/control-recepcion/count`);
+  }
+
+  marcarNotificacionControlLeida(idHistorial: number): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/control-recepcion/${idHistorial}/leer`, {}).pipe(
       tap(() => this.emitirCambio())
     );
   }

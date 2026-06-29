@@ -104,6 +104,46 @@ namespace TESIS_OG.Controllers
             return Ok(new { message = "Transferencia realizada con éxito" });
         }
 
+        [HttpGet("scrap/proyecto/{idProyecto}/insumos")]
+        public async Task<IActionResult> ObtenerInsumosProyectoParaScrap(int idProyecto)
+        {
+            var result = await _ubicacionService.ObtenerInsumosProyectoParaScrapAsync(idProyecto);
+            return Ok(result);
+        }
+
+        [HttpGet("scrap/proyecto/{idProyecto}/disponibles")]
+        public async Task<IActionResult> ObtenerScrapsProyectoParaTransferencia(int idProyecto)
+        {
+            var result = await _ubicacionService.ObtenerScrapsProyectoParaTransferenciaAsync(idProyecto);
+            return Ok(result);
+        }
+
+        [HttpPost("scrap/proyecto-a-scrap")]
+        public async Task<IActionResult> TransferirProyectoAScrap([FromBody] ScrapTransferDTO transferDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new { message = "Datos invalidos", errors = ModelState });
+
+            var (ok, error) = await _ubicacionService.TransferirProyectoAScrapAsync(transferDto);
+            if (!ok)
+                return BadRequest(new { message = error ?? "No se pudo transferir a scrap." });
+
+            return Ok(new { message = "Transferencia a scrap realizada con exito" });
+        }
+
+        [HttpPost("scrap/scrap-a-proyecto")]
+        public async Task<IActionResult> TransferirScrapAProyecto([FromBody] ScrapTransferDTO transferDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new { message = "Datos invalidos", errors = ModelState });
+
+            var (ok, error) = await _ubicacionService.TransferirScrapAProyectoAsync(transferDto);
+            if (!ok)
+                return BadRequest(new { message = error ?? "No se pudo devolver scrap al proyecto." });
+
+            return Ok(new { message = "Transferencia desde scrap realizada con exito" });
+        }
+
         [HttpGet("{id}/scraps")]
         public async Task<IActionResult> ObtenerScrapsPorUbicacion(int id)
         {

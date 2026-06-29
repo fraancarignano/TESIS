@@ -9,6 +9,7 @@ import { AlertasService } from '../../../core/services/alertas';
 import { AuthService } from '../../login/services/auth.service';
 import { HasPermissionDirective } from '../../../core/directives/has-permission.directive';
 import { ExportService } from '../../../core/services/export.service';
+import { NotificacionesService } from '../../../core/services/notificaciones.service';
 
 @Component({
   selector: 'app-orden-compra',
@@ -47,7 +48,8 @@ export class OrdenCompraComponent implements OnInit {
     private ordenCompraService: OrdenCompraService,
     private alertas: AlertasService,
     private authService: AuthService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    private notificacionesService: NotificacionesService
   ) { }
 
   ngOnInit(): void {
@@ -178,6 +180,12 @@ export class OrdenCompraComponent implements OnInit {
     this.ordenCompraService.habilitarControl(orden.idOrdenCompra, usuario.idUsuario).subscribe({
       next: () => {
         this.alertas.success('Recepción habilitada', 'El operario ya puede realizar el control.');
+        // Notificar al operario que hay un control pendiente
+        this.notificacionesService.crearNotificacionControlRecepcion({
+          idOrdenCompra: orden.idOrdenCompra,
+          nroOrden: orden.nroOrden,
+          tipo: 'HabilitarControl'
+        }).subscribe({ error: () => {} }); // silencioso — no bloquear el flujo principal
         this.cargarOrdenes();
         this.cerrarDetalle();
       },

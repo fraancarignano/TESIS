@@ -609,8 +609,16 @@ namespace TESIS_OG.Controllers
                 if (proyecto == null)
                     return NotFound(new { message = $"Proyecto {id} no encontrado" });
 
-                if (proyecto.Estado != "Pendiente")
-                    return BadRequest(new { message = $"Solo se pueden asignar materiales a proyectos en estado Pendiente. Estado actual: {proyecto.Estado}" });
+                var estadosPermitidos = new[] { "Pendiente", "En Proceso", "Pausado" };
+                if (!estadosPermitidos.Contains(proyecto.Estado))
+                    return BadRequest(new { message = $"No se pueden asignar materiales a proyectos en estado {proyecto.Estado}" });
+
+                if (proyecto.Estado is "En Proceso" or "Pausado")
+                {
+                    var avanceCorte = proyecto.AvanceDisenoDesarrollo ?? 0;
+                    if (avanceCorte > 0)
+                        return BadRequest(new { message = $"Solo se pueden asignar materiales antes del área de Corte. Avance en Corte: {avanceCorte}%" });
+                }
 
                 if (dto?.Materiales == null || !dto.Materiales.Any())
                     return BadRequest(new { message = "No se recibieron materiales para asignar" });

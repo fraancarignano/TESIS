@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { HasPermissionDirective } from '../../core/directives/has-permission.directive';
 import { AlertasService } from '../../core/services/alertas';
@@ -124,8 +124,14 @@ export class PrivateLayoutComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.notificacionesService.contarSolicitudesPendientes().subscribe({
-      next: (res) => this.notificacionesStockCount = res.total || 0,
+    forkJoin({
+      solicitudes: this.notificacionesService.contarSolicitudesPendientes(),
+      control: this.notificacionesService.contarNotificacionesControlRecepcion()
+    }).subscribe({
+      next: ({ solicitudes, control }) => {
+        this.notificacionesStockCount =
+          (solicitudes.total || 0) + (control.total || 0);
+      },
       error: () => this.notificacionesStockCount = 0
     });
   }

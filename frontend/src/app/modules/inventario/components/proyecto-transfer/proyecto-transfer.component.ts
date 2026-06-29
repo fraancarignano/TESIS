@@ -7,13 +7,8 @@ import { ProyectosService } from '../../../proyectos/services/proyecto.service';
 import { ProyectosServiceNuevo } from '../../../proyectos/services/proyectos-nuevo.service';
 import { OrdenCompraService } from '../../../orden-compra/services/orden-compra.service';
 import { NotificacionesService } from '../../../../core/services/notificaciones.service';
-import { Proyecto } from '../../../proyectos/models/proyecto.model';
+import { Proyecto, filtrarProyectosParaAsignacion } from '../../../proyectos/models/proyecto.model';
 
-function normalizarColor(c?: string | null): string {
-  if (!c) return '';
-  return c.trim().toUpperCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
 
 interface MaterialRow {
   idMaterialCalculado: number;
@@ -21,6 +16,9 @@ interface MaterialRow {
   idTipoInsumo: number;
   nombreInsumo: string;
   tipoInsumo: string;
+  /** Color registrado en Gestión de insumos — fuente única de verdad. Nunca derivado ni transformado. */
+  colorInsumo: string;
+  /** Color solicitado en la prenda del proyecto. Puede ser vacío si no fue especificado. */
   colorSolicitado: string;
   cantidadNecesaria: number;
   unidadMedida: string;
@@ -63,6 +61,9 @@ export class ProyectoTransferComponent implements OnInit {
   idProyectoSeleccionado: number | null = null;
   idSolicitudOrigen: number | null = null;
   proyectoActual: Proyecto | null = null;
+  busquedaProyecto = '';
+  proyectosFiltrados: Proyecto[] = [];
+  mostrarResultadosProyecto = false;
 
   materiales: MaterialRow[] = [];
 
@@ -104,12 +105,10 @@ export class ProyectoTransferComponent implements OnInit {
       proveedores: this.ordenCompraService.obtenerProveedores()
     }).subscribe({
       next: ({ proyectos, proveedores }) => {
-        this.proyectos = (proyectos as any[]).filter((p: any) =>
-          p.estado !== 'Archivado' && p.estado !== 'Cancelado' && p.estado !== 'Finalizado'
-        );
+        this.proyectos = filtrarProyectosParaAsignacion(proyectos as any[]);
         this.proveedores = proveedores;
         this.cargando = false;
-        if (this.idProyectoSeleccionado) this.onProyectoChange();
+        this.sincronizarProyectoDesdeQuery();
       },
       error: () => { this.mostrarMensaje('Error al cargar datos', 'error'); this.cargando = false; }
     });
@@ -119,6 +118,64 @@ export class ProyectoTransferComponent implements OnInit {
     if (!this.idProyectoSeleccionado) { this.materiales = []; this.proyectoActual = null; return; }
     this.proyectoActual = this.proyectos.find(p => p.idProyecto === Number(this.idProyectoSeleccionado)) || null;
     this.cargarMateriales();
+  }
+
+  onBusquedaProyectoChange(): void {
+    if (this.idProyectoSeleccionado) {
+      const label = this.obtenerLabelProyecto(this.proyectoActual);
+      if (this.busquedaProyecto !== label) {
+        this.idProyectoSeleccionado = null;
+        this.proyectoActual = null;
+        this.materiales = [];
+      }
+    }
+
+    const term = this.busquedaProyecto.trim().toLowerCase();
+    if (!term) {
+      this.proyectosFiltrados = [];
+      this.mostrarResultadosProyecto = false;
+      return;
+    }
+
+    this.proyectosFiltrados = this.proyectos.filter(p =>
+      p.nombreProyecto?.toLowerCase().includes(term) ||
+      p.codigoProyecto?.toLowerCase().includes(term) ||
+      p.clienteNombre?.toLowerCase().includes(term) ||
+      p.estado?.toLowerCase().includes(term) ||
+      p.idProyecto?.toString().includes(term)
+    );
+    this.mostrarResultadosProyecto = this.proyectosFiltrados.length > 0;
+  }
+
+  seleccionarProyecto(p: Proyecto): void {
+    this.idProyectoSeleccionado = p.idProyecto ?? null;
+    this.busquedaProyecto = this.obtenerLabelProyecto(p);
+    this.mostrarResultadosProyecto = false;
+    this.proyectosFiltrados = [];
+    this.onProyectoChange();
+  }
+
+  limpiarProyecto(): void {
+    this.idProyectoSeleccionado = null;
+    this.proyectoActual = null;
+    this.busquedaProyecto = '';
+    this.materiales = [];
+    this.mostrarResultadosProyecto = false;
+    this.proyectosFiltrados = [];
+  }
+
+  private obtenerLabelProyecto(p: Proyecto | null): string {
+    if (!p) return '';
+    return `${p.nombreProyecto} (${p.codigoProyecto || '—'}) — ${p.estado}`;
+  }
+
+  private sincronizarProyectoDesdeQuery(): void {
+    if (!this.idProyectoSeleccionado || !this.proyectos.length) return;
+    const p = this.proyectos.find(x => x.idProyecto === Number(this.idProyectoSeleccionado));
+    if (p) {
+      this.busquedaProyecto = this.obtenerLabelProyecto(p);
+      this.onProyectoChange();
+    }
   }
 
   cargarMateriales(): void {
@@ -131,7 +188,6 @@ export class ProyectoTransferComponent implements OnInit {
         this.materiales = (proyecto.materiales || []).map((m: any): MaterialRow => {
           const necesario = Number(m.cantidadFinal ?? m.cantidadNecesaria ?? 0);
           // Si hay un idInsumo explícito, usar su stock directamente.
-          // El color es solo un atributo del insumo, no debe impedir usar su stock.
           const stock = Number(m.stockActual ?? 0);
           const tieneStock = stock >= necesario;
           const esExtra = m.tipoCalculo === 'Extra';
@@ -141,7 +197,10 @@ export class ProyectoTransferComponent implements OnInit {
             idTipoInsumo: m.idTipoInsumo ?? 0,
             nombreInsumo: m.nombreInsumo,
             tipoInsumo: m.tipoInsumo || '',
-            colorSolicitado: normalizarColor(m.colorSolicitado),
+            // Fuente única de verdad: colorInsumo viene directamente de Gestión de insumos,
+            // sin transformaciones ni derivaciones en el frontend.
+            colorInsumo: m.colorInsumo ?? '',
+            colorSolicitado: m.colorSolicitado ?? '',
             cantidadNecesaria: necesario,
             unidadMedida: m.unidadMedida || '',
             stockDisponible: stock,
@@ -265,7 +324,9 @@ export class ProyectoTransferComponent implements OnInit {
         idMaterialCalculado: m.idMaterialCalculado,
         idInsumo: m.idInsumo || 0,
         nombreInsumo: m.nombreInsumo,
-        colorSolicitado: m.colorSolicitado || '',
+        // El color en la OC parte del color registrado en Gestión de insumos (fuente de verdad).
+        // Si la prenda tiene un color solicitado distinto, se muestra ese; de lo contrario el del insumo.
+        colorSolicitado: m.colorSolicitado || m.colorInsumo || '',
         cantidad: cantidadInicial,
         precioUnitario: m.precioUnitario || 0,
         nuevoIdTipoInsumo: m.idInsumo === 0 ? (m.idTipoInsumo || undefined) : undefined,

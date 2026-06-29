@@ -57,4 +57,26 @@ namespace TESIS_OG.DTOs.Notificaciones
         public DateOnly FechaSolicitud { get; set; }
         public DateOnly? FechaAtendida { get; set; }
     }
+
+    // ============================================================
+    // DTOs para notificaciones de control de recepción de pedidos
+    // ============================================================
+
+    /// <summary>Item devuelto al listar notificaciones de control de recepción.</summary>
+    public class NotificacionControlRecepcionItemDTO
+    {
+        public int IdHistorial { get; set; }
+        public int IdOrdenCompra { get; set; }
+        public string NroOrden { get; set; } = string.Empty;
+        /// <summary>
+        /// "HabilitarControl" → admin habilitó, va al operario.
+        /// "ControlCompletado" → operario terminó, va al admin.
+        /// </summary>
+        public string Tipo { get; set; } = string.Empty;
+        public string Mensaje { get; set; } = string.Empty;
+        public DateOnly Fecha { get; set; }
+        public int IdUsuarioEmisor { get; set; }
+        public string UsuarioEmisor { get; set; } = string.Empty;
+        public bool Leida { get; set; }
+    }
 }

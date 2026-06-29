@@ -13,12 +13,22 @@
   <div class="pt-card">
     <div class="pt-field">
       <label>Proyecto *</label>
-      <select [(ngModel)]="idProyectoSeleccionado" (change)="onProyectoChange()" style="max-width:480px">
-        <option [ngValue]="null">Seleccionar proyecto...</option>
-        <option *ngFor="let p of proyectos" [ngValue]="p.idProyecto">
-          {{ p.nombreProyecto }} ({{ p.codigoProyecto }}) — {{ p.estado }}
-        </option>
-      </select>
+      <div class="search-container pt-search" style="max-width:480px">
+        <input type="text"
+          [(ngModel)]="busquedaProyecto"
+          (ngModelChange)="onBusquedaProyectoChange()"
+          (focus)="onBusquedaProyectoChange()"
+          placeholder="Buscar por nombre, código, cliente o estado..."
+          [disabled]="cargando">
+        <button type="button" class="btn-clear" *ngIf="idProyectoSeleccionado" (click)="limpiarProyecto()">✕</button>
+        <div class="search-results" *ngIf="mostrarResultadosProyecto">
+          <div class="search-item" *ngFor="let p of proyectosFiltrados" (click)="seleccionarProyecto(p)">
+            <span class="item-name">{{ p.nombreProyecto }}</span>
+            <span class="item-meta">{{ p.codigoProyecto || '—' }} · {{ p.clienteNombre || 'Sin cliente' }} · {{ p.estado }}</span>
+          </div>
+        </div>
+      </div>
+      <small *ngIf="!cargando">{{ proyectos.length }} proyecto(s) disponible(s)</small>
     </div>
   </div>
 
@@ -48,7 +58,7 @@
               <th>Sel.</th>
               <th>Material</th>
               <th>Tipo</th>
-              <th>Color solicitado</th>
+              <th>Color</th>
               <th>Necesario</th>
               <th>En stock</th>
               <th>Cantidad a asignar</th>
@@ -66,8 +76,8 @@
               </td>
               <td><span class="badge-tipo">{{ m.tipoInsumo }}</span></td>
               <td>
-                <span *ngIf="m.colorSolicitado" class="color-tag solicitado">{{ m.colorSolicitado }}</span>
-                <span *ngIf="!m.colorSolicitado" class="text-muted">—</span>
+                <span *ngIf="m.colorInsumo" class="color-tag">{{ m.colorInsumo }}</span>
+                <span *ngIf="!m.colorInsumo" class="text-muted">—</span>
               </td>
               <td>{{ m.cantidadNecesaria }} {{ m.unidadMedida }}</td>
               <td class="text-ok">{{ m.stockDisponible }} {{ m.unidadMedida }}</td>
@@ -104,7 +114,7 @@
               <th>Sel.</th>
               <th>Material</th>
               <th>Tipo</th>
-              <th>Color solicitado</th>
+              <th>Color</th>
               <th>Stock disponible</th>
               <th>Cantidad a asignar</th>
             </tr>
@@ -121,8 +131,8 @@
               </td>
               <td><span class="badge-tipo">{{ m.tipoInsumo }}</span></td>
               <td>
-                <span *ngIf="m.colorSolicitado" class="color-tag solicitado">{{ m.colorSolicitado }}</span>
-                <span *ngIf="!m.colorSolicitado" class="text-muted">—</span>
+                <span *ngIf="m.colorInsumo" class="color-tag">{{ m.colorInsumo }}</span>
+                <span *ngIf="!m.colorInsumo" class="text-muted">—</span>
               </td>
               <td [class.text-ok]="m.stockDisponible > 0" [class.text-warn]="m.stockDisponible <= 0">
                 {{ m.stockDisponible }} {{ m.unidadMedida }}
@@ -160,7 +170,7 @@
             <tr>
               <th>Material</th>
               <th>Tipo</th>
-              <th>Color solicitado</th>
+              <th>Color</th>
               <th>Necesario</th>
               <th>Stock disponible</th>
               <th>Faltante</th>
@@ -175,8 +185,8 @@
               </td>
               <td><span class="badge-tipo">{{ m.tipoInsumo }}</span></td>
               <td>
-                <span *ngIf="m.colorSolicitado" class="color-tag solicitado">{{ m.colorSolicitado }}</span>
-                <span *ngIf="!m.colorSolicitado" class="text-muted">—</span>
+                <span *ngIf="m.colorInsumo" class="color-tag">{{ m.colorInsumo }}</span>
+                <span *ngIf="!m.colorInsumo" class="text-muted">—</span>
               </td>
               <td>{{ m.cantidadNecesaria }} {{ m.unidadMedida }}</td>
               <td class="text-warn">{{ m.stockDisponible }} {{ m.unidadMedida }}</td>

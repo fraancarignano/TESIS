@@ -253,6 +253,49 @@ export interface ProyectoVista extends Proyecto {
 // ============================================
 
 /**
+ * Filtra proyectos elegibles para recibir asignación de materiales.
+ *
+ * Reglas:
+ * - Siempre se incluyen: Pendiente (cualquier avanceCorte).
+ * - Se incluyen con condición: En Proceso y Pausado, solo si avanceCorte es 0, null o undefined.
+ * - Siempre se excluyen: Finalizado, Cancelado, Despachado, Archivado, Anulado.
+ * - Se excluyen: En Proceso / Pausado con avanceCorte > 0 (ya iniciaron Corte).
+ * - Se excluyen: valores de estado desconocidos, nulos o fuera de rango.
+ */
+export function filtrarProyectosParaAsignacion(proyectos: Proyecto[]): Proyecto[] {
+  const ESTADOS_EXCLUIDOS = new Set<EstadoProyecto>([
+    'Finalizado', 'Cancelado', 'Despachado', 'Archivado', 'Anulado'
+  ]);
+  const ESTADOS_VALIDOS = new Set<string>([
+    'Pendiente', 'En Proceso', 'Finalizado', 'Despachado',
+    'Cancelado', 'Pausado', 'Anulado', 'Archivado'
+  ]);
+
+  return proyectos.filter(p => {
+    const estado = p.estado;
+
+    // Excluir estados nulos o desconocidos
+    if (!estado || !ESTADOS_VALIDOS.has(estado)) return false;
+
+    // Excluir estados terminales
+    if (ESTADOS_EXCLUIDOS.has(estado)) return false;
+
+    // Pendiente: siempre incluir
+    if (estado === 'Pendiente') return true;
+
+    // En Proceso y Pausado: incluir solo si aún no llegaron a Corte
+    if (estado === 'En Proceso' || estado === 'Pausado') {
+      const avance = p.avanceCorte ?? 0;
+      // Excluir datos fuera de rango (negativos o > 100)
+      if (avance < 0 || avance > 100) return false;
+      return avance === 0;
+    }
+
+    return false;
+  });
+}
+
+/**
  * Calcular progreso general del proyecto
  */
 export function calcularProgresoGeneral(proyecto: Proyecto): number {

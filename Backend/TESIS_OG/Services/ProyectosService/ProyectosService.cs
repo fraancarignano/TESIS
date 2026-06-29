@@ -1750,10 +1750,13 @@ namespace TESIS_OG.Services.ProyectoService
                     Observaciones = mc.Observaciones,
                     IdProyectoPrenda = mc.IdProyectoPrenda,
                     NombrePrenda = mc.IdProyectoPrendaNavigation?.IdTipoPrendaNavigation?.NombrePrenda,
+                    // ColorInsumo: fuente única de verdad — siempre desde Insumo.Color, nunca derivado del contexto.
                     ColorInsumo = insumoReal?.Color,
+                    // ColorSolicitado: el color pedido en la prenda del proyecto; null si no fue especificado.
+                    // No se usa insumoReal?.Color como fallback para no mezclar ambos conceptos.
                     ColorSolicitado = !string.IsNullOrWhiteSpace(colorSolicitado)
                         ? colorSolicitado
-                        : insumoReal?.Color,
+                        : null,
                     ColorCoincide = string.IsNullOrWhiteSpace(colorSolicitado)
                                    || NormalizarColor(insumoReal?.Color) == NormalizarColor(colorSolicitado),
                     PrecioUnitario = insumoReal?.PrecioUnitario ?? mc.IdInsumoNavigation?.PrecioUnitario

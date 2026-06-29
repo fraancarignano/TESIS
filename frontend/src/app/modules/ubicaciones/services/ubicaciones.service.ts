@@ -37,6 +37,17 @@ export interface InventarioScrap {
     ultimoRegistro: string;
 }
 
+export interface ScrapProyectoInsumo {
+    idInsumo: number;
+    nombreInsumo: string;
+    color?: string;
+    unidadMedida?: string;
+    cantidadAsignada: number;
+    stockProyecto: number;
+    cantidadTransferir?: number;
+    motivo?: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -88,5 +99,21 @@ export class UbicacionesService {
 
     transferirDesdeOrden(transferDto: any): Observable<any> {
         return this.http.post(`${this.apiUrl}/transfer`, transferDto);
+    }
+
+    getInsumosProyectoParaScrap(idProyecto: number): Observable<ScrapProyectoInsumo[]> {
+        return this.http.get<ScrapProyectoInsumo[]>(`${this.apiUrl}/scrap/proyecto/${idProyecto}/insumos`);
+    }
+
+    getScrapsProyectoParaTransferencia(idProyecto: number): Observable<ScrapProyectoInsumo[]> {
+        return this.http.get<ScrapProyectoInsumo[]>(`${this.apiUrl}/scrap/proyecto/${idProyecto}/disponibles`);
+    }
+
+    transferirProyectoAScrap(transferDto: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/scrap/proyecto-a-scrap`, transferDto);
+    }
+
+    transferirScrapAProyecto(transferDto: any): Observable<any> {
+        return this.http.post(`${this.apiUrl}/scrap/scrap-a-proyecto`, transferDto);
     }
 }

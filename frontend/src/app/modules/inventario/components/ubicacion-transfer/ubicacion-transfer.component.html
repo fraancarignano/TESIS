@@ -85,7 +85,13 @@
   <div class="tab-content" *ngIf="tabActiva === 'ub-ub'">
     <p class="tab-desc">Mueve insumos de una ubicación a otra dentro del depósito.</p>
 
-    <div class="form-grid">
+    <div class="mode-tabs">
+      <button type="button" class="mode-tab" [class.active]="modoEntreUbicaciones === 'ubicacion'" (click)="setModoEntreUbicaciones('ubicacion')">Ubicación → Ubicación</button>
+      <button type="button" class="mode-tab" [class.active]="modoEntreUbicaciones === 'proyecto-scrap'" (click)="setModoEntreUbicaciones('proyecto-scrap')">Proyecto → Scrap</button>
+      <button type="button" class="mode-tab" [class.active]="modoEntreUbicaciones === 'scrap-proyecto'" (click)="setModoEntreUbicaciones('scrap-proyecto')">Scrap → Proyecto</button>
+    </div>
+
+    <div class="form-grid" *ngIf="modoEntreUbicaciones === 'ubicacion'">
       <div class="form-group">
         <label>Ubicación origen</label>
         <select [(ngModel)]="idUbicacionOrigen" (change)="onUbicacionOrigenChange()">
@@ -106,7 +112,7 @@
       </div>
     </div>
 
-    <div class="insumos-list" *ngIf="insumosUB.length > 0">
+    <div class="insumos-list" *ngIf="modoEntreUbicaciones === 'ubicacion' && insumosUB.length > 0">
       <div class="list-header">
         <strong>Insumos en la ubicación</strong>
         <label class="check-all"><input type="checkbox" [checked]="todosSeleccionadosUB" (change)="toggleTodosUB()"> Todos</label>
@@ -126,8 +132,87 @@
       </div>
     </div>
 
-    <div class="empty-hint" *ngIf="!idUbicacionOrigen">Seleccioná una ubicación de origen para ver sus insumos.</div>
-    <div class="empty-hint" *ngIf="idUbicacionOrigen && insumosUB.length === 0 && !cargando">No hay insumos en esta ubicación.</div>
+    <div class="empty-hint" *ngIf="modoEntreUbicaciones === 'ubicacion' && !idUbicacionOrigen">Seleccioná una ubicación de origen para ver sus insumos.</div>
+    <div class="empty-hint" *ngIf="modoEntreUbicaciones === 'ubicacion' && idUbicacionOrigen && insumosUB.length === 0 && !cargando">No hay insumos en esta ubicación.</div>
+
+    <ng-container *ngIf="modoEntreUbicaciones !== 'ubicacion'">
+      <div class="form-grid scrap-project-grid">
+        <div class="form-group">
+          <label>Proyecto</label>
+          <div class="search-container pt-search">
+            <input type="text"
+              [(ngModel)]="busquedaProyectoScrap"
+              (ngModelChange)="onBusquedaProyectoScrapChange()"
+              (focus)="onBusquedaProyectoScrapChange()"
+              placeholder="Buscar por nombre, código, cliente o estado..."
+              [disabled]="cargando">
+            <button type="button" class="btn-clear" *ngIf="idProyectoScrapSeleccionado" (click)="limpiarProyectoScrap()">×</button>
+            <div class="search-results" *ngIf="mostrarResultadosProyectoScrap">
+              <div class="search-item" *ngFor="let p of proyectosScrapFiltrados" (click)="seleccionarProyectoScrap(p)">
+                <span class="item-name">{{ p.nombreProyecto }}</span>
+                <span class="item-meta">{{ p.codigoProyecto || '—' }} · {{ p.clienteNombre || 'Sin cliente' }} · {{ p.estado }}</span>
+              </div>
+            </div>
+          </div>
+          <small class="hint-warn" *ngIf="!cargando">{{ proyectos.length }} proyecto(s) disponible(s)</small>
+        </div>
+      </div>
+
+      <div class="pt-loading" *ngIf="cargandoInsumosScrap">
+        <div class="spinner"></div> Cargando insumos...
+      </div>
+
+      <div class="scrap-table-wrap" *ngIf="!cargandoInsumosScrap && insumosScrap.length > 0">
+        <table class="pt-table scrap-transfer-table">
+          <thead>
+            <tr>
+              <th>Insumo</th>
+              <th>Color</th>
+              <th>{{ modoEntreUbicaciones === 'scrap-proyecto' ? 'Cantidad en scrap' : 'Cantidad asignada' }}</th>
+              <th>{{ modoEntreUbicaciones === 'scrap-proyecto' ? 'Cantidad a devolver' : 'Cantidad a transferir a scrap' }}</th>
+              <th>Motivo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of insumosScrap">
+              <td><strong>{{ item.nombreInsumo }}</strong></td>
+              <td>
+                <span *ngIf="item.color" class="color-tag solicitado">{{ item.color }}</span>
+                <span *ngIf="!item.color" class="text-muted">—</span>
+              </td>
+              <td>{{ item.cantidadAsignada | number:'1.2-2' }} {{ item.unidadMedida }}</td>
+              <td>
+                <input type="number" class="input-cant scrap-cant"
+                  [(ngModel)]="item.cantidadTransferir"
+                  [min]="0"
+                  [max]="item.cantidadAsignada"
+                  step="0.01"
+                  (ngModelChange)="onCantidadScrapChange(item)">
+              </td>
+              <td>
+                <select class="scrap-motivo" [(ngModel)]="item.motivo" [disabled]="modoEntreUbicaciones === 'scrap-proyecto'">
+                  <option value="">Seleccionar...</option>
+                  <option *ngFor="let motivo of motivosScrap" [value]="motivo">{{ motivo }}</option>
+                  <option *ngIf="modoEntreUbicaciones === 'scrap-proyecto'" value="Reingreso desde scrap">Reingreso desde scrap</option>
+                </select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="actions">
+          <button class="btn-secondary" (click)="limpiarProyectoScrap()">Limpiar</button>
+          <button class="btn-primary" (click)="confirmarTransferenciaScrap()" [disabled]="cargando">
+            {{ cargando ? 'Procesando...' : (modoEntreUbicaciones === 'scrap-proyecto' ? 'Devolver al proyecto' : 'Transferir a scrap') }}
+          </button>
+        </div>
+      </div>
+
+      <div class="empty-hint" *ngIf="!idProyectoScrapSeleccionado">Seleccioná un proyecto para ver sus insumos.</div>
+      <div class="empty-hint" *ngIf="idProyectoScrapSeleccionado && insumosScrap.length === 0 && !cargandoInsumosScrap">
+        {{ modoEntreUbicaciones === 'scrap-proyecto' ? 'No hay scrap disponible para este proyecto.' : 'No hay insumos asignados a este proyecto.' }}
+      </div>
+    </ng-container>
   </div>
 
   <!-- TAB 3: Asignar a Proyecto (lógica idéntica a proyecto-transfer) -->
@@ -138,12 +223,22 @@
     <div class="pt-card">
       <div class="pt-field">
         <label>Proyecto *</label>
-        <select [(ngModel)]="idProyectoSeleccionado" (change)="onProyectoChange()" style="max-width:480px">
-          <option [ngValue]="null">Seleccionar proyecto...</option>
-          <option *ngFor="let p of proyectos" [ngValue]="p.idProyecto">
-            {{ p.nombreProyecto }} ({{ p.codigoProyecto }}) — {{ p.estado }}
-          </option>
-        </select>
+        <div class="search-container pt-search" style="max-width:480px">
+          <input type="text"
+            [(ngModel)]="busquedaProyecto"
+            (ngModelChange)="onBusquedaProyectoChange()"
+            (focus)="onBusquedaProyectoChange()"
+            placeholder="Buscar por nombre, código, cliente o estado..."
+            [disabled]="cargando">
+          <button type="button" class="btn-clear" *ngIf="idProyectoSeleccionado" (click)="limpiarProyecto()">✕</button>
+          <div class="search-results" *ngIf="mostrarResultadosProyecto">
+            <div class="search-item" *ngFor="let p of proyectosFiltrados" (click)="seleccionarProyecto(p)">
+              <span class="item-name">{{ p.nombreProyecto }}</span>
+              <span class="item-meta">{{ p.codigoProyecto || '—' }} · {{ p.clienteNombre || 'Sin cliente' }} · {{ p.estado }}</span>
+            </div>
+          </div>
+        </div>
+        <small *ngIf="!cargando">{{ proyectos.length }} proyecto(s) disponible(s)</small>
       </div>
     </div>
 

@@ -14,6 +14,10 @@ namespace TESIS_OG.Services.UbicacionService
         Task<List<ProyectoUbicacionDTO>> ObtenerProyectosPorUbicacionAsync(int idUbicacion);
         Task<List<ScrapUbicacionDTO>> ObtenerScrapsPorUbicacionAsync(int idUbicacion);
         Task<List<InventarioScrapDTO>> ObtenerInventarioScrapGeneralAsync();
+        Task<List<ScrapProyectoInsumoDTO>> ObtenerInsumosProyectoParaScrapAsync(int idProyecto);
+        Task<List<ScrapProyectoInsumoDTO>> ObtenerScrapsProyectoParaTransferenciaAsync(int idProyecto);
+        Task<(bool ok, string? error)> TransferirProyectoAScrapAsync(ScrapTransferDTO transferDto);
+        Task<(bool ok, string? error)> TransferirScrapAProyectoAsync(ScrapTransferDTO transferDto);
         Task<(bool ok, string? error)> TransferirInsumosAsync(InsumoTransferDTO transferDto);
         Task<UbicacionDTO?> CambiarEstadoAsync(int id, string nuevoEstado);
     }

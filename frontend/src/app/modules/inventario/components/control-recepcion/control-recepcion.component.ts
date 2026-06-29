@@ -5,6 +5,7 @@ import { OrdenCompraService, ControlRecepcionDTO } from '../../../orden-compra/s
 import { OrdenCompra } from '../../../orden-compra/models/orden-compra.model';
 import { AuthService } from '../../../login/services/auth.service';
 import { AlertasService } from '../../../../core/services/alertas';
+import { NotificacionesService } from '../../../../core/services/notificaciones.service';
 
 @Component({
     selector: 'app-control-recepcion',
@@ -28,7 +29,8 @@ export class ControlRecepcionComponent implements OnInit {
     constructor(
         private ordenCompraService: OrdenCompraService,
         private authService: AuthService,
-        private alertas: AlertasService
+        private alertas: AlertasService,
+        private notificacionesService: NotificacionesService
     ) { }
 
     ngOnInit(): void {
@@ -136,6 +138,14 @@ export class ControlRecepcionComponent implements OnInit {
             next: () => {
                 this.guardando = false;
                 this.alertas.success('Control registrado', 'El stock fue actualizado correctamente.');
+                // Notificar al administrador que el control fue completado
+                const nroOrden = this.ordenActiva?.nroOrden ?? '';
+                const idOC = this.ordenActiva?.idOrdenCompra ?? 0;
+                this.notificacionesService.crearNotificacionControlRecepcion({
+                    idOrdenCompra: idOC,
+                    nroOrden: nroOrden,
+                    tipo: 'ControlCompletado'
+                }).subscribe({ error: () => {} }); // silencioso — no bloquear el flujo principal
                 this.cerrarControl();
                 this.cargarOrdenes();
             },
