@@ -33,6 +33,14 @@ export interface InsumoStock {
   nroOrden?: string;
   cantidad: number;
   fechaActualizacion: string;
+  /** Estado del proyecto (Pendiente, En Proceso, Finalizado, Despachado…) */
+  estadoProyecto?: string;
+  /** Área actual del proyecto (Corte, Confección, Control de Calidad…) */
+  areaActualProyecto?: string;
+  /** True cuando la edición manual de stock está bloqueada por etapa del proyecto */
+  stockBloqueado?: boolean;
+  /** Mensaje explicativo del bloqueo */
+  motivoBloqueado?: string;
 }
 
 export interface Insumo {

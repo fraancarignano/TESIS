@@ -99,6 +99,12 @@ import { AlertasService } from '../../../core/services/alertas';
                         {{ s.nombreProyecto }}
                       </span>
                       <span *ngIf="!s.idProyecto" class="text-muted">Stock General</span>
+                      <!-- Indicador de etapa del proyecto -->
+                      <span *ngIf="s.idProyecto && s.estadoProyecto" class="badge-etapa-proyecto"
+                            [class.etapa-bloqueada]="s.stockBloqueado"
+                            [class.etapa-libre]="!s.stockBloqueado">
+                        {{ s.areaActualProyecto || s.estadoProyecto }}
+                      </span>
                     </td>
                     <td class="font-bold">
                       <span *ngIf="editandoStock !== s.idInsumoStock">{{ s.cantidad }} {{ insumo.unidadMedida }}</span>
@@ -123,20 +129,28 @@ import { AlertasService } from '../../../core/services/alertas';
                       <span *ngIf="!s.idUbicacion" class="text-muted">-</span>
                     </td>
                     <td style="white-space:nowrap;">
-                      <!-- Editar cantidad (stock general o de proyecto) -->
-                      <button *ngIf="editandoStock !== s.idInsumoStock"
-                        (click)="iniciarEdicionStock(s)"
-                        title="Editar cantidad"
-                        style="background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:.72rem;margin-right:4px;">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </button>
-                      <!-- Devolver al stock general (solo si está asignado a proyecto) -->
-                      <button *ngIf="s.idProyecto"
-                        (click)="devolverAlGeneral(s)"
-                        title="Devolver al stock general"
-                        style="background:#fdecea;color:#c62828;border:1px solid #ef9a9a;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:.72rem;">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
-                      </button>
+                      <!-- Editar cantidad -->
+                      <ng-container *ngIf="!s.stockBloqueado; else btnsBloqueados">
+                        <button *ngIf="editandoStock !== s.idInsumoStock"
+                          (click)="iniciarEdicionStock(s)"
+                          title="Editar cantidad"
+                          style="background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:.72rem;margin-right:4px;">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button *ngIf="s.idProyecto"
+                          (click)="devolverAlGeneral(s)"
+                          title="Devolver al stock general"
+                          style="background:#fdecea;color:#c62828;border:1px solid #ef9a9a;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:.72rem;">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                        </button>
+                      </ng-container>
+                      <!-- Botones bloqueados: solo lectura con tooltip -->
+                      <ng-template #btnsBloqueados>
+                        <span class="stock-bloqueado-badge" [title]="s.motivoBloqueado || 'Stock bloqueado por etapa del proyecto'">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                          Bloqueado
+                        </span>
+                      </ng-template>
                     </td>
                   </tr>
                 </tbody>
@@ -271,6 +285,43 @@ import { AlertasService } from '../../../core/services/alertas';
     .mini-est-Ocupado { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
     .mini-est-BloqIN  { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
     .mini-est-BloqOUT { background: #ede7f6; color: #4527a0; border: 1px solid #d1c4e9; }
+
+    /* ─── ETAPA DEL PROYECTO EN FILA DE STOCK ─────────── */
+    .badge-etapa-proyecto {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      margin-left: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+    }
+    .etapa-bloqueada {
+      background: #fff3e0;
+      color: #b45309;
+      border: 1px solid #fcd34d;
+    }
+    .etapa-libre {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+
+    /* ─── BADGE BLOQUEADO ─────────────────────────────── */
+    .stock-bloqueado-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #92400e;
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 4px;
+      padding: 2px 7px;
+      cursor: help;
+    }
   `]
 })
 export class InsumoDetalleModalComponent {
@@ -309,6 +360,10 @@ export class InsumoDetalleModalComponent {
   }
 
   iniciarEdicionStock(s: InsumoStock): void {
+    if (s.stockBloqueado) {
+      this.alertas.error('Stock bloqueado', s.motivoBloqueado || 'No se puede editar el stock de este proyecto en esta etapa.');
+      return;
+    }
     this.editandoStock = s.idInsumoStock;
     this.cantidadEditando = s.cantidad;
   }

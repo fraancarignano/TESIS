@@ -218,7 +218,32 @@ namespace TESIS_OG.Services.InsumoService
                 IdOrdenCompra = s.IdOrdenCompra,
                 NroOrden = s.IdOrdenCompraNavigation != null ? s.IdOrdenCompraNavigation.NroOrden : null,
                 Cantidad = s.Cantidad,
-                FechaActualizacion = s.FechaActualizacion
+                FechaActualizacion = s.FechaActualizacion,
+                EstadoProyecto = s.IdProyectoNavigation != null ? s.IdProyectoNavigation.Estado : null,
+                AreaActualProyecto = s.IdProyectoNavigation != null ? s.IdProyectoNavigation.AreaActual : null,
+                // Bloqueado si el proyecto está en Corte/posterior, Finalizado o Despachado
+                StockBloqueado = s.IdProyecto != null && (
+                    s.IdProyectoNavigation!.Estado == "Finalizado" ||
+                    s.IdProyectoNavigation!.Estado == "Despachado" ||
+                    s.IdProyectoNavigation!.Estado == "Archivado" ||
+                    s.IdProyectoNavigation!.AreaActual == "Corte" ||
+                    s.IdProyectoNavigation!.AreaActual == "Confección" ||
+                    s.IdProyectoNavigation!.AreaActual == "Control de Calidad" ||
+                    s.IdProyectoNavigation!.AreaActual == "Etiquetado y Empaquetado" ||
+                    s.IdProyectoNavigation!.AreaActual == "Depósito y Logística"
+                ),
+                MotivoBloqueado = s.IdProyecto != null ? (
+                    s.IdProyectoNavigation!.Estado == "Despachado" ? "El proyecto ya fue despachado." :
+                    s.IdProyectoNavigation!.Estado == "Finalizado" ? "El proyecto está finalizado." :
+                    s.IdProyectoNavigation!.Estado == "Archivado" ? "El proyecto está archivado." :
+                    (s.IdProyectoNavigation!.AreaActual == "Corte" ||
+                     s.IdProyectoNavigation!.AreaActual == "Confección" ||
+                     s.IdProyectoNavigation!.AreaActual == "Control de Calidad" ||
+                     s.IdProyectoNavigation!.AreaActual == "Etiquetado y Empaquetado" ||
+                     s.IdProyectoNavigation!.AreaActual == "Depósito y Logística")
+                        ? $"El proyecto está en etapa '{s.IdProyectoNavigation!.AreaActual}'. No se puede modificar el stock una vez iniciado el corte."
+                        : null
+                ) : null
             }).ToList(),
             ProyectosAsignados = i.MaterialCalculados
                 .Where(mc => mc.IdProyectoNavigation.Estado != "Archivado" && mc.IdProyectoNavigation.Estado != "Cancelado")
@@ -516,10 +541,19 @@ namespace TESIS_OG.Services.InsumoService
     public async Task<string?> EditarStockEntryAsync(int idInsumoStock, decimal nuevaCantidad)
     {
       if (nuevaCantidad < 0) return "La cantidad no puede ser negativa";
-      var entry = await _context.InsumoStocks.FindAsync(idInsumoStock);
+      var entry = await _context.InsumoStocks
+          .Include(s => s.IdProyectoNavigation)
+          .FirstOrDefaultAsync(s => s.IdInsumoStock == idInsumoStock);
       if (entry == null) return "Registro de stock no encontrado";
       var insumo = await _context.Insumos.FindAsync(entry.IdInsumo);
       if (insumo == null) return "Insumo no encontrado";
+
+      // GUARD: bloquear edición si el proyecto está en Corte o etapa posterior
+      if (entry.IdProyecto != null && entry.IdProyectoNavigation != null)
+      {
+          var motivo = ObtenerMotivoBloqueadoProyecto(entry.IdProyectoNavigation);
+          if (motivo != null) return motivo;
+      }
 
       var diferencia = nuevaCantidad - entry.Cantidad;
 
@@ -636,11 +670,20 @@ namespace TESIS_OG.Services.InsumoService
 
     public async Task<(bool ok, string mensaje)> DevolverStockAlGeneralAsync(int idInsumoStock)
     {
-      var entry = await _context.InsumoStocks.FindAsync(idInsumoStock);
+      var entry = await _context.InsumoStocks
+          .Include(s => s.IdProyectoNavigation)
+          .FirstOrDefaultAsync(s => s.IdInsumoStock == idInsumoStock);
       if (entry == null) return (false, "Registro de stock no encontrado");
       if (entry.IdProyecto == null) return (false, "Este registro ya es stock general");
       var insumo = await _context.Insumos.FindAsync(entry.IdInsumo);
       if (insumo == null) return (false, "Insumo no encontrado");
+
+      // GUARD: bloquear devolución si el proyecto está en Corte o etapa posterior
+      if (entry.IdProyectoNavigation != null)
+      {
+          var motivo = ObtenerMotivoBloqueadoProyecto(entry.IdProyectoNavigation);
+          if (motivo != null) return (false, motivo);
+      }
 
       var entradaGeneral = await _context.InsumoStocks
           .FirstOrDefaultAsync(s => s.IdInsumo == entry.IdInsumo && s.IdProyecto == null);
@@ -688,6 +731,42 @@ namespace TESIS_OG.Services.InsumoService
 
       await _context.SaveChangesAsync();
       return insumos.Count;
+    }
+
+    // ─── ÁREAS BLOQUEANTES ────────────────────────────────────────────────────
+    // Corte es el punto de no retorno: una vez que el material ingresó al proceso
+    // de producción no puede devolverse al stock general ni editarse manualmente.
+    private static readonly HashSet<string> _areasBloqueantesSinDistincion = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Corte",
+        "Confección",
+        "Control de Calidad",
+        "Etiquetado y Empaquetado",
+        "Depósito y Logística"
+    };
+
+    private static readonly HashSet<string> _estadosBloqueantesSinDistincion = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Finalizado",
+        "Despachado",
+        "Archivado"
+    };
+
+    /// <summary>
+    /// Retorna el mensaje de bloqueo si el proyecto está en una etapa donde
+    /// no se puede editar el stock de forma manual. Retorna null si no hay bloqueo.
+    /// </summary>
+    private static string? ObtenerMotivoBloqueadoProyecto(Proyecto proyecto)
+    {
+        if (_estadosBloqueantesSinDistincion.Contains(proyecto.Estado))
+            return $"No se puede modificar el stock: el proyecto está en estado '{proyecto.Estado}'.";
+
+        if (!string.IsNullOrWhiteSpace(proyecto.AreaActual) &&
+            _areasBloqueantesSinDistincion.Contains(proyecto.AreaActual))
+            return $"No se puede modificar el stock: el proyecto se encuentra en etapa '{proyecto.AreaActual}'. " +
+                   "El stock queda bloqueado desde el inicio del Corte.";
+
+        return null;
     }
   }
 }
