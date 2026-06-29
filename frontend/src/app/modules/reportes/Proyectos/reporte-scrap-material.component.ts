@@ -53,6 +53,18 @@ interface ProyectoFiltro {
   nombreProyecto: string;
 }
 
+interface TreemapBloque {
+  nombre: string;
+  cantidad: number;
+  porcentaje: number;
+  color: string;
+  textColor: string;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+}
+
 @Component({
   selector: 'app-reporte-scrap-material',
   standalone: true,
@@ -62,7 +74,6 @@ interface ProyectoFiltro {
 })
 export class ReporteScrapMaterialComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('chartTemporal') chartTemporalRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('chartProyecto') chartProyectoRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('chartInsumo') chartInsumoRef!: ElementRef<HTMLCanvasElement>;
 
   loading = false;
@@ -78,11 +89,11 @@ export class ReporteScrapMaterialComponent implements OnInit, AfterViewInit, OnD
   serieTemporal: ScrapSerieTemporal[] = [];
   registros: ScrapRegistro[] = [];
   proyectos: ProyectoFiltro[] = [];
+  treemapProyectos: TreemapBloque[] = [];
 
   vistaActiva: 'graficos' | 'resumen' | 'detalle' = 'graficos';
 
   private chartTemporal?: Chart;
-  private chartProyecto?: Chart;
   private chartInsumo?: Chart;
 
   private readonly COLORES = [
@@ -91,7 +102,12 @@ export class ReporteScrapMaterialComponent implements OnInit, AfterViewInit, OnD
     '#00bcd4', '#8bc34a'
   ];
 
-  constructor(private http: HttpClient) {}
+  private readonly COLORES_TIDEPOOL = [
+    '#2a78d6', '#1baf7a', '#eda100', '#4a3aa7',
+    '#e34948', '#e87ba4', '#eb6834'
+  ];
+
+  constructor(private http: HttpClient) { }
 
   ngOnInit(): void {
     this.cargarDatos();
@@ -103,7 +119,6 @@ export class ReporteScrapMaterialComponent implements OnInit, AfterViewInit, OnD
 
   ngOnDestroy(): void {
     this.chartTemporal?.destroy();
-    this.chartProyecto?.destroy();
     this.chartInsumo?.destroy();
   }
 
@@ -153,56 +168,207 @@ export class ReporteScrapMaterialComponent implements OnInit, AfterViewInit, OnD
 
   private renderizarGraficos(): void {
     this.renderizarTemporal();
-    this.renderizarPorProyecto();
+    this.calcularTreemapProyectos();
     this.renderizarPorInsumo();
   }
 
   private renderizarTemporal(): void {
-    if (!this.chartTemporalRef?.nativeElement || !this.serieTemporal.length) return;
+    if (!this.chartTemporalRef?.nativeElement || !this.registros.length) return;
     this.chartTemporal?.destroy();
 
+    // Agrupar registros por fecha y motivo
+    const agrupado = new Map<string, { corte: number; otros: number }>();
+
+    this.registros.forEach(reg => {
+      const fecha = reg.fechaRegistro.split('T')[0]; // Obtener solo la fecha
+      if (!agrupado.has(fecha)) {
+        agrupado.set(fecha, { corte: 0, otros: 0 });
+      }
+      const grupo = agrupado.get(fecha)!;
+      const cantidad = Number(reg.cantidadScrap);
+
+      if (reg.motivo?.toLowerCase() === 'corte') {
+        grupo.corte += cantidad;
+      } else {
+        grupo.otros += cantidad;
+      }
+    });
+
+    // Ordenar por fecha
+    const fechasOrdenadas = Array.from(agrupado.keys()).sort();
+
     const cfg: ChartConfiguration = {
-      type: 'line',
+      type: 'bar',
       data: {
-        labels: this.serieTemporal.map(s => this.formatearFecha(s.fecha)),
-        datasets: [{
-          label: 'Scrap (u.)',
-          data: this.serieTemporal.map(s => Number(s.cantidadScrap)),
-          borderColor: '#ff6b35',
-          backgroundColor: 'rgba(255,107,53,0.12)',
-          borderWidth: 2.5,
-          pointRadius: 4,
-          pointBackgroundColor: '#ff6b35',
-          fill: true,
-          tension: 0.3
-        }]
+        labels: fechasOrdenadas.map(f => this.formatearFecha(f)),
+        datasets: [
+          {
+            label: 'Corte',
+            data: fechasOrdenadas.map(f => agrupado.get(f)!.corte),
+            backgroundColor: '#2a78d6',
+            borderRadius: 4,
+            borderSkipped: false
+          },
+          {
+            label: 'Desperfecto / operativo',
+            data: fechasOrdenadas.map(f => agrupado.get(f)!.otros),
+            backgroundColor: '#e34948',
+            borderRadius: 4,
+            borderSkipped: false
+          }
+        ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false }
+        },
         scales: {
-          y: { beginAtZero: true, ticks: { font: { size: 11 } } },
-          x: { ticks: { font: { size: 11 } } }
+          x: {
+            stacked: true,
+            ticks: { font: { size: 11 } },
+            grid: { display: false }
+          },
+          y: {
+            stacked: true,
+            beginAtZero: true,
+            ticks: { font: { size: 11 } },
+            grid: { color: '#e1e0d9', lineWidth: 1 }
+          }
         }
       }
     };
     this.chartTemporal = new Chart(this.chartTemporalRef.nativeElement, cfg);
   }
 
-  private renderizarPorProyecto(): void {
-    if (!this.chartProyectoRef?.nativeElement || !this.resumenPorProyecto.length) return;
-    this.chartProyecto?.destroy();
+  private calcularTreemapProyectos(): void {
+    if (!this.resumenPorProyecto.length) {
+      this.treemapProyectos = [];
+      return;
+    }
 
-    const top = this.resumenPorProyecto.slice(0, 8);
+    // Tomar top 8 proyectos ordenados de mayor a menor
+    const ordenados = [...this.resumenPorProyecto]
+      .sort((a, b) => Number(b.cantidadScrapTotal) - Number(a.cantidadScrapTotal));
+
+    const top8 = ordenados.slice(0, 8);
+    const resto = ordenados.slice(8);
+
+    // Calcular total
+    const totalScrap = ordenados.reduce((sum, p) => sum + Number(p.cantidadScrapTotal), 0);
+
+    // Preparar bloques (top 8 + otros si hay)
+    const bloques: Array<{ nombre: string; cantidad: number; porcentaje: number }> = [];
+
+    top8.forEach(p => {
+      bloques.push({
+        nombre: p.nombreProyecto,
+        cantidad: Number(p.cantidadScrapTotal),
+        porcentaje: (Number(p.cantidadScrapTotal) / totalScrap) * 100
+      });
+    });
+
+    if (resto.length > 0) {
+      const cantidadOtros = resto.reduce((sum, p) => sum + Number(p.cantidadScrapTotal), 0);
+      bloques.push({
+        nombre: 'Otros',
+        cantidad: cantidadOtros,
+        porcentaje: (cantidadOtros / totalScrap) * 100
+      });
+    }
+
+    // Asignar colores secuenciales de azul (oscuro a claro según magnitud)
+    const coloresAzules = ['#2a78d6', '#4d8fdd', '#70a6e4', '#85b7eb', '#a3c9f0', '#b5d4f4', '#cde4f9', '#e6f1fb'];
+
+    this.treemapProyectos = bloques.map((b, idx) => {
+      const color = coloresAzules[idx % coloresAzules.length];
+      // Texto blanco para colores oscuros, azul oscuro para claros
+      const textColor = idx < 3 ? '#ffffff' : '#0C447C';
+
+      return {
+        nombre: b.nombre,
+        cantidad: b.cantidad,
+        porcentaje: b.porcentaje,
+        color,
+        textColor,
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0
+      };
+    });
+
+    // Calcular layout del treemap con algoritmo de división simple
+    this.calcularLayoutTreemap();
+  }
+
+  private calcularLayoutTreemap(): void {
+    const anchoTotal = 100; // porcentaje
+    const altoTotal = 100;  // porcentaje
+    const bloques = this.treemapProyectos;
+
+    if (bloques.length === 0) return;
+
+    // Algoritmo simple: distribuir en filas
+    let x = 0;
+    let y = 0;
+    let altoFila = 0;
+    const anchoDisponible = anchoTotal;
+
+    bloques.forEach((bloque, idx) => {
+      const area = bloque.porcentaje;
+
+      // Calcular dimensiones proporcionales
+      // Usar raíz cuadrada del área para dimensiones más balanceadas
+      const escala = Math.sqrt(area / 100);
+      let ancho = anchoTotal * escala * 1.4; // Factor de ajuste
+      let alto = (area / ancho) * 100;
+
+      // Limitar dimensiones mínimas y máximas
+      ancho = Math.max(15, Math.min(ancho, anchoDisponible));
+      alto = Math.max(12, Math.min(alto, altoTotal));
+
+      // Si no cabe en la fila actual, pasar a la siguiente
+      if (x + ancho > anchoTotal && x > 0) {
+        x = 0;
+        y += altoFila;
+        altoFila = 0;
+      }
+
+      bloque.x = x;
+      bloque.y = y;
+      bloque.width = ancho;
+      bloque.height = alto;
+
+      x += ancho;
+      altoFila = Math.max(altoFila, alto);
+    });
+  }
+
+  private renderizarPorInsumo(): void {
+    if (!this.chartInsumoRef?.nativeElement || !this.resumenPorInsumo.length) return;
+    this.chartInsumo?.destroy();
+
+    // Ordenar de mayor a menor cantidad
+    const ordenados = [...this.resumenPorInsumo].sort((a, b) =>
+      Number(b.cantidadScrapTotal) - Number(a.cantidadScrapTotal)
+    );
+
+    // Ajustar alto del canvas dinámicamente
+    const alturaDinamica = Math.max(ordenados.length * 40 + 60, 60);
+    this.chartInsumoRef.nativeElement.style.height = `${alturaDinamica}px`;
+
     const cfg: ChartConfiguration = {
       type: 'bar',
       data: {
-        labels: top.map(r => r.nombreProyecto),
+        labels: ordenados.map(r => r.insumo),
         datasets: [{
           label: 'Scrap (u.)',
-          data: top.map(r => Number(r.cantidadScrapTotal)),
-          backgroundColor: top.map((_, i) => this.COLORES[i % this.COLORES.length]),
+          data: ordenados.map(r => Number(r.cantidadScrapTotal)),
+          backgroundColor: ordenados.map((_, i) =>
+            this.COLORES_TIDEPOOL[i % this.COLORES_TIDEPOOL.length]
+          ),
           borderRadius: 4,
           borderSkipped: false
         }]
@@ -211,37 +377,19 @@ export class ReporteScrapMaterialComponent implements OnInit, AfterViewInit, OnD
         responsive: true,
         maintainAspectRatio: false,
         indexAxis: 'y',
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { beginAtZero: true, ticks: { font: { size: 11 } } },
-          y: { ticks: { font: { size: 11 } } }
-        }
-      }
-    };
-    this.chartProyecto = new Chart(this.chartProyectoRef.nativeElement, cfg);
-  }
-
-  private renderizarPorInsumo(): void {
-    if (!this.chartInsumoRef?.nativeElement || !this.resumenPorInsumo.length) return;
-    this.chartInsumo?.destroy();
-
-    const top = this.resumenPorInsumo.slice(0, 6);
-    const cfg: ChartConfiguration = {
-      type: 'doughnut',
-      data: {
-        labels: top.map(r => r.insumo),
-        datasets: [{
-          data: top.map(r => Number(r.cantidadScrapTotal)),
-          backgroundColor: top.map((_, i) => this.COLORES[i % this.COLORES.length]),
-          borderWidth: 2,
-          borderColor: '#fff'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'right', labels: { font: { size: 11 }, boxWidth: 14 } }
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: { font: { size: 11 } },
+            grid: { display: false }
+          },
+          y: {
+            ticks: { font: { size: 11 } },
+            grid: { color: '#e1e0d9', lineWidth: 1 }
+          }
         }
       }
     };
